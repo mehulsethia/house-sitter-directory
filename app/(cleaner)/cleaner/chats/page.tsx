@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { MessageCircleMore } from 'lucide-react'
-import { bookingsApi } from '@/lib/api'
+import { authApi, bookingsApi } from '@/lib/api'
 import { createClient } from '@/lib/supabase'
 import { Chat } from '@/components/chat'
 import { SplitChatPageSkeleton } from '@/components/page-skeletons'
@@ -32,11 +32,15 @@ export default function CleanerChatsPage() {
   useEffect(() => {
     ;(async () => {
       try {
-        const [{ data }, userRes] = await Promise.all([bookingsApi.my(), createClient().auth.getUser()])
+        const [{ data }, userRes, meRes] = await Promise.all([
+          bookingsApi.my(),
+          createClient().auth.getUser(),
+          authApi.me().catch(() => null),
+        ])
         const chatBookings = (data?.items ?? []).filter((b) => CHAT_AVAILABLE.includes(b.status))
         setBookings(chatBookings)
         setSelectedBookingId(chatBookings[0]?.id ?? null)
-        setCurrentUserId(userRes.data.user?.id ?? null)
+        setCurrentUserId(userRes.data.user?.id ?? meRes?.data?.id ?? null)
       } catch {
         toast.error('Failed to load chats.')
       } finally {

@@ -59,11 +59,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = await getAuthHeaders()
   const res = await fetch(`${BASE}/api/v1${path}`, {
     ...options,
+    cache: 'no-store',
+    credentials: 'include',
     headers: { ...headers, ...options.headers },
   })
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: 'Unknown error' }))
-    throw new Error(error.detail ?? `Request failed: ${res.status}`)
+    throw new Error(error.detail ?? error.message ?? `Request failed: ${res.status}`)
   }
   return res.json() as Promise<T>
 }

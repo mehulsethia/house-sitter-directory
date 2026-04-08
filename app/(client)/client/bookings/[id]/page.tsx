@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Calendar, Clock, MapPin } from 'lucide-react'
-import { bookingsApi, reviewsApi } from '@/lib/api'
+import { authApi, bookingsApi, reviewsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { PriceBreakdownCard } from '@/components/price-breakdown-card'
 import { Chat } from '@/components/chat'
@@ -49,7 +49,9 @@ export default function ClientBookingDetailPage() {
 
   useEffect(() => {
     refresh()
-    createClient().auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null))
+    Promise.all([createClient().auth.getUser(), authApi.me().catch(() => null)]).then(([userRes, meRes]) => {
+      setCurrentUserId(userRes.data.user?.id ?? meRes?.data?.id ?? null)
+    })
   }, [id])
 
   async function handleCancel() {

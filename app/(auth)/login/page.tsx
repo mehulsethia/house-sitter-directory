@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { cleanersApi } from '@/lib/api'
 import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
 
@@ -19,12 +20,30 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       toast.error(error.message)
     } else {
       const nextParam = params.get('next')
-      const next = nextParam && nextParam.startsWith('/') ? nextParam : '/client/dashboard'
+      const safeNext = nextParam && nextParam.startsWith('/') ? nextParam : null
+      const role = (data.user?.user_metadata?.role as string | undefined) ?? 'client'
+
+      let next = safeNext
+      if (!next) {
+        if (role === 'cleaner') {
+          try {
+            const cleanerRes = await cleanersApi.me()
+            next = cleanerRes.data?.onboarding?.completion_pct === 100 ? '/cleaner/dashboard' : '/cleaner/onboarding'
+          } catch {
+            next = '/cleaner/onboarding'
+          }
+        } else if (role === 'admin') {
+          next = '/admin/dashboard'
+        } else {
+          next = '/client/dashboard'
+        }
+      }
+
       router.replace(next)
       router.refresh()
     }

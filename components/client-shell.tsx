@@ -36,7 +36,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen text-slate-900">
       <div className="mx-auto flex max-w-[1500px]">
-        <aside className="hidden md:flex md:w-72 md:shrink-0 md:flex-col md:border-r md:border-slate-200/80 md:bg-white/90 md:px-5 md:py-6 md:backdrop-blur-md">
+        <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-72 md:shrink-0 md:flex-col md:border-r md:border-slate-200/80 md:bg-white/90 md:px-5 md:py-6 md:backdrop-blur-md">
           <Link href="/client/dashboard" className="mb-8 inline-flex items-center gap-2.5">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-indigo-700 font-extrabold text-white shadow-[0_10px_24px_rgba(39,70,250,0.35)]">M</span>
             <span className="text-[1.7rem] font-bold tracking-tight text-primary">MaidHive</span>
@@ -74,7 +74,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
           </button>
         </aside>
 
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 px-3 py-3 backdrop-blur md:hidden">
             <div className="mb-3 flex items-center justify-between">
               <Link href="/client/dashboard" className="inline-flex items-center gap-2">
@@ -110,7 +110,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
             </nav>
           </header>
 
-          <main className="app-shell-main px-3 py-4 sm:px-4 sm:py-5 md:px-8 md:py-8">{children}</main>
+          <main className="app-shell-main mx-auto w-full max-w-[1240px] px-3 py-4 sm:px-4 sm:py-5 md:px-8 md:py-8">{children}</main>
         </div>
       </div>
     </div>

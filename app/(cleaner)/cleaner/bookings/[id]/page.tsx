@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Calendar, Clock, MapPin, ArrowLeft } from 'lucide-react'
-import { bookingsApi } from '@/lib/api'
+import { authApi, bookingsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { Chat } from '@/components/chat'
 import { DetailPageSkeleton } from '@/components/page-skeletons'
@@ -45,7 +45,9 @@ export default function CleanerBookingDetailPage() {
 
   useEffect(() => {
     refresh()
-    createClient().auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null))
+    Promise.all([createClient().auth.getUser(), authApi.me().catch(() => null)]).then(([userRes, meRes]) => {
+      setCurrentUserId(userRes.data.user?.id ?? meRes?.data?.id ?? null)
+    })
   }, [id])
 
   async function handleAction(action: 'accept' | 'start' | 'complete') {

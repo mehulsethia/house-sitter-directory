@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { authApi } from '@/lib/api'
+import { authApi, cleanersApi } from '@/lib/api'
 import { toast } from 'sonner'
 
 const COUNTRY_CODES = [
@@ -45,7 +45,7 @@ function SignupForm() {
     const phoneDigits = phone.replace(/\D/g, '')
     const fullPhone = `${countryCode}${phoneDigits}`
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -59,14 +59,35 @@ function SignupForm() {
       return
     }
 
+    // If email confirmation is enabled, Supabase may not create an active session on signup.
+    if (!data.session) {
+      const signInRes = await supabase.auth.signInWithPassword({ email, password })
+      if (signInRes.error) {
+        toast.success('Account created. Please verify your email and log in to continue.')
+        router.push('/login')
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       await authApi.sync({ name, role, phone: fullPhone })
     } catch {
       // Non-fatal — the DB trigger already created the row
     }
 
-    toast.success('Account created! Check your email to confirm.')
-    router.push(role === 'cleaner' ? '/cleaner/onboarding' : '/client/dashboard')
+    if (role === 'cleaner') {
+      try {
+        const cleanerRes = await cleanersApi.me()
+        router.push(cleanerRes.data?.onboarding?.completion_pct === 100 ? '/cleaner/dashboard' : '/cleaner/onboarding')
+      } catch {
+        router.push('/cleaner/onboarding')
+      }
+    } else {
+      router.push('/client/dashboard')
+    }
+
+    toast.success('Account created successfully.')
     setLoading(false)
   }
 
