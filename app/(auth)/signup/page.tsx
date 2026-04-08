@@ -66,7 +66,7 @@ function SignupForm() {
         </p>
         <div className="relative rounded-xl overflow-hidden aspect-[4/3] shadow-lg">
           <Image
-            src="/images/auth-cleaners.jpg"
+            src="/images/join-maidhive.avif"
             alt="Professional cleaning team"
             fill
             className="object-cover"

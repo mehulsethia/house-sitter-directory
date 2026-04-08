@@ -63,36 +63,17 @@ export default function CleanerLandingPage() {
               </div>
             </div>
 
-            {/* Right — Earnings card mockup */}
+            {/* Right — Hero image */}
             <div className="hidden lg:block animate-fade-in-right">
-              <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm ml-auto">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-sm text-gray-500">This week&apos;s earnings</span>
-                  <span className="text-3xl font-bold text-gray-900">&euro; 642.50</span>
-                </div>
-                <div className="space-y-3">
-                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-sm text-gray-900">Deep Clean</span>
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">New</span>
-                    </div>
-                    <p className="text-xs text-gray-500">Tomorrow, 10:00 AM</p>
-                    <p className="text-xs text-gray-400 mt-1">3 hrs &middot; 2 rooms &middot; 1 bathroom</p>
-                    <div className="mt-3">
-                      <div className="w-full bg-primary text-white text-xs font-medium text-center py-2 rounded-lg">
-                        Accept Booking
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-sm text-gray-900">Regular Clean</span>
-                      <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full font-medium">Confirmed</span>
-                    </div>
-                    <p className="text-xs text-gray-500">Friday, 2:00 PM</p>
-                    <p className="text-xs text-gray-400 mt-1">2 hrs &middot; 3 rooms &middot; 1 bathroom</p>
-                  </div>
-                </div>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] max-w-xl ml-auto">
+                <Image
+                  src="/images/hero-cleaner.png"
+                  alt="Professional cleaner hero preview"
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                />
               </div>
             </div>
           </div>
@@ -189,34 +170,15 @@ export default function CleanerLandingPage() {
               </div>
             </div>
 
-            {/* Right — Pricing card */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <span className="text-sm text-gray-500">Example: 3-hour deep clean</span>
-              </div>
-              <div className="text-center mb-8">
-                <span className="text-5xl font-bold text-gray-900">&euro;67.50</span>
-                <p className="text-sm text-gray-400 mt-2">Your earnings after platform fee</p>
-              </div>
-
-              <div className="space-y-4 border-t border-gray-100 pt-6">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Job total (&euro;25/hr &times; 3 hours)</span>
-                  <span className="font-medium text-gray-900">&euro;75.00</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Platform fee (10%)</span>
-                  <span className="font-medium text-red-500">-&euro;7.50</span>
-                </div>
-                <div className="border-t border-gray-100 pt-4 flex justify-between">
-                  <span className="font-semibold text-gray-900">You receive</span>
-                  <span className="text-2xl font-bold text-primary">&euro;67.50</span>
-                </div>
-              </div>
-
-              <div className="mt-6 bg-gray-50 rounded-xl p-4 text-center">
-                <p className="text-xs text-gray-500">Paid to your account within 48 hours</p>
-              </div>
+            {/* Right — Earnings image */}
+            <div className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-100 aspect-[4/3]">
+              <Image
+                src="/images/Earnings-cleaner.png"
+                alt="Cleaner earnings breakdown"
+                fill
+                className="object-cover"
+                sizes="(min-width: 1024px) 50vw, 100vw"
+              />
             </div>
           </div>
         </div>
@@ -371,7 +333,7 @@ export default function CleanerLandingPage() {
             {/* Image */}
             <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
               <Image
-                src="/images/hero-client.png"
+                src="/images/trusted-cleaner.avif"
                 alt="Clean modern home"
                 fill
                 className="object-cover"

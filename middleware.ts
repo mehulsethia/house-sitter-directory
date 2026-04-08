@@ -6,6 +6,13 @@ const PROTECTED_PREFIXES = ['/client', '/cleaner', '/admin']
 // Routes only for unauthenticated users
 const AUTH_ROUTES = ['/login', '/signup']
 
+function getPostLoginPath(user: { user_metadata?: Record<string, unknown> }) {
+  const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'client'
+  if (role === 'cleaner') return '/cleaner/dashboard'
+  if (role === 'admin') return '/admin/dashboard'
+  return '/client/dashboard'
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -33,6 +40,7 @@ export async function middleware(request: NextRequest) {
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))
   const isAuthRoute = AUTH_ROUTES.some((p) => pathname.startsWith(p))
+  const isApiRoute = pathname.startsWith('/api')
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
@@ -44,7 +52,15 @@ export async function middleware(request: NextRequest) {
   if (isAuthRoute && user) {
     // Redirect logged-in users away from auth pages to their dashboard
     const url = request.nextUrl.clone()
-    url.pathname = '/client/dashboard'
+    url.pathname = getPostLoginPath(user)
+    return NextResponse.redirect(url)
+  }
+
+  // Logged-in users should stay inside the app area only.
+  // Landing/legal/static pages remain visible only after logout.
+  if (user && !isProtected && !isApiRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = getPostLoginPath(user)
     return NextResponse.redirect(url)
   }
 
@@ -52,5 +68,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif)$).*)'],
 }

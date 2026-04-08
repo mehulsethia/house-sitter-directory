@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
 import { LandingHeader } from '@/components/landing-header'
 import Footer from '@/components/footer'
 import {
@@ -18,7 +21,50 @@ import {
   ChevronRight,
 } from 'lucide-react'
 
+const HOW_IT_WORKS_STEPS = [
+  {
+    step: '01',
+    title: 'Choose a vetted cleaner',
+    desc: 'Browse verified profiles with real reviews and transparent pricing.',
+    icon: UserCheck,
+    image: '/images/Property%201=Variant.jpg',
+  },
+  {
+    step: '02',
+    title: 'Pick a time that works',
+    desc: 'Select from available slots that fit your schedule.',
+    icon: Clock,
+    image: '/images/Property%202=Time.jpg',
+  },
+  {
+    step: '03',
+    title: 'Get your home cleaned',
+    desc: 'Your cleaner arrives on time and completes the service professionally.',
+    icon: Sparkles,
+    image: '/images/Property%203=Cleaning.jpg',
+  },
+  {
+    step: '04',
+    title: 'Pay securely after completion',
+    desc: 'Payment is processed only after you confirm the work is done.',
+    icon: CreditCard,
+    image: '/images/Property%204=Giving%20money.jpg',
+  },
+]
+
 export default function ClientLandingPage() {
+  const [activeHowStepIndex, setActiveHowStepIndex] = useState(0)
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setActiveHowStepIndex((prev) => (prev + 1) % HOW_IT_WORKS_STEPS.length)
+    }, 3000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
   return (
     <main className="min-h-screen flex flex-col">
       <LandingHeader />
@@ -66,10 +112,11 @@ export default function ClientLandingPage() {
             <div className="relative hidden lg:block animate-fade-in-right">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
                 <Image
-                  src="/images/hero-client.png"
+                  src="/images/hero-client.gif"
                   alt="Professional cleaner at work"
                   fill
                   className="object-cover"
+                  unoptimized
                   priority
                   sizes="(min-width: 1024px) 50vw, 100vw"
                 />
@@ -93,49 +140,40 @@ export default function ClientLandingPage() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Vetted badge */}
+            {/* Left — Auto-rotating step image */}
             <div className="relative flex items-center justify-center">
               <div className="relative w-full max-w-md">
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-10 text-center">
-                  <div className="w-20 h-20 bg-gray-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Shield className="h-10 w-10 text-white" />
+                <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 p-4">
+                  <div className="relative rounded-xl overflow-hidden aspect-[4/3]">
+                    <Image
+                      src={HOW_IT_WORKS_STEPS[activeHowStepIndex].image}
+                      alt={HOW_IT_WORKS_STEPS[activeHowStepIndex].title}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 420px, 100vw"
+                    />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900">Vetted</h3>
-                  <p className="text-gray-500 mt-2 text-sm">Every cleaner on our platform is verified</p>
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    {HOW_IT_WORKS_STEPS.map((step, index) => (
+                      <span
+                        key={step.step}
+                        className={`h-2 rounded-full transition-all ${
+                          index === activeHowStepIndex ? 'w-8 bg-primary' : 'w-2 bg-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Right — Steps */}
             <div className="space-y-8">
-              {[
-                {
-                  step: '01',
-                  title: 'Choose a vetted cleaner',
-                  desc: 'Browse verified profiles with real reviews and transparent pricing.',
-                  icon: UserCheck,
-                },
-                {
-                  step: '02',
-                  title: 'Pick a time that works',
-                  desc: 'Select from available slots that fit your schedule.',
-                  icon: Clock,
-                },
-                {
-                  step: '03',
-                  title: 'Get your home cleaned',
-                  desc: 'Your cleaner arrives on time and completes the service professionally.',
-                  icon: Sparkles,
-                },
-                {
-                  step: '04',
-                  title: 'Pay securely after completion',
-                  desc: 'Payment is processed only after you confirm the work is done.',
-                  icon: CreditCard,
-                },
-              ].map((item) => (
+              {HOW_IT_WORKS_STEPS.map((item, index) => (
                 <div key={item.step} className="flex gap-5 group">
-                  <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                    index === activeHowStepIndex ? 'bg-primary/20' : 'bg-primary/10 group-hover:bg-primary/20'
+                  }`}>
                     <item.icon className="h-5 w-5 text-primary" />
                   </div>
                   <div>
@@ -312,7 +350,7 @@ export default function ClientLandingPage() {
             {/* Image */}
             <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
               <Image
-                src="/images/become-cleaner.jpg"
+                src="/images/Become%20a%20Cleaner.png"
                 alt="Professional cleaner with cleaning supplies"
                 fill
                 className="object-cover"
