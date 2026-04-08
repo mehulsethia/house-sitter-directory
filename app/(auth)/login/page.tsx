@@ -23,23 +23,25 @@ function LoginForm() {
     if (error) {
       toast.error(error.message)
     } else {
-      const next = params.get('next') ?? '/client/dashboard'
-      router.push(next)
+      const nextParam = params.get('next')
+      const next = nextParam && nextParam.startsWith('/') ? nextParam : '/client/dashboard'
+      router.replace(next)
+      router.refresh()
     }
     setLoading(false)
   }
 
   return (
-    <div className="grid md:grid-cols-2">
+    <div className="grid md:grid-cols-2 min-h-[620px]">
       {/* Left — Branding panel */}
-      <div className="hidden md:flex flex-col justify-center bg-gray-50 p-10 lg:p-14">
+      <div className="hidden md:flex flex-col bg-gray-50 p-5 lg:p-6">
         <h1 className="text-3xl lg:text-4xl font-bold text-primary mb-3 leading-tight">
           Welcome back!
         </h1>
-        <p className="text-gray-500 text-base leading-relaxed mb-8">
+        <p className="text-gray-500 text-base leading-relaxed mb-4">
           Continue with trusted home service professionals.
         </p>
-        <div className="relative rounded-xl overflow-hidden aspect-[4/3] shadow-lg">
+        <div className="relative rounded-xl overflow-hidden shadow-lg flex-1 min-h-[360px]">
           <Image
             src="/images/join-maidhive.avif"
             alt="Professional cleaning team"

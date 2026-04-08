@@ -8,6 +8,18 @@ import { createClient } from '@/lib/supabase'
 import { authApi } from '@/lib/api'
 import { toast } from 'sonner'
 
+const COUNTRY_CODES = [
+  { label: 'US/CA (+1)', value: '+1' },
+  { label: 'IN (+91)', value: '+91' },
+  { label: 'GB (+44)', value: '+44' },
+  { label: 'AU (+61)', value: '+61' },
+  { label: 'DE (+49)', value: '+49' },
+  { label: 'FR (+33)', value: '+33' },
+  { label: 'NL (+31)', value: '+31' },
+  { label: 'SG (+65)', value: '+65' },
+  { label: 'AE (+971)', value: '+971' },
+]
+
 function SignupForm() {
   const router = useRouter()
   const params = useSearchParams()
@@ -17,6 +29,7 @@ function SignupForm() {
   const [role, setRole] = useState<'client' | 'cleaner'>(defaultRole)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [countryCode, setCountryCode] = useState('+1')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
   const [experience, setExperience] = useState('')
@@ -29,11 +42,15 @@ function SignupForm() {
     setLoading(true)
 
     const name = `${firstName} ${lastName}`.trim()
+    const phoneDigits = phone.replace(/\D/g, '')
+    const fullPhone = `${countryCode}${phoneDigits}`
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, role, phone, address, experience: role === 'cleaner' ? experience : undefined } },
+      options: {
+        data: { name, role, phone: fullPhone, address, experience: role === 'cleaner' ? experience : undefined },
+      },
     })
 
     if (error) {
@@ -43,7 +60,7 @@ function SignupForm() {
     }
 
     try {
-      await authApi.sync({ name, role })
+      await authApi.sync({ name, role, phone: fullPhone })
     } catch {
       // Non-fatal — the DB trigger already created the row
     }
@@ -54,17 +71,19 @@ function SignupForm() {
   }
 
   return (
-    <div className="grid md:grid-cols-2">
+    <div className="grid md:grid-cols-2 min-h-[calc(100vh-8rem)]">
       {/* Left — Branding panel */}
-      <div className="hidden md:flex flex-col justify-center bg-gray-50 p-10 lg:p-14">
-        <h1 className="text-3xl lg:text-4xl font-bold text-primary mb-3 leading-tight">
-          Join MaidHive
-        </h1>
-        <p className="text-gray-500 text-base leading-relaxed mb-8">
-          Easily connect with trusted professionals for all
-          your home service needs.
-        </p>
-        <div className="relative rounded-xl overflow-hidden aspect-[4/3] shadow-lg">
+      <div className="hidden md:flex flex-col bg-gray-50 p-8 lg:p-10">
+        <div className="mb-5">
+          <h1 className="text-2xl lg:text-3xl font-bold text-primary mb-2 leading-tight">
+            Join MaidHive
+          </h1>
+          <p className="text-gray-500 text-sm leading-relaxed">
+            Easily connect with trusted professionals for all
+            your home service needs.
+          </p>
+        </div>
+        <div className="relative rounded-xl overflow-hidden shadow-lg flex-1">
           <Image
             src="/images/join-maidhive.avif"
             alt="Professional cleaning team"
@@ -76,9 +95,9 @@ function SignupForm() {
       </div>
 
       {/* Right — Form */}
-      <div className="p-8 lg:p-14 flex flex-col justify-center">
+      <div className="p-6 lg:p-10 flex flex-col justify-center">
         {/* Role toggle */}
-        <div className="grid grid-cols-2 gap-1 bg-gray-100 rounded-xl p-1 mb-8">
+        <div className="grid grid-cols-2 gap-1 bg-gray-100 rounded-xl p-1 mb-5">
           {(['client', 'cleaner'] as const).map((r) => (
             <button
               key={r}
@@ -95,7 +114,7 @@ function SignupForm() {
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           {/* Name row */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -108,7 +127,7 @@ function SignupForm() {
                 placeholder="Enter your first name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
               />
             </div>
             <div>
@@ -121,7 +140,7 @@ function SignupForm() {
                 placeholder="Enter your last name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -131,14 +150,27 @@ function SignupForm() {
             <label className="text-sm font-medium text-gray-700 mb-1.5 block">
               Phone Number <span className="text-red-500">*</span>
             </label>
-            <input
-              type="tel"
-              required
-              placeholder="Enter your phone number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
-            />
+            <div className="grid grid-cols-[9.5rem_1fr] gap-3">
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+              >
+                {COUNTRY_CODES.map((code) => (
+                  <option key={code.value} value={code.value}>
+                    {code.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="tel"
+                required
+                placeholder="Enter your phone number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
+              />
+            </div>
           </div>
 
           {/* Role-specific field */}
@@ -154,7 +186,7 @@ function SignupForm() {
                 placeholder="Enter your years of experience"
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
               />
             </div>
           ) : (
@@ -168,7 +200,7 @@ function SignupForm() {
                 placeholder="Enter your address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
+                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
               />
             </div>
           )}
@@ -184,7 +216,7 @@ function SignupForm() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
+              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
             />
           </div>
 
@@ -200,7 +232,7 @@ function SignupForm() {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
+              className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"
             />
           </div>
 
@@ -213,7 +245,7 @@ function SignupForm() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-8">
+        <p className="text-center text-sm text-gray-500 mt-5">
           Already have an account?{' '}
           <Link href="/login" className="text-primary font-medium hover:underline">
             Log in

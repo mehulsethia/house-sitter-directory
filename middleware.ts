@@ -45,14 +45,17 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('next', pathname)
+    const nextPath = `${pathname}${request.nextUrl.search}`
+    url.searchParams.set('next', nextPath)
     return NextResponse.redirect(url)
   }
 
   if (isAuthRoute && user) {
-    // Redirect logged-in users away from auth pages to their dashboard
+    // Redirect logged-in users away from auth pages, preserving a safe `next` destination.
     const url = request.nextUrl.clone()
-    url.pathname = getPostLoginPath(user)
+    const next = request.nextUrl.searchParams.get('next')
+    url.pathname = next && next.startsWith('/') ? next : getPostLoginPath(user)
+    url.search = ''
     return NextResponse.redirect(url)
   }
 

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { LandingHeader } from '@/components/landing-header'
+import { ScrollReveal, StaggerChildren } from '@/components/scroll-reveal'
 import Footer from '@/components/footer'
 import {
   ArrowRight,
@@ -25,8 +26,9 @@ export default function CleanerLandingPage() {
       <LandingHeader />
 
       {/* ─── Hero ─── */}
-      <section className="relative bg-gradient-to-br from-primary/95 via-primary to-primary/80 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.08),transparent_50%)]" />
+      <section className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-primary/30 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(59,91,219,0.15),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(59,91,219,0.1),transparent_50%)]" />
 
         <div className="relative max-w-7xl mx-auto px-6 py-20 lg:py-28">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -35,14 +37,14 @@ export default function CleanerLandingPage() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-6">
                 Become a MaidHive Cleaner
               </h1>
-              <p className="text-lg text-white/80 leading-relaxed mb-8 max-w-lg">
+              <p className="text-lg text-gray-300 leading-relaxed mb-8 max-w-lg">
                 Set your hourly rate, accept bookings on your schedule, and get
                 paid securely through the platform.
               </p>
 
               <Link
                 href="/signup?role=cleaner"
-                className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-primary font-semibold px-8 py-3.5 rounded-lg text-base transition-all shadow-lg"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3.5 rounded-lg text-base transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
               >
                 Apply as a cleaner
                 <ArrowRight className="h-4 w-4" />
@@ -56,16 +58,16 @@ export default function CleanerLandingPage() {
                   'Build your reputation with real reviews',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-white/90 shrink-0" />
-                    <span className="text-sm text-white/80">{item}</span>
+                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                    <span className="text-sm text-gray-300">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Right — Hero image */}
-            <div className="hidden lg:block animate-fade-in-right">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] max-w-xl ml-auto">
+            <div className="relative hidden lg:block animate-fade-in-right">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
                 <Image
                   src="/images/hero-cleaner.png"
                   alt="Professional cleaner hero preview"
@@ -74,6 +76,7 @@ export default function CleanerLandingPage() {
                   priority
                   sizes="(min-width: 1024px) 50vw, 100vw"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
               </div>
             </div>
           </div>
@@ -83,14 +86,14 @@ export default function CleanerLandingPage() {
       {/* ─── How it works ─── */}
       <section id="how-it-works" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               How it works
             </h2>
             <p className="text-gray-500 text-lg">Get started in four simple steps</p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <StaggerChildren className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8" stagger={120}>
             {[
               {
                 step: '1',
@@ -121,7 +124,7 @@ export default function CleanerLandingPage() {
                 <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
               </div>
             ))}
-          </div>
+          </StaggerChildren>
         </div>
       </section>
 
@@ -130,7 +133,7 @@ export default function CleanerLandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left content */}
-            <div>
+            <ScrollReveal animation="fade-right">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Clear earnings, no surprises
               </h2>
@@ -168,10 +171,10 @@ export default function CleanerLandingPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* Right — Earnings image */}
-            <div className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-100 aspect-[4/3]">
+            <ScrollReveal animation="fade-left" className="relative rounded-2xl overflow-hidden shadow-xl border border-gray-100 aspect-[4/3]">
               <Image
                 src="/images/Earnings-cleaner.png"
                 alt="Cleaner earnings breakdown"
@@ -179,7 +182,7 @@ export default function CleanerLandingPage() {
                 className="object-cover"
                 sizes="(min-width: 1024px) 50vw, 100vw"
               />
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -187,16 +190,16 @@ export default function CleanerLandingPage() {
       {/* ─── Why cleaners choose MaidHive ─── */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Why cleaners choose MaidHive
             </h2>
             <p className="text-gray-500 text-lg">
               A fair, structured platform built for independent professionals
             </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StaggerChildren className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" stagger={100}>
             {[
               {
                 icon: ShieldCheck,
@@ -240,14 +243,14 @@ export default function CleanerLandingPage() {
                 <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
             ))}
-          </div>
+          </StaggerChildren>
         </div>
       </section>
 
       {/* ─── Work on your terms ─── */}
       <section className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Work on your terms
             </h2>
@@ -255,10 +258,10 @@ export default function CleanerLandingPage() {
               MaidHive gives you control over your schedule and the jobs you accept.
               Build your business, your way.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
+            <ScrollReveal animation="fade-right" className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
               <h3 className="font-semibold text-gray-900 text-lg mb-4">Choose when you work</h3>
               <p className="text-sm text-gray-500 leading-relaxed mb-6">
                 Set your availability by day and time. Update it as often as you
@@ -276,9 +279,9 @@ export default function CleanerLandingPage() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </ScrollReveal>
 
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
+            <ScrollReveal animation="fade-left" className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
               <h3 className="font-semibold text-gray-900 text-lg mb-4">Select your jobs</h3>
               <p className="text-sm text-gray-500 leading-relaxed mb-6">
                 Review each booking before accepting. See the location,
@@ -296,14 +299,14 @@ export default function CleanerLandingPage() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
 
       {/* ─── CTA Banner ─── */}
       <section className="bg-gradient-to-br from-gray-950 via-gray-900 to-primary/30 py-20">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <ScrollReveal className="max-w-3xl mx-auto px-6 text-center" animation="zoom-in">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Ready to grow your cleaning business?
           </h2>
@@ -323,7 +326,7 @@ export default function CleanerLandingPage() {
           <p className="text-xs text-gray-400 mt-4">
             Applications are reviewed within 48 hours to maintain quality and trust
           </p>
-        </div>
+        </ScrollReveal>
       </section>
 
       {/* ─── Cross-sell to client ─── */}
@@ -331,7 +334,7 @@ export default function CleanerLandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Image */}
-            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
+            <ScrollReveal animation="fade-right" className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
               <Image
                 src="/images/trusted-cleaner.avif"
                 alt="Clean modern home"
@@ -339,10 +342,10 @@ export default function CleanerLandingPage() {
                 className="object-cover"
                 sizes="(min-width: 1024px) 50vw, 100vw"
               />
-            </div>
+            </ScrollReveal>
 
             {/* Content */}
-            <div>
+            <ScrollReveal animation="fade-left">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Need a trusted cleaner for your home?
               </h2>
@@ -376,7 +379,7 @@ export default function CleanerLandingPage() {
               <p className="text-xs text-gray-400 mt-4">
                 Book with confidence. Platform-managed from start to finish.
               </p>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>

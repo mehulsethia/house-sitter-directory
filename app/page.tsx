@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { LandingHeader } from '@/components/landing-header'
+import { ScrollReveal, StaggerChildren } from '@/components/scroll-reveal'
 import Footer from '@/components/footer'
 import {
   Shield,
@@ -130,18 +131,18 @@ export default function ClientLandingPage() {
       {/* ─── How it works ─── */}
       <section id="how-it-works" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               See how MaidHive works
             </h2>
             <p className="text-gray-500 text-lg">
               A seamless platform that handles everything
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left — Auto-rotating step image */}
-            <div className="relative flex items-center justify-center">
+            <ScrollReveal animation="fade-right" className="relative flex items-center justify-center">
               <div className="relative w-full max-w-md">
                 <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 p-4">
                   <div className="relative rounded-xl overflow-hidden aspect-[4/3]">
@@ -165,10 +166,10 @@ export default function ClientLandingPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* Right — Steps */}
-            <div className="space-y-8">
+            <StaggerChildren className="space-y-8" stagger={120} animation="fade-left">
               {HOW_IT_WORKS_STEPS.map((item, index) => (
                 <div key={item.step} className="flex gap-5 group">
                   <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
@@ -185,7 +186,7 @@ export default function ClientLandingPage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </StaggerChildren>
           </div>
         </div>
       </section>
@@ -193,17 +194,17 @@ export default function ClientLandingPage() {
       {/* ─── Why MaidHive ─── */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               Why MaidHive
             </h2>
             <p className="text-gray-500 text-lg">
               Reliable cleaners, transparent pricing, and a process you can trust.
             </p>
-          </div>
+          </ScrollReveal>
 
           {/* Top row — 3 cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-6">
+          <StaggerChildren className="grid md:grid-cols-3 gap-6 mb-6" stagger={100}>
             {[
               {
                 icon: UserCheck,
@@ -235,10 +236,10 @@ export default function ClientLandingPage() {
                 <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
             ))}
-          </div>
+          </StaggerChildren>
 
           {/* Bottom row — 3 cards */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <StaggerChildren className="grid md:grid-cols-3 gap-6" stagger={100}>
             {[
               {
                 icon: ClipboardCheck,
@@ -270,23 +271,23 @@ export default function ClientLandingPage() {
                 <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>
             ))}
-          </div>
+          </StaggerChildren>
         </div>
       </section>
 
       {/* ─── What you can book ─── */}
       <section id="services" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
               What you can book on MaidHive
             </h2>
             <p className="text-gray-500 text-lg">
               All services are booked hourly — choose the number of hours based on your needs.
             </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerChildren className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" stagger={120}>
             {[
               {
                 icon: Home,
@@ -320,13 +321,13 @@ export default function ClientLandingPage() {
                 <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
               </div>
             ))}
-          </div>
+          </StaggerChildren>
         </div>
       </section>
 
       {/* ─── CTA Banner ─── */}
       <section className="bg-gradient-to-br from-gray-950 via-gray-900 to-primary/30 py-20">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <ScrollReveal className="max-w-3xl mx-auto px-6 text-center" animation="zoom-in">
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
             Ready to book with confidence?
           </h2>
@@ -340,7 +341,7 @@ export default function ClientLandingPage() {
             Find a trusted cleaner
             <ArrowRight className="h-4 w-4" />
           </Link>
-        </div>
+        </ScrollReveal>
       </section>
 
       {/* ─── Become a cleaner cross-sell ─── */}
@@ -348,7 +349,7 @@ export default function ClientLandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Image */}
-            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
+            <ScrollReveal animation="fade-right" className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
               <Image
                 src="/images/Become%20a%20Cleaner.png"
                 alt="Professional cleaner with cleaning supplies"
@@ -356,10 +357,10 @@ export default function ClientLandingPage() {
                 className="object-cover"
                 sizes="(min-width: 1024px) 50vw, 100vw"
               />
-            </div>
+            </ScrollReveal>
 
             {/* Content */}
-            <div>
+            <ScrollReveal animation="fade-left">
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 Become a cleaner
               </h2>
@@ -395,7 +396,7 @@ export default function ClientLandingPage() {
               <p className="text-xs text-gray-400 mt-4">
                 Set your availability, accept bookings, and get paid securely through the platform.
               </p>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
