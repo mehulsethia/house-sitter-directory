@@ -42,8 +42,20 @@ export interface CleanerRead {
   id: string
   user_id: string
   bio?: string
+  profile_image_url?: string
+  skills?: string[]
   years_experience: number
   hourly_rate: number
+  transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
+  transport_pickup_location?: string
+  id_type?: 'passport' | 'national_id' | 'drivers_licence'
+  id_file_name?: string
+  pet_acceptance?: boolean
+  work_eligibility_confirmed?: boolean
+  terms_accepted?: boolean
+  onboarding_step?: number
+  onboarding_skipped_step3?: boolean
+  onboarding_skipped_step4?: boolean
   status: 'pending' | 'approved' | 'rejected' | 'suspended'
   profile_complete: boolean
   identity_verified: boolean
@@ -61,6 +73,18 @@ export interface CleanerSummary {
   total_jobs: number
   average_rating?: number
   bio?: string
+}
+
+export interface CleanerOnboardingProgress {
+  completion_pct: number
+  can_be_listed: boolean
+  current_step: 1 | 2 | 3 | 4
+  steps: {
+    step1_basic_details: boolean
+    step2_kyc: boolean
+    step3_availability: boolean
+    step4_stripe: boolean
+  }
 }
 
 // ---------------------------------------------------------------------------

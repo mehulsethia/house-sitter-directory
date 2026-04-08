@@ -25,43 +25,53 @@ export const availabilityService = {
       bookingRepo.findActiveForCleaner(cleanerId, startOfDay(date), endOfDay(date)),
     ])
 
-    const schedule = schedules.find((s) => s.dayOfWeek === dayOfWeek && s.isActive)
-    if (!schedule) return []
+    const daySchedules = schedules
+      .filter((s) => s.dayOfWeek === dayOfWeek && s.isActive)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime))
 
-    const [startH, startM] = schedule.startTime.split(':').map(Number)
-    const [endH, endM] = schedule.endTime.split(':').map(Number)
-    const bufferMs = schedule.bufferMinutes * 60 * 1000
+    if (daySchedules.length === 0) return []
+
     const durationMs = durationHours * 60 * 60 * 1000
+    const allSlots: TimeSlot[] = []
 
-    const dayStart = new Date(date)
-    dayStart.setUTCHours(startH, startM, 0, 0)
+    for (const schedule of daySchedules) {
+      const [startH, startM] = schedule.startTime.split(':').map(Number)
+      const [endH, endM] = schedule.endTime.split(':').map(Number)
+      const bufferMs = schedule.bufferMinutes * 60 * 1000
 
-    const dayEnd = new Date(date)
-    dayEnd.setUTCHours(endH, endM, 0, 0)
+      const dayStart = new Date(date)
+      dayStart.setUTCHours(startH, startM, 0, 0)
 
-    const slots: TimeSlot[] = []
-    let cursor = dayStart.getTime()
+      const dayEnd = new Date(date)
+      dayEnd.setUTCHours(endH, endM, 0, 0)
 
-    while (cursor + durationMs <= dayEnd.getTime()) {
-      const slotStart = new Date(cursor)
-      const slotEnd = new Date(cursor + durationMs)
+      let cursor = dayStart.getTime()
 
-      const hasConflict =
-        blockedTimes.some(
-          (b) => b.startDatetime < slotEnd && b.endDatetime > slotStart,
-        ) ||
-        existingBookings.some(
-          (b) => b.scheduledStart < slotEnd && b.scheduledEnd > slotStart,
-        )
+      while (cursor + durationMs <= dayEnd.getTime()) {
+        const slotStart = new Date(cursor)
+        const slotEnd = new Date(cursor + durationMs)
 
-      if (!hasConflict) {
-        slots.push({ start: slotStart.toISOString(), end: slotEnd.toISOString() })
+        const hasConflict =
+          blockedTimes.some(
+            (b) => b.startDatetime < slotEnd && b.endDatetime > slotStart,
+          ) ||
+          existingBookings.some(
+            (b) => b.scheduledStart < slotEnd && b.scheduledEnd > slotStart,
+          )
+
+        if (!hasConflict) {
+          allSlots.push({ start: slotStart.toISOString(), end: slotEnd.toISOString() })
+        }
+
+        cursor += durationMs + bufferMs
       }
-
-      cursor += durationMs + bufferMs
     }
 
-    return slots
+    const uniqueSlots = new Map<string, TimeSlot>()
+    for (const slot of allSlots) {
+      uniqueSlots.set(`${slot.start}_${slot.end}`, slot)
+    }
+    return Array.from(uniqueSlots.values())
   },
 }
 

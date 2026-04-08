@@ -20,7 +20,7 @@ export const PUT = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const cleaner = await cleanerRepo.findByUserId(user.id)
   if (!cleaner) return err('Cleaner profile not found', 404)
 
-  const schedules = await availabilityRepo.upsertSchedule(
+  const schedules = await availabilityRepo.replaceSchedule(
     cleaner.id,
     parsed.data.schedules.map((s) => ({
       dayOfWeek: s.day_of_week,

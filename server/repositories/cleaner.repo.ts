@@ -21,8 +21,21 @@ export const cleanerRepo = {
 
   update: (id: string, data: Partial<{
     bio: string | null
+    profileImageUrl: string | null
+    skills: string[]
     yearsExperience: number
     hourlyRate: number
+    transportMode: string | null
+    transportPickupLocation: string | null
+    idType: string | null
+    idFileName: string | null
+    petAcceptance: boolean
+    workEligibilityConfirmed: boolean
+    termsAccepted: boolean
+    onboardingStep: number
+    onboardingSkippedStep3: boolean
+    onboardingSkippedStep4: boolean
+    onboardingCompletedAt: Date | null
     profileComplete: boolean
     identityVerified: boolean
     stripeOnboardingComplete: boolean
@@ -41,6 +54,7 @@ export const cleanerRepo = {
   search: (params: { city?: string; page: number; pageSize: number }) => {
     const where = {
       status: 'approved' as const,
+      profileComplete: true,
       ...(params.city
         ? { serviceAreas: { some: { city: { contains: params.city, mode: 'insensitive' as const } } } }
         : {}),

@@ -12,6 +12,7 @@ import type {
   BookingCreate,
   BookingRead,
   CleanerRead,
+  CleanerOnboardingProgress,
   CleanerSummary,
   MessageRead,
   NotificationRead,
@@ -79,8 +80,15 @@ export const cleanersApi = {
     return request<APIResponse<PaginatedResponse<CleanerSummary>>>(`/cleaners?${qs}`)
   },
   getById: (id: string) => request<APIResponse<CleanerRead>>(`/cleaners/${id}`),
+  me: () =>
+    request<APIResponse<{ cleaner: CleanerRead; onboarding: CleanerOnboardingProgress }>>('/cleaners/me'),
   updateMyProfile: (body: { bio?: string; years_experience?: number; hourly_rate: number }) =>
     request<APIResponse<CleanerRead>>('/cleaners/me', { method: 'PATCH', body: JSON.stringify(body) }),
+  updateMyOnboarding: (body: Record<string, unknown>) =>
+    request<APIResponse<{ cleaner: CleanerRead; onboarding: CleanerOnboardingProgress }>>('/cleaners/me', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
 }
 
 // ---------------------------------------------------------------------------
@@ -88,8 +96,11 @@ export const cleanersApi = {
 // ---------------------------------------------------------------------------
 export const availabilityApi = {
   getMySchedule: () => request<APIResponse<any[]>>('/availability/me'),
-  setMySchedule: (body: any[]) =>
-    request<APIResponse<any[]>>('/availability/me', { method: 'PUT', body: JSON.stringify(body) }),
+  setMySchedule: (schedules: any[]) =>
+    request<APIResponse<any[]>>('/availability/me', {
+      method: 'PUT',
+      body: JSON.stringify({ schedules }),
+    }),
   getMyBlocked: () => request<APIResponse<any[]>>('/availability/me/blocked-list'),
   addBlocked: (body: { start_datetime: string; end_datetime: string; reason?: string }) =>
     request<APIResponse<any>>('/availability/me/blocked', { method: 'POST', body: JSON.stringify(body) }),

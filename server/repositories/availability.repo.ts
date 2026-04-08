@@ -7,7 +7,7 @@ export const availabilityRepo = {
       orderBy: { dayOfWeek: 'asc' },
     }),
 
-  upsertSchedule: (
+  replaceSchedule: async (
     cleanerId: string,
     schedules: Array<{
       dayOfWeek: number
@@ -16,21 +16,26 @@ export const availabilityRepo = {
       bufferMinutes: number
       isActive: boolean
     }>
-  ) =>
-    Promise.all(
-      schedules.map((s) =>
-        db.availabilitySchedule.upsert({
-          where: { cleanerId_dayOfWeek: { cleanerId, dayOfWeek: s.dayOfWeek } },
-          update: {
-            startTime: s.startTime,
-            endTime: s.endTime,
-            bufferMinutes: s.bufferMinutes,
-            isActive: s.isActive,
-          },
-          create: { cleanerId, ...s },
-        })
-      )
-    ),
+  ) => {
+    await db.availabilitySchedule.deleteMany({ where: { cleanerId } })
+    if (schedules.length === 0) return []
+
+    await db.availabilitySchedule.createMany({
+      data: schedules.map((s) => ({
+        cleanerId,
+        dayOfWeek: s.dayOfWeek,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        bufferMinutes: s.bufferMinutes,
+        isActive: s.isActive,
+      })),
+    })
+
+    return db.availabilitySchedule.findMany({
+      where: { cleanerId },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    })
+  },
 
   getBlockedTimes: (cleanerId: string) =>
     db.blockedTime.findMany({

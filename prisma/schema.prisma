@@ -41,8 +41,21 @@ model Cleaner {
   id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId                   String    @unique @map("user_id") @db.Uuid
   bio                      String?
+  profileImageUrl          String?   @map("profile_image_url")
+  skills                   String[]  @default([])
   yearsExperience          Int       @default(0) @map("years_experience")
   hourlyRate               Decimal   @map("hourly_rate") @db.Decimal(10, 2)
+  transportMode            String?   @map("transport_mode")
+  transportPickupLocation  String?   @map("transport_pickup_location")
+  idType                   String?   @map("id_type")
+  idFileName               String?   @map("id_file_name")
+  petAcceptance            Boolean   @default(false) @map("pet_acceptance")
+  workEligibilityConfirmed Boolean   @default(false) @map("work_eligibility_confirmed")
+  termsAccepted            Boolean   @default(false) @map("terms_accepted")
+  onboardingStep           Int       @default(1) @map("onboarding_step")
+  onboardingSkippedStep3   Boolean   @default(false) @map("onboarding_skipped_step3")
+  onboardingSkippedStep4   Boolean   @default(false) @map("onboarding_skipped_step4")
+  onboardingCompletedAt    DateTime? @map("onboarding_completed_at") @db.Timestamptz(6)
   status                   String    @default("pending") // pending|approved|rejected|suspended
   rejectionReason          String?   @map("rejection_reason")
   approvedAt               DateTime? @map("approved_at") @db.Timestamptz(6)
@@ -115,7 +128,7 @@ model AvailabilitySchedule {
 
   cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
 
-  @@unique([cleanerId, dayOfWeek])
+  @@unique([cleanerId, dayOfWeek, startTime, endTime])
   @@map("availability_schedules")
   @@schema("public")
 }

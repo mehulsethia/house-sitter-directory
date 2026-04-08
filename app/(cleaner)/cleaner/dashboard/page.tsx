@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Play, ThumbsUp } from 'lucide-react'
-import { bookingsApi } from '@/lib/api'
+import Link from 'next/link'
+import { bookingsApi, cleanersApi } from '@/lib/api'
 import { BookingCard } from '@/components/booking-card'
 import { EmptyState } from '@/components/empty-state'
 import { LoadingSpinner } from '@/components/loading-spinner'
@@ -21,12 +22,16 @@ const PAST: BookingStatus[] = ['completed', 'cancelled', 'expired', 'disputed']
 
 export default function CleanerDashboard() {
   const [bookings, setBookings] = useState<BookingRead[]>([])
+  const [completionPct, setCompletionPct] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   const refresh = () =>
-    bookingsApi.my()
-      .then(r => setBookings(r.data?.items ?? []))
+    Promise.all([bookingsApi.my(), cleanersApi.me()])
+      .then(([bookingRes, meRes]) => {
+        setBookings(bookingRes.data?.items ?? [])
+        setCompletionPct(meRes.data?.onboarding?.completion_pct ?? null)
+      })
       .catch(() => toast.error('Failed to load jobs'))
       .finally(() => setLoading(false))
 
@@ -55,6 +60,22 @@ export default function CleanerDashboard() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">My Jobs</h1>
+
+      {completionPct !== null && completionPct < 100 && (
+        <Card className="mb-6 border-amber-200 bg-amber-50">
+          <CardContent className="p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-amber-900">Profile completion: {completionPct}%</p>
+              <p className="text-sm text-amber-800">
+                Your profile is hidden from clients until it reaches 100%.
+              </p>
+            </div>
+            <Link href="/cleaner/onboarding" className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-white hover:opacity-90">
+              Complete profile
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Active job banner */}
       {active.map(b => (
