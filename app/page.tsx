@@ -66,7 +66,7 @@ export default function ClientLandingPage() {
             <div className="relative hidden lg:block animate-fade-in-right">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
                 <Image
-                  src="/images/hero-client.jpg"
+                  src="/images/hero-client.png"
                   alt="Professional cleaner at work"
                   fill
                   className="object-cover"

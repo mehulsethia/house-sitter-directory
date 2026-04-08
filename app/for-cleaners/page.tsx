@@ -371,7 +371,7 @@ export default function CleanerLandingPage() {
             {/* Image */}
             <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
               <Image
-                src="/images/hero-client.jpg"
+                src="/images/hero-client.png"
                 alt="Clean modern home"
                 fill
                 className="object-cover"
