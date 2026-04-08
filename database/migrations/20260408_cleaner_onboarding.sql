@@ -15,7 +15,18 @@ ALTER TABLE public.cleaners
   ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ;
 
 -- Support multiple availability slots per day (instead of one slot/day)
-DROP INDEX IF EXISTS public.availability_schedules_cleaner_id_day_of_week_key;
+ALTER TABLE public.availability_schedules
+  DROP CONSTRAINT IF EXISTS availability_schedules_cleaner_id_day_of_week_key;
 
-CREATE UNIQUE INDEX IF NOT EXISTS availability_schedules_cleaner_id_day_of_week_start_time_end_time_key
-  ON public.availability_schedules (cleaner_id, day_of_week, start_time, end_time);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'availability_schedules_cleaner_id_day_of_week_start_time_end_time_key'
+  ) THEN
+    ALTER TABLE public.availability_schedules
+      ADD CONSTRAINT availability_schedules_cleaner_id_day_of_week_start_time_end_time_key
+      UNIQUE (cleaner_id, day_of_week, start_time, end_time);
+  END IF;
+END $$;

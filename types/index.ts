@@ -35,6 +35,17 @@ export interface UserUpdate {
   avatar_url?: string
 }
 
+export interface ClientProfileRead {
+  id: string
+  user_id: string
+  stripe_customer_id?: string
+  default_address?: string
+  default_city?: string
+  default_postcode?: string
+  default_country?: string
+  user?: UserRead
+}
+
 // ---------------------------------------------------------------------------
 // Cleaners
 // ---------------------------------------------------------------------------
@@ -73,6 +84,19 @@ export interface CleanerSummary {
   total_jobs: number
   average_rating?: number
   bio?: string
+  skills?: string[]
+  user?: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+    avatar_url?: string
+  }
+  service_areas?: Array<{
+    city: string
+    postcode_prefix?: string
+    radius_km?: number
+  }>
 }
 
 export interface CleanerOnboardingProgress {
@@ -139,6 +163,24 @@ export interface BookingRead {
   cancelled_at?: string
   cancellation_reason?: string
   created_at: string
+  client?: {
+    id: string
+    user?: UserRead
+  }
+  cleaner?: {
+    id: string
+    user?: UserRead
+    profile_image_url?: string
+  }
+  payment?: {
+    id: string
+    status: string
+  } | null
+  review?: {
+    id: string
+    rating: number
+    comment?: string
+  } | null
 }
 
 export interface PriceBreakdown {
@@ -263,4 +305,19 @@ export interface AdminDispute {
   refund_amount?: number
   resolved_at?: string
   created_at: string
+}
+
+export interface ClientDispute {
+  id: string
+  booking_id: string
+  raised_by: string
+  reason: string
+  evidence?: string[] | null
+  status: 'open' | 'under_review' | 'resolved' | 'closed'
+  resolution_type?: string
+  resolution_note?: string
+  refund_amount?: number
+  resolved_at?: string
+  created_at: string
+  booking?: BookingRead
 }

@@ -35,4 +35,16 @@ export const disputeRepo = {
       }),
       db.dispute.count({ where: { status: { not: 'closed' } } }),
     ]),
+
+  listByRaisedBy: (raisedBy: string, page: number, pageSize: number) =>
+    Promise.all([
+      db.dispute.findMany({
+        where: { raisedBy },
+        include: { booking: { include: { cleaner: { include: { user: true } } } } },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
+      db.dispute.count({ where: { raisedBy } }),
+    ]),
 }

@@ -1,230 +1,306 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { CheckCircle2, Play, ThumbsUp } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { CalendarDays, CircleCheck, Clock3, Euro, Star, ArrowUpRight, CalendarClock, MessageSquare } from 'lucide-react'
 import { bookingsApi, cleanersApi } from '@/lib/api'
-import { BookingCard } from '@/components/booking-card'
-import { EmptyState } from '@/components/empty-state'
-import { LoadingSpinner } from '@/components/loading-spinner'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Card, CardContent } from '@/components/ui/card'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { DashboardPageSkeleton } from '@/components/page-skeletons'
+import { EmptyState } from '@/components/empty-state'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { BookingRead, BookingStatus } from '@/types'
 import { toast } from 'sonner'
 
-const INCOMING: BookingStatus[] = ['pending']
-const UPCOMING: BookingStatus[] = ['confirmed', 'accepted']
-const ACTIVE: BookingStatus[] = ['in_progress']
-const PAST: BookingStatus[] = ['completed', 'cancelled', 'expired', 'disputed']
+const REQUEST_STATUSES: BookingStatus[] = ['pending']
+const UPCOMING_STATUSES: BookingStatus[] = ['accepted', 'confirmed']
+const ACTIVE_STATUSES: BookingStatus[] = ['in_progress']
+const COMPLETED_STATUSES: BookingStatus[] = ['completed']
 
-export default function CleanerDashboard() {
+const SERVICE_LABELS: Record<string, string> = {
+  standard: 'Standard Clean',
+  deep_clean: 'Deep Clean',
+  end_of_tenancy: 'End of Tenancy',
+  move_in: 'Move-in Clean',
+}
+
+export default function CleanerDashboardPage() {
   const [bookings, setBookings] = useState<BookingRead[]>([])
-  const [completionPct, setCompletionPct] = useState<number | null>(null)
+  const [completionPct, setCompletionPct] = useState<number>(0)
+  const [avgRating, setAvgRating] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
-  const refresh = () =>
-    Promise.all([bookingsApi.my(), cleanersApi.me()])
-      .then(([bookingRes, meRes]) => {
-        setBookings(bookingRes.data?.items ?? [])
-        setCompletionPct(meRes.data?.onboarding?.completion_pct ?? null)
-      })
-      .catch(() => toast.error('Failed to load jobs'))
-      .finally(() => setLoading(false))
+  async function refresh() {
+    try {
+      const [bookingRes, cleanerRes] = await Promise.all([bookingsApi.my(), cleanersApi.me()])
+      setBookings(bookingRes.data?.items ?? [])
+      setCompletionPct(cleanerRes.data?.onboarding?.completion_pct ?? 0)
+      const cleaner = cleanerRes.data?.cleaner as any
+      setAvgRating(cleaner?.average_rating ?? cleaner?.averageRating ?? null)
+    } catch {
+      toast.error('Failed to load dashboard data.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  useEffect(() => { refresh() }, [])
+  useEffect(() => {
+    refresh()
+  }, [])
 
   async function handleAction(bookingId: string, action: 'accept' | 'start' | 'complete') {
-    setActionLoading(bookingId + action)
+    setActionLoading(`${bookingId}-${action}`)
     try {
       await bookingsApi.action(bookingId, action)
-      toast.success(`Booking ${action === 'accept' ? 'accepted' : action === 'start' ? 'started' : 'completed'}!`)
+      toast.success(
+        action === 'accept' ? 'Booking accepted.' : action === 'start' ? 'Job started.' : 'Job completed.',
+      )
       await refresh()
     } catch (err: any) {
-      toast.error(err.message)
+      toast.error(err.message ?? 'Action failed.')
     } finally {
       setActionLoading(null)
     }
   }
 
-  const incoming = bookings.filter(b => INCOMING.includes(b.status))
-  const upcoming = bookings.filter(b => UPCOMING.includes(b.status))
-  const active = bookings.filter(b => ACTIVE.includes(b.status))
-  const past = bookings.filter(b => PAST.includes(b.status))
+  async function declineBooking(bookingId: string) {
+    setActionLoading(`${bookingId}-decline`)
+    try {
+      await bookingsApi.cancel(bookingId, 'Cleaner declined')
+      toast.success('Booking declined.')
+      await refresh()
+    } catch (err: any) {
+      toast.error(err.message ?? 'Unable to decline booking.')
+    } finally {
+      setActionLoading(null)
+    }
+  }
 
-  if (loading) return <LoadingSpinner />
+  const stats = useMemo(() => {
+    const requests = bookings.filter((b) => REQUEST_STATUSES.includes(b.status))
+    const upcoming = bookings.filter((b) => UPCOMING_STATUSES.includes(b.status))
+    const active = bookings.filter((b) => ACTIVE_STATUSES.includes(b.status))
+    const completed = bookings.filter((b) => COMPLETED_STATUSES.includes(b.status))
+
+    return {
+      requests,
+      upcoming,
+      active,
+      completed,
+      totalRevenue: completed.reduce((sum, b) => sum + b.cleaner_payout, 0),
+    }
+  }, [bookings])
+
+  if (loading) return <DashboardPageSkeleton />
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">My Jobs</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="marketplace-title text-3xl text-slate-900">Welcome back</h1>
+          <p className="mt-1 text-sm text-slate-500">Manage your bookings, availability, and cleaner profile.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/cleaner/profile" className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50">
+            Update profile
+          </Link>
+          <Link href="/cleaner/bookings" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(39,70,250,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95">
+            View bookings
+          </Link>
+        </div>
+      </div>
 
-      {completionPct !== null && completionPct < 100 && (
-        <Card className="mb-6 border-amber-200 bg-amber-50">
-          <CardContent className="p-4 flex items-center justify-between gap-3">
+      {completionPct < 100 && (
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="font-semibold text-amber-900">Profile completion: {completionPct}%</p>
-              <p className="text-sm text-amber-800">
-                Your profile is hidden from clients until it reaches 100%.
-              </p>
+              <p className="text-sm font-semibold text-amber-900">Profile completion: {completionPct}%</p>
+              <p className="text-xs text-amber-700">Your profile appears to clients only after 100% completion.</p>
             </div>
-            <Link href="/cleaner/onboarding" className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-white hover:opacity-90">
-              Complete profile
+            <Link href="/cleaner/onboarding" className="inline-flex h-8 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95">
+              Complete now
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Active job banner */}
-      {active.map(b => (
-        <Card key={b.id} className="mb-6 border-primary border-2 bg-primary/5">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="font-semibold text-sm">Job in progress</span>
-                </div>
-                <p className="text-sm text-muted-foreground">{formatDate(b.scheduled_start)} · {b.city}</p>
-                <p className="text-sm font-medium mt-1">Earn {formatCurrency(b.cleaner_payout)}</p>
-              </div>
-              <Button
-                size="sm"
-                onClick={() => handleAction(b.id, 'complete')}
-                loading={actionLoading === b.id + 'complete'}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Mark complete
-              </Button>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="border-slate-200">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Total Revenue</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{formatCurrency(stats.totalRevenue)}</p>
             </div>
+            <div className="rounded-xl bg-emerald-50 p-2 text-emerald-600"><Euro className="h-5 w-5" /></div>
           </CardContent>
         </Card>
-      ))}
 
-      <Tabs defaultValue="incoming">
-        <TabsList>
-          <TabsTrigger value="incoming">
-            New requests {incoming.length > 0 && <span className="ml-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">{incoming.length}</span>}
-          </TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
-          <TabsTrigger value="past">Past</TabsTrigger>
-        </TabsList>
+        <Card className="border-slate-200">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Jobs Completed</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{stats.completed.length}</p>
+            </div>
+            <div className="rounded-xl bg-blue-50 p-2 text-blue-600"><CircleCheck className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="incoming">
-          {incoming.length === 0 ? (
-            <EmptyState title="No new requests" description="New booking requests will appear here." />
-          ) : (
-            <div className="space-y-4">
-              {incoming.map(b => (
-                <Card key={b.id} className="border-yellow-200">
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold capitalize">{b.service_type.replace('_', ' ')}</span>
-                          <BookingStatusBadge status={b.status} />
-                        </div>
-                        <p className="text-sm text-muted-foreground">{formatDate(b.scheduled_start)}</p>
-                        <p className="text-sm text-muted-foreground">{b.city}, {b.postcode} · {b.duration_hours}h</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-lg">{formatCurrency(b.cleaner_payout)}</p>
-                        <p className="text-xs text-muted-foreground">your payout</p>
-                      </div>
+        <Card className="border-slate-200">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Active Jobs</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{stats.active.length}</p>
+            </div>
+            <div className="rounded-xl bg-violet-50 p-2 text-violet-600"><Clock3 className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200">
+          <CardContent className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Average Rating</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{avgRating ? Number(avgRating).toFixed(1) : '—'}</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 p-2 text-amber-600"><Star className="h-5 w-5" /></div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Card className="xl:col-span-2 border-slate-200">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">New Job Requests</CardTitle>
+              <Link href="/cleaner/bookings" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+                View all
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <p className="text-sm text-slate-500">Respond quickly to increase booking conversion.</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {stats.requests.length === 0 ? (
+              <EmptyState title="No new requests" description="You're all caught up for now." />
+            ) : (
+              stats.requests.slice(0, 4).map((b) => (
+                <div key={b.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-slate-900">{SERVICE_LABELS[b.service_type] ?? b.service_type}</p>
+                      <p className="text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
                     </div>
-                    {b.special_instructions && (
-                      <p className="text-xs text-muted-foreground bg-muted rounded px-2 py-1 mb-3">
-                        "{b.special_instructions}"
-                      </p>
-                    )}
-                    {b.accept_by && (
-                      <p className="text-xs text-yellow-700 mb-3">Accept by: {formatDate(b.accept_by)}</p>
-                    )}
+                    <BookingStatusBadge status={b.status} />
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">{b.city}, {b.postcode} · {b.duration_hours}h</p>
+                  {b.special_instructions && (
+                    <p className="mt-2 line-clamp-2 rounded-md bg-white px-2 py-1 text-xs text-slate-500">{b.special_instructions}</p>
+                  )}
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="flex-1"
-                        onClick={() => handleAction(b.id, 'accept')}
-                        loading={actionLoading === b.id + 'accept'}
-                      >
-                        <ThumbsUp className="h-4 w-4 mr-1" />
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
                         variant="outline"
-                        className="flex-1"
-                        onClick={async () => {
-                          try {
-                            await bookingsApi.cancel(b.id, 'Cleaner declined')
-                            await refresh()
-                          } catch (err: any) {
-                            toast.error(err.message)
-                          }
-                        }}
+                        onClick={() => declineBooking(b.id)}
+                        loading={actionLoading === `${b.id}-decline`}
                       >
                         Decline
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="upcoming">
-          {upcoming.length === 0 ? (
-            <EmptyState title="No upcoming jobs" description="Accepted bookings will appear here." />
-          ) : (
-            <div className="space-y-4">
-              {upcoming.map(b => (
-                <Card key={b.id}>
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold capitalize">{b.service_type.replace('_', ' ')}</span>
-                          <BookingStatusBadge status={b.status} />
-                        </div>
-                        <p className="text-sm text-muted-foreground">{formatDate(b.scheduled_start)}</p>
-                        <p className="text-sm text-muted-foreground">{b.address}, {b.city}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{formatCurrency(b.cleaner_payout)}</p>
-                        <p className="text-xs text-muted-foreground">your payout</p>
-                      </div>
-                    </div>
-                    {b.status === 'confirmed' && (
                       <Button
                         size="sm"
-                        className="w-full"
-                        onClick={() => handleAction(b.id, 'start')}
-                        loading={actionLoading === b.id + 'start'}
+                        onClick={() => handleAction(b.id, 'accept')}
+                        loading={actionLoading === `${b.id}-accept`}
                       >
-                        <Play className="h-4 w-4 mr-1" />
-                        Start job
+                        Accept
                       </Button>
-                    )}
-                  </CardContent>
-                </Card>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card className="border-slate-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Link href="/cleaner/profile?tab=availability" className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50">
+                <span className="inline-flex items-center gap-2"><CalendarClock className="h-4 w-4 text-primary" />Update availability</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link href="/cleaner/chats" className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50">
+                <span className="inline-flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" />Open chats</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link href="/cleaner/profile?tab=reviews" className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50">
+                <span className="inline-flex items-center gap-2"><Star className="h-4 w-4 text-primary" />Manage reviews</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link href="/cleaner/profile?tab=payments" className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50">
+                <span className="inline-flex items-center gap-2"><Euro className="h-4 w-4 text-primary" />Payout settings</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Upcoming Jobs</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {stats.upcoming.length === 0 ? (
+                <p className="text-sm text-slate-500">No upcoming jobs yet.</p>
+              ) : (
+                stats.upcoming.slice(0, 3).map((b) => (
+                  <Link key={b.id} href={`/cleaner/bookings/${b.id}`} className="block rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100">
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-900">{SERVICE_LABELS[b.service_type] ?? b.service_type}</p>
+                      <BookingStatusBadge status={b.status} />
+                    </div>
+                    <p className="text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
+                    <p className="mt-1 text-sm text-emerald-700 font-semibold">{formatCurrency(b.cleaner_payout)}</p>
+                  </Link>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <Card className="border-slate-200">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-lg">Recent Activity</CardTitle>
+            <Link href="/cleaner/bookings" className="rounded-md px-2 py-1 text-sm font-medium text-primary hover:bg-primary/10">
+              Open bookings
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {bookings.length === 0 ? (
+            <EmptyState title="No bookings yet" description="Your jobs will appear here as clients book services." />
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {bookings.slice(0, 6).map((b) => (
+                <Link key={b.id} href={`/cleaner/bookings/${b.id}`} className="rounded-xl border border-slate-200 bg-white p-3 hover:border-primary/40 hover:shadow-sm">
+                  <p className="font-medium text-slate-900">{SERVICE_LABELS[b.service_type] ?? b.service_type}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
+                  <p className="mt-2 text-xs text-slate-500">{b.city}, {b.postcode}</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <BookingStatusBadge status={b.status} />
+                    <p className="text-sm font-semibold text-slate-900">{formatCurrency(b.cleaner_payout)}</p>
+                  </div>
+                </Link>
               ))}
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="past">
-          {past.length === 0 ? (
-            <EmptyState title="No past jobs" />
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {past.map(b => <BookingCard key={b.id} booking={b} viewAs="cleaner" />)}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }

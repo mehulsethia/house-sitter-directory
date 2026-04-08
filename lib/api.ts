@@ -14,6 +14,8 @@ import type {
   CleanerRead,
   CleanerOnboardingProgress,
   CleanerSummary,
+  ClientProfileRead,
+  ClientDispute,
   MessageRead,
   NotificationRead,
   PaginatedResponse,
@@ -26,6 +28,22 @@ import type {
 } from '@/types'
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
+
+type AnyObj = Record<string, any>
+
+function normalizePaginated<T>(payload: AnyObj, key: string): PaginatedResponse<T> {
+  const items = (payload?.items ?? payload?.[key] ?? []) as T[]
+  const total = Number(payload?.total ?? items.length ?? 0)
+  const page = Number(payload?.page ?? 1)
+  const pageSize = Number(payload?.page_size ?? payload?.pageSize ?? 20)
+  return {
+    items,
+    total,
+    page,
+    page_size: pageSize,
+    has_next: page * pageSize < total,
+  }
+}
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   const supabase = createClient()
@@ -68,16 +86,36 @@ export const usersApi = {
 }
 
 // ---------------------------------------------------------------------------
+// Client Profile
+// ---------------------------------------------------------------------------
+export const clientsApi = {
+  me: () => request<APIResponse<ClientProfileRead>>('/clients/me'),
+  updateMe: (body: {
+    name?: string
+    phone?: string
+    default_address?: string | null
+    default_city?: string | null
+    default_postcode?: string | null
+    default_country?: string | null
+  }) =>
+    request<APIResponse<ClientProfileRead>>('/clients/me', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+}
+
+// ---------------------------------------------------------------------------
 // Cleaners
 // ---------------------------------------------------------------------------
 export const cleanersApi = {
-  search: (params: { city?: string; page?: number }) => {
+  search: async (params: { city?: string; page?: number }) => {
     const qs = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    return request<APIResponse<PaginatedResponse<CleanerSummary>>>(`/cleaners?${qs}`)
+    const res = await request<APIResponse<any>>(`/cleaners?${qs}`)
+    return { ...res, data: normalizePaginated<CleanerSummary>(res.data ?? {}, 'cleaners') }
   },
   getById: (id: string) => request<APIResponse<CleanerRead>>(`/cleaners/${id}`),
   me: () =>
@@ -124,8 +162,10 @@ export const bookingsApi = {
   },
   create: (body: BookingCreate) =>
     request<APIResponse<BookingRead>>('/bookings', { method: 'POST', body: JSON.stringify(body) }),
-  my: (page = 1) =>
-    request<APIResponse<PaginatedResponse<BookingRead>>>(`/bookings/my?page=${page}`),
+  my: async (page = 1) => {
+    const res = await request<APIResponse<any>>(`/bookings?page=${page}`)
+    return { ...res, data: normalizePaginated<BookingRead>(res.data ?? {}, 'bookings') }
+  },
   getById: (id: string) => request<APIResponse<BookingRead>>(`/bookings/${id}`),
   action: (id: string, action: 'accept' | 'start' | 'complete') =>
     request<APIResponse<BookingRead>>(`/bookings/${id}/action`, {
@@ -153,6 +193,7 @@ export const paymentsApi = {
   getConnectStatus: () =>
     request<APIResponse<{
       connected: boolean
+      onboarded?: boolean
       charges_enabled: boolean
       payouts_enabled: boolean
       details_submitted?: boolean
@@ -169,8 +210,14 @@ export const reviewsApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  getForCleaner: (cleanerId: string) =>
-    request<APIResponse<ReviewRead[]>>(`/reviews/cleaner/${cleanerId}`),
+  getForCleaner: async (cleanerId: string) => {
+    const res = await request<APIResponse<any>>(`/reviews/cleaner/${cleanerId}`)
+    return { ...res, data: (res.data?.reviews ?? res.data ?? []) as ReviewRead[] }
+  },
+  getForCleanerPaged: (cleanerId: string, page = 1, pageSize = 20) =>
+    request<APIResponse<{ reviews: ReviewRead[]; total: number; page: number; page_size: number }>>(
+      `/reviews/cleaner/${cleanerId}?page=${page}&page_size=${pageSize}`,
+    ),
 }
 
 // ---------------------------------------------------------------------------
@@ -204,26 +251,28 @@ export const adminApi = {
   getStats: () =>
     request<APIResponse<AdminStats>>('/admin/stats'),
 
-  listUsers: (params: { page?: number; role?: string; search?: string } = {}) => {
+  listUsers: async (params: { page?: number; role?: string; search?: string } = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    return request<APIResponse<PaginatedResponse<AdminUser>>>(`/admin/users${qs ? `?${qs}` : ''}`)
+    const res = await request<APIResponse<any>>(`/admin/users${qs ? `?${qs}` : ''}`)
+    return { ...res, data: normalizePaginated<AdminUser>(res.data ?? {}, 'users') }
   },
   toggleUserActive: (id: string) =>
     request<APIResponse<{ id: string; is_active: boolean }>>(`/admin/users/${id}/toggle-active`, {
       method: 'PATCH',
     }),
 
-  listCleaners: (params: { page?: number; status?: string } = {}) => {
+  listCleaners: async (params: { page?: number; status?: string } = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    return request<APIResponse<PaginatedResponse<AdminCleaner>>>(`/admin/cleaners${qs ? `?${qs}` : ''}`)
+    const res = await request<APIResponse<any>>(`/admin/cleaners${qs ? `?${qs}` : ''}`)
+    return { ...res, data: normalizePaginated<AdminCleaner>(res.data ?? {}, 'cleaners') }
   },
   suspendCleaner: (id: string) =>
     request<APIResponse<{ id: string; status: string }>>(`/admin/cleaners/${id}/suspend`, {
@@ -235,17 +284,21 @@ export const adminApi = {
       body: JSON.stringify({ action, rejection_reason }),
     }),
 
-  listBookings: (params: { page?: number; status?: string } = {}) => {
+  listBookings: async (params: { page?: number; status?: string } = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    return request<APIResponse<PaginatedResponse<BookingRead>>>(`/admin/bookings${qs ? `?${qs}` : ''}`)
+    const res = await request<APIResponse<any>>(`/admin/bookings${qs ? `?${qs}` : ''}`)
+    return { ...res, data: normalizePaginated<BookingRead>(res.data ?? {}, 'bookings') }
   },
 
-  listDisputes: () =>
-    request<APIResponse<AdminDispute[]>>('/disputes'),
+  listDisputes: async () => {
+    const res = await request<APIResponse<any>>('/disputes')
+    const disputes = (res.data?.disputes ?? res.data ?? []) as AdminDispute[]
+    return { ...res, data: disputes }
+  },
   markDisputeUnderReview: (id: string) =>
     request<APIResponse<AdminDispute>>(`/disputes/${id}/status`, { method: 'PATCH' }),
   resolveDispute: (id: string, body: {
@@ -254,6 +307,21 @@ export const adminApi = {
     refund_amount?: number | null
   }) =>
     request<APIResponse<AdminDispute>>(`/disputes/${id}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+}
+
+// ---------------------------------------------------------------------------
+// Client Disputes
+// ---------------------------------------------------------------------------
+export const disputesApi = {
+  listMine: async (page = 1, pageSize = 20) => {
+    const res = await request<APIResponse<any>>(`/disputes?page=${page}&page_size=${pageSize}`)
+    return { ...res, data: normalizePaginated<ClientDispute>(res.data ?? {}, 'disputes') }
+  },
+  createForBooking: (bookingId: string, body: { reason: string; evidence?: string[] }) =>
+    request<APIResponse<any>>(`/disputes/${bookingId}`, {
       method: 'POST',
       body: JSON.stringify(body),
     }),

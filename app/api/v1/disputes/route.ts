@@ -1,11 +1,16 @@
 import { NextRequest } from 'next/server'
-import { requireAdmin } from '@/server/auth'
+import { requireAuth } from '@/server/auth'
 import { disputeRepo } from '@/server/repositories/dispute.repo'
 import { ok } from '@/server/response'
 
-export const GET = requireAdmin(async (req: NextRequest) => {
+export const GET = requireAuth(async (req: NextRequest, _ctx, user) => {
   const page = Number(req.nextUrl.searchParams.get('page') ?? 1)
   const pageSize = Number(req.nextUrl.searchParams.get('page_size') ?? 20)
-  const [disputes, total] = await disputeRepo.listOpen(page, pageSize)
+
+  const [disputes, total] =
+    user.role === 'admin'
+      ? await disputeRepo.listOpen(page, pageSize)
+      : await disputeRepo.listByRaisedBy(user.id, page, pageSize)
+
   return ok({ disputes, total, page, page_size: pageSize })
 })
