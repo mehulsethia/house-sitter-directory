@@ -59,21 +59,33 @@ function ClientReportPageContent() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | ReportStatus>('all')
 
+  const disputeBookingIds = useMemo(() => new Set(disputes.map((d) => getDisputeBookingId(d))), [disputes])
+
+  const eligibleBookings = useMemo(() => {
+    const now = Date.now()
+    return bookings.filter((b) => {
+      if (b.status !== 'completed') return false
+      if (disputeBookingIds.has(b.id)) return false
+      const completedAt = b.completed_at ? new Date(b.completed_at).getTime() : 0
+      if (!completedAt) return false
+      return now <= completedAt + 24 * 60 * 60 * 1000
+    })
+  }, [bookings, disputeBookingIds])
+
   async function load() {
     setLoading(true)
     try {
       const [bookingRes, disputeRes] = await Promise.all([bookingsApi.my(), disputesApi.listMine()])
       const bookItems = bookingRes.data?.items ?? []
-      const eligible = bookItems.filter((b) => ['in_progress', 'completed'].includes(b.status))
-      setBookings(eligible)
+      setBookings(bookItems)
 
       const ds = (disputeRes.data?.items ?? []) as ClientDispute[]
       setDisputes(ds)
 
-      if (bookingFromQuery && eligible.some((b) => b.id === bookingFromQuery)) {
+      if (bookingFromQuery && bookItems.some((b) => b.id === bookingFromQuery)) {
         setBookingId(bookingFromQuery)
-      } else if (!bookingId && eligible.length > 0) {
-        setBookingId(eligible[0].id)
+      } else if (!bookingId && bookItems.length > 0) {
+        setBookingId(bookItems[0].id)
       }
     } catch {
       toast.error('Failed to load reports.')
@@ -87,8 +99,22 @@ function ClientReportPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingFromQuery])
 
+  useEffect(() => {
+    if (eligibleBookings.length === 0) {
+      setBookingId('')
+      return
+    }
+
+    if (!eligibleBookings.some((b) => b.id === bookingId)) {
+      setBookingId(eligibleBookings[0].id)
+    }
+  }, [eligibleBookings, bookingId])
+
   async function submitReport() {
     if (!bookingId) return toast.error('Select a booking.')
+    if (!eligibleBookings.some((b) => b.id === bookingId)) {
+      return toast.error('This booking is outside the dispute window or already has a dispute.')
+    }
     if (!reason.trim()) return toast.error('Please describe the issue.')
 
     const evidence = evidenceInput
@@ -150,17 +176,17 @@ function ClientReportPageContent() {
       <Card className="border-slate-200">
         <CardContent className="space-y-4 p-5">
           <p className="text-lg font-semibold text-slate-900">Raise a new dispute</p>
-          {bookings.length === 0 ? (
+          {eligibleBookings.length === 0 ? (
             <EmptyState
               title="No eligible bookings"
-              description="Only in-progress or completed bookings can be reported."
+              description="Only completed bookings in the 24-hour dispute window can be reported."
             />
           ) : (
             <>
               <div>
                 <Label>Booking</Label>
                 <Select value={bookingId} onChange={(e) => setBookingId(e.target.value)} className="mt-1">
-                  {bookings.map((b) => (
+                  {eligibleBookings.map((b) => (
                     <option key={b.id} value={b.id}>
                       {(b as any)?.cleaner?.user?.name ?? 'Cleaner'} · {formatDate(b.scheduled_start)} · {b.city}
                     </option>

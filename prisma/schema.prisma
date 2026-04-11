@@ -165,7 +165,7 @@ model Booking {
   durationHours       Decimal   @map("duration_hours") @db.Decimal(4, 2)
   hourlyRate          Decimal   @map("hourly_rate") @db.Decimal(10, 2)
   subtotal            Decimal   @db.Decimal(10, 2)
-  platformFeePct      Decimal   @default(15.00) @map("platform_fee_pct") @db.Decimal(5, 2)
+  platformFeePct      Decimal   @default(10.00) @map("platform_fee_pct") @db.Decimal(5, 2)
   platformFee         Decimal   @map("platform_fee") @db.Decimal(10, 2)
   cleanerPayout       Decimal   @map("cleaner_payout") @db.Decimal(10, 2)
   totalAmount         Decimal   @map("total_amount") @db.Decimal(10, 2)

@@ -17,6 +17,8 @@ export const availabilityService = {
    * intervals from the start of each schedule window to (end - 30min).
    *
    * A slot is marked `disabled: true` when:
+   *  - It is within the 2-hour lead time from now
+   *  - It starts within the 1-hour buffer before the schedule ends
    *  - The selected duration would overflow past the schedule window end
    *  - There is a conflict with a blocked time or existing booking
    */
@@ -41,6 +43,8 @@ export const availabilityService = {
     if (daySchedules.length === 0) return []
 
     const durationMs = durationHours * 60 * 60 * 1000
+    const now = Date.now()
+    const minBookableStart = now + 2 * 60 * 60 * 1000
     const allSlots: TimeSlot[] = []
 
     for (const schedule of daySchedules) {
@@ -53,31 +57,35 @@ export const availabilityService = {
       const windowEnd = new Date(date)
       windowEnd.setUTCHours(endH, endM, 0, 0)
 
+      const maxBookableStart = windowEnd.getTime() - 1 * 60 * 60 * 1000
+
       // Generate 30-min interval slots from window start to (window end - 30min)
       let cursor = windowStart.getTime()
-      const lastSlotTime = windowEnd.getTime() - SLOT_INTERVAL_MS
+      const windowEndTime = windowEnd.getTime()
 
-      while (cursor <= lastSlotTime) {
+      while (cursor + SLOT_INTERVAL_MS <= windowEndTime) {
         const slotStart = new Date(cursor)
         const slotEnd = new Date(cursor + durationMs)
 
-        // Check if the duration overflows past the schedule window
-        const overflows = slotEnd.getTime() > windowEnd.getTime()
+        // Duration overflow
+        const overflows = slotEnd.getTime() > windowEndTime
 
-        // Check conflicts with blocked times and existing bookings
-        const hasConflict = !overflows && (
-          blockedTimes.some(
-            (b) => b.startDatetime < slotEnd && b.endDatetime > slotStart,
-          ) ||
-          existingBookings.some(
-            (b) => b.scheduledStart < slotEnd && b.scheduledEnd > slotStart,
-          )
-        )
+        // hour lead time check
+        const isTooSoon = cursor < minBookableStart
+
+        // hour end buffer check
+        const isTooLate = cursor > maxBookableStart
+
+        // Conflicts check
+        const hasConflict =
+          !overflows &&
+          (blockedTimes.some((b) => b.startDatetime < slotEnd && b.endDatetime > slotStart) ||
+            existingBookings.some((b) => b.scheduledStart < slotEnd && b.scheduledEnd > slotStart))
 
         allSlots.push({
           start: slotStart.toISOString(),
           end: slotEnd.toISOString(),
-          disabled: overflows || hasConflict,
+          disabled: overflows || isTooSoon || isTooLate || hasConflict,
         })
 
         cursor += SLOT_INTERVAL_MS
@@ -94,7 +102,86 @@ export const availabilityService = {
         uniqueSlots.set(key, slot)
       }
     }
-    return Array.from(uniqueSlots.values())
+    return Array.from(uniqueSlots.values()).sort((a, b) => a.start.localeCompare(b.start))
+  },
+
+  async getBookableDates(
+    cleanerId: string,
+    durationHours: number,
+    daysAhead: number,
+  ): Promise<string[]> {
+    if (daysAhead <= 0) return []
+
+    const dates: string[] = []
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    const end = new Date(today)
+    end.setUTCDate(end.getUTCDate() + daysAhead)
+
+    const [schedules, blockedTimes, existingBookings] = await Promise.all([
+      availabilityRepo.getSchedule(cleanerId),
+      availabilityRepo.getBlockedTimesInRange(cleanerId, today, end),
+      bookingRepo.findActiveForCleaner(cleanerId, today, end),
+    ])
+
+    const durationMs = durationHours * 60 * 60 * 1000
+    const now = Date.now()
+    const minBookableStart = now + 2 * 60 * 60 * 1000
+
+    for (let i = 0; i < daysAhead; i++) {
+      const d = new Date(today)
+      d.setUTCDate(d.getUTCDate() + i)
+
+      const daySchedules = schedules
+        .filter((s) => s.dayOfWeek === isoWeekday(d) && s.isActive)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+
+      if (daySchedules.length === 0) continue
+
+      let hasBookableSlot = false
+      for (const schedule of daySchedules) {
+        const [startH, startM] = schedule.startTime.split(':').map(Number)
+        const [endH, endM] = schedule.endTime.split(':').map(Number)
+
+        const windowStart = new Date(d)
+        windowStart.setUTCHours(startH, startM, 0, 0)
+        const windowEnd = new Date(d)
+        windowEnd.setUTCHours(endH, endM, 0, 0)
+
+        const windowEndTime = windowEnd.getTime()
+        const maxBookableStart = windowEndTime - 1 * 60 * 60 * 1000
+        let cursor = windowStart.getTime()
+
+        while (cursor + durationMs <= windowEndTime) {
+          // Lead time and buffer checks
+          if (cursor < minBookableStart || cursor > maxBookableStart) {
+            cursor += SLOT_INTERVAL_MS
+            continue
+          }
+
+          const slotStart = new Date(cursor)
+          const slotEnd = new Date(cursor + durationMs)
+          const hasConflict =
+            blockedTimes.some((b) => b.startDatetime < slotEnd && b.endDatetime > slotStart) ||
+            existingBookings.some((b) => b.scheduledStart < slotEnd && b.scheduledEnd > slotStart)
+
+          if (!hasConflict) {
+            hasBookableSlot = true
+            break
+          }
+
+          cursor += SLOT_INTERVAL_MS
+        }
+
+        if (hasBookableSlot) break
+      }
+
+      if (hasBookableSlot) {
+        dates.push(d.toISOString().slice(0, 10))
+      }
+    }
+
+    return dates
   },
 }
 

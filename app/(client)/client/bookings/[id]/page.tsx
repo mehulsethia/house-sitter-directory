@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Calendar, Clock, MapPin } from 'lucide-react'
-import { authApi, bookingsApi, reviewsApi } from '@/lib/api'
+import { authApi, bookingsApi, paymentsApi, reviewsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { PriceBreakdownCard } from '@/components/price-breakdown-card'
 import { Chat } from '@/components/chat'
@@ -31,6 +31,7 @@ const CHAT_STATUSES = ['confirmed', 'in_progress', 'completed', 'disputed']
 export default function ClientBookingDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [booking, setBooking] = useState<BookingRead | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,6 +54,18 @@ export default function ClientBookingDetailPage() {
       setCurrentUserId(userRes.data.user?.id ?? meRes?.data?.id ?? null)
     })
   }, [id])
+
+  useEffect(() => {
+    const paymentFlag = searchParams.get('payment')
+    if (paymentFlag !== 'authorized') return
+
+    paymentsApi.syncAuthorization(id)
+      .then(() => refresh())
+      .catch(() => {
+        // If sync fails, webhook may still complete the transition shortly.
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, searchParams])
 
   async function handleCancel() {
     if (!cancelReason.trim()) { toast.error('Please provide a cancellation reason.'); return }
@@ -82,11 +95,27 @@ export default function ClientBookingDetailPage() {
     }
   }
 
+  async function handleComplete() {
+    setActionLoading(true)
+    try {
+      await bookingsApi.complete(id)
+      toast.success('Booking marked as completed.')
+      await refresh()
+    } catch (err: any) {
+      toast.error(err.message)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   if (loading) return <DetailPageSkeleton />
   if (!booking) return <div className="text-center py-16 text-muted-foreground">Booking not found.</div>
 
   const canCancel = ['pending', 'accepted', 'confirmed'].includes(booking.status)
-  const canPay = booking.status === 'accepted'
+  const paymentStatus = booking.payment?.status ?? null
+  const isAuthorized = ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
+  const canAuthorize = ['pending', 'accepted'].includes(booking.status) && !isAuthorized
+  const canComplete = booking.status === 'in_progress'
   const canReview = booking.status === 'completed'
   const showChat = CHAT_STATUSES.includes(booking.status)
 
@@ -124,7 +153,7 @@ export default function ClientBookingDetailPage() {
         hourly_rate: booking.hourly_rate,
         duration_hours: booking.duration_hours,
         subtotal: booking.total_amount,
-        platform_fee_pct: 15,
+        platform_fee_pct: 10,
         platform_fee: booking.platform_fee,
         cleaner_payout: booking.cleaner_payout,
         total_amount: booking.total_amount,
@@ -133,20 +162,27 @@ export default function ClientBookingDetailPage() {
       {/* TTL warnings */}
       {booking.status === 'pending' && booking.accept_by && (
         <p className="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
-          Waiting for cleaner to accept. Expires: {formatDate(booking.accept_by)}
+          {canAuthorize
+            ? 'Authorize your card to send this booking request to the cleaner.'
+            : `Waiting for cleaner to accept. Expires: ${formatDate(booking.accept_by)}`}
         </p>
       )}
-      {booking.status === 'accepted' && booking.pay_by && (
+      {booking.status === 'accepted' && canAuthorize && (
         <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-          Complete payment by {formatDate(booking.pay_by)} to confirm this booking.
+          Authorize your card now to keep this booking active. Your card is reserved, not charged yet.
         </p>
       )}
 
       {/* Actions */}
       <div className="flex flex-col gap-2">
-        {canPay && (
+        {canAuthorize && (
           <Button size="lg" onClick={() => router.push(`/client/checkout/${id}`)}>
-            Complete payment
+            Authorize card
+          </Button>
+        )}
+        {canComplete && (
+          <Button size="lg" onClick={handleComplete} loading={actionLoading}>
+            Mark service complete
           </Button>
         )}
         {canReview && (
@@ -167,7 +203,7 @@ export default function ClientBookingDetailPage() {
         </Card>
       ) : !showChat ? (
         <p className="text-xs text-center text-muted-foreground">
-          Chat will be available once the cleaner accepts and payment is confirmed.
+          Chat will be available once the cleaner accepts and card authorization is confirmed.
         </p>
       ) : null}
 

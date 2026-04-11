@@ -5,7 +5,7 @@ export const BOOKING_STATUSES = [
   'pending', 'accepted', 'confirmed', 'in_progress',
   'completed', 'cancelled', 'expired', 'disputed',
 ] as const
-export const CLEANER_ACTIONS = ['accept', 'start', 'complete'] as const
+export const CLEANER_ACTIONS = ['accept', 'start'] as const
 
 export const previewPriceSchema = z.object({
   cleaner_id: z.string().uuid(),

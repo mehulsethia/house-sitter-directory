@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { TrendingUp, Briefcase, Clock, DollarSign } from 'lucide-react'
 import { bookingsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { ListPageSkeleton } from '@/components/page-skeletons'
@@ -23,13 +22,13 @@ export default function EarningsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const completed = bookings.filter(b => b.status === 'completed')
-  const totalEarned = completed.reduce((sum, b) => sum + b.cleaner_payout, 0)
-  const totalHours = completed.reduce((sum, b) => sum + b.duration_hours, 0)
-  const avgRating = 0 // Would come from cleaner profile
+  const settledStatuses = new Set(['captured', 'transferred'])
+  const settled = bookings.filter((b) => settledStatuses.has(String(b.payment?.status ?? '')))
+  const totalEarned = settled.reduce((sum, b) => sum + b.cleaner_payout, 0)
+  const totalHours = settled.reduce((sum, b) => sum + b.duration_hours, 0)
 
-  const pending = bookings.filter(b => ['confirmed', 'in_progress'].includes(b.status))
-  const pendingAmount = pending.reduce((sum, b) => sum + b.cleaner_payout, 0)
+  const unsettled = bookings.filter((b) => !settledStatuses.has(String(b.payment?.status ?? '')))
+  const upcoming = unsettled.filter((b) => ['confirmed', 'in_progress', 'completed', 'disputed'].includes(b.status))
 
   if (loading) return <ListPageSkeleton />
 
@@ -48,7 +47,7 @@ export default function EarningsPage() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Jobs completed</p>
-            <p className="text-2xl font-bold">{completed.length}</p>
+            <p className="text-2xl font-bold">{settled.length}</p>
           </CardContent>
         </Card>
         <Card>
@@ -60,19 +59,19 @@ export default function EarningsPage() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Pending payout</p>
-            <p className="text-2xl font-bold text-yellow-600">{formatCurrency(pendingAmount)}</p>
+            <p className="text-2xl font-bold text-yellow-600">{upcoming.length}</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Pending payouts */}
-      {pending.length > 0 && (
+      {upcoming.length > 0 && (
         <Card className="border-yellow-200 bg-yellow-50">
           <CardHeader>
             <CardTitle className="text-yellow-800 text-base">Upcoming payouts</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {pending.map(b => (
+            {upcoming.map((b) => (
               <div key={b.id} className="flex items-center justify-between text-sm py-1">
                 <div>
                   <span className="font-medium capitalize">{b.service_type.replace('_', ' ')}</span>
@@ -80,7 +79,7 @@ export default function EarningsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <BookingStatusBadge status={b.status} />
-                  <span className="font-semibold">{formatCurrency(b.cleaner_payout)}</span>
+                  <span className="text-xs text-muted-foreground">{settlementLabel(b)}</span>
                 </div>
               </div>
             ))}
@@ -94,11 +93,11 @@ export default function EarningsPage() {
           <CardTitle>Transaction history</CardTitle>
         </CardHeader>
         <CardContent>
-          {completed.length === 0 ? (
+          {settled.length === 0 ? (
             <EmptyState title="No completed jobs yet" description="Earnings from completed jobs will appear here." />
           ) : (
             <div className="space-y-0">
-              {completed.map((b, i) => (
+              {settled.map((b, i) => (
                 <div key={b.id}>
                   <div className="flex items-center justify-between py-3">
                     <div>
@@ -110,7 +109,7 @@ export default function EarningsPage() {
                       <p className="text-xs text-muted-foreground">{formatCurrency(b.hourly_rate)}/hr</p>
                     </div>
                   </div>
-                  {i < completed.length - 1 && <Separator />}
+                  {i < settled.length - 1 && <Separator />}
                 </div>
               ))}
             </div>
@@ -119,8 +118,15 @@ export default function EarningsPage() {
       </Card>
 
       <p className="text-xs text-center text-muted-foreground">
-        Payouts are released 24 hours after job completion via Stripe.
+        Payout states update from booking and payment status. Amounts are shown only after settlement.
       </p>
     </div>
   )
+}
+
+function settlementLabel(booking: BookingRead) {
+  if (booking.status === 'confirmed' || booking.status === 'in_progress') return 'Awaiting completion'
+  if (booking.status === 'disputed') return 'Paused due to dispute'
+  if (booking.status === 'completed') return 'In 24h hold window'
+  return 'Pending settlement'
 }

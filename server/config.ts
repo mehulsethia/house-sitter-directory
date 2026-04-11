@@ -10,10 +10,12 @@ const schema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
   GOOGLE_CLIENT_SECRET: z.string().optional().default(''),
   GOOGLE_REDIRECT_URI: z.string().optional().default(''),
-  PLATFORM_FEE_PCT: z.coerce.number().default(15),
+  PLATFORM_FEE_PCT: z.coerce.number().default(10),
+  CAPTURE_DELAY_HOURS: z.coerce.number().default(24),
   PAYOUT_DELAY_HOURS: z.coerce.number().default(24),
   BOOKING_ACCEPT_TTL_MINUTES: z.coerce.number().default(60),
   BOOKING_PAY_TTL_MINUTES: z.coerce.number().default(15),
+  JOBS_SECRET: z.string().optional().default(''),
 })
 
 export const config = schema.parse(process.env)

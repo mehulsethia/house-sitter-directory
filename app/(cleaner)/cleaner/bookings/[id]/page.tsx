@@ -50,11 +50,11 @@ export default function CleanerBookingDetailPage() {
     })
   }, [id])
 
-  async function handleAction(action: 'accept' | 'start' | 'complete') {
+  async function handleAction(action: 'accept' | 'start') {
     setActionLoading(true)
     try {
       await bookingsApi.action(id, action)
-      const labels = { accept: 'Booking accepted!', start: 'Job started!', complete: 'Job marked as complete!' }
+      const labels = { accept: 'Booking accepted!', start: 'Job started!' }
       toast.success(labels[action])
       await refresh()
     } catch (err: any) {
@@ -142,15 +142,15 @@ export default function CleanerBookingDetailPage() {
             <Button variant="destructive" onClick={() => setCancelOpen(true)}>Decline</Button>
           </>
         )}
-        {booking.status === 'confirmed' && (
+        {(booking.status === 'accepted' || booking.status === 'confirmed') && (
           <Button size="lg" onClick={() => handleAction('start')} loading={actionLoading}>
             Start job
           </Button>
         )}
         {booking.status === 'in_progress' && (
-          <Button size="lg" onClick={() => handleAction('complete')} loading={actionLoading}>
-            Mark as complete
-          </Button>
+          <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            Waiting for the client to mark this booking as completed.
+          </p>
         )}
       </div>
 

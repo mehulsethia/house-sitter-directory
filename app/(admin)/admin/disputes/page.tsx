@@ -128,6 +128,7 @@ export default function AdminDisputesPage() {
   const [resolveType, setResolveType] = useState('no_refund')
   const [resolveNote, setResolveNote] = useState('')
   const [refundAmount, setRefundAmount] = useState('')
+  const [chargePercentage, setChargePercentage] = useState('')
   const [resolving, setResolving] = useState(false)
 
   const load = useCallback(async () => {
@@ -160,8 +161,20 @@ export default function AdminDisputesPage() {
   async function submitResolve() {
     if (!resolveTarget) return
     if (!resolveNote.trim()) { toast.error('Please add a resolution note.'); return }
-    if (resolveType === 'partial_refund' && !refundAmount) {
-      toast.error('Enter the refund amount.'); return
+
+    const refund = refundAmount.trim() ? Number(refundAmount) : null
+    const chargePct = chargePercentage.trim() ? Number(chargePercentage) : null
+
+    if (resolveType === 'partial_refund' && refund === null && chargePct === null) {
+      toast.error('Enter either refund amount or charge percentage for partial refund.'); return
+    }
+
+    if (chargePct !== null && (Number.isNaN(chargePct) || chargePct < 1 || chargePct > 100)) {
+      toast.error('Charge percentage must be between 1 and 100.'); return
+    }
+
+    if (refund !== null && (Number.isNaN(refund) || refund <= 0)) {
+      toast.error('Refund amount must be greater than 0.'); return
     }
 
     setResolving(true)
@@ -169,12 +182,14 @@ export default function AdminDisputesPage() {
       await adminApi.resolveDispute(resolveTarget.id, {
         resolution_type: resolveType,
         resolution_note: resolveNote,
-        refund_amount: resolveType === 'partial_refund' ? Number(refundAmount) : null,
+        refund_amount: resolveType === 'partial_refund' ? refund : null,
+        charge_percentage: ['partial_refund', 'no_refund', 'payment_released'].includes(resolveType) ? chargePct : null,
       })
       toast.success('Dispute resolved.')
       setResolveTarget(null)
       setResolveNote('')
       setRefundAmount('')
+      setChargePercentage('')
       setResolveType('no_refund')
       load()
     } catch (err: any) {
@@ -267,7 +282,13 @@ export default function AdminDisputesPage() {
       {/* Resolve dialog */}
       <Dialog
         open={!!resolveTarget}
-        onClose={() => { setResolveTarget(null); setResolveNote(''); setRefundAmount(''); setResolveType('no_refund') }}
+        onClose={() => {
+          setResolveTarget(null)
+          setResolveNote('')
+          setRefundAmount('')
+          setChargePercentage('')
+          setResolveType('no_refund')
+        }}
       >
         <DialogTitle>Resolve dispute</DialogTitle>
         {resolveTarget && (
@@ -308,6 +329,25 @@ export default function AdminDisputesPage() {
               </div>
             )}
 
+            {['partial_refund', 'no_refund', 'payment_released'].includes(resolveType) && (
+              <div>
+                <Label>Charge percentage (%)</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="100"
+                  step="1"
+                  value={chargePercentage}
+                  onChange={e => setChargePercentage(e.target.value)}
+                  className="mt-1"
+                  placeholder={resolveType === 'partial_refund' ? 'Optional if refund amount is entered' : 'Optional, defaults to 100'}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Use this to capture only part of the authorized amount.
+                </p>
+              </div>
+            )}
+
             <div>
               <Label>Resolution note</Label>
               <Textarea
@@ -319,11 +359,9 @@ export default function AdminDisputesPage() {
               />
             </div>
 
-            {(resolveType === 'full_refund' || resolveType === 'partial_refund') && (
-              <p className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 rounded px-3 py-2 text-blue-700">
-                Note: Stripe refund must be processed manually in the Stripe Dashboard after saving this resolution.
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 rounded px-3 py-2 text-blue-700">
+              This action applies the payment outcome immediately for this dispute.
+            </p>
 
             <Button
               onClick={submitResolve}

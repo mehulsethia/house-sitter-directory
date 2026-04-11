@@ -13,4 +13,5 @@ export const resolveDisputeSchema = z.object({
   resolution_type: z.enum(['full_refund', 'partial_refund', 'no_refund', 'payment_released']),
   resolution_note: z.string().min(1),
   refund_amount: z.number().positive().optional(),
+  charge_percentage: z.number().min(1).max(100).optional(),
 })

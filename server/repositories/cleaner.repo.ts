@@ -55,6 +55,7 @@ export const cleanerRepo = {
     const where = {
       status: 'approved' as const,
       profileComplete: true,
+      stripeOnboardingComplete: true,
       ...(params.city
         ? { serviceAreas: { some: { city: { contains: params.city, mode: 'insensitive' as const } } } }
         : {}),

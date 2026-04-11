@@ -3,6 +3,7 @@ import { stripe } from '@/server/stripe'
 import { paymentRepo } from '@/server/repositories/payment.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { paymentAuthorizationService } from '@/server/services/payment-authorization.service'
 import type Stripe from 'stripe'
 
 export async function POST(req: NextRequest) {
@@ -20,13 +21,7 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'payment_intent.amount_capturable_updated': {
         const pi = event.data.object as Stripe.PaymentIntent
-        const payment = await paymentRepo.findByStripeIntentId(pi.id)
-        if (payment) {
-          await paymentRepo.update(payment.id, { status: 'authorized', authorizedAt: new Date() })
-          if (pi.metadata?.booking_id) {
-            await bookingRepo.update(pi.metadata.booking_id, { status: 'confirmed', confirmedAt: new Date() })
-          }
-        }
+        await paymentAuthorizationService.syncFromPaymentIntent(pi)
         break
       }
 
@@ -57,11 +52,21 @@ export async function POST(req: NextRequest) {
 
       case 'account.updated': {
         const account = event.data.object as Stripe.Account
-        if (account.charges_enabled) {
-          const cleaner = await cleanerRepo.findById(account.metadata?.cleaner_id ?? '')
-          if (cleaner) {
-            await cleanerRepo.update(cleaner.id, { stripeOnboardingComplete: true })
-          }
+        const cleaner = await cleanerRepo.findById(account.metadata?.cleaner_id ?? '')
+        if (cleaner) {
+          const restrictedOrIncomplete =
+            (account.requirements?.currently_due?.length ?? 0) > 0 ||
+            (account.requirements?.past_due?.length ?? 0) > 0 ||
+            Boolean(account.requirements?.disabled_reason)
+          const connected =
+            account.details_submitted &&
+            account.charges_enabled &&
+            account.payouts_enabled &&
+            !restrictedOrIncomplete
+
+          await cleanerRepo.update(cleaner.id, {
+            stripeOnboardingComplete: connected,
+          })
         }
         break
       }

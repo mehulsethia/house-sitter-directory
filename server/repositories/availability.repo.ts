@@ -41,27 +41,61 @@ export const availabilityRepo = {
       isActive: boolean
     }>
   ) => {
-    await db.availabilitySchedule.deleteMany({ where: { cleanerId } })
-    if (schedules.length === 0) return []
-
+    // Group by day and validate logic
+    const byDay: Record<number, typeof schedules> = {}
     for (const s of schedules) {
-      await db.availabilitySchedule.create({
-        data: {
-          cleanerId,
-          dayOfWeek: s.dayOfWeek,
-          startTime: timeStringToDate(s.startTime),
-          endTime: timeStringToDate(s.endTime),
-          bufferMinutes: s.bufferMinutes,
-          isActive: s.isActive,
-        },
-      })
+      if (!byDay[s.dayOfWeek]) byDay[s.dayOfWeek] = []
+      byDay[s.dayOfWeek].push(s)
     }
 
-    const rows = await db.availabilitySchedule.findMany({
-      where: { cleanerId },
-      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    for (const day of Object.keys(byDay)) {
+      const daySlots = byDay[Number(day)].sort((a, b) => a.startTime.localeCompare(b.startTime))
+      let lastEnd: number | null = null
+
+      for (const slot of daySlots) {
+        const start = timeStringToDate(slot.startTime).getTime()
+        const end = timeStringToDate(slot.endTime).getTime()
+
+        if (end <= start) {
+          throw new Error(`Invalid slot: end time ${slot.endTime} must be after start time ${slot.startTime}`)
+        }
+
+        if (lastEnd !== null) {
+          const gapMs = start - lastEnd
+          if (gapMs < 30 * 60 * 1000) {
+            throw new Error(
+              `Slots must have at least a 30-minute gap. Gap between ${dateToTimeString(new Date(lastEnd))} and ${
+                slot.startTime
+              } is too small.`
+            )
+          }
+        }
+        lastEnd = end
+      }
+    }
+
+    return db.$transaction(async (tx) => {
+      await tx.availabilitySchedule.deleteMany({ where: { cleanerId } })
+      
+      if (schedules.length > 0) {
+        await tx.availabilitySchedule.createMany({
+          data: schedules.map((s) => ({
+            cleanerId,
+            dayOfWeek: s.dayOfWeek,
+            startTime: timeStringToDate(s.startTime),
+            endTime: timeStringToDate(s.endTime),
+            bufferMinutes: s.bufferMinutes,
+            isActive: s.isActive,
+          })),
+        })
+      }
+
+      const rows = await tx.availabilitySchedule.findMany({
+        where: { cleanerId },
+        orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+      })
+      return rows.map(normalizeSchedule)
     })
-    return rows.map(normalizeSchedule)
   },
 
   getBlockedTimes: (cleanerId: string) =>

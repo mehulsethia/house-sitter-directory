@@ -16,13 +16,44 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
 
   const booking = await bookingRepo.findById(parsed.data.booking_id)
   if (!booking) return err('Booking not found', 404)
-  if (booking.status !== 'accepted') return err('Booking must be in accepted status', 400)
+  if (!['pending', 'accepted'].includes(booking.status)) {
+    return err('Booking must be pending or accepted for authorization', 400)
+  }
 
   const client = await clientRepo.findByUserId(user.id)
   if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
 
   const cleaner = booking.cleaner
   if (!cleaner.stripeAccountId) return err('Cleaner has not completed Stripe onboarding', 400)
+
+  const account = await stripe.accounts.retrieve(cleaner.stripeAccountId)
+  const restrictedOrIncomplete =
+    (account.requirements?.currently_due?.length ?? 0) > 0 ||
+    (account.requirements?.past_due?.length ?? 0) > 0 ||
+    Boolean(account.requirements?.disabled_reason)
+  if (!account.details_submitted || !account.charges_enabled || !account.payouts_enabled || restrictedOrIncomplete) {
+    return err('Cleaner Stripe account is not fully ready to receive payments', 400)
+  }
+
+  const existing = await paymentRepo.findByBookingId(booking.id)
+  if (existing) {
+    const pi = await stripe.paymentIntents.retrieve(existing.stripePaymentIntentId)
+    if (pi.currency !== 'eur') {
+      return err('Only EUR payments are supported', 422)
+    }
+
+    if (pi.status === 'requires_capture' || existing.status === 'authorized') {
+      return err('Payment already authorized for this booking', 409)
+    }
+
+    if (['succeeded', 'processing'].includes(pi.status) || ['captured', 'transferred'].includes(existing.status)) {
+      return err('Payment already processed for this booking', 409)
+    }
+
+    if (pi.client_secret) {
+      return ok({ client_secret: pi.client_secret, payment_intent_id: pi.id })
+    }
+  }
 
   const amountCents = Math.round(Number(booking.totalAmount) * 100)
   const feeCents = Math.round(Number(booking.platformFee) * 100)
@@ -38,14 +69,17 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
       client_id: client.id,
       cleaner_id: cleaner.id,
     },
+  }, {
+    idempotencyKey: `booking_intent_${booking.id}`,
   })
 
-  await paymentRepo.create({
+  await paymentRepo.upsert({
     bookingId: booking.id,
     stripePaymentIntentId: intent.id,
     amount: Number(booking.totalAmount),
     platformFee: Number(booking.platformFee),
     cleanerPayout: Number(booking.cleanerPayout),
+    currency: 'eur',
   })
 
   return ok({ client_secret: intent.client_secret, payment_intent_id: intent.id })

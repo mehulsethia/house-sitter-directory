@@ -14,9 +14,29 @@ export const paymentRepo = {
     amount: number
     platformFee: number
     cleanerPayout: number
-    currency?: string
+    currency?: 'eur'
   }) =>
     db.payment.create({ data }),
+
+  upsert: (data: {
+    bookingId: string
+    stripePaymentIntentId: string
+    amount: number
+    platformFee: number
+    cleanerPayout: number
+    currency?: string
+  }) =>
+    db.payment.upsert({
+      where: { bookingId: data.bookingId },
+      create: data,
+      update: {
+        stripePaymentIntentId: data.stripePaymentIntentId,
+        amount: data.amount,
+        platformFee: data.platformFee,
+        cleanerPayout: data.cleanerPayout,
+        currency: data.currency ?? 'eur',
+      },
+    }),
 
   update: (id: string, data: Prisma.PaymentUpdateInput) =>
     db.payment.update({ where: { id }, data }),

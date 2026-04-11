@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/server/auth'
 import { disputeRepo } from '@/server/repositories/dispute.repo'
+import { bookingRepo } from '@/server/repositories/booking.repo'
 import { paymentRepo } from '@/server/repositories/payment.repo'
 import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
@@ -16,31 +17,104 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
   if (!dispute) return err('Dispute not found', 404)
   if (dispute.status === 'resolved') return err('Dispute already resolved', 400)
 
-  let stripeRefundId: string | undefined
+  const payment = await paymentRepo.findByBookingId(dispute.bookingId)
+  let resolvedRefundAmount: number | undefined = parsed.data.refund_amount
 
-  if (parsed.data.resolution_type === 'full_refund' || parsed.data.resolution_type === 'partial_refund') {
-    const payment = await paymentRepo.findByBookingId(dispute.bookingId)
-    if (payment && payment.stripePaymentIntentId) {
-      const refundAmount =
-        parsed.data.resolution_type === 'full_refund'
-          ? undefined
-          : parsed.data.refund_amount
-            ? Math.round(parsed.data.refund_amount * 100)
-            : undefined
+  if (payment && payment.currency !== 'eur') {
+    return err('Only EUR payments are supported', 422)
+  }
 
-      const refund = await stripe.refunds.create({
-        payment_intent: payment.stripePaymentIntentId,
-        ...(refundAmount ? { amount: refundAmount } : {}),
-      })
-      stripeRefundId = refund.id
+  if (payment && payment.stripePaymentIntentId) {
+    const paymentAmount = Number(payment.amount)
+    const paymentAmountCents = Math.round(paymentAmount * 100)
+    const chargePct = parsed.data.charge_percentage
 
-      await paymentRepo.update(payment.id, {
-        status: parsed.data.resolution_type === 'full_refund' ? 'refunded' : 'partially_refunded',
-        stripeRefundId,
-        refundAmount: parsed.data.refund_amount,
-        refundReason: parsed.data.resolution_note,
-        refundedAt: new Date(),
-      })
+    if (parsed.data.resolution_type === 'full_refund') {
+      if (payment.status === 'authorized') {
+        await stripe.paymentIntents.cancel(payment.stripePaymentIntentId)
+        resolvedRefundAmount = paymentAmount
+        await paymentRepo.update(payment.id, {
+          status: 'refunded',
+          refundAmount: resolvedRefundAmount,
+          refundReason: parsed.data.resolution_note,
+          refundedAt: new Date(),
+        })
+      } else {
+        const refund = await stripe.refunds.create({
+          payment_intent: payment.stripePaymentIntentId,
+        })
+        resolvedRefundAmount = paymentAmount
+        await paymentRepo.update(payment.id, {
+          status: 'refunded',
+          stripeRefundId: refund.id,
+          refundAmount: resolvedRefundAmount,
+          refundReason: parsed.data.resolution_note,
+          refundedAt: new Date(),
+        })
+      }
+    }
+
+    if (parsed.data.resolution_type === 'partial_refund') {
+      if (payment.status === 'authorized') {
+        if (!chargePct) {
+          return err('charge_percentage is required for partial capture from authorized payment', 422)
+        }
+
+        const amountToCapture = Math.max(1, Math.floor((paymentAmountCents * chargePct) / 100))
+        const captured = await stripe.paymentIntents.capture(payment.stripePaymentIntentId, {
+          amount_to_capture: amountToCapture,
+        })
+        resolvedRefundAmount = Number(((paymentAmountCents - amountToCapture) / 100).toFixed(2))
+        await paymentRepo.update(payment.id, {
+          status: 'captured',
+          stripeChargeId: typeof captured.latest_charge === 'string' ? captured.latest_charge : undefined,
+          capturedAt: new Date(),
+          payoutScheduledAt: new Date(),
+          refundAmount: resolvedRefundAmount,
+          refundReason: parsed.data.resolution_note,
+        })
+      } else {
+        const explicitRefund = parsed.data.refund_amount
+        if (!explicitRefund && !chargePct) {
+          return err('refund_amount or charge_percentage is required for partial refund', 422)
+        }
+
+        const refundCents = explicitRefund
+          ? Math.round(explicitRefund * 100)
+          : Math.max(1, paymentAmountCents - Math.floor((paymentAmountCents * (chargePct ?? 100)) / 100))
+
+        const refund = await stripe.refunds.create({
+          payment_intent: payment.stripePaymentIntentId,
+          amount: refundCents,
+        })
+        resolvedRefundAmount = Number((refundCents / 100).toFixed(2))
+        await paymentRepo.update(payment.id, {
+          status: 'partially_refunded',
+          stripeRefundId: refund.id,
+          refundAmount: resolvedRefundAmount,
+          refundReason: parsed.data.resolution_note,
+          refundedAt: new Date(),
+        })
+      }
+    }
+
+    if (parsed.data.resolution_type === 'no_refund' || parsed.data.resolution_type === 'payment_released') {
+      if (payment.status === 'authorized') {
+        const pct = chargePct ?? 100
+        const amountToCapture = Math.max(1, Math.floor((paymentAmountCents * pct) / 100))
+        const captured = await stripe.paymentIntents.capture(payment.stripePaymentIntentId, {
+          amount_to_capture: amountToCapture,
+        })
+        resolvedRefundAmount = Number(((paymentAmountCents - amountToCapture) / 100).toFixed(2))
+        await paymentRepo.update(payment.id, {
+          status: 'captured',
+          stripeChargeId: typeof captured.latest_charge === 'string' ? captured.latest_charge : undefined,
+          capturedAt: new Date(),
+          payoutScheduledAt: new Date(),
+          refundAmount: resolvedRefundAmount > 0 ? resolvedRefundAmount : undefined,
+          refundReason: resolvedRefundAmount && resolvedRefundAmount > 0 ? parsed.data.resolution_note : undefined,
+        })
+      }
     }
   }
 
@@ -48,10 +122,12 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
     status: 'resolved',
     resolutionType: parsed.data.resolution_type,
     resolutionNote: parsed.data.resolution_note,
-    refundAmount: parsed.data.refund_amount,
+    refundAmount: resolvedRefundAmount,
     resolvedByUser: { connect: { id: user.id } },
     resolvedAt: new Date(),
   })
+
+  await bookingRepo.update(dispute.bookingId, { status: 'completed' })
 
   return ok(updated)
 })

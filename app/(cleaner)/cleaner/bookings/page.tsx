@@ -52,11 +52,11 @@ export default function CleanerBookingsPage() {
     refresh()
   }, [])
 
-  async function action(id: string, type: 'accept' | 'start' | 'complete') {
+  async function action(id: string, type: 'accept' | 'start') {
     setActionLoading(`${id}-${type}`)
     try {
       await bookingsApi.action(id, type)
-      toast.success(type === 'accept' ? 'Booking accepted.' : type === 'start' ? 'Job started.' : 'Job completed.')
+      toast.success(type === 'accept' ? 'Booking accepted.' : 'Job started.')
       await refresh()
     } catch (err: any) {
       toast.error(err.message ?? 'Action failed.')
@@ -218,7 +218,7 @@ export default function CleanerBookingsPage() {
                       </>
                     )}
 
-                    {b.status === 'confirmed' && (
+                    {(b.status === 'accepted' || b.status === 'confirmed') && (
                       <Button
                         size="sm"
                         onClick={() => action(b.id, 'start')}
@@ -229,13 +229,9 @@ export default function CleanerBookingsPage() {
                     )}
 
                     {b.status === 'in_progress' && (
-                      <Button
-                        size="sm"
-                        onClick={() => action(b.id, 'complete')}
-                        loading={actionLoading === `${b.id}-complete`}
-                      >
-                        Mark complete
-                      </Button>
+                      <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                        Waiting for client completion
+                      </span>
                     )}
                   </div>
                 </div>

@@ -27,15 +27,24 @@ function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess:
     if (!stripe || !elements) return
 
     setSubmitting(true)
+    const returnUrl = `${window.location.origin}/client/bookings/${booking.id}?payment=authorized`
     const { error } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required',
+      confirmParams: {
+        return_url: returnUrl,
+      },
     })
 
     if (error) {
       toast.error(error.message ?? 'Payment failed. Please try again.')
     } else {
-      toast.success('Payment authorised! Your booking is confirmed.')
+      try {
+        await paymentsApi.syncAuthorization(booking.id)
+      } catch {
+        // Webhook normally handles this; sync is best-effort fallback for local dev.
+      }
+      toast.success('Card authorised. Your booking request is now sent to the cleaner.')
       onSuccess()
     }
     setSubmitting(false)
@@ -45,7 +54,7 @@ function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess:
     <form onSubmit={handleSubmit} className="space-y-4">
       <PaymentElement />
       <Button type="submit" size="lg" className="w-full" loading={submitting} disabled={!stripe || !elements}>
-        Pay {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
+        Authorize {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
       </Button>
     </form>
   )
@@ -64,8 +73,8 @@ export default function CheckoutPage() {
         const bookingRes = await bookingsApi.getById(bookingId)
         const b = bookingRes.data
         if (!b) throw new Error('Booking not found')
-        if (b.status !== 'accepted') {
-          toast.error('This booking cannot be paid right now.')
+        if (!['pending', 'accepted'].includes(b.status)) {
+          toast.error('This booking cannot be authorized right now.')
           router.push(`/client/bookings/${bookingId}`)
           return
         }
@@ -74,7 +83,7 @@ export default function CheckoutPage() {
         const intentRes = await paymentsApi.createIntent(bookingId)
         setClientSecret(intentRes.data?.client_secret ?? null)
       } catch (err: any) {
-        toast.error(err.message ?? 'Failed to initialise checkout')
+        toast.error(err.message ?? 'Failed to initialise card authorization')
       } finally {
         setLoading(false)
       }
@@ -87,7 +96,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
-      <h1 className="marketplace-title text-2xl text-slate-900">Complete payment</h1>
+      <h1 className="marketplace-title text-2xl text-slate-900">Authorize card</h1>
 
       {/* Booking summary */}
       <Card>
@@ -112,7 +121,7 @@ export default function CheckoutPage() {
         hourly_rate: booking.hourly_rate,
         duration_hours: booking.duration_hours,
         subtotal: booking.total_amount,
-        platform_fee_pct: 15,
+        platform_fee_pct: 10,
         platform_fee: booking.platform_fee,
         cleaner_payout: booking.cleaner_payout,
         total_amount: booking.total_amount,
@@ -120,7 +129,7 @@ export default function CheckoutPage() {
 
       {/* Stripe payment form */}
       <Card>
-        <CardHeader><CardTitle>Payment details</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Card authorization</CardTitle></CardHeader>
         <CardContent>
           <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
             <CheckoutForm booking={booking} onSuccess={() => router.push(`/client/bookings/${bookingId}`)} />
@@ -129,7 +138,7 @@ export default function CheckoutPage() {
       </Card>
 
       <p className="text-xs text-center text-muted-foreground">
-        Your card is authorised now. Payment is only captured after your job is completed.
+        Your card is authorized now. Stripe captures it 24 hours after the job is completed unless a dispute is raised.
       </p>
     </div>
   )

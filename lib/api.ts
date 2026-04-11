@@ -168,8 +168,11 @@ export const availabilityApi = {
       `/availability/${cleanerId}/slots?${qs}`,
     )
   },
-  getAvailableDates: (cleanerId: string, days = 30) => {
-    const qs = new URLSearchParams({ days: String(days) })
+  getBookableDates: (cleanerId: string, durationHours: number, daysAhead = 30) => {
+    const qs = new URLSearchParams({
+      duration_hours: String(durationHours),
+      days_ahead: String(daysAhead),
+    })
     return request<{ success: boolean; data: string[] }>(
       `/availability/${cleanerId}/dates?${qs}`,
     )
@@ -191,10 +194,14 @@ export const bookingsApi = {
     return { ...res, data: normalizePaginated<BookingRead>(res.data ?? {}, 'bookings') }
   },
   getById: (id: string) => request<APIResponse<BookingRead>>(`/bookings/${id}`),
-  action: (id: string, action: 'accept' | 'start' | 'complete') =>
+  action: (id: string, action: 'accept' | 'start') =>
     request<APIResponse<BookingRead>>(`/bookings/${id}/action`, {
       method: 'POST',
       body: JSON.stringify({ action }),
+    }),
+  complete: (id: string) =>
+    request<APIResponse<BookingRead>>(`/bookings/${id}/complete`, {
+      method: 'POST',
     }),
   cancel: (id: string, reason: string) =>
     request<APIResponse<BookingRead>>(`/bookings/${id}/cancel`, {
@@ -221,8 +228,17 @@ export const paymentsApi = {
       charges_enabled: boolean
       payouts_enabled: boolean
       details_submitted?: boolean
+      restricted_or_incomplete?: boolean
+      requirements_currently_due?: string[]
+      requirements_past_due?: string[]
+      requirements_disabled_reason?: string | null
       stripe_account_id?: string
     }>>('/payments/connect/status'),
+  syncAuthorization: (bookingId: string) =>
+    request<APIResponse<{ payment_intent_status: string; payment_status: string; sync: any }>>(
+      `/payments/sync/${bookingId}`,
+      { method: 'POST' },
+    ),
 }
 
 // ---------------------------------------------------------------------------
@@ -329,6 +345,7 @@ export const adminApi = {
     resolution_type: string
     resolution_note: string
     refund_amount?: number | null
+    charge_percentage?: number | null
   }) =>
     request<APIResponse<AdminDispute>>(`/disputes/${id}/resolve`, {
       method: 'POST',

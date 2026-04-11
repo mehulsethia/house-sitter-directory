@@ -108,7 +108,7 @@ function CleanerOnboardingPageContent() {
       setWorkEligibilityConfirmed(Boolean(c.work_eligibility_confirmed ?? c.workEligibilityConfirmed))
       setTermsAccepted(Boolean(c.terms_accepted ?? c.termsAccepted))
 
-      setStripeConnected(Boolean(stripeRes.data?.connected || stripeRes.data?.charges_enabled))
+      setStripeConnected(Boolean(stripeRes.data?.connected))
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to load onboarding.')
     } finally {
@@ -125,7 +125,7 @@ function CleanerOnboardingPageContent() {
     ;(async () => {
       try {
         const stripeRes = await paymentsApi.getConnectStatus()
-        const connected = Boolean(stripeRes.data?.connected || stripeRes.data?.charges_enabled)
+        const connected = Boolean(stripeRes.data?.connected)
         setStripeConnected(connected)
         if (connected) {
           toast.success('Stripe account connected.')
@@ -142,6 +142,7 @@ function CleanerOnboardingPageContent() {
   }
 
   async function saveStep1() {
+    if (!profileImage) return toast.error('Profile picture is required.')
     if (!bio.trim()) return toast.error('Professional bio is required.')
     if (!hourlyRate || Number(hourlyRate) < 15) return toast.error('Min hourly rate is €15.')
     if (Number(hourlyRate) > 100) return toast.error('Max hourly rate is €100.')
@@ -198,29 +199,17 @@ function CleanerOnboardingPageContent() {
     }
   }
 
-  async function skipStep3() {
-    setSaving(true)
-    try {
-      const res = await cleanersApi.updateMyOnboarding({
-        onboarding_step: 4,
-        onboarding_skipped_step3: true,
-      })
-      setCleaner(res.data?.cleaner ?? cleaner)
-      setProgress(res.data?.onboarding ?? progress)
-      setStep(4)
-    } catch (err: any) {
-      toast.error(err.message ?? 'Failed to skip step 3.')
-    } finally {
-      setSaving(false)
+  async function finishStep4() {
+    if (!stripeConnected) {
+      toast.error('Stripe connection is required to continue.')
+      return
     }
-  }
 
-  async function finishStep4(skip: boolean) {
     setSaving(true)
     try {
       await cleanersApi.updateMyOnboarding({
         onboarding_step: 4,
-        onboarding_skipped_step4: skip,
+        onboarding_skipped_step4: false,
       })
       router.push('/cleaner/dashboard')
     } catch (err: any) {
@@ -258,7 +247,7 @@ function CleanerOnboardingPageContent() {
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">Profile Picture</Label>
+                <Label className="text-sm font-medium">Profile Picture <span className="text-red-500">*</span></Label>
                 <div className="mt-2 flex items-center gap-4">
                   <label className="relative h-20 w-20 shrink-0 rounded-full bg-gray-200 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden hover:border-primary/50 transition-colors">
                     {profileImagePreview ? (
@@ -280,7 +269,7 @@ function CleanerOnboardingPageContent() {
                     />
                   </label>
                   <p className="text-xs text-gray-500">
-                    {profileImage || 'Click the circle to upload a photo (optional)'}
+                    {profileImage || 'Click the circle to upload a photo'}
                   </p>
                 </div>
               </div>
@@ -438,10 +427,7 @@ function CleanerOnboardingPageContent() {
                 <Button variant="outline" onClick={() => setStep(2)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" onClick={skipStep3} disabled={saving}>Skip for now</Button>
-                  <Button onClick={() => scheduleSaveRef.current?.()} loading={saving} className="min-w-36">Save & Continue</Button>
-                </div>
+                <Button onClick={() => scheduleSaveRef.current?.()} loading={saving} className="min-w-36">Save & Continue</Button>
               </div>
             </div>
           )}
@@ -467,10 +453,7 @@ function CleanerOnboardingPageContent() {
                 <Button variant="outline" onClick={() => setStep(3)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" onClick={() => finishStep4(true)} disabled={saving}>Skip for now</Button>
-                  <Button onClick={() => finishStep4(false)} loading={saving}>Launch your page</Button>
-                </div>
+                <Button onClick={finishStep4} loading={saving}>Launch your page</Button>
               </div>
             </div>
           )}

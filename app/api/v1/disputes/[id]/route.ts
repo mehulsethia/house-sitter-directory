@@ -1,26 +1,30 @@
 import { NextRequest } from 'next/server'
-import { requireAuth } from '@/server/auth'
+import { requireClient } from '@/server/auth'
 import { disputeRepo } from '@/server/repositories/dispute.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
 import { clientRepo } from '@/server/repositories/client.repo'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { ok, err } from '@/server/response'
 import { createDisputeSchema } from '@/server/schemas/dispute.schema'
 
-export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
+export const POST = requireClient(async (req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
   const booking = await bookingRepo.findById(id)
   if (!booking) return err('Booking not found', 404)
 
   const client = await clientRepo.findByUserId(user.id)
-  const cleaner = await cleanerRepo.findByUserId(user.id)
-  const isParty =
-    (client && booking.clientId === client.id) ||
-    (cleaner && booking.cleanerId === cleaner.id)
-  if (!isParty) return err('Forbidden', 403)
+  if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
 
-  if (!['completed', 'in_progress'].includes(booking.status)) {
-    return err('Can only dispute completed or in-progress bookings', 400)
+  if (booking.status !== 'completed') {
+    return err('Disputes can only be raised after booking completion', 400)
+  }
+
+  if (!booking.completedAt) {
+    return err('Completed timestamp missing for this booking', 400)
+  }
+
+  const disputeDeadline = new Date(booking.completedAt.getTime() + 24 * 60 * 60 * 1000)
+  if (Date.now() > disputeDeadline.getTime()) {
+    return err('Dispute window has expired (24 hours after completion)', 400)
   }
 
   const existing = await disputeRepo.findByBookingId(id)

@@ -68,13 +68,11 @@ export default function CleanerDashboardPage() {
     refresh()
   }, [])
 
-  async function handleAction(bookingId: string, action: 'accept' | 'start' | 'complete') {
+  async function handleAction(bookingId: string, action: 'accept' | 'start') {
     setActionLoading(`${bookingId}-${action}`)
     try {
       await bookingsApi.action(bookingId, action)
-      toast.success(
-        action === 'accept' ? 'Booking accepted.' : action === 'start' ? 'Job started.' : 'Job completed.',
-      )
+      toast.success(action === 'accept' ? 'Booking accepted.' : 'Job started.')
       await refresh()
     } catch (err: any) {
       toast.error(err.message ?? 'Action failed.')

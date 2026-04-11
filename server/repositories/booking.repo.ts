@@ -27,7 +27,21 @@ export const bookingRepo = {
   },
 
   findByCleaner: (cleanerId: string, params: { page: number; pageSize: number; status?: string }) => {
-    const where = { cleanerId, ...(params.status ? { status: params.status } : {}) }
+    const where: Prisma.BookingWhereInput = {
+      cleanerId,
+      ...(params.status ? { status: params.status } : {}),
+      OR: [
+        { status: { not: 'pending' } },
+        {
+          status: 'pending',
+          payment: {
+            is: {
+              status: { in: ['authorized', 'captured', 'transferred'] },
+            },
+          },
+        },
+      ],
+    }
     return Promise.all([
       db.booking.findMany({
         where,

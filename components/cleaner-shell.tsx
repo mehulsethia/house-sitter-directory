@@ -1,9 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutGrid, CalendarDays, MessagesSquare, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { cleanersApi, paymentsApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { SidebarProfile } from '@/components/sidebar-profile'
 
@@ -18,6 +20,39 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const isOnboardingRoute = pathname === '/cleaner/onboarding'
+  const [gateChecked, setGateChecked] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function runGate() {
+      if (isOnboardingRoute) {
+        if (mounted) setGateChecked(true)
+        return
+      }
+
+      try {
+        const [me, stripe] = await Promise.all([
+          cleanersApi.me(),
+          paymentsApi.getConnectStatus(),
+        ])
+        const completion = me.data?.onboarding?.completion_pct ?? 0
+        if (completion < 100 || !stripe.data?.connected) {
+          router.replace('/cleaner/onboarding')
+          return
+        }
+      } catch {
+        // If gate check fails, keep current route behavior and let page-level auth handle it.
+      } finally {
+        if (mounted) setGateChecked(true)
+      }
+    }
+
+    runGate()
+    return () => {
+      mounted = false
+    }
+  }, [isOnboardingRoute, router])
 
   async function handleLogout() {
     await createClient().auth.signOut()
@@ -30,6 +65,12 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-slate-50 px-3 py-6 sm:px-4 md:px-8 md:py-10">
         <div className="mx-auto w-full max-w-5xl">{children}</div>
       </div>
+    )
+  }
+
+  if (!gateChecked) {
+    return (
+      <div className="min-h-screen bg-slate-50" />
     )
   }
 

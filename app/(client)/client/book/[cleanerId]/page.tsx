@@ -12,8 +12,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BookableCalendar } from '@/components/ui/bookable-calendar'
 import { formatCurrency } from '@/lib/utils'
 import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead } from '@/types'
 import { toast } from 'sonner'
@@ -301,9 +302,9 @@ export default function BookingFlowPage() {
   const [step, setStep] = useState(1)
 
   // Step 1: Schedule
-  const [duration, setDuration] = useState(1)
-  const [availableDates, setAvailableDates] = useState<string[]>([])
-  const [datesLoading, setDatesLoading] = useState(true)
+  const [duration, setDuration] = useState(2)
+  const [bookableDates, setBookableDates] = useState<string[]>([])
+  const [bookableDatesLoading, setBookableDatesLoading] = useState(false)
   const [date, setDate] = useState('')
   const [selectedSlot, setSelectedSlot] = useState('')
   const [slots, setSlots] = useState<{ start: string; end: string; disabled?: boolean }[]>([])
@@ -325,22 +326,16 @@ export default function BookingFlowPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // Load cleaner + client profile + available dates
+  // Load cleaner + client profile
   useEffect(() => {
     Promise.all([
       cleanersApi.getById(cleanerId),
       clientsApi.me().catch(() => null),
-      availabilityApi.getAvailableDates(cleanerId, 30),
     ])
-      .then(([cleanerRes, clientRes, datesRes]) => {
+      .then(([cleanerRes, clientRes]) => {
         setCleaner(cleanerRes.data ?? null)
         const cp = (clientRes as any)?.data ?? null
         setClientProfile(cp)
-
-        const dates = (datesRes as any)?.data ?? []
-        setAvailableDates(dates)
-        // Auto-select first available date
-        if (dates.length > 0) setDate(dates[0])
 
         // Autofill from client profile
         if (cp) {
@@ -358,7 +353,7 @@ export default function BookingFlowPage() {
         }
       })
       .catch(() => toast.error('Failed to load data'))
-      .finally(() => { setLoading(false); setDatesLoading(false) })
+      .finally(() => { setLoading(false) })
   }, [cleanerId])
 
   // Fetch available slots when date or duration changes
@@ -371,6 +366,17 @@ export default function BookingFlowPage() {
       .catch(() => setSlots([]))
       .finally(() => setSlotsLoading(false))
   }, [date, duration, cleanerId])
+
+  useEffect(() => {
+    if (!cleanerId) return
+    setBookableDatesLoading(true)
+    setDate('')
+    setBookableDates([])
+    availabilityApi.getBookableDates(cleanerId, duration, 45)
+      .then((r) => setBookableDates(r.data ?? []))
+      .catch(() => setBookableDates([]))
+      .finally(() => setBookableDatesLoading(false))
+  }, [cleanerId, duration])
 
   // Fetch price breakdown when duration changes
   useEffect(() => {
@@ -423,7 +429,7 @@ export default function BookingFlowPage() {
       if (b.status === 'pending') {
         // Cleaner hasn't accepted yet — skip payment, go to confirmation
         setStep(4)
-      } else if (b.status === 'accepted') {
+      } else {
         const intentRes = await paymentsApi.createIntent(b.id)
         setClientSecret(intentRes.data?.client_secret ?? null)
         setStep(3)
@@ -486,21 +492,31 @@ export default function BookingFlowPage() {
                   </div>
                 </div>
 
-                {/* Date picker — horizontal scroll */}
+                {/* Date picker */}
                 <div>
                   <Label className="text-sm font-semibold mb-2 block">Preferred Date</Label>
-                  {datesLoading ? (
-                    <div className="flex gap-2">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="h-20 w-[90px] rounded-xl bg-slate-100 animate-pulse shrink-0" />
-                      ))}
-                    </div>
-                  ) : (
-                    <DatePicker
-                      availableDates={availableDates}
-                      selectedDate={date}
-                      onSelect={setDate}
-                    />
+                  <BookableCalendar
+                    className="mt-2"
+                    availableDates={bookableDates}
+                    selectedDate={date}
+                    onSelectDate={setDate}
+                    daysAhead={45}
+                  />
+                  {bookableDatesLoading && (
+                    <p className="mt-2 text-xs text-muted-foreground">Loading available dates...</p>
+                  )}
+                  {date && (
+                    <p className="mt-2 text-xs text-slate-600">
+                      Selected: {new Date(`${date}T00:00:00Z`).toLocaleDateString('en-IE', {
+                        weekday: 'long',
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  )}
+                  {!bookableDatesLoading && bookableDates.length === 0 && (
+                    <p className="mt-2 text-xs text-muted-foreground">No available dates found for this duration.</p>
                   )}
                 </div>
 
@@ -519,7 +535,7 @@ export default function BookingFlowPage() {
                     ) : (
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {slots.map(slot => {
-                          const time = new Date(slot.start).toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true })
+                          const time = new Date(slot.start).toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })
                           const isDisabled = !!slot.disabled
                           const isSelected = selectedSlot === slot.start
                           return (
