@@ -63,7 +63,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
   const roleLabel = role === 'cleaner' ? 'Cleaner' : 'Client'
 
   return (
-    <div ref={ref} className="relative mt-auto">
+    <div ref={ref} className="relative mt-auto border-t border-slate-200 pt-2">
       {/* Popover — rises up above trigger */}
       <div
         className={cn(

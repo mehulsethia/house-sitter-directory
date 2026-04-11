@@ -168,6 +168,12 @@ export const availabilityApi = {
       `/availability/${cleanerId}/slots?${qs}`,
     )
   },
+  getAvailableDates: (cleanerId: string, days = 30) => {
+    const qs = new URLSearchParams({ days: String(days) })
+    return request<{ success: boolean; data: string[] }>(
+      `/availability/${cleanerId}/dates?${qs}`,
+    )
+  },
 }
 
 // ---------------------------------------------------------------------------

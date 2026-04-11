@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Clock, Lock, Shield, Star } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock, Lock, Shield, Star } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { cleanersApi, bookingsApi, availabilityApi, clientsApi, paymentsApi } from '@/lib/api'
@@ -19,13 +19,6 @@ import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead } from
 import { toast } from 'sonner'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-
-const SERVICE_TYPES = [
-  { value: 'standard', label: 'Standard Clean' },
-  { value: 'deep_clean', label: 'Deep Clean' },
-  { value: 'end_of_tenancy', label: 'End of Tenancy' },
-  { value: 'move_in', label: 'Move-in Clean' },
-]
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',
@@ -75,15 +68,104 @@ function StepIndicator({ current }: { current: number }) {
   )
 }
 
+// ── Horizontal Date Picker ────────────────────────────────────────────────
+function DatePicker({
+  availableDates,
+  selectedDate,
+  onSelect,
+}: {
+  availableDates: string[]
+  selectedDate: string
+  onSelect: (date: string) => void
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [scrollPos, setScrollPos] = useState(0)
+
+  function scroll(dir: 'left' | 'right') {
+    if (!scrollRef.current) return
+    const amount = 300
+    const target = dir === 'left' ? scrollRef.current.scrollLeft - amount : scrollRef.current.scrollLeft + amount
+    scrollRef.current.scrollTo({ left: target, behavior: 'smooth' })
+  }
+
+  function handleScroll() {
+    if (scrollRef.current) setScrollPos(scrollRef.current.scrollLeft)
+  }
+
+  const canScrollLeft = scrollPos > 0
+  const canScrollRight = scrollRef.current
+    ? scrollPos < scrollRef.current.scrollWidth - scrollRef.current.clientWidth - 1
+    : availableDates.length > 5
+
+  if (availableDates.length === 0) {
+    return <p className="text-sm text-slate-500">No available dates found for this cleaner.</p>
+  }
+
+  return (
+    <div className="relative">
+      {/* Left arrow */}
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+      )}
+
+      {/* Scrollable dates */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-1"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {availableDates.map(dateStr => {
+          const d = new Date(dateStr + 'T12:00:00Z') // noon UTC to avoid timezone shift
+          const dayName = d.toLocaleDateString('en-IE', { weekday: 'short', timeZone: 'UTC' })
+          const dayNum = d.getUTCDate()
+          const month = d.toLocaleDateString('en-IE', { month: 'short', timeZone: 'UTC' })
+          const isSelected = selectedDate === dateStr
+
+          return (
+            <button
+              key={dateStr}
+              type="button"
+              onClick={() => onSelect(dateStr)}
+              className={`shrink-0 flex flex-col items-center justify-center rounded-xl border-2 px-4 py-3 min-w-[90px] transition-all ${
+                isSelected
+                  ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:-translate-y-0.5'
+              }`}
+            >
+              <span className={`text-xs font-medium ${isSelected ? 'text-primary' : 'text-slate-500'}`}>{dayName}</span>
+              <span className="text-lg font-bold">{dayNum}</span>
+              <span className={`text-xs ${isSelected ? 'text-primary' : 'text-slate-500'}`}>{month}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Right arrow */}
+      {canScrollRight && (
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-9 w-9 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ── Booking Summary Sidebar ───────────────────────────────────────────────
 function BookingSummary({
   cleaner,
-  serviceType,
   duration,
   breakdown,
 }: {
   cleaner: CleanerRead
-  serviceType: string
   duration: number
   breakdown: PriceBreakdown | null
 }) {
@@ -119,11 +201,11 @@ function BookingSummary({
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-sm bg-primary" />
-            <span className="text-slate-700">{SERVICE_LABELS[serviceType] ?? serviceType}</span>
+            <span className="text-slate-700">Cleaning Service</span>
           </div>
           <div className="flex items-center gap-2 text-slate-500">
             <Clock className="h-3.5 w-3.5" />
-            <span>{duration} hours</span>
+            <span>{duration} hour{duration !== 1 ? 's' : ''}</span>
           </div>
         </div>
 
@@ -133,7 +215,7 @@ function BookingSummary({
         {breakdown && (
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">Service ({duration} hours)</span>
+              <span className="text-slate-600">Service ({duration}h)</span>
               <span className="font-medium">{formatCurrency(breakdown.subtotal)}</span>
             </div>
             <div className="flex justify-between">
@@ -218,9 +300,10 @@ export default function BookingFlowPage() {
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState(1)
 
-  // Step 1: Service & Schedule
-  const [serviceType, setServiceType] = useState('standard')
-  const [duration, setDuration] = useState(2)
+  // Step 1: Schedule
+  const [duration, setDuration] = useState(1)
+  const [availableDates, setAvailableDates] = useState<string[]>([])
+  const [datesLoading, setDatesLoading] = useState(true)
   const [date, setDate] = useState('')
   const [selectedSlot, setSelectedSlot] = useState('')
   const [slots, setSlots] = useState<{ start: string; end: string }[]>([])
@@ -242,16 +325,23 @@ export default function BookingFlowPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // Load cleaner + client profile
+  // Load cleaner + client profile + available dates
   useEffect(() => {
     Promise.all([
       cleanersApi.getById(cleanerId),
       clientsApi.me().catch(() => null),
+      availabilityApi.getAvailableDates(cleanerId, 30),
     ])
-      .then(([cleanerRes, clientRes]) => {
+      .then(([cleanerRes, clientRes, datesRes]) => {
         setCleaner(cleanerRes.data ?? null)
         const cp = (clientRes as any)?.data ?? null
         setClientProfile(cp)
+
+        const dates = (datesRes as any)?.data ?? []
+        setAvailableDates(dates)
+        // Auto-select first available date
+        if (dates.length > 0) setDate(dates[0])
+
         // Autofill from client profile
         if (cp) {
           const user = cp.user
@@ -268,21 +358,21 @@ export default function BookingFlowPage() {
         }
       })
       .catch(() => toast.error('Failed to load data'))
-      .finally(() => setLoading(false))
+      .finally(() => { setLoading(false); setDatesLoading(false) })
   }, [cleanerId])
 
-  // Fetch available slots
+  // Fetch available slots when date or duration changes
   useEffect(() => {
     if (!date || !cleanerId) return
     setSlotsLoading(true)
     setSelectedSlot('')
-    availabilityApi.getSlots(cleanerId, `${date}T00:00:00Z`, duration)
-      .then(r => setSlots(r.data))
+    availabilityApi.getSlots(cleanerId, date, duration)
+      .then(r => setSlots(r.data ?? []))
       .catch(() => setSlots([]))
       .finally(() => setSlotsLoading(false))
   }, [date, duration, cleanerId])
 
-  // Fetch price breakdown
+  // Fetch price breakdown when duration changes
   useEffect(() => {
     if (!cleanerId) return
     bookingsApi.previewPrice(cleanerId, duration)
@@ -295,7 +385,7 @@ export default function BookingFlowPage() {
     return cleaner.hourly_rate * duration
   }, [cleaner, duration])
 
-  // Navigation helpers
+  // Navigation
   function goNext() {
     if (step === 1) {
       if (!date) { toast.error('Please select a date.'); return }
@@ -309,7 +399,6 @@ export default function BookingFlowPage() {
       if (!address.trim()) { toast.error('Service address is required.'); return }
       if (!city.trim()) { toast.error('City is required.'); return }
       if (!postcode.trim()) { toast.error('ZIP code is required.'); return }
-      // Create booking and move to payment
       createBookingAndProceed()
     }
   }
@@ -319,7 +408,7 @@ export default function BookingFlowPage() {
     try {
       const res = await bookingsApi.create({
         cleaner_id: cleanerId,
-        service_type: serviceType as any,
+        service_type: 'standard',
         address: address.trim(),
         city: city.trim(),
         postcode: postcode.trim(),
@@ -331,12 +420,10 @@ export default function BookingFlowPage() {
       if (!b) throw new Error('Failed to create booking')
       setBooking(b)
 
-      // If booking is pending (cleaner hasn't accepted yet), skip payment step
-      // and go straight to confirmation
       if (b.status === 'pending') {
+        // Cleaner hasn't accepted yet — skip payment, go to confirmation
         setStep(4)
       } else if (b.status === 'accepted') {
-        // Create payment intent
         const intentRes = await paymentsApi.createIntent(b.id)
         setClientSecret(intentRes.data?.client_secret ?? null)
         setStep(3)
@@ -382,59 +469,57 @@ export default function BookingFlowPage() {
               <CardContent className="p-5 sm:p-6 space-y-6">
                 <h2 className="text-lg font-bold text-slate-900">Select Service & Schedule</h2>
 
-                {/* Service type */}
-                <div>
-                  <Label className="text-sm font-semibold">Service</Label>
-                  <Select value={serviceType} onChange={e => setServiceType(e.target.value)} className="mt-1">
-                    {SERVICE_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </Select>
-                </div>
-
                 {/* Duration & estimated cost */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-semibold">Duration (hours)</Label>
                     <Select value={String(duration)} onChange={e => setDuration(Number(e.target.value))} className="mt-1">
-                      {DURATION_OPTIONS.map(d => <option key={d} value={d}>{d} hours</option>)}
+                      {DURATION_OPTIONS.map(d => <option key={d} value={d}>{d} hour{d !== 1 ? 's' : ''}</option>)}
                     </Select>
                   </div>
                   <div>
                     <Label className="text-sm font-semibold">Estimated Cost</Label>
                     <div className="mt-1">
                       <p className="text-2xl font-bold text-slate-900">{formatCurrency(estimatedCost)}</p>
-                      <p className="text-xs text-slate-500">{formatCurrency(cleaner.hourly_rate)}/hr x {duration} hours</p>
+                      <p className="text-xs text-slate-500">{formatCurrency(cleaner.hourly_rate)}/hr x {duration}h</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Date picker */}
+                {/* Date picker — horizontal scroll */}
                 <div>
-                  <Label className="text-sm font-semibold">Preferred Date</Label>
-                  <Input
-                    type="date"
-                    value={date}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={e => setDate(e.target.value)}
-                    className="mt-1"
-                  />
+                  <Label className="text-sm font-semibold mb-2 block">Preferred Date</Label>
+                  {datesLoading ? (
+                    <div className="flex gap-2">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="h-20 w-[90px] rounded-xl bg-slate-100 animate-pulse shrink-0" />
+                      ))}
+                    </div>
+                  ) : (
+                    <DatePicker
+                      availableDates={availableDates}
+                      selectedDate={date}
+                      onSelect={setDate}
+                    />
+                  )}
                 </div>
 
                 {/* Time slots */}
                 {date && (
                   <div>
-                    <Label className="text-sm font-semibold">Preferred Time</Label>
+                    <Label className="text-sm font-semibold mb-2 block">Select time of day</Label>
                     {slotsLoading ? (
-                      <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {Array.from({ length: 8 }).map((_, i) => (
-                          <div key={i} className="h-10 rounded-xl bg-slate-100 animate-pulse" />
+                          <div key={i} className="h-11 rounded-xl bg-slate-100 animate-pulse" />
                         ))}
                       </div>
                     ) : slots.length === 0 ? (
-                      <p className="mt-2 text-sm text-slate-500">No available slots on this date.</p>
+                      <p className="text-sm text-slate-500">No available slots on this date.</p>
                     ) : (
-                      <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {slots.map(slot => {
-                          const time = new Date(slot.start).toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit', hour12: true })
+                          const time = new Date(slot.start).toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true })
                           return (
                             <button
                               key={slot.start}
@@ -590,7 +675,7 @@ export default function BookingFlowPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Duration:</span>
-                    <span className="font-medium text-slate-900">{booking.duration_hours} hours</span>
+                    <span className="font-medium text-slate-900">{booking.duration_hours} hour{booking.duration_hours !== 1 ? 's' : ''}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-sm font-semibold">
@@ -604,7 +689,7 @@ export default function BookingFlowPage() {
                   <Button className="w-full" onClick={() => router.push('/client/dashboard')}>
                     Go to Dashboard
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={() => router.push(`/client/cleaners`)}>
+                  <Button variant="outline" className="w-full" onClick={() => router.push('/client/cleaners')}>
                     Book Another Service
                   </Button>
                 </div>
@@ -618,7 +703,6 @@ export default function BookingFlowPage() {
           <div className="hidden lg:block">
             <BookingSummary
               cleaner={cleaner}
-              serviceType={serviceType}
               duration={duration}
               breakdown={breakdown}
             />
