@@ -141,6 +141,10 @@ export const cleanersApi = {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
+  submitForApproval: () =>
+    request<APIResponse<{ cleaner: CleanerRead; onboarding: CleanerOnboardingProgress }>>('/cleaners/me/submit', {
+      method: 'POST',
+    }),
 }
 
 // ---------------------------------------------------------------------------

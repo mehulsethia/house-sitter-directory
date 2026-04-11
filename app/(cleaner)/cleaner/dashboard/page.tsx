@@ -28,6 +28,9 @@ const SERVICE_LABELS: Record<string, string> = {
 export default function CleanerDashboardPage() {
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [completionPct, setCompletionPct] = useState<number>(0)
+  const [cleanerStatus, setCleanerStatus] = useState<string>('pending')
+  const [rejectionReason, setRejectionReason] = useState<string>('')
+  const [profileComplete, setProfileComplete] = useState(false)
   const [avgRating, setAvgRating] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -40,6 +43,9 @@ export default function CleanerDashboardPage() {
         const cleanerRes = await cleanersApi.me()
         setCompletionPct(cleanerRes.data?.onboarding?.completion_pct ?? 0)
         const cleaner = cleanerRes.data?.cleaner as any
+        setCleanerStatus(cleaner?.status ?? 'pending')
+        setRejectionReason(cleaner?.rejection_reason ?? '')
+        setProfileComplete(cleaner?.profile_complete ?? false)
         setAvgRating(cleaner?.average_rating ?? null)
       } catch {
         toast.error('Failed to load profile data.')
@@ -124,16 +130,68 @@ export default function CleanerDashboardPage() {
         </div>
       </div>
 
-      {completionPct < 100 && (
+      {cleanerStatus === 'approved' && (
+        <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <CircleCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+            <p className="text-sm font-semibold text-emerald-900">Your profile is approved and visible to clients.</p>
+          </div>
+        </div>
+      )}
+
+      {cleanerStatus === 'rejected' && (
+        <div className="rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-red-900">Your profile was not approved.</p>
+              {rejectionReason && (
+                <p className="text-xs text-red-700 mt-1">Reason: {rejectionReason}</p>
+              )}
+              <p className="text-xs text-red-600 mt-1">Please update your profile and resubmit for review.</p>
+            </div>
+            <Link href="/cleaner/profile" className="inline-flex h-8 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 shrink-0">
+              Update profile
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {cleanerStatus === 'pending' && completionPct < 100 && (
         <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-amber-900">Profile completion: {completionPct}%</p>
-              <p className="text-xs text-amber-700">Your profile appears to clients only after 100% completion.</p>
+              <p className="text-xs text-amber-700">Complete your profile to submit it for admin approval.</p>
             </div>
-            <Link href="/cleaner/profile" className="inline-flex h-8 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95">
+            <Link href="/cleaner/profile" className="inline-flex h-8 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 shrink-0">
               Complete now
             </Link>
+          </div>
+        </div>
+      )}
+
+      {cleanerStatus === 'pending' && completionPct === 100 && !profileComplete && (
+        <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">Your profile is ready!</p>
+              <p className="text-xs text-blue-700">Submit your profile for admin review to start receiving bookings.</p>
+            </div>
+            <Link href="/cleaner/profile" className="inline-flex h-8 items-center rounded-xl bg-primary px-3 text-xs font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95 shrink-0">
+              Submit for approval
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {cleanerStatus === 'pending' && profileComplete && (
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Clock3 className="h-5 w-5 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-900">Profile submitted — awaiting admin approval.</p>
+              <p className="text-xs text-amber-700">You'll be notified once your profile is reviewed.</p>
+            </div>
           </div>
         </div>
       )}

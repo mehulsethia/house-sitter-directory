@@ -454,7 +454,7 @@ function CleanerOnboardingPageContent() {
                   <p className="text-sm text-gray-500 mt-2">Manage your earnings and payouts seamlessly.</p>
                   <a href="https://stripe.com/connect" target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">Click here to learn more.</a>
                 </div>
-                <Button onClick={connectStripe} variant="outline">Connect with Stripe</Button>
+                <Button onClick={connectStripe} variant="outline">{stripeConnected ? 'Manage Stripe' : 'Connect with Stripe'}</Button>
               </div>
 
               {stripeConnected && (

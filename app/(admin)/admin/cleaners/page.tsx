@@ -2,10 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import {
+  Briefcase,
+  Car,
   CheckCircle2,
+  FileText,
+  Mail,
   PauseCircle,
+  Phone,
   PlayCircle,
   Star,
+  User,
   XCircle,
 } from 'lucide-react'
 import { adminApi } from '@/lib/api'
@@ -33,6 +39,18 @@ const STATUS_BADGE: Record<string, { variant: any; label: string }> = {
   rejected:  { variant: 'secondary',   label: 'Rejected' },
 }
 
+const TRANSPORT_LABELS: Record<string, string> = {
+  own_car: 'Own Car',
+  bus_walk: 'Bus / Walk',
+  requires_pickup: 'Requires Pick-up',
+}
+
+const ID_TYPE_LABELS: Record<string, string> = {
+  passport: 'Passport',
+  national_id: 'National ID',
+  drivers_licence: "Driver's Licence",
+}
+
 function CleanerCard({
   cleaner,
   onApprove,
@@ -50,22 +68,34 @@ function CleanerCard({
   return (
     <Card>
       <CardContent className="p-5">
+        {/* Header: avatar, name, badges, rate */}
         <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <span className="font-semibold">{cleaner.user_name}</span>
-              <Badge variant={sb.variant}>{sb.label}</Badge>
-              {cleaner.identity_verified && (
-                <Badge variant="outline" className="text-[10px] py-0">ID verified</Badge>
-              )}
-              {cleaner.stripe_onboarding_complete && (
-                <Badge variant="outline" className="text-[10px] py-0">Stripe ready</Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">{cleaner.user_email}</p>
-            {cleaner.user_phone && (
-              <p className="text-xs text-muted-foreground">{cleaner.user_phone}</p>
+          <div className="flex items-start gap-3 min-w-0">
+            {cleaner.profile_image_url ? (
+              <img src={cleaner.profile_image_url} alt="" className="h-12 w-12 rounded-full object-cover shrink-0 border border-slate-200" />
+            ) : (
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <User className="h-5 w-5 text-primary" />
+              </div>
             )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                <span className="font-semibold text-lg">{cleaner.user_name}</span>
+                <Badge variant={sb.variant}>{sb.label}</Badge>
+                {cleaner.identity_verified && (
+                  <Badge variant="outline" className="text-[10px] py-0">ID verified</Badge>
+                )}
+                {cleaner.stripe_onboarding_complete && (
+                  <Badge variant="outline" className="text-[10px] py-0">Stripe ready</Badge>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{cleaner.user_email}</span>
+                {cleaner.user_phone && (
+                  <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{cleaner.user_phone}</span>
+                )}
+              </div>
+            </div>
           </div>
           <div className="text-right shrink-0">
             <p className="text-sm font-medium">{formatCurrency(cleaner.hourly_rate)}/hr</p>
@@ -80,13 +110,51 @@ function CleanerCard({
           </div>
         </div>
 
+        {/* Metadata grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 text-sm">
+          {cleaner.transport_mode && (
+            <div className="flex items-start gap-2">
+              <Car className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Transport</p>
+                <p className="font-medium">{TRANSPORT_LABELS[cleaner.transport_mode] ?? cleaner.transport_mode}</p>
+              </div>
+            </div>
+          )}
+          {cleaner.id_type && (
+            <div className="flex items-start gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">KYC Document</p>
+                <p className="font-medium">{ID_TYPE_LABELS[cleaner.id_type] ?? cleaner.id_type}</p>
+                {cleaner.id_file_name && (
+                  <p className="text-xs text-muted-foreground truncate max-w-[160px]">{cleaner.id_file_name}</p>
+                )}
+              </div>
+            </div>
+          )}
+          {cleaner.skills && cleaner.skills.length > 0 && (
+            <div className="flex items-start gap-2">
+              <Briefcase className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Skills</p>
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {cleaner.skills.map(s => (
+                    <span key={s} className="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">{s}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {cleaner.bio && (
           <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{cleaner.bio}</p>
         )}
 
         {cleaner.rejection_reason && (
           <div className="text-xs bg-destructive/5 border border-destructive/20 rounded px-3 py-2 mb-4 text-destructive">
-            Rejection reason: {cleaner.rejection_reason}
+            <span className="font-semibold">Rejection reason:</span> {cleaner.rejection_reason}
           </div>
         )}
 

@@ -68,6 +68,7 @@ export interface CleanerRead {
   onboarding_skipped_step3?: boolean
   onboarding_skipped_step4?: boolean
   status: 'pending' | 'approved' | 'rejected' | 'suspended'
+  rejection_reason?: string
   profile_complete: boolean
   identity_verified: boolean
   stripe_onboarding_complete: boolean
@@ -282,8 +283,13 @@ export interface AdminCleaner {
   user_email: string
   user_phone?: string
   bio?: string
+  skills?: string[]
   years_experience: number
   hourly_rate: number
+  transport_mode?: string
+  id_type?: string
+  id_file_name?: string
+  profile_image_url?: string
   status: 'pending' | 'approved' | 'rejected' | 'suspended'
   rejection_reason?: string
   profile_complete: boolean

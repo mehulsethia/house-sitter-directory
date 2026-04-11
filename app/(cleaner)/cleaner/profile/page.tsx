@@ -54,6 +54,9 @@ function CleanerProfilePageContent() {
 
   const [completionPct, setCompletionPct] = useState<number>(100)
   const [cleanerStatus, setCleanerStatus] = useState<string>('pending')
+  const [rejectionReason, setRejectionReason] = useState<string>('')
+  const [profileComplete, setProfileComplete] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [reviews, setReviews] = useState<ReviewRead[]>([])
   const [stripe, setStripe] = useState<{
@@ -85,6 +88,8 @@ function CleanerProfilePageContent() {
 
       setCompletionPct(onboarding?.completion_pct ?? 0)
       setCleanerStatus(c.status ?? 'pending')
+      setRejectionReason(c.rejection_reason ?? '')
+      setProfileComplete(c.profile_complete ?? false)
 
       setCleanerId(c.id ?? '')
       setFullName(user.name ?? '')
@@ -180,6 +185,19 @@ function CleanerProfilePageContent() {
   }
 
 
+  async function submitForApproval() {
+    setSubmitting(true)
+    try {
+      await cleanersApi.submitForApproval()
+      toast.success('Profile submitted for approval!')
+      await loadAll()
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to submit profile.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   async function connectStripe() {
     try {
       const res = await paymentsApi.createConnectOnboardLink()
@@ -205,26 +223,58 @@ function CleanerProfilePageContent() {
         </Button>
       </div>
 
-      {(completionPct < 100 || cleanerStatus !== 'approved') && (
+      {cleanerStatus === 'rejected' && (
+        <div className="rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-red-900">Your profile was not approved.</p>
+              {rejectionReason && (
+                <p className="text-xs text-red-700 mt-1">Reason: {rejectionReason}</p>
+              )}
+              <p className="text-xs text-red-600 mt-1">Please update your profile and resubmit for review.</p>
+            </div>
+            <Button size="sm" onClick={submitForApproval} loading={submitting} className="shrink-0">
+              Resubmit for approval
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {cleanerStatus === 'pending' && completionPct === 100 && !profileComplete && (
+        <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-blue-900">Your profile is ready!</p>
+              <p className="text-xs text-blue-700">Submit your profile for admin review to start receiving bookings.</p>
+            </div>
+            <Button size="sm" onClick={submitForApproval} loading={submitting} className="shrink-0">
+              Submit for approval
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {cleanerStatus === 'pending' && profileComplete && (
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="text-sm font-semibold text-amber-900">Profile submitted — awaiting admin approval.</p>
+              <p className="text-xs text-amber-700">You'll be notified once your profile is reviewed.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cleanerStatus !== 'rejected' && completionPct < 100 && (
         <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-amber-900">
-                {completionPct < 100
-                  ? `Profile completion: ${completionPct}%`
-                  : 'Profile complete — pending admin approval'}
-              </p>
-              <p className="text-xs text-amber-700">
-                {completionPct < 100
-                  ? 'Complete all steps so your profile can be reviewed and listed to clients.'
-                  : 'Your profile is under review. You\'ll be notified once approved.'}
-              </p>
+              <p className="text-sm font-semibold text-amber-900">Profile completion: {completionPct}%</p>
+              <p className="text-xs text-amber-700">Complete all steps so your profile can be submitted for review.</p>
             </div>
-            {completionPct < 100 && (
-              <div className="h-2 w-32 overflow-hidden rounded-full bg-amber-200">
-                <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${completionPct}%` }} />
-              </div>
-            )}
+            <div className="h-2 w-32 overflow-hidden rounded-full bg-amber-200 shrink-0">
+              <div className="h-full rounded-full bg-amber-500 transition-all" style={{ width: `${completionPct}%` }} />
+            </div>
           </div>
         </div>
       )}
@@ -380,7 +430,7 @@ function CleanerProfilePageContent() {
                       <p className="text-2xl font-semibold leading-none text-[#635BFF]">stripe</p>
                       <p className="mt-2 text-sm text-slate-500">Manage earnings and payouts securely with Stripe Connect.</p>
                     </div>
-                    <Button onClick={connectStripe} variant="outline">Manage Stripe</Button>
+                    <Button onClick={connectStripe} variant="outline">{stripe.connected ? 'Manage Stripe' : 'Connect Stripe'}</Button>
                   </div>
                 </div>
 
