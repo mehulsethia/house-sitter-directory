@@ -76,6 +76,8 @@ export interface CleanerRead {
   total_jobs: number
   average_rating?: number
   created_at: string
+  user?: UserRead
+  service_areas?: Array<{ city: string; postcode_prefix?: string; radius_km?: number }>
 }
 
 export interface CleanerSummary {
