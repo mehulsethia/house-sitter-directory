@@ -25,7 +25,7 @@ export function DashboardPageSkeleton() {
 
 export function ListPageSkeleton() {
   return (
-    <div className="space-y-5">
+    <div className="space-y-12">
       <div className="space-y-2">
         <Skeleton className="h-9 w-56" />
         <Skeleton className="h-4 w-80" />

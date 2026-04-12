@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookableCalendar } from '@/components/ui/bookable-calendar'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, cn } from '@/lib/utils'
 import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead, ServiceType } from '@/types'
 import { toast } from 'sonner'
 
@@ -490,7 +490,7 @@ export default function BookingFlowPage() {
 
       <StepIndicator current={step} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className={cn('grid gap-6', step < 4 ? 'lg:grid-cols-[1fr_320px]' : 'max-w-2xl mx-auto w-full')}>
         {/* Main content */}
         <div>
           {/* ── Step 1: Service & Date ─────────────────────────────── */}
@@ -640,14 +640,10 @@ export default function BookingFlowPage() {
                   <Input value={address} onChange={e => setAddress(e.target.value)} className="mt-1" placeholder="Street address" />
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label className="text-sm font-semibold">City</Label>
                     <Input value={city} onChange={e => setCity(e.target.value)} className="mt-1" placeholder="Dublin" />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-semibold">State</Label>
-                    <Input className="mt-1" placeholder="County" disabled />
                   </div>
                   <div>
                     <Label className="text-sm font-semibold">ZIP Code</Label>
@@ -704,8 +700,8 @@ export default function BookingFlowPage() {
           {step === 4 && booking && (
             <Card className="border-slate-200">
               <CardContent className="p-5 sm:p-8 text-center space-y-5">
-                <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center border-4 border-emerald-50">
+                  <Check className="h-8 w-8 text-emerald-600" strokeWidth={3} />
                 </div>
 
                 <div>

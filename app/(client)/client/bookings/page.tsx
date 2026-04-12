@@ -75,15 +75,15 @@ export default function ClientBookingsPage() {
   if (loading) return <ListPageSkeleton />
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="marketplace-title text-3xl text-slate-900">My Bookings</h1>
-        <p className="text-sm text-slate-500">Track all bookings, statuses, and next actions.</p>
+    <div className="space-y-12">
+      <div className="mb-4">
+        <h1 className="marketplace-title text-4xl text-slate-900">My Bookings</h1>
+        <p className="mt-3 text-sm text-slate-500">Track all bookings, statuses, and next actions.</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-3">
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between p-10 pt-10 md:pt-10">
             <div>
               <p className="text-xs text-slate-500">Active</p>
               <p className="text-2xl font-bold">{summary.active}</p>
@@ -92,7 +92,7 @@ export default function ClientBookingsPage() {
           </CardContent>
         </Card>
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between p-10 pt-10 md:pt-10">
             <div>
               <p className="text-xs text-slate-500">Completed</p>
               <p className="text-2xl font-bold">{summary.completed}</p>
@@ -101,7 +101,7 @@ export default function ClientBookingsPage() {
           </CardContent>
         </Card>
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between p-10 pt-10 md:pt-10">
             <div>
               <p className="text-xs text-slate-500">Cancelled/Expired</p>
               <p className="text-2xl font-bold">{summary.cancelled}</p>
@@ -112,7 +112,7 @@ export default function ClientBookingsPage() {
       </div>
 
       <Card className="border-slate-200">
-        <CardContent className="space-y-4 p-4">
+        <CardContent className="space-y-10 p-10 pt-10 md:pt-10">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -148,12 +148,12 @@ export default function ClientBookingsPage() {
               }
             />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filtered.map((b) => {
                 const cleanerName = (b as any)?.cleaner?.user?.name ?? 'Cleaner'
                 const canDispute = ['in_progress', 'completed', 'disputed'].includes(b.status)
                 return (
-                  <article key={b.id} className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
+                  <article key={b.id} className="rounded-2xl border border-slate-200 bg-white p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="text-base font-semibold text-slate-900">{SERVICE_LABELS[b.service_type] ?? b.service_type}</p>

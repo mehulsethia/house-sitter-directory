@@ -144,7 +144,7 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
             </nav>
           </header>
 
-          <main className="app-shell-main mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 md:px-8 md:py-8">{children}</main>
+          <main className="app-shell-main mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 md:px-8 md:pt-16 md:pb-12">{children}</main>
         </div>
       </div>
     </div>
