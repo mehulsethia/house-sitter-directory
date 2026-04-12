@@ -16,7 +16,7 @@ import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookableCalendar } from '@/components/ui/bookable-calendar'
 import { formatCurrency } from '@/lib/utils'
-import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead } from '@/types'
+import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead, ServiceType } from '@/types'
 import { toast } from 'sonner'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -27,6 +27,8 @@ const SERVICE_LABELS: Record<string, string> = {
   end_of_tenancy: 'End of Tenancy',
   move_in: 'Move-in Clean',
 }
+
+const SERVICE_OPTIONS: ServiceType[] = ['standard', 'deep_clean', 'end_of_tenancy', 'move_in']
 
 const DURATION_OPTIONS = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
 
@@ -48,9 +50,8 @@ function StepIndicator({ current }: { current: number }) {
           <div key={s.num} className="flex items-center">
             <div className="flex flex-col items-center w-20 sm:w-28">
               <div
-                className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                  done ? 'bg-primary text-white' : active ? 'bg-primary text-white ring-4 ring-primary/20' : 'bg-slate-100 text-slate-400'
-                }`}
+                className={`h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${done ? 'bg-primary text-white' : active ? 'bg-primary text-white ring-4 ring-primary/20' : 'bg-slate-100 text-slate-400'
+                  }`}
               >
                 {done ? <Check className="h-4 w-4" /> : s.num}
               </div>
@@ -133,11 +134,10 @@ function DatePicker({
               key={dateStr}
               type="button"
               onClick={() => onSelect(dateStr)}
-              className={`shrink-0 flex flex-col items-center justify-center rounded-xl border-2 px-4 py-3 w-[80px] transition-all ${
-                isSelected
-                  ? 'border-primary bg-primary/5 text-primary shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:-translate-y-0.5'
-              }`}
+              className={`shrink-0 flex flex-col items-center justify-center rounded-xl border-2 px-4 py-3 w-[80px] transition-all ${isSelected
+                ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:-translate-y-0.5'
+                }`}
             >
               <span className={`text-xs font-medium ${isSelected ? 'text-primary' : 'text-slate-500'}`}>{dayName}</span>
               <span className="text-lg font-bold">{dayNum}</span>
@@ -163,18 +163,22 @@ function DatePicker({
 // ── Booking Summary Sidebar ───────────────────────────────────────────────
 function BookingSummary({
   cleaner,
+  serviceType,
   duration,
   breakdown,
 }: {
   cleaner: CleanerRead
+  serviceType: ServiceType
   duration: number
   breakdown: PriceBreakdown | null
 }) {
   const cleanerName = cleaner.user?.name ?? 'Professional Cleaner'
   return (
-    <Card className="border-slate-200 sticky top-6">
-      <CardContent className="p-5 space-y-4">
-        <h3 className="font-semibold text-slate-900">Booking Summary</h3>
+    <Card className="rounded-2xl border-slate-200 sticky top-6">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-bold">Booking Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
 
         {/* Cleaner info */}
         <div className="flex items-center gap-3">
@@ -185,13 +189,15 @@ function BookingSummary({
               <span className="text-primary font-bold">{cleanerName.charAt(0)}</span>
             </div>
           )}
-          <div>
-            <p className="font-semibold text-sm text-slate-900">{cleanerName}</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-sm text-slate-900 truncate">{cleanerName}</p>
             <div className="flex items-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className={`h-3 w-3 ${i < Math.round(cleaner.average_rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
-              ))}
-              <span className="text-xs text-slate-500 ml-0.5">{cleaner.average_rating?.toFixed(1) ?? '—'}</span>
+              <div className="flex items-center">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={`h-3 w-3 ${i < Math.round(cleaner.average_rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                ))}
+              </div>
+              <span className="text-xs text-slate-500">{cleaner.average_rating?.toFixed(1) ?? '—'}/5</span>
             </div>
           </div>
         </div>
@@ -202,7 +208,7 @@ function BookingSummary({
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-sm bg-primary" />
-            <span className="text-slate-700">Cleaning Service</span>
+            <span className="text-slate-700">{SERVICE_LABELS[serviceType] ?? 'Cleaning Service'}</span>
           </div>
           <div className="flex items-center gap-2 text-slate-500">
             <Clock className="h-3.5 w-3.5" />
@@ -214,19 +220,19 @@ function BookingSummary({
 
         {/* Price breakdown */}
         {breakdown && (
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-600">Service ({duration}h)</span>
-              <span className="font-medium">{formatCurrency(breakdown.subtotal)}</span>
+          <div className="space-y-2 text-sm pt-2">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500">Service ({duration}h)</span>
+              <span className="font-semibold text-slate-900">{formatCurrency(breakdown.subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600">Service fee</span>
-              <span className="font-medium">{formatCurrency(breakdown.platform_fee)}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500">Service fee</span>
+              <span className="font-semibold text-slate-900">{formatCurrency(breakdown.platform_fee)}</span>
             </div>
-            <Separator />
-            <div className="flex justify-between font-bold text-base">
-              <span>Total</span>
-              <span>{formatCurrency(breakdown.total_amount)}</span>
+            <Separator className="my-2" />
+            <div className="flex justify-between items-center font-bold">
+              <span className="text-slate-900">Total</span>
+              <span className="text-lg text-primary">{formatCurrency(breakdown.total_amount)}</span>
             </div>
           </div>
         )}
@@ -249,7 +255,7 @@ function BookingSummary({
 }
 
 // ── Stripe Payment Form (inner) ──────────────────────────────────────────
-function StripePaymentForm({ onSuccess, totalAmount }: { onSuccess: () => void; totalAmount: number }) {
+function StripePaymentForm({ onSuccess, totalAmount }: { onSuccess: () => Promise<void>; totalAmount: number }) {
   const stripe = useStripe()
   const elements = useElements()
   const [submitting, setSubmitting] = useState(false)
@@ -257,14 +263,25 @@ function StripePaymentForm({ onSuccess, totalAmount }: { onSuccess: () => void; 
   async function handleSubmit() {
     if (!stripe || !elements) return
     setSubmitting(true)
-    const { error } = await stripe.confirmPayment({ elements, redirect: 'if_required' })
-    if (error) {
-      toast.error(error.message ?? 'Payment failed. Please try again.')
-    } else {
-      toast.success('Payment authorised! Your booking is confirmed.')
-      onSuccess()
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        redirect: 'if_required',
+        confirmParams: {
+          return_url: `${window.location.origin}/client/bookings`,
+        },
+      })
+      if (error) {
+        toast.error(error.message ?? 'Payment failed. Please try again.')
+      } else {
+        await onSuccess()
+        toast.success('Card authorised. Booking request sent to the cleaner.')
+      }
+    } catch {
+      toast.error('Card was authorized, but booking sync failed. Please retry in Bookings.')
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
   return (
@@ -278,13 +295,13 @@ function StripePaymentForm({ onSuccess, totalAmount }: { onSuccess: () => void; 
 
       <p className="text-xs text-slate-500">
         I agree to the Terms of Service and Privacy Policy. I understand that payment will be processed securely.
-        Your card is authorised now — payment is only captured after your job is completed.
+        Your card is authorised now. Stripe only captures payment after your job is completed.
       </p>
 
       <div className="flex items-center justify-between pt-2">
         <span className="text-sm text-slate-500">Total: <strong className="text-slate-900">{formatCurrency(totalAmount)}</strong></span>
         <Button onClick={handleSubmit} loading={submitting} disabled={!stripe || !elements}>
-          Complete Booking
+          Authorize Card & Send Request
         </Button>
       </div>
     </div>
@@ -302,6 +319,7 @@ export default function BookingFlowPage() {
   const [step, setStep] = useState(1)
 
   // Step 1: Schedule
+  const [serviceType, setServiceType] = useState<ServiceType>('standard')
   const [duration, setDuration] = useState(2)
   const [bookableDates, setBookableDates] = useState<string[]>([])
   const [bookableDatesLoading, setBookableDatesLoading] = useState(false)
@@ -383,7 +401,7 @@ export default function BookingFlowPage() {
     if (!cleanerId) return
     bookingsApi.previewPrice(cleanerId, duration)
       .then(r => setBreakdown(r.data ?? null))
-      .catch(() => {})
+      .catch(() => { })
   }, [duration, cleanerId])
 
   const estimatedCost = useMemo(() => {
@@ -414,7 +432,7 @@ export default function BookingFlowPage() {
     try {
       const res = await bookingsApi.create({
         cleaner_id: cleanerId,
-        service_type: 'standard',
+        service_type: serviceType,
         address: address.trim(),
         city: city.trim(),
         postcode: postcode.trim(),
@@ -426,14 +444,13 @@ export default function BookingFlowPage() {
       if (!b) throw new Error('Failed to create booking')
       setBooking(b)
 
-      if (b.status === 'pending') {
-        // Cleaner hasn't accepted yet — skip payment, go to confirmation
-        setStep(4)
-      } else {
-        const intentRes = await paymentsApi.createIntent(b.id)
-        setClientSecret(intentRes.data?.client_secret ?? null)
-        setStep(3)
+      const intentRes = await paymentsApi.createIntent(b.id)
+      const nextClientSecret = intentRes.data?.client_secret ?? null
+      if (!nextClientSecret) {
+        throw new Error('Unable to initialize card authorization for this booking')
       }
+      setClientSecret(nextClientSecret)
+      setStep(3)
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to create booking')
     } finally {
@@ -441,7 +458,14 @@ export default function BookingFlowPage() {
     }
   }
 
-  function handlePaymentSuccess() {
+  async function handlePaymentSuccess() {
+    if (!booking) throw new Error('Missing booking context for authorization sync')
+
+    await paymentsApi.syncAuthorization(booking.id)
+    const bookingRes = await bookingsApi.getById(booking.id)
+    if (bookingRes.data) {
+      setBooking(bookingRes.data)
+    }
     setStep(4)
   }
 
@@ -456,12 +480,12 @@ export default function BookingFlowPage() {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => step > 1 && step < 4 ? setStep(step - 1) : router.back()}
-          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> {step > 1 && step < 4 ? 'Previous' : 'Back to All Cleaners'}
         </button>
         <h1 className="text-xl font-bold text-slate-900">Book Service</h1>
-        <div className="w-24" />
+        <div className="w-24 hidden sm:block" />
       </div>
 
       <StepIndicator current={step} />
@@ -471,24 +495,38 @@ export default function BookingFlowPage() {
         <div>
           {/* ── Step 1: Service & Date ─────────────────────────────── */}
           {step === 1 && (
-            <Card className="border-slate-200">
-              <CardContent className="p-5 sm:p-6 space-y-6">
-                <h2 className="text-lg font-bold text-slate-900">Select Service & Schedule</h2>
+            <Card className="rounded-2xl border-slate-200">
+              <CardHeader>
+                <CardTitle>Select Service & Schedule</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
 
-                {/* Duration & estimated cost */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-semibold">Duration (hours)</Label>
+                    <Label className="text-sm font-semibold text-slate-700">Service Type</Label>
+                    <Select value={serviceType} onChange={e => setServiceType(e.target.value as ServiceType)} className="mt-1">
+                      {SERVICE_OPTIONS.map(service => (
+                        <option key={service} value={service}>{SERVICE_LABELS[service]}</option>
+                      ))}
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-semibold text-slate-700">Duration (hours)</Label>
                     <Select value={String(duration)} onChange={e => setDuration(Number(e.target.value))} className="mt-1">
                       {DURATION_OPTIONS.map(d => <option key={d} value={d}>{d} hour{d !== 1 ? 's' : ''}</option>)}
                     </Select>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between border-y border-slate-100 py-4">
                   <div>
-                    <Label className="text-sm font-semibold">Estimated Cost</Label>
-                    <div className="mt-1">
-                      <p className="text-2xl font-bold text-slate-900">{formatCurrency(estimatedCost)}</p>
-                      <p className="text-xs text-slate-500">{formatCurrency(cleaner.hourly_rate)}/hr x {duration}h</p>
-                    </div>
+                    <p className="text-xs font-medium text-slate-500">Estimated Cost</p>
+                    <p className="text-2xl font-bold text-slate-900">{formatCurrency(estimatedCost)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-medium text-slate-500">Hourly Rate</p>
+                    <p className="text-base font-semibold text-slate-700">{formatCurrency(cleaner.hourly_rate)}/hr</p>
                   </div>
                 </div>
 
@@ -544,13 +582,12 @@ export default function BookingFlowPage() {
                               type="button"
                               disabled={isDisabled}
                               onClick={() => !isDisabled && setSelectedSlot(slot.start)}
-                              className={`rounded-xl border py-2.5 text-sm font-medium transition-all ${
-                                isDisabled
-                                  ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
-                                  : isSelected
-                                    ? 'bg-primary text-white border-primary shadow-sm'
-                                    : 'bg-white border-slate-200 text-slate-700 hover:border-primary/40 hover:-translate-y-0.5'
-                              }`}
+                              className={`rounded-xl border py-2.5 text-sm font-medium transition-all ${isDisabled
+                                ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                                : isSelected
+                                  ? 'bg-primary text-white border-primary shadow-sm'
+                                  : 'bg-white border-slate-200 text-slate-700 hover:border-primary/40 hover:-translate-y-0.5'
+                                }`}
                             >
                               {time}
                             </button>
@@ -562,8 +599,8 @@ export default function BookingFlowPage() {
                 )}
 
                 {/* Navigation */}
-                <div className="flex justify-end pt-2">
-                  <Button onClick={goNext} className="gap-1.5">
+                <div className="flex justify-end pt-4">
+                  <Button onClick={goNext} className="gap-2">
                     Next <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -573,9 +610,11 @@ export default function BookingFlowPage() {
 
           {/* ── Step 2: Your Details ───────────────────────────────── */}
           {step === 2 && (
-            <Card className="border-slate-200">
-              <CardContent className="p-5 sm:p-6 space-y-6">
-                <h2 className="text-lg font-bold text-slate-900">Your Information</h2>
+            <Card className="rounded-2xl border-slate-200">
+              <CardHeader>
+                <CardTitle>Your Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
@@ -645,9 +684,11 @@ export default function BookingFlowPage() {
 
           {/* ── Step 3: Payment ────────────────────────────────────── */}
           {step === 3 && clientSecret && booking && (
-            <Card className="border-slate-200">
-              <CardContent className="p-5 sm:p-6 space-y-5">
-                <h2 className="text-lg font-bold text-slate-900">Payment Information</h2>
+            <Card className="rounded-2xl border-slate-200">
+              <CardHeader>
+                <CardTitle>Payment Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
 
                 <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>
                   <StripePaymentForm
@@ -668,9 +709,13 @@ export default function BookingFlowPage() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Booking Confirmed!</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {booking.status === 'confirmed' ? 'Booking Confirmed!' : 'Booking Request Sent!'}
+                  </h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    Your service has been successfully booked with {cleanerName}
+                    {booking.status === 'confirmed'
+                      ? `Your service has been successfully booked with ${cleanerName}`
+                      : `Your card is authorized and your request has been sent to ${cleanerName}`}
                   </p>
                 </div>
 
@@ -681,6 +726,10 @@ export default function BookingFlowPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Service:</span>
                     <span className="font-medium text-slate-900">{SERVICE_LABELS[booking.service_type] ?? booking.service_type}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Status:</span>
+                    <span className="font-medium text-slate-900 capitalize">{booking.status.replace('_', ' ')}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Date:</span>
@@ -724,6 +773,7 @@ export default function BookingFlowPage() {
           <div className="hidden lg:block">
             <BookingSummary
               cleaner={cleaner}
+              serviceType={serviceType}
               duration={duration}
               breakdown={breakdown}
             />

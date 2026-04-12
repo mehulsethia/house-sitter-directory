@@ -99,36 +99,36 @@ export function BookableCalendar({
   }
 
   return (
-    <div className={cn('rounded-2xl border bg-white p-4', className)}>
-      <div className="mb-3 flex items-center justify-between">
+    <div className={cn('rounded-xl border border-slate-100 bg-white p-6 shadow-sm', className)}>
+      <div className="mb-6 flex items-center justify-between">
         <button
           type="button"
           onClick={goPrevMonth}
           disabled={!canGoPrev}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 disabled:cursor-not-allowed disabled:opacity-20 transition-all"
           aria-label="Previous month"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <p className="text-sm font-semibold text-slate-900">{monthLabel}</p>
+        <p className="text-sm font-bold text-slate-900 uppercase tracking-widest">{monthLabel}</p>
         <button
           type="button"
           onClick={goNextMonth}
           disabled={!canGoNext}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-200 disabled:cursor-not-allowed disabled:opacity-20 transition-all"
           aria-label="Next month"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
         {WEEKDAY_LABELS.map((w) => (
-          <div key={w} className="py-1">{w}</div>
+          <div key={w} className="py-2">{w}</div>
         ))}
       </div>
 
-      <div className="mt-1 grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1">
         {dayCells.map((cell, idx) => {
           if (!cell) return <div key={`blank-${idx}`} className="h-10" />
 
@@ -145,14 +145,17 @@ export function BookableCalendar({
               onClick={() => !disabled && onSelectDate(cell.iso)}
               disabled={disabled}
               className={cn(
-                'h-10 rounded-lg text-sm font-medium transition-colors',
-                selected && 'bg-primary text-primary-foreground',
-                !selected && !disabled && 'bg-slate-50 text-slate-800 hover:bg-slate-100',
-                disabled && 'cursor-not-allowed bg-slate-50 text-slate-300 line-through',
+                'h-10 w-full rounded-lg text-sm font-semibold transition-all relative',
+                selected && 'bg-primary text-white',
+                !selected && !disabled && 'bg-slate-50 text-slate-700 hover:bg-slate-100',
+                disabled && 'bg-transparent text-slate-200 cursor-not-allowed',
               )}
               aria-label={cell.iso}
             >
-              {cell.day}
+              <span className="relative z-10">{cell.day}</span>
+              {!disabled && isAvailable && !selected && (
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary/30 rounded-full" />
+              )}
             </button>
           )
         })}
