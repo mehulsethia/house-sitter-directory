@@ -27,6 +27,7 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
   if (payment && payment.stripePaymentIntentId) {
     const paymentAmount = Number(payment.amount)
     const paymentAmountCents = Math.round(paymentAmount * 100)
+    const originalPlatformFeeCents = Math.round(Number(payment.platformFee) * 100)
     const chargePct = parsed.data.charge_percentage
 
     if (parsed.data.resolution_type === 'full_refund') {
@@ -61,8 +62,14 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
         }
 
         const amountToCapture = Math.max(1, Math.floor((paymentAmountCents * chargePct) / 100))
+        const proportionalFeeCents = getProportionalFeeCents(
+          amountToCapture,
+          paymentAmountCents,
+          originalPlatformFeeCents,
+        )
         const captured = await stripe.paymentIntents.capture(payment.stripePaymentIntentId, {
           amount_to_capture: amountToCapture,
+          application_fee_amount: proportionalFeeCents,
         })
         resolvedRefundAmount = Number(((paymentAmountCents - amountToCapture) / 100).toFixed(2))
         await paymentRepo.update(payment.id, {
@@ -102,8 +109,14 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
       if (payment.status === 'authorized') {
         const pct = chargePct ?? 100
         const amountToCapture = Math.max(1, Math.floor((paymentAmountCents * pct) / 100))
+        const proportionalFeeCents = getProportionalFeeCents(
+          amountToCapture,
+          paymentAmountCents,
+          originalPlatformFeeCents,
+        )
         const captured = await stripe.paymentIntents.capture(payment.stripePaymentIntentId, {
           amount_to_capture: amountToCapture,
+          application_fee_amount: proportionalFeeCents,
         })
         resolvedRefundAmount = Number(((paymentAmountCents - amountToCapture) / 100).toFixed(2))
         await paymentRepo.update(payment.id, {
@@ -131,3 +144,16 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
 
   return ok(updated)
 })
+
+function getProportionalFeeCents(
+  amountToCaptureCents: number,
+  originalAmountCents: number,
+  originalPlatformFeeCents: number,
+) {
+  if (amountToCaptureCents <= 0 || originalAmountCents <= 0 || originalPlatformFeeCents <= 0) {
+    return 0
+  }
+
+  const proportional = Math.round((originalPlatformFeeCents * amountToCaptureCents) / originalAmountCents)
+  return Math.min(amountToCaptureCents, Math.max(0, proportional))
+}

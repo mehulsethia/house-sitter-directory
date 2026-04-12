@@ -100,6 +100,15 @@ export const bookingService = {
       throw new ServiceError(`Cannot ${action} a booking in status '${booking.status}'`, 400)
     }
 
+    const paymentStatus = booking.payment?.status
+    const isPaymentAuthorized = ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
+    if (!isPaymentAuthorized) {
+      throw new ServiceError(
+        `Cannot ${action} booking before client card authorization is completed`,
+        400,
+      )
+    }
+
     const now = new Date()
     const updateData: Record<string, unknown> & { status: string } = {
       status: t.to,
