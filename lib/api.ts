@@ -335,8 +335,8 @@ export const adminApi = {
   resolveDispute: (id: string, body: {
     resolution_type: string
     resolution_note: string
-    refund_amount?: number | null
-    charge_percentage?: number | null
+    refund_amount?: number
+    charge_percentage?: number
   }) =>
     request<APIResponse<AdminDispute>>(`/disputes/${id}/resolve`, {
       method: 'POST',
