@@ -92,7 +92,7 @@ function BookingTable({ bookings }: { bookings: BookingRead[] }) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export default function AdminBookingsPage() {
-  const [activeGroup, setActiveGroup] = useState('active')
+  const [activeGroup, setActiveGroup] = useState('all')
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)

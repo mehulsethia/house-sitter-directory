@@ -328,7 +328,10 @@ export const adminApi = {
     return { ...res, data: disputes }
   },
   markDisputeUnderReview: (id: string) =>
-    request<APIResponse<AdminDispute>>(`/disputes/${id}/status`, { method: 'PATCH' }),
+    request<APIResponse<AdminDispute>>(`/disputes/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'under_review' }),
+    }),
   resolveDispute: (id: string, body: {
     resolution_type: string
     resolution_note: string

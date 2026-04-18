@@ -80,7 +80,18 @@ export const bookingRepo = {
     db.booking.update({ where: { id }, data, include: bookingInclude }),
 
   listAll: (params: { status?: string; page: number; pageSize: number }) => {
-    const where = params.status ? { status: params.status } : {}
+    const statuses = params.status
+      ? params.status
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : []
+    const where: Prisma.BookingWhereInput =
+      statuses.length > 0
+        ? statuses.length === 1
+          ? { status: statuses[0] as any }
+          : { status: { in: statuses as any[] } }
+        : {}
     return Promise.all([
       db.booking.findMany({
         where,

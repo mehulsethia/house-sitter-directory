@@ -179,11 +179,24 @@ export default function AdminDisputesPage() {
 
     setResolving(true)
     try {
-      await adminApi.resolveDispute(resolveTarget.id, {
+      const payload: {
+        resolution_type: string
+        resolution_note: string
+        refund_amount?: number
+        charge_percentage?: number
+      } = {
         resolution_type: resolveType,
         resolution_note: resolveNote,
-        refund_amount: resolveType === 'partial_refund' ? refund : null,
-        charge_percentage: ['partial_refund', 'no_refund', 'payment_released'].includes(resolveType) ? chargePct : null,
+      }
+      if (resolveType === 'partial_refund' && refund !== null) {
+        payload.refund_amount = refund
+      }
+      if (['partial_refund', 'no_refund', 'payment_released'].includes(resolveType) && chargePct !== null) {
+        payload.charge_percentage = chargePct
+      }
+
+      await adminApi.resolveDispute(resolveTarget.id, {
+        ...payload,
       })
       toast.success('Dispute resolved.')
       setResolveTarget(null)
