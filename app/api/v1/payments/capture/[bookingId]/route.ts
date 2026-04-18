@@ -3,6 +3,7 @@ import { bookingRepo } from '@/server/repositories/booking.repo'
 import { paymentRepo } from '@/server/repositories/payment.repo'
 import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
+import { config } from '@/server/config'
 
 export const POST = requireAdmin(async (_req, ctx) => {
   const { bookingId } = await ctx.params
@@ -20,7 +21,7 @@ export const POST = requireAdmin(async (_req, ctx) => {
     status: 'captured',
     stripeChargeId: typeof captured.latest_charge === 'string' ? captured.latest_charge : undefined,
     capturedAt: new Date(),
-    payoutScheduledAt: new Date(Date.now() + (Number(process.env.PAYOUT_DELAY_HOURS ?? 24)) * 60 * 60 * 1000),
+    payoutScheduledAt: new Date(Date.now() + config.PAYOUT_DELAY_HOURS * 60 * 60 * 1000),
   })
 
   return ok(updated)

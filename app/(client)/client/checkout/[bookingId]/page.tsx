@@ -138,7 +138,7 @@ export default function CheckoutPage() {
       </Card>
 
       <p className="text-xs text-center text-muted-foreground">
-        Your card is authorized now. Stripe captures it 24 hours after the job is completed unless a dispute is raised.
+        Your card is authorized now. Stripe captures it after the post-completion window unless a dispute is raised.
       </p>
     </div>
   )

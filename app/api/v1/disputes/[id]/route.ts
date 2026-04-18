@@ -5,6 +5,7 @@ import { bookingRepo } from '@/server/repositories/booking.repo'
 import { clientRepo } from '@/server/repositories/client.repo'
 import { ok, err } from '@/server/response'
 import { createDisputeSchema } from '@/server/schemas/dispute.schema'
+import { config } from '@/server/config'
 
 export const POST = requireClient(async (req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
@@ -22,9 +23,13 @@ export const POST = requireClient(async (req: NextRequest, ctx, user) => {
     return err('Completed timestamp missing for this booking', 400)
   }
 
-  const disputeDeadline = new Date(booking.completedAt.getTime() + 24 * 60 * 60 * 1000)
+  const disputeWindowMs = config.CAPTURE_DELAY_HOURS * 60 * 60 * 1000
+  const disputeWindowLabel = config.CAPTURE_DELAY_HOURS >= 1
+    ? `${config.CAPTURE_DELAY_HOURS} hour${config.CAPTURE_DELAY_HOURS === 1 ? '' : 's'}`
+    : `${Math.round(config.CAPTURE_DELAY_HOURS * 60)} minute${Math.round(config.CAPTURE_DELAY_HOURS * 60) === 1 ? '' : 's'}`
+  const disputeDeadline = new Date(booking.completedAt.getTime() + disputeWindowMs)
   if (Date.now() > disputeDeadline.getTime()) {
-    return err('Dispute window has expired (24 hours after completion)', 400)
+    return err(`Dispute window has expired (${disputeWindowLabel} after completion)`, 400)
   }
 
   const existing = await disputeRepo.findByBookingId(id)

@@ -17,6 +17,8 @@ import type { BookingRead, ClientDispute } from '@/types'
 import { toast } from 'sonner'
 
 type ReportStatus = 'open' | 'under_review' | 'resolved' | 'closed'
+const DISPUTE_WINDOW_MINUTES = Number(process.env.NEXT_PUBLIC_POST_COMPLETION_BUFFER_MINUTES ?? 30)
+const DISPUTE_WINDOW_MS = DISPUTE_WINDOW_MINUTES * 60 * 1000
 
 const STATUS_STYLES: Record<ReportStatus, string> = {
   open: 'bg-rose-100 text-rose-700',
@@ -68,7 +70,7 @@ function ClientReportPageContent() {
       if (disputeBookingIds.has(b.id)) return false
       const completedAt = b.completed_at ? new Date(b.completed_at).getTime() : 0
       if (!completedAt) return false
-      return now <= completedAt + 24 * 60 * 60 * 1000
+      return now <= completedAt + DISPUTE_WINDOW_MS
     })
   }, [bookings, disputeBookingIds])
 
@@ -179,7 +181,7 @@ function ClientReportPageContent() {
           {eligibleBookings.length === 0 ? (
             <EmptyState
               title="No eligible bookings"
-              description="Only completed bookings in the 24-hour dispute window can be reported."
+              description={`Only completed bookings in the ${DISPUTE_WINDOW_MINUTES}-minute dispute window can be reported.`}
             />
           ) : (
             <>
