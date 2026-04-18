@@ -349,11 +349,12 @@ export default function BookingFlowPage() {
       .then(([cleanerRes, clientRes]) => {
         setCleaner(cleanerRes.data ?? null)
         const cp = (clientRes as any)?.data ?? null
+        const cpAny = (cp ?? {}) as any
+        const user = cpAny.user ?? {}
         setClientProfile(cp)
 
         // Autofill from client profile
         if (cp) {
-          const user = cp.user
           if (user?.name) {
             const parts = user.name.trim().split(' ')
             setFirstName(parts[0] ?? '')
@@ -361,9 +362,9 @@ export default function BookingFlowPage() {
           }
           if (user?.email) setEmail(user.email)
           if (user?.phone) setPhone(user.phone)
-          if (cp.default_address) setAddress(cp.default_address)
-          if (cp.default_city) setCity(cp.default_city)
-          if (cp.default_postcode) setPostcode(cp.default_postcode)
+          if (cpAny.default_address ?? cpAny.defaultAddress) setAddress(cpAny.default_address ?? cpAny.defaultAddress)
+          if (cpAny.default_city ?? cpAny.defaultCity) setCity(cpAny.default_city ?? cpAny.defaultCity)
+          if (cpAny.default_postcode ?? cpAny.defaultPostcode) setPostcode(cpAny.default_postcode ?? cpAny.defaultPostcode)
         }
       })
       .catch(() => toast.error('Failed to load data'))
@@ -603,36 +604,36 @@ export default function BookingFlowPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <Label className="text-sm font-semibold">First Name</Label>
-                    <Input value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1" placeholder="John" />
+                    <Label className="text-sm font-semibold">First Name <span className="text-red-500">*</span></Label>
+                    <Input required value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1" placeholder="John" />
                   </div>
                   <div>
-                    <Label className="text-sm font-semibold">Last Name</Label>
-                    <Input value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1" placeholder="Doe" />
+                    <Label className="text-sm font-semibold">Last Name <span className="text-red-500">*</span></Label>
+                    <Input required value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1" placeholder="Doe" />
                   </div>
                   <div>
-                    <Label className="text-sm font-semibold">Email</Label>
-                    <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" placeholder="john@example.com" />
+                    <Label className="text-sm font-semibold">Email <span className="text-red-500">*</span></Label>
+                    <Input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" placeholder="john@example.com" />
                   </div>
                   <div>
-                    <Label className="text-sm font-semibold">Phone Number</Label>
+                    <Label className="text-sm font-semibold">Phone Number <span className="text-red-500">*</span></Label>
                     <PhoneInput value={phone} onChange={setPhone} className="mt-1" />
                   </div>
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold">Service Address</Label>
-                  <Input value={address} onChange={e => setAddress(e.target.value)} className="mt-1" placeholder="Street address" />
+                  <Label className="text-sm font-semibold">Service Address <span className="text-red-500">*</span></Label>
+                  <Input required value={address} onChange={e => setAddress(e.target.value)} className="mt-1" placeholder="Street address" />
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <Label className="text-sm font-semibold">City</Label>
-                    <Input value={city} onChange={e => setCity(e.target.value)} className="mt-1" placeholder="Dublin" />
+                    <Label className="text-sm font-semibold">City <span className="text-red-500">*</span></Label>
+                    <Input required value={city} onChange={e => setCity(e.target.value)} className="mt-1" placeholder="Dublin" />
                   </div>
                   <div>
-                    <Label className="text-sm font-semibold">ZIP Code</Label>
-                    <Input value={postcode} onChange={e => setPostcode(e.target.value)} className="mt-1" placeholder="D01 AB12" />
+                    <Label className="text-sm font-semibold">ZIP Code <span className="text-red-500">*</span></Label>
+                    <Input required value={postcode} onChange={e => setPostcode(e.target.value)} className="mt-1" placeholder="D01 AB12" />
                   </div>
                 </div>
 

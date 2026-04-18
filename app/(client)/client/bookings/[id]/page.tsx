@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { Calendar, Clock, MapPin } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, MapPin } from 'lucide-react'
 import { authApi, bookingsApi, paymentsApi, reviewsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { PriceBreakdownCard } from '@/components/price-breakdown-card'
@@ -124,6 +124,13 @@ export default function ClientBookingDetailPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-5">
+      <div>
+        <Button variant="outline" size="sm" onClick={() => router.push('/client/bookings')}>
+          <ArrowLeft className="h-4 w-4" />
+          Back to bookings
+        </Button>
+      </div>
+
       <div className="flex items-center justify-between">
         <h1 className="marketplace-title text-2xl text-slate-900">Booking details</h1>
         <BookingStatusBadge status={booking.status} />

@@ -196,7 +196,7 @@ export default function CleanerDashboardPage() {
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between p-4 !pt-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Total Revenue</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{formatCurrency(stats.totalRevenue)}</p>
@@ -206,7 +206,7 @@ export default function CleanerDashboardPage() {
         </Card>
 
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between p-4 !pt-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Jobs Completed</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{stats.completed.length}</p>
@@ -216,7 +216,7 @@ export default function CleanerDashboardPage() {
         </Card>
 
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between p-4 !pt-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Active Jobs</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{stats.active.length}</p>
@@ -226,7 +226,7 @@ export default function CleanerDashboardPage() {
         </Card>
 
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-4">
+          <CardContent className="flex items-center justify-between p-4 !pt-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-slate-500">Average Rating</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{avgRating ? Number(avgRating).toFixed(1) : '—'}</p>

@@ -207,6 +207,8 @@ export const paymentsApi = {
     }),
   createConnectOnboardLink: () =>
     request<APIResponse<{ url: string }>>('/payments/connect/onboard', { method: 'POST' }),
+  createConnectDashboardLink: () =>
+    request<APIResponse<{ url: string }>>('/payments/connect/dashboard', { method: 'POST' }),
   getConnectStatus: () =>
     request<APIResponse<{
       connected: boolean

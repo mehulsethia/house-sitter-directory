@@ -175,6 +175,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
   const [blockInput, setBlockInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [addingBlocked, setAddingBlocked] = useState(false)
 
   // ── Load ──────────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -381,6 +382,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
 
   // ── Block dates ───────────────────────────────────────────────────────────
   async function addBlockedDate() {
+    if (addingBlocked) return
     if (!blockInput) {
       toast.error('Select a date to block.')
       return
@@ -391,6 +393,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
       return
     }
 
+    setAddingBlocked(true)
     try {
       const startOfDay = new Date(date)
       startOfDay.setHours(0, 0, 0, 0)
@@ -413,6 +416,8 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
       toast.success('Date blocked.')
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to block date.')
+    } finally {
+      setAddingBlocked(false)
     }
   }
 
@@ -585,10 +590,11 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
                 type="date"
                 value={blockInput}
                 min={new Date().toISOString().split('T')[0]}
+                disabled={addingBlocked}
                 onChange={(e) => setBlockInput(e.target.value)}
                 placeholder="Select days when you are unavailable"
               />
-              <Button className="w-full" onClick={addBlockedDate}>
+              <Button className="w-full" onClick={addBlockedDate} loading={addingBlocked}>
                 Add unavailable dates
               </Button>
             </div>
@@ -656,10 +662,11 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
               type="date"
               value={blockInput}
               min={new Date().toISOString().split('T')[0]}
+              disabled={addingBlocked}
               onChange={(e) => setBlockInput(e.target.value)}
               className="flex-1"
             />
-            <Button size="sm" onClick={addBlockedDate}>
+            <Button size="sm" onClick={addBlockedDate} loading={addingBlocked}>
               Add
             </Button>
           </div>

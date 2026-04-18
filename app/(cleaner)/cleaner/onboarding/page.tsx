@@ -142,6 +142,7 @@ function CleanerOnboardingPageContent() {
   }
 
   async function saveStep1() {
+    if (saving) return
     if (!profileImage) return toast.error('Profile picture is required.')
     if (!bio.trim()) return toast.error('Professional bio is required.')
     if (!hourlyRate || Number(hourlyRate) < 15) return toast.error('Min hourly rate is €15.')
@@ -168,6 +169,7 @@ function CleanerOnboardingPageContent() {
   }
 
   async function saveStep2() {
+    if (saving) return
     if (!transportMode) return toast.error('Select mode of transport.')
     if (transportMode === 'requires_pickup' && !pickupLocation.trim()) {
       return toast.error('Pick-up/drop-off location is required.')
@@ -200,6 +202,7 @@ function CleanerOnboardingPageContent() {
   }
 
   async function finishStep4() {
+    if (saving) return
     if (!stripeConnected) {
       toast.error('Stripe connection is required to continue.')
       return
@@ -220,17 +223,31 @@ function CleanerOnboardingPageContent() {
   }
 
   async function connectStripe() {
+    if (saving) return
     try {
-      const res = await paymentsApi.createConnectOnboardLink()
+      const res = stripeConnected
+        ? await paymentsApi.createConnectDashboardLink()
+        : await paymentsApi.createConnectOnboardLink()
       const url = res.data?.url
-      if (!url) throw new Error('Could not create Stripe onboarding link.')
+      if (!url) throw new Error('Could not open Stripe.')
       window.location.href = url
     } catch (err: any) {
-      toast.error(err.message ?? 'Failed to connect Stripe.')
+      toast.error(err.message ?? 'Failed to open Stripe.')
     }
   }
 
   if (loading) return <FormPageSkeleton />
+
+  async function saveScheduleAndContinue() {
+    if (saving) return
+    if (!scheduleSaveRef.current) return
+    setSaving(true)
+    try {
+      await scheduleSaveRef.current()
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="max-w-xl mx-auto">
@@ -427,7 +444,7 @@ function CleanerOnboardingPageContent() {
                 <Button variant="outline" onClick={() => setStep(2)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <Button onClick={() => scheduleSaveRef.current?.()} loading={saving} className="min-w-36">Save & Continue</Button>
+                <Button onClick={saveScheduleAndContinue} loading={saving} className="min-w-36">Save & Continue</Button>
               </div>
             </div>
           )}

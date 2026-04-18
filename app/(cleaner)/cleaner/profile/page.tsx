@@ -155,6 +155,12 @@ function CleanerProfilePageContent() {
     return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
   }, [reviews])
 
+  const paymentHistory = useMemo(() => {
+    return bookings
+      .filter((b) => b.payment || ['completed', 'disputed', 'confirmed', 'in_progress'].includes(b.status))
+      .sort((a, b) => new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime())
+  }, [bookings])
+
   function toggleSkill(skill: string) {
     setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]))
   }
@@ -203,13 +209,16 @@ function CleanerProfilePageContent() {
   }
 
   async function connectStripe() {
+    if (saving || submitting) return
     try {
-      const res = await paymentsApi.createConnectOnboardLink()
+      const res = stripe.connected
+        ? await paymentsApi.createConnectDashboardLink()
+        : await paymentsApi.createConnectOnboardLink()
       const url = res.data?.url
-      if (!url) throw new Error('Could not generate Stripe onboarding link.')
+      if (!url) throw new Error('Could not generate Stripe link.')
       window.location.href = url
     } catch (err: any) {
-      toast.error(err.message ?? 'Failed to connect Stripe.')
+      toast.error(err.message ?? 'Failed to open Stripe.')
     }
   }
 
@@ -286,7 +295,7 @@ function CleanerProfilePageContent() {
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <div className="space-y-4">
           <Card className="border-slate-200">
-            <CardContent className="p-5 text-center">
+            <CardContent className="p-5 !pt-5 text-center">
               <div className="mx-auto mb-3">
                 <AvatarUpload
                   currentUrl={profileImageUrl}
@@ -308,7 +317,7 @@ function CleanerProfilePageContent() {
           </Card>
 
           <Card className="border-slate-200">
-            <CardContent className="space-y-2 p-5 text-sm">
+            <CardContent className="space-y-2 p-5 !pt-5 text-sm">
               <p className="font-semibold text-slate-900">Performance Stats</p>
               <div className="flex items-center justify-between text-slate-600"><span>Total Jobs</span><strong>{stats.totalJobs}</strong></div>
               <div className="flex items-center justify-between text-slate-600"><span>Completion Rate</span><strong>{stats.completionRate}%</strong></div>
@@ -318,7 +327,7 @@ function CleanerProfilePageContent() {
           </Card>
 
           <Card className="border-slate-200">
-            <CardContent className="space-y-2 p-5">
+            <CardContent className="space-y-2 p-5 !pt-5">
               <p className="font-semibold text-slate-900">Quick Actions</p>
               <button onClick={() => setTab('overview')} className="flex w-full items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"><ChartNoAxesCombined className="h-4 w-4 text-primary" />View Overview</button>
               <button onClick={() => setTab('availability')} className="flex w-full items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"><CalendarDays className="h-4 w-4 text-primary" />Update Availability</button>
@@ -474,6 +483,47 @@ function CleanerProfilePageContent() {
                     Connect Stripe to receive payouts for completed jobs.
                   </div>
                 )}
+
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-base font-semibold text-slate-900">Payment History</p>
+                  <p className="mt-1 text-xs text-slate-500">Completed and active booking payments</p>
+
+                  {paymentHistory.length === 0 ? (
+                    <p className="mt-4 rounded-lg border border-dashed border-slate-300 p-3 text-sm text-slate-500">
+                      No payment records yet. Completed bookings and their payout/payment states will appear here.
+                    </p>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      {paymentHistory.map((b) => (
+                        <div key={b.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {(b.service_type ?? 'Service').replace(/_/g, ' ')}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {new Date(b.scheduled_start).toLocaleDateString('en-IE', {
+                                weekday: 'short',
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                                timeZone: 'Europe/Nicosia',
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
+                            <p className="text-xs text-slate-500">
+                              Payment: {String(b.payment?.status ?? 'pending').replace(/_/g, ' ')}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              Booking: {String(b.status).replace(/_/g, ' ')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>

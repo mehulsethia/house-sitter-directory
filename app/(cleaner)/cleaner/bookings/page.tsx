@@ -109,7 +109,7 @@ export default function CleanerBookingsPage() {
 
       <div className="grid gap-6 sm:grid-cols-3">
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-10 pt-10 md:pt-10">
+          <CardContent className="flex items-center justify-between p-10 !pt-10 md:!pt-10">
             <div>
               <p className="text-xs text-slate-500">New Requests</p>
               <p className="text-2xl font-bold">{summary.pending}</p>
@@ -118,7 +118,7 @@ export default function CleanerBookingsPage() {
           </CardContent>
         </Card>
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-10 pt-10 md:pt-10">
+          <CardContent className="flex items-center justify-between p-10 !pt-10 md:!pt-10">
             <div>
               <p className="text-xs text-slate-500">In Progress</p>
               <p className="text-2xl font-bold">{summary.inProgress}</p>
@@ -127,7 +127,7 @@ export default function CleanerBookingsPage() {
           </CardContent>
         </Card>
         <Card className="border-slate-200">
-          <CardContent className="flex items-center justify-between p-10 pt-10 md:pt-10">
+          <CardContent className="flex items-center justify-between p-10 !pt-10 md:!pt-10">
             <div>
               <p className="text-xs text-slate-500">Completed</p>
               <p className="text-2xl font-bold">{summary.completed}</p>
@@ -138,7 +138,7 @@ export default function CleanerBookingsPage() {
       </div>
 
       <Card className="border-slate-200">
-        <CardContent className="space-y-10 p-10 pt-10 md:pt-10">
+        <CardContent className="space-y-10 p-10 !pt-10 md:!pt-10">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input

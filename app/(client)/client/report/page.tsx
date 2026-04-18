@@ -1,8 +1,8 @@
 'use client'
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { CalendarDays } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ArrowLeft, CalendarDays } from 'lucide-react'
 import { bookingsApi, disputesApi } from '@/lib/api'
 import { EmptyState } from '@/components/empty-state'
 import { ReportPageSkeleton } from '@/components/page-skeletons'
@@ -47,6 +47,7 @@ function getDisputeResolutionNote(dispute: any) {
 }
 
 function ClientReportPageContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const bookingFromQuery = searchParams.get('booking') ?? ''
 
@@ -163,6 +164,19 @@ function ClientReportPageContent() {
 
   return (
     <div className="space-y-5">
+      <div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            router.push(bookingFromQuery ? `/client/bookings/${bookingFromQuery}` : '/client/bookings')
+          }
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      </div>
+
       <div>
         <h1 className="marketplace-title text-3xl text-slate-900">My Reports</h1>
         <p className="text-sm text-slate-500">Raise and track disputes for your bookings.</p>
