@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarCheck2, CircleX, Clock3, Search } from 'lucide-react'
 import { bookingsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { EmptyState } from '@/components/empty-state'
 import { ListPageSkeleton } from '@/components/page-skeletons'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -34,21 +35,37 @@ const SERVICE_LABELS: Record<string, string> = {
 export default function ClientBookingsPage() {
   const [loading, setLoading] = useState(true)
   const [bookings, setBookings] = useState<BookingRead[]>([])
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<'all' | BookingStatus>('all')
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const res = await bookingsApi.my()
-        setBookings(res.data?.items ?? [])
-      } catch {
-        toast.error('Failed to load bookings.')
-      } finally {
-        setLoading(false)
-      }
-    })()
+  const loadBookings = useCallback(async () => {
+    try {
+      const res = await bookingsApi.my()
+      setBookings(res.data?.items ?? [])
+    } catch {
+      toast.error('Failed to load bookings.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    loadBookings()
+  }, [loadBookings])
+
+  async function handleComplete(bookingId: string) {
+    setActionLoadingId(bookingId)
+    try {
+      await bookingsApi.complete(bookingId)
+      toast.success('Booking marked as completed.')
+      await loadBookings()
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to mark booking as complete.')
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
 
   const filtered = useMemo(() => {
     return bookings.filter((b) => {
@@ -152,6 +169,8 @@ export default function ClientBookingsPage() {
               {filtered.map((b) => {
                 const cleanerName = (b as any)?.cleaner?.user?.name ?? 'Cleaner'
                 const canDispute = ['in_progress', 'completed', 'disputed'].includes(b.status)
+                const isActiveBooking = ['pending', 'accepted', 'confirmed', 'in_progress'].includes(b.status)
+                const canComplete = b.status === 'in_progress'
                 const chatCutoff = b.scheduled_end ? new Date(b.scheduled_end).getTime() + 30 * 60 * 1000 : Infinity
                 const canChat = ['confirmed', 'in_progress', 'completed', 'disputed'].includes(b.status) && Date.now() < chatCutoff
                 return (
@@ -191,6 +210,21 @@ export default function ClientBookingsPage() {
                         >
                           Report issue
                         </Link>
+                      )}
+                      {isActiveBooking && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleComplete(b.id)}
+                          loading={actionLoadingId === b.id}
+                          disabled={!canComplete}
+                          title={
+                            canComplete
+                              ? 'Mark this booking as complete'
+                              : 'Available when booking is in progress'
+                          }
+                        >
+                          Mark as Complete
+                        </Button>
                       )}
                     </div>
                   </article>

@@ -99,13 +99,13 @@ function ClientChatsPageContent() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
-      <Card className="border-slate-200">
+    <div className="grid min-h-[calc(100vh-11rem)] gap-4 lg:grid-cols-[360px_1fr]">
+      <Card className="border-slate-200 lg:h-full">
         <CardHeader className="pb-3">
           <CardTitle className="marketplace-title text-2xl">Chats</CardTitle>
           <p className="text-sm text-slate-500">Manage all your conversations with cleaners.</p>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="flex h-full flex-col space-y-3">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -117,7 +117,7 @@ function ClientChatsPageContent() {
               No conversations yet.
             </div>
           ) : (
-            <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
               {filtered.map((b) => {
                 const active = b.id === selectedBookingId
                 const cleanerName = (b as any)?.cleaner?.user?.name ?? 'Cleaner'
@@ -154,15 +154,15 @@ function ClientChatsPageContent() {
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200">
-        <CardContent className="p-0">
+      <Card className="border-slate-200 lg:h-full">
+        <CardContent className="h-full p-0">
           {!selected ? (
-            <div className="flex h-[70vh] flex-col items-center justify-center gap-3 text-center text-slate-500">
+            <div className="flex h-full min-h-[560px] flex-col items-center justify-center gap-3 text-center text-slate-500">
               <MessageCircleMore className="h-9 w-9 text-slate-300" />
               <p className="text-sm">Select a conversation to start chatting.</p>
             </div>
           ) : (
-            <div className="p-3 md:p-4">
+            <div className="h-full p-3 md:p-4">
               <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <p className="text-sm font-semibold text-slate-900">{SERVICE_LABELS[selected.service_type] ?? selected.service_type}</p>
                 <p className="text-xs text-slate-600">{(selected as any)?.cleaner?.user?.name ?? 'Cleaner'}</p>
@@ -171,7 +171,7 @@ function ClientChatsPageContent() {
                   Open booking details
                 </Link>
               </div>
-              <Chat bookingId={selected.id} currentUserId={currentUserId} />
+              <Chat bookingId={selected.id} currentUserId={currentUserId} fullHeight />
             </div>
           )}
         </CardContent>

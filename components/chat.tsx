@@ -12,9 +12,10 @@ import { toast } from 'sonner'
 interface ChatProps {
   bookingId: string
   currentUserId: string
+  fullHeight?: boolean
 }
 
-export function Chat({ bookingId, currentUserId }: ChatProps) {
+export function Chat({ bookingId, currentUserId, fullHeight = false }: ChatProps) {
   const [messages, setMessages] = useState<MessageRead[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -122,7 +123,13 @@ export function Chat({ bookingId, currentUserId }: ChatProps) {
   }
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border bg-background" style={{ height: 420 }}>
+    <div
+      className={cn(
+        'flex flex-col overflow-hidden rounded-2xl border bg-background',
+        fullHeight ? 'h-full min-h-[560px]' : '',
+      )}
+      style={fullHeight ? undefined : { height: 420 }}
+    >
       {/* Header */}
       <div className="px-4 py-3 border-b bg-muted/40 text-sm font-medium shrink-0">
         In-booking chat
