@@ -176,7 +176,7 @@ function ClientReportPageContent() {
           <div className="client-stage__media" aria-hidden="true" />
           <div className="client-stage__grain" aria-hidden="true" />
 
-          <div className="relative z-10 grid gap-7 px-5 py-7 sm:px-8 sm:py-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-10 lg:py-9">
+          <div className="relative z-10 grid gap-4 px-5 py-4 sm:px-6 sm:py-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-5">
             <div className="animate-stage-up space-y-4">
               <Button
                 variant="outline"
@@ -193,7 +193,7 @@ function ClientReportPageContent() {
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Resolution Desk
               </p>
-              <h1 className={`${displayFont.className} text-4xl font-extrabold tracking-[-0.03em] text-white sm:text-5xl lg:text-6xl`}>
+              <h1 className={`${displayFont.className} text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl`}>
                 Reports & Disputes
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -202,7 +202,7 @@ function ClientReportPageContent() {
             </div>
 
             <div className="animate-stage-up delay-120">
-              <div className="ml-auto grid w-full max-w-sm grid-cols-3 gap-2 rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
+              <div className="ml-auto grid w-full max-w-sm grid-cols-1 gap-2 rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm sm:grid-cols-3">
                 <StatTile label="Open" value={pendingCount} monoFont={monoFont.className} displayFont={displayFont.className} />
                 <StatTile label="Review" value={underReviewCount} monoFont={monoFont.className} displayFont={displayFont.className} />
                 <StatTile label="Done" value={resolvedCount} monoFont={monoFont.className} displayFont={displayFont.className} />

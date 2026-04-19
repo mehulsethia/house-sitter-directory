@@ -88,17 +88,17 @@ export default function ClientDashboardPage() {
           <div className="dashboard-stage__media" aria-hidden="true" />
           <div className="dashboard-stage__grain" aria-hidden="true" />
 
-          <div className="relative z-10 grid gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:min-h-[31rem] lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:px-10 lg:py-10">
+          <div className="relative z-10 grid gap-4 px-5 py-4 sm:px-6 sm:py-5 lg:min-h-[16rem] lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:px-8 lg:py-5">
             <div className="space-y-5 lg:space-y-6 animate-stage-up">
               <p className={`${monoFont.className} text-[0.72rem] uppercase tracking-[0.28em] text-white/75`}>
                 MaidHive Client Space
               </p>
 
               <div className="space-y-2">
-                <p className={`${displayFont.className} text-5xl font-extrabold tracking-[-0.03em] text-white sm:text-6xl lg:text-7xl`}>
+                <p className={`${displayFont.className} text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl`}>
                   MaidHive
                 </p>
-                <h1 className={`${displayFont.className} text-xl font-medium tracking-[-0.01em] text-white/90 sm:text-2xl`}>
+                <h1 className={`${displayFont.className} text-lg font-medium tracking-[-0.01em] text-white/90 sm:text-xl`}>
                   {firstName ? `${firstName}, your bookings are in motion.` : 'Your bookings are in motion.'}
                 </h1>
               </div>
@@ -130,7 +130,7 @@ export default function ClientDashboardPage() {
                   Live Snapshot
                 </p>
 
-                <dl className="mt-4 grid grid-cols-3 gap-4 text-white">
+                <dl className="mt-4 grid grid-cols-1 gap-3 text-white sm:grid-cols-3 sm:gap-4">
                   <div>
                     <dt className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-white/60`}>
                       Total

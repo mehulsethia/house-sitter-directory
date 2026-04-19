@@ -84,7 +84,7 @@ export default function CleanerProfilePage() {
           <div className="client-stage__media" aria-hidden="true" />
           <div className="client-stage__grain" aria-hidden="true" />
 
-          <div className="relative z-10 grid gap-7 px-5 py-7 sm:px-8 sm:py-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-10 lg:py-9">
+          <div className="relative z-10 grid gap-4 px-5 py-4 sm:px-6 sm:py-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-5">
             <div className="animate-stage-up space-y-4">
               <button
                 onClick={() => router.back()}
@@ -96,7 +96,7 @@ export default function CleanerProfilePage() {
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Cleaner Profile
               </p>
-              <h1 className={`${displayFont.className} text-4xl font-extrabold tracking-[-0.03em] text-white sm:text-5xl lg:text-6xl`}>
+              <h1 className={`${displayFont.className} text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl`}>
                 {cleanerName}
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -126,7 +126,7 @@ export default function CleanerProfilePage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-3 gap-3">
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard title="Jobs Completed" value={cleaner.total_jobs} icon={<CheckCircle className="h-6 w-6 text-[#0d4bc9]" />} displayFont={displayFont.className} />
           <MetricCard title="Average Rating" value={avgRating > 0 ? `${avgRating.toFixed(1)}/5` : '—'} icon={<Star className="h-6 w-6 text-amber-400" />} displayFont={displayFont.className} />
           <MetricCard title="Completion Rate" value={`${completionRate}%`} icon={<TrendingUp className="h-6 w-6 text-emerald-500" />} displayFont={displayFont.className} />

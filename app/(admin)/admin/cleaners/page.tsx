@@ -111,7 +111,7 @@ function CleanerCard({
         </div>
 
         {/* Metadata grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 text-sm">
+        <div className="mb-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
           {cleaner.transport_mode && (
             <div className="flex items-start gap-2">
               <Car className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -158,9 +158,9 @@ function CleanerCard({
           </div>
         )}
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">Applied {formatDate(cleaner.created_at)}</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {cleaner.status === 'pending' && (
               <>
                 <Button

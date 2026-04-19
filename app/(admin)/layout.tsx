@@ -181,11 +181,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               }}
             />
             <div className="admin-stage__grain" aria-hidden="true" />
-            <div className="relative z-10 px-5 py-7 text-white">
+            <div className="relative z-10 px-5 py-4 text-white">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Admin Console
               </p>
-              <h1 className={`${displayFont.className} mt-2 text-4xl font-extrabold tracking-[-0.03em]`}>Restricted Access</h1>
+              <h1 className={`${displayFont.className} mt-2 text-3xl font-extrabold tracking-[-0.03em]`}>Restricted Access</h1>
               <p className="mt-2 text-sm text-slate-100/90">Sign in with authorized admin credentials to continue.</p>
             </div>
           </section>
@@ -309,11 +309,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               }}
             />
             <div className="admin-stage__grain" aria-hidden="true" />
-            <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
+            <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-4">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 {stage.tag}
               </p>
-              <h1 className={`${displayFont.className} mt-2 text-4xl font-extrabold tracking-[-0.03em] text-white sm:text-5xl`}>
+              <h1 className={`${displayFont.className} mt-2 text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl`}>
                 {stage.title}
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>

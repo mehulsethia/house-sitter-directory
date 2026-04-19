@@ -157,11 +157,11 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
               }}
             />
             <div className="cleaner-stage__grain" aria-hidden="true" />
-            <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
+            <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-4">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 {stage.tag}
               </p>
-              <h1 className={`${displayFont.className} mt-2 text-4xl font-extrabold tracking-[-0.03em] text-white sm:text-5xl`}>
+              <h1 className={`${displayFont.className} mt-2 text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl`}>
                 {stage.title}
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>
@@ -276,11 +276,11 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
                 }}
               />
               <div className="cleaner-stage__grain" aria-hidden="true" />
-              <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
+              <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-4">
                 <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                   {stage.tag}
                 </p>
-                <h1 className={`${displayFont.className} mt-2 text-4xl font-extrabold tracking-[-0.03em] text-white sm:text-5xl`}>
+                <h1 className={`${displayFont.className} mt-2 text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl`}>
                   {stage.title}
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>
