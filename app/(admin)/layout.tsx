@@ -172,14 +172,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="admin-stage-bg" aria-hidden="true" />
         <div className="relative z-10 mx-auto w-full max-w-sm">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div
-              className="admin-stage__media"
-              aria-hidden="true"
-              style={{
-                backgroundImage:
-                  "linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('/images/stage/admin-login.jpg')",
-              }}
-            />
+            <div className="admin-stage__media" aria-hidden="true" />
             <div className="admin-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-4 text-white">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -254,8 +247,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Authenticated admin — full layout
   return (
-    <div className="min-h-screen flex">
-      <aside className="w-60 border-r min-h-screen flex flex-col bg-muted/20">
+    <div className="min-h-screen md:pl-60">
+      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-60 md:flex-col md:border-r md:bg-muted/20">
         <div className="px-6 py-5 border-b">
           <Link href="/admin/dashboard" className="text-base font-bold text-primary">
             MaidHive
@@ -297,17 +290,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto px-4 py-4 sm:px-6 md:px-8 md:py-6">
+      <main className="px-4 py-4 sm:px-6 md:px-8 md:py-6">
         <div className="space-y-6">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div
-              className="admin-stage__media"
-              aria-hidden="true"
-              style={{
-                backgroundImage:
-                  `linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('${stage.image}')`,
-              }}
-            />
+            <div className="admin-stage__media" aria-hidden="true" />
             <div className="admin-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-4">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -333,6 +319,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .admin-stage__media {
           position: absolute;
           inset: 0;
+          background-image:
+            linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
+            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
+            repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
           background-size: cover;
           background-position: center;
           mix-blend-mode: screen;

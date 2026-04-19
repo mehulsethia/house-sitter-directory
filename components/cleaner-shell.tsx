@@ -148,14 +148,7 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen px-3 py-6 sm:px-4 md:px-8 md:py-10">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div
-              className="cleaner-stage__media"
-              aria-hidden="true"
-              style={{
-                backgroundImage:
-                  `linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('${stage.image}')`,
-              }}
-            />
+            <div className="cleaner-stage__media" aria-hidden="true" />
             <div className="cleaner-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-4">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -180,9 +173,9 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen text-slate-900">
-      <div className="mx-auto flex max-w-[1500px]">
-        <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-72 md:shrink-0 md:flex-col md:border-r md:border-slate-200/80 md:bg-white/90 md:px-5 md:py-6 md:backdrop-blur-md">
+    <div className="min-h-screen text-slate-900 md:pl-72">
+      <div className="mx-auto max-w-[1500px]">
+        <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:h-screen md:w-72 md:flex-col md:border-r md:border-slate-200/80 md:bg-white/90 md:px-5 md:py-6 md:backdrop-blur-md">
           <Link href="/cleaner/dashboard" className="mb-8 inline-flex items-center gap-2.5">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-indigo-700 font-extrabold text-white shadow-[0_10px_24px_rgba(39,70,250,0.35)]">M</span>
             <span className="text-[1.7rem] font-bold tracking-tight text-primary">MaidHive</span>
@@ -221,7 +214,7 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
           <SidebarProfile profileHref="/cleaner/profile" role="cleaner" />
         </aside>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 px-3 py-3 backdrop-blur md:hidden">
             <div className="mb-3 flex items-center justify-between">
               <Link href="/cleaner/dashboard" className="inline-flex items-center gap-2">
@@ -267,14 +260,7 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
 
           <main className="app-shell-main mx-auto w-full max-w-[1240px] space-y-6 px-4 py-4 sm:px-6 md:px-8 md:py-6">
             <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-              <div
-                className="cleaner-stage__media"
-                aria-hidden="true"
-                style={{
-                  backgroundImage:
-                    `linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('${stage.image}')`,
-                }}
-              />
+              <div className="cleaner-stage__media" aria-hidden="true" />
               <div className="cleaner-stage__grain" aria-hidden="true" />
               <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-4">
                 <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -301,6 +287,10 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
         .cleaner-stage__media {
           position: absolute;
           inset: 0;
+          background-image:
+            linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
+            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
+            repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
           background-size: cover;
           background-position: center;
           mix-blend-mode: screen;
