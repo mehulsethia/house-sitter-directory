@@ -28,6 +28,7 @@ function cleanerStageCopy(pathname: string) {
       tag: 'MaidHive Cleaner Hub',
       title: 'Cleaner Dashboard',
       desc: 'Track jobs, manage requests, and run your cleaner business from one focused workspace.',
+      image: '/images/stage/cleaner-dashboard.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/bookings')) {
@@ -35,6 +36,7 @@ function cleanerStageCopy(pathname: string) {
       tag: 'MaidHive Cleaner Jobs',
       title: 'Cleaner Bookings',
       desc: 'Review every booking, update status, and keep delivery consistent.',
+      image: '/images/stage/cleaner-bookings.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/chats')) {
@@ -42,6 +44,7 @@ function cleanerStageCopy(pathname: string) {
       tag: 'MaidHive Conversations',
       title: 'Cleaner Chats',
       desc: 'Coordinate directly with clients and keep context tied to each job.',
+      image: '/images/stage/cleaner-chats.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/profile')) {
@@ -49,6 +52,7 @@ function cleanerStageCopy(pathname: string) {
       tag: 'MaidHive Cleaner Identity',
       title: 'Cleaner Profile',
       desc: 'Present your experience, rates, and availability with a clear professional profile.',
+      image: '/images/stage/cleaner-profile.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/availability')) {
@@ -56,6 +60,7 @@ function cleanerStageCopy(pathname: string) {
       tag: 'MaidHive Schedule Control',
       title: 'Availability',
       desc: 'Shape your schedule and block times with precision.',
+      image: '/images/stage/cleaner-availability.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/earnings')) {
@@ -63,6 +68,7 @@ function cleanerStageCopy(pathname: string) {
       tag: 'MaidHive Earnings',
       title: 'Payouts & Earnings',
       desc: 'Monitor completed payouts and performance trends over time.',
+      image: '/images/stage/cleaner-earnings.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/onboarding')) {
@@ -70,12 +76,14 @@ function cleanerStageCopy(pathname: string) {
       tag: 'MaidHive Onboarding',
       title: 'Cleaner Onboarding',
       desc: 'Complete your setup and move into live booking mode.',
+      image: '/images/stage/cleaner-onboarding.jpg',
     }
   }
   return {
     tag: 'MaidHive Cleaner',
     title: 'Cleaner Workspace',
     desc: 'Manage all cleaner operations in one place.',
+    image: '/images/stage/cleaner-default.jpg',
   }
 }
 
@@ -140,7 +148,14 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen px-3 py-6 sm:px-4 md:px-8 md:py-10">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div className="cleaner-stage__media" aria-hidden="true" />
+            <div
+              className="cleaner-stage__media"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  `linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('${stage.image}')`,
+              }}
+            />
             <div className="cleaner-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -252,7 +267,14 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
 
           <main className="app-shell-main mx-auto w-full max-w-[1240px] space-y-6 px-4 py-4 sm:px-6 md:px-8 md:py-6">
             <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-              <div className="cleaner-stage__media" aria-hidden="true" />
+              <div
+                className="cleaner-stage__media"
+                aria-hidden="true"
+                style={{
+                  backgroundImage:
+                    `linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('${stage.image}')`,
+                }}
+              />
               <div className="cleaner-stage__grain" aria-hidden="true" />
               <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
                 <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -279,9 +301,6 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
         .cleaner-stage__media {
           position: absolute;
           inset: 0;
-          background-image:
-            linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            url('/images/hero-cleaner.png');
           background-size: cover;
           background-position: center;
           mix-blend-mode: screen;

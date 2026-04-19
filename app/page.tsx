@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { LandingHeader } from '@/components/landing-header'
+import { CookieConsentBanner } from '@/components/cookie-consent-banner'
 import { ScrollReveal, StaggerChildren } from '@/components/scroll-reveal'
 import Footer from '@/components/footer'
 import {
@@ -402,6 +403,7 @@ export default function ClientLandingPage() {
       </section>
 
       <Footer />
+      <CookieConsentBanner />
     </main>
   )
 }

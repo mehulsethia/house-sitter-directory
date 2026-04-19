@@ -35,6 +35,7 @@ function adminStageCopy(pathname: string) {
       tag: 'MaidHive Admin Console',
       title: 'Platform Overview',
       desc: 'Monitor platform health, revenue, and operational signals in real time.',
+      image: '/images/stage/admin-dashboard.jpg',
     }
   }
   if (pathname.startsWith('/admin/cleaners')) {
@@ -42,6 +43,7 @@ function adminStageCopy(pathname: string) {
       tag: 'MaidHive Admin Console',
       title: 'Cleaner Operations',
       desc: 'Review onboarding quality, approvals, and cleaner account status.',
+      image: '/images/stage/admin-cleaners.jpg',
     }
   }
   if (pathname.startsWith('/admin/bookings')) {
@@ -49,6 +51,7 @@ function adminStageCopy(pathname: string) {
       tag: 'MaidHive Admin Console',
       title: 'Booking Operations',
       desc: 'Inspect booking flow, statuses, and edge-case interventions.',
+      image: '/images/stage/admin-bookings.jpg',
     }
   }
   if (pathname.startsWith('/admin/disputes')) {
@@ -56,6 +59,7 @@ function adminStageCopy(pathname: string) {
       tag: 'MaidHive Admin Console',
       title: 'Dispute Resolution',
       desc: 'Triages active disputes and apply structured resolution outcomes.',
+      image: '/images/stage/admin-disputes.jpg',
     }
   }
   if (pathname.startsWith('/admin/users')) {
@@ -63,12 +67,14 @@ function adminStageCopy(pathname: string) {
       tag: 'MaidHive Admin Console',
       title: 'User Management',
       desc: 'Audit user accounts, access controls, and account activity.',
+      image: '/images/stage/admin-users.jpg',
     }
   }
   return {
     tag: 'MaidHive Admin Console',
     title: 'Administration',
     desc: 'Control and monitor platform operations from one command surface.',
+    image: '/images/stage/admin-default.jpg',
   }
 }
 
@@ -166,7 +172,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="admin-stage-bg" aria-hidden="true" />
         <div className="relative z-10 mx-auto w-full max-w-sm">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div className="admin-stage__media" aria-hidden="true" />
+            <div
+              className="admin-stage__media"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  "linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('/images/stage/admin-login.jpg')",
+              }}
+            />
             <div className="admin-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-7 text-white">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -287,7 +300,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 overflow-auto px-4 py-4 sm:px-6 md:px-8 md:py-6">
         <div className="space-y-6">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div className="admin-stage__media" aria-hidden="true" />
+            <div
+              className="admin-stage__media"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  `linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('${stage.image}')`,
+              }}
+            />
             <div className="admin-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -313,9 +333,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .admin-stage__media {
           position: absolute;
           inset: 0;
-          background-image:
-            linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            url('/images/hero-cleaner.png');
           background-size: cover;
           background-position: center;
           mix-blend-mode: screen;

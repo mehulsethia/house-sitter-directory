@@ -283,7 +283,7 @@ export default function ClientBookingsPage() {
           inset: 0;
           background-image:
             linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            url('/images/hero-client.gif');
+            url('/images/stage/client-bookings.jpg');
           background-size: cover;
           background-position: center;
           mix-blend-mode: screen;
