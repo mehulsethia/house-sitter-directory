@@ -93,10 +93,6 @@ export default function CleanerChatsPage() {
   if (!currentUserId) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="marketplace-title text-3xl text-slate-900">Chats</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage all your client conversations.</p>
-        </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">
           Unable to load your account for chat. Please try refreshing the page.
         </div>
@@ -106,10 +102,6 @@ export default function CleanerChatsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="marketplace-title text-3xl text-slate-900">Chats</h1>
-        <p className="mt-1 text-sm text-slate-500">Manage all your client conversations.</p>
-      </div>
       <div className="grid gap-4 lg:h-[calc(100vh-12.5rem)] lg:grid-cols-[340px_1fr]">
       <Card className="border-slate-200 lg:h-full">
         <CardHeader className="pb-3">

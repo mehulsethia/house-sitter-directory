@@ -34,8 +34,6 @@ export default function EarningsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="marketplace-title text-2xl text-slate-900">Earnings</h1>
-
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>

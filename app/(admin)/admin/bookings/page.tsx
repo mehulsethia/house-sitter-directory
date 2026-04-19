@@ -129,13 +129,6 @@ export default function AdminBookingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Bookings</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {total > 0 ? `${total} total across all clients` : 'All platform bookings'}
-        </p>
-      </div>
-
       <Tabs value={activeGroup} onValueChange={v => { setActiveGroup(v) }}>
         <TabsList>
           {GROUPS.map(g => (

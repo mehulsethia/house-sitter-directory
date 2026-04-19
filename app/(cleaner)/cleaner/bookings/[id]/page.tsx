@@ -93,8 +93,7 @@ export default function CleanerBookingDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
-      <div className="flex items-center justify-between">
-        <h1 className="marketplace-title text-2xl text-slate-900">Job details</h1>
+      <div className="flex items-center justify-end">
         <BookingStatusBadge status={booking.status} />
       </div>
 

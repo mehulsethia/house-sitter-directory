@@ -78,13 +78,6 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {total > 0 ? `${total} total users` : 'All platform users'}
-        </p>
-      </div>
-
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48 max-w-sm">

@@ -294,11 +294,6 @@ export default function AdminCleanersPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-2xl font-bold">Cleaners</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Manage cleaner applications and accounts</p>
-      </div>
-
       <Tabs value={tab} onValueChange={v => setTab(v as Tab)}>
         <TabsList>
           {TAB_STATUS.map(s => (

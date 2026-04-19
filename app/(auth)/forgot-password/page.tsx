@@ -34,12 +34,6 @@ export default function ForgotPasswordPage() {
     <div className="grid md:grid-cols-2 min-h-[620px]">
       {/* Left — Branding panel */}
       <div className="hidden md:flex flex-col bg-gray-50 p-5 lg:p-6">
-        <h1 className="text-3xl lg:text-4xl font-bold text-primary mb-3 leading-tight">
-          Reset your password
-        </h1>
-        <p className="text-gray-500 text-base leading-relaxed mb-4">
-          We&apos;ll send you a link to reset your password.
-        </p>
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1 min-h-[360px]">
           <Image
             src="/images/join-maidhive.avif"

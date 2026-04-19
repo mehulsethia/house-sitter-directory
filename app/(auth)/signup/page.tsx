@@ -80,15 +80,6 @@ function SignupForm() {
     <div className="grid md:grid-cols-2 min-h-[calc(100vh-8rem)]">
       {/* Left — Branding panel */}
       <div className="hidden md:flex flex-col bg-gray-50 p-8 lg:p-10">
-        <div className="mb-5">
-          <h1 className="text-2xl lg:text-3xl font-bold text-primary mb-2 leading-tight">
-            Join MaidHive
-          </h1>
-          <p className="text-gray-500 text-sm leading-relaxed">
-            Easily connect with trusted professionals for all
-            your home service needs.
-          </p>
-        </div>
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1">
           <Image
             src="/images/join-maidhive.avif"

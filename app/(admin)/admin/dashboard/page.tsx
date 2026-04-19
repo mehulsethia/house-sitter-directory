@@ -93,11 +93,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold">Overview</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Platform health at a glance</p>
-      </div>
-
       {/* ── KPI Grid ────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard

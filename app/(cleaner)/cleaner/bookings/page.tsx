@@ -102,11 +102,6 @@ export default function CleanerBookingsPage() {
 
   return (
     <div className="space-y-12">
-      <div className="mb-4">
-        <h1 className="marketplace-title text-4xl text-slate-900">My Bookings</h1>
-        <p className="mt-3 text-sm text-slate-500">Track requests, active jobs, and completed work.</p>
-      </div>
-
       <div className="grid gap-6 sm:grid-cols-3">
         <Card className="border-slate-200">
           <CardContent className="flex items-center justify-between p-10 !pt-10 md:!pt-10">

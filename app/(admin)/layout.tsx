@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import {
   BarChart3,
   BookOpen,
@@ -25,11 +26,58 @@ const NAV = [
   { href: '/admin/users',     label: 'Users',     icon: Users },
 ]
 
+const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
+const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
+
+function adminStageCopy(pathname: string) {
+  if (pathname.startsWith('/admin/dashboard')) {
+    return {
+      tag: 'MaidHive Admin Console',
+      title: 'Platform Overview',
+      desc: 'Monitor platform health, revenue, and operational signals in real time.',
+    }
+  }
+  if (pathname.startsWith('/admin/cleaners')) {
+    return {
+      tag: 'MaidHive Admin Console',
+      title: 'Cleaner Operations',
+      desc: 'Review onboarding quality, approvals, and cleaner account status.',
+    }
+  }
+  if (pathname.startsWith('/admin/bookings')) {
+    return {
+      tag: 'MaidHive Admin Console',
+      title: 'Booking Operations',
+      desc: 'Inspect booking flow, statuses, and edge-case interventions.',
+    }
+  }
+  if (pathname.startsWith('/admin/disputes')) {
+    return {
+      tag: 'MaidHive Admin Console',
+      title: 'Dispute Resolution',
+      desc: 'Triages active disputes and apply structured resolution outcomes.',
+    }
+  }
+  if (pathname.startsWith('/admin/users')) {
+    return {
+      tag: 'MaidHive Admin Console',
+      title: 'User Management',
+      desc: 'Audit user accounts, access controls, and account activity.',
+    }
+  }
+  return {
+    tag: 'MaidHive Admin Console',
+    title: 'Administration',
+    desc: 'Control and monitor platform operations from one command surface.',
+  }
+}
+
 type AuthState = 'loading' | 'login' | 'authed'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
+  const stage = adminStageCopy(pathname)
   const [authState, setAuthState] = useState<AuthState>('loading')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -114,17 +162,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Admin login screen
   if (authState === 'login') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-indigo-700 text-xl font-extrabold text-white shadow-lg">
-              M
+      <div className="relative min-h-screen px-4 py-8">
+        <div className="admin-stage-bg" aria-hidden="true" />
+        <div className="relative z-10 mx-auto w-full max-w-sm">
+          <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+            <div className="admin-stage__media" aria-hidden="true" />
+            <div className="admin-stage__grain" aria-hidden="true" />
+            <div className="relative z-10 px-5 py-7 text-white">
+              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                MaidHive Admin Console
+              </p>
+              <h1 className={`${displayFont.className} mt-2 text-4xl font-extrabold tracking-[-0.03em]`}>Restricted Access</h1>
+              <p className="mt-2 text-sm text-slate-100/90">Sign in with authorized admin credentials to continue.</p>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Admin Console</h1>
-            <p className="mt-1 text-sm text-slate-500">Sign in with your admin credentials</p>
-          </div>
+          </section>
 
-          <form onSubmit={handleLogin} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <form onSubmit={handleLogin} className="mt-5 rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
@@ -171,6 +224,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             This area is restricted to authorized administrators.
           </p>
         </div>
+
+        <style jsx>{`
+          .admin-stage-bg {
+            position: absolute;
+            inset: 0;
+            background-image:
+              radial-gradient(circle at 14% 0%, rgba(61, 88, 247, 0.1), transparent 32%),
+              radial-gradient(circle at 100% 8%, rgba(14, 165, 233, 0.08), transparent 28%),
+              linear-gradient(180deg, #f4f7ff 0%, #f7f8fc 42%, #f8fafc 100%);
+          }
+        `}</style>
       </div>
     )
   }
@@ -220,7 +284,67 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto px-4 py-4 sm:px-6 md:px-8 md:py-6">{children}</main>
+      <main className="flex-1 overflow-auto px-4 py-4 sm:px-6 md:px-8 md:py-6">
+        <div className="space-y-6">
+          <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+            <div className="admin-stage__media" aria-hidden="true" />
+            <div className="admin-stage__grain" aria-hidden="true" />
+            <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
+              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                {stage.tag}
+              </p>
+              <h1 className={`${displayFont.className} mt-2 text-4xl font-extrabold tracking-[-0.03em] text-white sm:text-5xl`}>
+                {stage.title}
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>
+            </div>
+          </section>
+          <div>{children}</div>
+        </div>
+      </main>
+
+      <style jsx>{`
+        .admin-stage {
+          position: relative;
+          isolation: isolate;
+          background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
+        }
+
+        .admin-stage__media {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
+            url('/images/hero-cleaner.png');
+          background-size: cover;
+          background-position: center;
+          mix-blend-mode: screen;
+          opacity: 0.82;
+        }
+
+        .admin-stage__grain {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
+            radial-gradient(circle at 20% 28%, rgba(56, 220, 255, 0.22), transparent 28%),
+            radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
+          animation: admin-sweep 11s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        @keyframes admin-sweep {
+          0%,
+          100% {
+            transform: translateX(0%);
+            opacity: 1;
+          }
+          50% {
+            transform: translateX(1.6%);
+            opacity: 0.88;
+          }
+        }
+      `}</style>
     </div>
   )
 }

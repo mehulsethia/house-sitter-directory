@@ -220,11 +220,6 @@ export default function AdminDisputesPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-2xl font-bold">Disputes</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Manage and resolve client–cleaner disputes</p>
-      </div>
-
       {open.length > 0 && (
         <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 font-medium">
           <AlertTriangle className="h-4 w-4 shrink-0" />

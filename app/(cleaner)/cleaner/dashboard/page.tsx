@@ -113,11 +113,7 @@ export default function CleanerDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="marketplace-title text-3xl text-slate-900">Welcome back</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage your bookings, availability, and cleaner profile.</p>
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         <div className="flex items-center gap-2">
           <Link href="/cleaner/profile" className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50">
             Update profile
