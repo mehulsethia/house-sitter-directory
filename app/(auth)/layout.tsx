@@ -7,13 +7,30 @@ const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col">
-      <div className="auth-stage-bg" aria-hidden="true" />
+      <div
+        className="absolute inset-0"
+        aria-hidden="true"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 14% 0%, rgba(61, 88, 247, 0.1), transparent 32%), radial-gradient(circle at 100% 8%, rgba(14, 165, 233, 0.08), transparent 28%), linear-gradient(180deg, #f4f7ff 0%, #f7f8fc 42%, #f8fafc 100%)',
+        }}
+      />
       <LandingHeader />
       <div className="relative z-10 flex-1 px-4 py-6 md:px-6 md:py-8">
         <div className="mx-auto w-full max-w-6xl space-y-5">
-          <section className="auth-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div className="auth-stage__media" aria-hidden="true" />
-            <div className="auth-stage__grain" aria-hidden="true" />
+          <section className="relative isolate overflow-hidden rounded-[2rem] border border-slate-200/70 bg-[linear-gradient(125deg,#04162f_8%,#0f3b76_58%,#0e5698)]">
+            <div
+              className="absolute inset-0 bg-[url('/images/join-maidhive.avif')] bg-cover bg-center opacity-[0.84] mix-blend-screen"
+              aria-hidden="true"
+              style={{
+                backgroundImage:
+                  "linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%), url('/images/join-maidhive.avif')",
+              }}
+            />
+            <div
+              className="absolute inset-0 pointer-events-none bg-[linear-gradient(90deg,rgba(255,255,255,0.11)_0%,rgba(255,255,255,0)_45%),radial-gradient(circle_at_20%_28%,rgba(56,220,255,0.22),transparent_28%),radial-gradient(circle_at_82%_12%,rgba(244,180,0,0.2),transparent_22%)]"
+              aria-hidden="true"
+            />
             <div className="relative z-10 px-5 py-7 sm:px-8 sm:py-8">
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Access
@@ -32,58 +49,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .auth-stage-bg {
-          position: absolute;
-          inset: 0;
-          background-image:
-            radial-gradient(circle at 14% 0%, rgba(61, 88, 247, 0.1), transparent 32%),
-            radial-gradient(circle at 100% 8%, rgba(14, 165, 233, 0.08), transparent 28%),
-            linear-gradient(180deg, #f4f7ff 0%, #f7f8fc 42%, #f8fafc 100%);
-        }
-
-        .auth-stage {
-          position: relative;
-          isolation: isolate;
-          background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
-        }
-
-        .auth-stage__media {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            url('/images/join-maidhive.avif');
-          background-size: cover;
-          background-position: center;
-          mix-blend-mode: screen;
-          opacity: 0.84;
-        }
-
-        .auth-stage__grain {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-            radial-gradient(circle at 20% 28%, rgba(56, 220, 255, 0.22), transparent 28%),
-            radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
-          animation: auth-sweep 11s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        @keyframes auth-sweep {
-          0%,
-          100% {
-            transform: translateX(0%);
-            opacity: 1;
-          }
-          50% {
-            transform: translateX(1.6%);
-            opacity: 0.88;
-          }
-        }
-      `}</style>
     </div>
   )
 }
