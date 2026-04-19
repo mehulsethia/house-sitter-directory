@@ -2,6 +2,7 @@ import type Stripe from 'stripe'
 import { paymentRepo } from '../repositories/payment.repo'
 import { bookingRepo } from '../repositories/booking.repo'
 import { notificationRepo } from '../repositories/notification.repo'
+import { loopsEmailService } from './loops-email.service'
 
 export const paymentAuthorizationService = {
   async syncFromPaymentIntent(pi: Stripe.PaymentIntent) {
@@ -43,6 +44,19 @@ export const paymentAuthorizationService = {
           body: `You have a new booking request from ${booking.client.user?.name ?? 'a client'}`,
           data: { booking_id: booking.id },
         })
+
+        try {
+          await loopsEmailService.sendCleanerNewBookingRequest({
+            email: booking.cleaner.user.email,
+            fullName: booking.cleaner.user.name ?? 'Cleaner',
+            clientName: booking.client.user.name ?? 'Client',
+            date: booking.scheduledStart,
+            durationHours: Number(booking.durationHours),
+            bookingId: booking.id,
+          })
+        } catch (emailError) {
+          console.error('Failed to send cleaner new booking request email via Loops:', emailError)
+        }
       }
 
       return { updated: true, reason: 'authorized_pending_notified' as const }
@@ -50,6 +64,18 @@ export const paymentAuthorizationService = {
 
     if (booking.status === 'accepted') {
       await bookingRepo.update(booking.id, { status: 'confirmed', confirmedAt: new Date() })
+      try {
+        await loopsEmailService.sendClientBookingConfirmed({
+          email: booking.client.user.email,
+          fullName: booking.client.user.name ?? 'Client',
+          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          scheduledStart: booking.scheduledStart,
+          durationHours: Number(booking.durationHours),
+          bookingId: booking.id,
+        })
+      } catch (emailError) {
+        console.error('Failed to send client booking confirmed email via Loops:', emailError)
+      }
       return { updated: true, reason: 'authorized_accepted_confirmed' as const }
     }
 

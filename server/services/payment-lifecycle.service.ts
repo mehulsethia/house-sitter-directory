@@ -1,6 +1,7 @@
 import { db } from '../db'
 import { stripe } from '../stripe'
 import { config } from '../config'
+import { loopsEmailService } from './loops-email.service'
 
 export const paymentLifecycleService = {
   async processDueCaptures(limit = 200) {
@@ -69,6 +70,16 @@ export const paymentLifecycleService = {
 
   async expireBookingDeadlines() {
     const now = new Date()
+    const expiredPendingBookings = await db.booking.findMany({
+      where: {
+        status: 'pending',
+        acceptBy: { lt: now },
+      },
+      include: {
+        client: { include: { user: true } },
+        cleaner: { include: { user: true } },
+      },
+    })
 
     const pending = await db.booking.updateMany({
       where: {
@@ -80,12 +91,28 @@ export const paymentLifecycleService = {
       },
     })
 
+    for (const booking of expiredPendingBookings) {
+      try {
+        await loopsEmailService.sendClientBookingRejectedOrExpired({
+          email: booking.client.user.email,
+          fullName: booking.client.user.name ?? 'Client',
+          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+        })
+      } catch (emailError) {
+        console.error('Failed to send client booking expired email via Loops:', emailError)
+      }
+    }
+
     const acceptedExpired = await db.booking.findMany({
       where: {
         status: 'accepted',
         payBy: { lt: now },
       },
-      include: { payment: true },
+      include: {
+        payment: true,
+        client: { include: { user: true } },
+        cleaner: { include: { user: true } },
+      },
     })
 
     let accepted = 0
@@ -94,6 +121,16 @@ export const paymentLifecycleService = {
     for (const booking of acceptedExpired) {
       await db.booking.update({ where: { id: booking.id }, data: { status: 'expired' } })
       accepted += 1
+
+      try {
+        await loopsEmailService.sendClientBookingRejectedOrExpired({
+          email: booking.client.user.email,
+          fullName: booking.client.user.name ?? 'Client',
+          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+        })
+      } catch (emailError) {
+        console.error('Failed to send client booking expired email via Loops:', emailError)
+      }
 
       if (booking.payment && booking.payment.status === 'pending') {
         try {

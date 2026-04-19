@@ -6,6 +6,7 @@ import { clientRepo } from '@/server/repositories/client.repo'
 import { ok, err } from '@/server/response'
 import { createDisputeSchema } from '@/server/schemas/dispute.schema'
 import { config } from '@/server/config'
+import { loopsEmailService } from '@/server/services/loops-email.service'
 
 export const POST = requireClient(async (req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
@@ -47,6 +48,27 @@ export const POST = requireClient(async (req: NextRequest, ctx, user) => {
   })
 
   await bookingRepo.update(id, { status: 'disputed' })
+
+  try {
+    await loopsEmailService.sendAdminDisputeRaised({
+      bookingId: booking.id,
+      clientName: booking.client.user.name ?? 'Client',
+      cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+      date: booking.scheduledStart.toISOString(),
+    })
+  } catch (emailError) {
+    console.error('Failed to send admin dispute raised email via Loops:', emailError)
+  }
+
+  try {
+    await loopsEmailService.sendClientIssueOrNoShowNotification({
+      email: booking.client.user.email,
+      fullName: booking.client.user.name ?? 'Client',
+      bookingId: booking.id,
+    })
+  } catch (emailError) {
+    console.error('Failed to send client issue/no-show email via Loops:', emailError)
+  }
 
   return ok(dispute, 201)
 })

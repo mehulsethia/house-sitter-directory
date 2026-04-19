@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 import { db } from '@/server/db'
+import { loopsEmailService } from '@/server/services/loops-email.service'
 
 /**
  * Handles Supabase email confirmation redirects.
@@ -51,10 +52,30 @@ export async function GET(request: NextRequest) {
 
             if (dbUser.role === 'client') {
               const existing = await db.client.findFirst({ where: { userId: user.id } })
-              if (!existing) await db.client.create({ data: { userId: user.id } })
+              if (!existing) {
+                await db.client.create({ data: { userId: user.id } })
+                try {
+                  await loopsEmailService.sendClientAccountCreated({
+                    email: dbUser.email,
+                    fullName: dbUser.name ?? 'Client',
+                  })
+                } catch (emailError) {
+                  console.error('Failed to send client account created email via Loops:', emailError)
+                }
+              }
             } else if (dbUser.role === 'cleaner') {
               const existing = await db.cleaner.findFirst({ where: { userId: user.id } })
-              if (!existing) await db.cleaner.create({ data: { userId: user.id, hourlyRate: 15 } })
+              if (!existing) {
+                await db.cleaner.create({ data: { userId: user.id, hourlyRate: 15 } })
+                try {
+                  await loopsEmailService.sendCleanerSignup({
+                    email: dbUser.email,
+                    fullName: dbUser.name ?? 'Cleaner',
+                  })
+                } catch (emailError) {
+                  console.error('Failed to send cleaner signup email via Loops:', emailError)
+                }
+              }
             }
           }
         } catch {

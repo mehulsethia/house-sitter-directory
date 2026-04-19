@@ -1,6 +1,7 @@
 import { cleanerRepo } from '../repositories/cleaner.repo'
 import { db } from '../db'
 import { ServiceError } from './booking.service'
+import { loopsEmailService } from './loops-email.service'
 import type { User } from '@prisma/client'
 
 const STRIKE_SUSPEND_THRESHOLD = 3
@@ -11,12 +12,30 @@ export const cleanerService = {
     if (!cleaner) throw new ServiceError('Cleaner not found', 404)
     if (cleaner.status !== 'pending') throw new ServiceError('Cleaner is not in pending status', 400)
 
-    return cleanerRepo.update(cleanerId, {
+    const updated = await cleanerRepo.update(cleanerId, {
       status: action === 'approve' ? 'approved' : 'rejected',
       rejectionReason: action === 'reject' ? (rejectionReason ?? null) : null,
       approvedAt: action === 'approve' ? new Date() : null,
       approvedBy: action === 'approve' ? adminUser.id : null,
     })
+
+    try {
+      if (action === 'approve') {
+        await loopsEmailService.sendCleanerApplicationApproved({
+          email: updated.user.email,
+          fullName: updated.user.name ?? 'Cleaner',
+        })
+      } else {
+        await loopsEmailService.sendCleanerApplicationRejected({
+          email: updated.user.email,
+          fullName: updated.user.name ?? 'Cleaner',
+        })
+      }
+    } catch (emailError) {
+      console.error('Failed to send cleaner application status email via Loops:', emailError)
+    }
+
+    return updated
   },
 
   async issueStrike(

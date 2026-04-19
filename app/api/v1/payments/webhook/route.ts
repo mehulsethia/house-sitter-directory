@@ -4,6 +4,7 @@ import { paymentRepo } from '@/server/repositories/payment.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { paymentAuthorizationService } from '@/server/services/payment-authorization.service'
+import { loopsEmailService } from '@/server/services/loops-email.service'
 import type Stripe from 'stripe'
 
 export async function POST(req: NextRequest) {
@@ -40,11 +41,29 @@ export async function POST(req: NextRequest) {
         if (piId) {
           const payment = await paymentRepo.findByStripeIntentId(piId)
           if (payment) {
+            const wasCaptured = payment.status === 'captured'
             await paymentRepo.update(payment.id, {
               status: 'captured',
               stripeChargeId: charge.id,
               capturedAt: new Date(),
             })
+
+            if (!wasCaptured) {
+              const booking = await bookingRepo.findById(payment.bookingId)
+              if (booking) {
+                try {
+                  await loopsEmailService.sendClientPaymentReceipt({
+                    email: booking.client.user.email,
+                    fullName: booking.client.user.name ?? 'Client',
+                    amount: Number(payment.amount),
+                    cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+                    date: new Date(),
+                  })
+                } catch (emailError) {
+                  console.error('Failed to send client payment receipt email via Loops:', emailError)
+                }
+              }
+            }
           }
         }
         break
@@ -77,11 +96,27 @@ export async function POST(req: NextRequest) {
         if (piId) {
           const payment = await paymentRepo.findByStripeIntentId(piId)
           if (payment) {
+            const wasTransferred = payment.status === 'transferred'
             await paymentRepo.update(payment.id, {
               status: 'transferred',
               stripeTransferId: transfer.id,
               transferredAt: new Date(),
             })
+
+            if (!wasTransferred) {
+              const booking = await bookingRepo.findById(payment.bookingId)
+              if (booking) {
+                try {
+                  await loopsEmailService.sendCleanerPayoutNotification({
+                    email: booking.cleaner.user.email,
+                    fullName: booking.cleaner.user.name ?? 'Cleaner',
+                    amount: Number(payment.cleanerPayout),
+                  })
+                } catch (emailError) {
+                  console.error('Failed to send cleaner payout notification email via Loops:', emailError)
+                }
+              }
+            }
           }
         }
         break

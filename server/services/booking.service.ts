@@ -3,6 +3,7 @@ import { cleanerRepo } from '../repositories/cleaner.repo'
 import { clientRepo } from '../repositories/client.repo'
 import { notificationRepo } from '../repositories/notification.repo'
 import { availabilityRepo } from '../repositories/availability.repo'
+import { loopsEmailService } from './loops-email.service'
 import type { User } from '@prisma/client'
 
 const PLATFORM_FEE_PCT = Number(process.env.PLATFORM_FEE_PCT ?? 10)
@@ -77,6 +78,16 @@ export const bookingService = {
       acceptBy,
     })
 
+    try {
+      await loopsEmailService.sendClientBookingCreatedPending({
+        email: booking.client.user.email,
+        fullName: booking.client.user.name ?? 'Client',
+        cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+      })
+    } catch (emailError) {
+      console.error('Failed to send client booking created pending email via Loops:', emailError)
+    }
+
     return booking
   },
 
@@ -130,6 +141,18 @@ export const bookingService = {
       data: { booking_id: bookingId },
     })
 
+    if (action === 'accept') {
+      try {
+        await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
+          email: booking.cleaner.user.email,
+          fullName: booking.cleaner.user.name ?? 'Cleaner',
+          bookingId,
+        })
+      } catch (emailError) {
+        console.error('Failed to send cleaner booking accepted confirmation email via Loops:', emailError)
+      }
+    }
+
     return updated
   },
 
@@ -158,6 +181,17 @@ export const bookingService = {
       body: 'Client marked this booking as completed',
       data: { booking_id: bookingId },
     })
+
+    try {
+      await loopsEmailService.sendClientReviewRequest({
+        email: booking.client.user.email,
+        fullName: booking.client.user.name ?? 'Client',
+        cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+        bookingId: booking.id,
+      })
+    } catch (emailError) {
+      console.error('Failed to send client review request email via Loops:', emailError)
+    }
 
     return updated
   },
@@ -200,6 +234,27 @@ export const bookingService = {
       body: 'A booking has been cancelled',
       data: { booking_id: bookingId },
     })
+
+    try {
+      await loopsEmailService.sendClientCancellationConfirmation({
+        email: booking.client.user.email,
+        fullName: booking.client.user.name ?? 'Client',
+        date: new Date(),
+      })
+    } catch (emailError) {
+      console.error('Failed to send client cancellation confirmation email via Loops:', emailError)
+    }
+
+    if (cleaner && booking.cleanerId === cleaner.id) {
+      try {
+        await loopsEmailService.sendCleanerCancellationWarningOrStrike({
+          email: booking.cleaner.user.email,
+          fullName: booking.cleaner.user.name ?? 'Cleaner',
+        })
+      } catch (emailError) {
+        console.error('Failed to send cleaner cancellation warning/strike email via Loops:', emailError)
+      }
+    }
 
     return updated
   },

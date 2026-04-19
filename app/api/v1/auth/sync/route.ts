@@ -3,6 +3,7 @@ import { requireAuth } from '@/server/auth'
 import { userRepo } from '@/server/repositories/user.repo'
 import { clientRepo } from '@/server/repositories/client.repo'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { loopsEmailService } from '@/server/services/loops-email.service'
 import { ok } from '@/server/response'
 import { syncUserSchema } from '@/server/schemas/user.schema'
 
@@ -14,10 +15,30 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   // Ensure role-specific profile exists
   if (user.role === 'client') {
     const existing = await clientRepo.findByUserId(user.id)
-    if (!existing) await clientRepo.create(user.id)
+    if (!existing) {
+      await clientRepo.create(user.id)
+      try {
+        await loopsEmailService.sendClientAccountCreated({
+          email: user.email,
+          fullName: user.name ?? data.name ?? 'Client',
+        })
+      } catch (emailError) {
+        console.error('Failed to send client account created email via Loops:', emailError)
+      }
+    }
   } else if (user.role === 'cleaner') {
     const existing = await cleanerRepo.findByUserId(user.id)
-    if (!existing) await cleanerRepo.create(user.id)
+    if (!existing) {
+      await cleanerRepo.create(user.id)
+      try {
+        await loopsEmailService.sendCleanerSignup({
+          email: user.email,
+          fullName: user.name ?? data.name ?? 'Cleaner',
+        })
+      } catch (emailError) {
+        console.error('Failed to send cleaner signup email via Loops:', emailError)
+      }
+    }
   }
 
   const updated = await userRepo.findById(user.id)
