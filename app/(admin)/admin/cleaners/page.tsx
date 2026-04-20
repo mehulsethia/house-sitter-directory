@@ -66,8 +66,8 @@ function CleanerCard({
 }) {
   const sb = STATUS_BADGE[cleaner.status]
   return (
-    <Card>
-      <CardContent className="p-5">
+    <Card className="rounded-2xl border-slate-200">
+      <CardContent className="p-5 pt-5">
         {/* Header: avatar, name, badges, rate */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-start gap-3 min-w-0">
@@ -293,11 +293,11 @@ export default function AdminCleanersPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <Tabs value={tab} onValueChange={v => setTab(v as Tab)}>
-        <TabsList>
+    <div className="space-y-6">
+      <Tabs value={tab} onValueChange={v => setTab(v as Tab)} className="space-y-0">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 sm:grid-cols-4">
           {TAB_STATUS.map(s => (
-            <TabsTrigger key={s} value={s} className="capitalize gap-1.5">
+            <TabsTrigger key={s} value={s} className="h-9 rounded-lg capitalize gap-1.5">
               {s}
               {cleaners[s].length > 0 && (
                 <span className={`h-4 w-4 rounded-full text-[10px] flex items-center justify-center font-medium ${
@@ -326,7 +326,7 @@ export default function AdminCleanersPage() {
                 }
               />
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 sm:p-4">
                 {cleaners[s].map(c => (
                   <CleanerCard
                     key={c.id}

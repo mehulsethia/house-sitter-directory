@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { FormPageSkeleton } from '@/components/page-skeletons'
 import { ScheduleEditor } from '@/components/schedule-editor'
+import { getAccessToken } from '@/lib/auth-cache'
 import { cn } from '@/lib/utils'
 import type { CleanerOnboardingProgress, CleanerRead } from '@/types'
 import { toast } from 'sonner'
@@ -60,6 +61,7 @@ function CleanerOnboardingPageContent() {
 
   const [profileImage, setProfileImage] = useState('')
   const [profileImagePreview, setProfileImagePreview] = useState('')
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
   const [bio, setBio] = useState('')
   const [hourlyRate, setHourlyRate] = useState('')
   const [skills, setSkills] = useState<string[]>([])
@@ -141,8 +143,42 @@ function CleanerOnboardingPageContent() {
     setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]))
   }
 
+  async function handleProfileImageUpload(file: File) {
+    const localPreview = URL.createObjectURL(file)
+    setProfileImagePreview(localPreview)
+    setUploadingProfileImage(true)
+    try {
+      const token = await getAccessToken()
+      const BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
+      const form = new FormData()
+      form.append('file', file)
+
+      const res = await fetch(`${BASE}/api/v1/upload/profile-image`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      })
+
+      const json = await res.json()
+      if (!res.ok || !json.success || !json.data?.url) {
+        throw new Error(json.message ?? 'Upload failed')
+      }
+
+      setProfileImage(json.data.url)
+      setProfileImagePreview(json.data.url)
+      toast.success('Profile image uploaded.')
+    } catch (err: any) {
+      setProfileImage('')
+      setProfileImagePreview('')
+      toast.error(err.message ?? 'Failed to upload profile image.')
+    } finally {
+      setUploadingProfileImage(false)
+    }
+  }
+
   async function saveStep1() {
     if (saving) return
+    if (uploadingProfileImage) return toast.error('Please wait for image upload to finish.')
     if (!profileImage) return toast.error('Profile picture is required.')
     if (!bio.trim()) return toast.error('Professional bio is required.')
     if (!hourlyRate || Number(hourlyRate) < 15) return toast.error('Min hourly rate is €15.')
@@ -276,17 +312,15 @@ function CleanerOnboardingPageContent() {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0]
-                        if (file) {
-                          setProfileImage(file.name)
-                          setProfileImagePreview(URL.createObjectURL(file))
-                        }
+                        if (!file) return
+                        await handleProfileImageUpload(file)
                       }}
                     />
                   </label>
                   <p className="text-xs text-gray-500">
-                    {profileImage || 'Click the circle to upload a photo'}
+                    {uploadingProfileImage ? 'Uploading image...' : (profileImage ? 'Profile image ready' : 'Click the circle to upload a photo')}
                   </p>
                 </div>
               </div>

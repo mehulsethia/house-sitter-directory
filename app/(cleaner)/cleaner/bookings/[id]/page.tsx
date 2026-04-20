@@ -88,7 +88,7 @@ export default function CleanerBookingDetailPage() {
   const showChat = CHAT_STATUSES.includes(booking.status) && Date.now() < chatCutoff
 
   return (
-    <div className="mx-auto max-w-xl space-y-5">
+    <div className="w-full space-y-5">
       <button onClick={() => router.back()} className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-sm font-semibold text-slate-500 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-800">
         <ArrowLeft className="h-4 w-4" /> Back
       </button>

@@ -21,6 +21,8 @@ type CleanerVM = CleanerSummary & {
   city?: string
   years_experience?: number
   profile_image_url?: string
+  created_at?: string
+  unique_key: string
   skills: string[]
 }
 
@@ -29,6 +31,17 @@ const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600
 
 function avatarLetter(name: string) {
   return (name.trim().charAt(0) || 'C').toUpperCase()
+}
+
+function cleanerKey(cleaner: CleanerVM) {
+  return cleaner.unique_key.slice(-6).toUpperCase()
+}
+
+function joinedLabel(createdAt?: string) {
+  if (!createdAt) return null
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export default function ClientCleanersPage() {
@@ -53,7 +66,9 @@ export default function ClientCleanersPage() {
             name: cleaner?.user?.name ?? 'Cleaner',
             city: cleaner?.service_areas?.[0]?.city,
             years_experience: cleaner?.years_experience ?? cleaner?.yearsExperience,
-            profile_image_url: cleaner?.profile_image_url ?? cleaner?.profileImageUrl,
+            profile_image_url: cleaner?.profile_image_url ?? cleaner?.profileImageUrl ?? cleaner?.user?.avatar_url,
+            created_at: cleaner?.created_at ?? cleaner?.user?.created_at,
+            unique_key: cleaner?.user_id ?? cleaner?.id ?? '',
             skills: cleaner?.skills ?? [],
           })),
         )
@@ -205,15 +220,26 @@ export default function ClientCleanersPage() {
                 style={{ animationDelay: `${index * 65}ms` }}
               >
                 <div className="flex items-start gap-3">
-                  <div className="grid h-16 w-16 place-items-center rounded-full bg-[#0d4bc9]/10 text-xl font-bold text-[#0d4bc9]">
-                    {avatarLetter(cleaner.name)}
-                  </div>
+                  {cleaner.profile_image_url ? (
+                    <img
+                      src={cleaner.profile_image_url}
+                      alt={`${cleaner.name} profile`}
+                      className="h-16 w-16 rounded-full border border-slate-200 object-cover"
+                    />
+                  ) : (
+                    <div className="grid h-16 w-16 place-items-center rounded-full bg-[#0d4bc9]/10 text-xl font-bold text-[#0d4bc9]">
+                      {avatarLetter(cleaner.name)}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3 className={`${displayFont.className} truncate text-2xl font-semibold tracking-[-0.02em] text-slate-900`}>
                           {cleaner.name}
                         </h3>
+                        <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.14em] text-slate-500`}>
+                          ID {cleanerKey(cleaner)}{joinedLabel(cleaner.created_at) ? ` • Joined ${joinedLabel(cleaner.created_at)}` : ''}
+                        </p>
                         <div className="mt-1"><StarRating rating={Number(cleaner.average_rating ?? 0)} /></div>
                       </div>
                       <p className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
@@ -262,13 +288,24 @@ export default function ClientCleanersPage() {
               >
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="grid h-14 w-14 place-items-center rounded-full bg-[#0d4bc9]/10 text-lg font-bold text-[#0d4bc9]">
-                      {avatarLetter(cleaner.name)}
-                    </div>
+                    {cleaner.profile_image_url ? (
+                      <img
+                        src={cleaner.profile_image_url}
+                        alt={`${cleaner.name} profile`}
+                        className="h-14 w-14 rounded-full border border-slate-200 object-cover"
+                      />
+                    ) : (
+                      <div className="grid h-14 w-14 place-items-center rounded-full bg-[#0d4bc9]/10 text-lg font-bold text-[#0d4bc9]">
+                        {avatarLetter(cleaner.name)}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <h3 className={`${displayFont.className} truncate text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
                         {cleaner.name}
                       </h3>
+                      <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.14em] text-slate-500`}>
+                        ID {cleanerKey(cleaner)}{joinedLabel(cleaner.created_at) ? ` • Joined ${joinedLabel(cleaner.created_at)}` : ''}
+                      </p>
                       <div className="mt-1"><StarRating rating={Number(cleaner.average_rating ?? 0)} /></div>
                       <p className="mt-1 line-clamp-1 text-sm text-slate-600">{cleaner.bio || 'Professional cleaner available for bookings.'}</p>
                     </div>

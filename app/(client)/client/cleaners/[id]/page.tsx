@@ -132,7 +132,7 @@ export default function CleanerProfilePage() {
           <MetricCard title="Completion Rate" value={`${completionRate}%`} icon={<TrendingUp className="h-6 w-6 text-emerald-500" />} displayFont={displayFont.className} />
         </section>
 
-        <section className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-3 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
+        <section className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
           <div className="flex justify-center border-b border-slate-200">
             <button
               onClick={() => setTab('overview')}
@@ -157,7 +157,7 @@ export default function CleanerProfilePage() {
           </div>
 
           {tab === 'overview' && (
-            <div className="grid gap-4 p-3 lg:grid-cols-[1fr_300px]">
+            <div className="grid gap-4 p-4 lg:grid-cols-[1fr_300px]">
               <div className="space-y-4">
                 <Card className="border-slate-200">
                   <CardContent className="p-5">
@@ -215,7 +215,7 @@ export default function CleanerProfilePage() {
           )}
 
           {tab === 'reviews' && (
-            <div className="grid gap-4 p-3 lg:grid-cols-[240px_1fr]">
+            <div className="grid gap-4 p-4 lg:grid-cols-[240px_1fr]">
               <Card className="h-fit border-slate-200">
                 <CardContent className="p-5 text-center">
                   <p className={`${displayFont.className} text-4xl font-bold tracking-[-0.02em] text-slate-900`}>
@@ -253,7 +253,7 @@ export default function CleanerProfilePage() {
                 ) : (
                   deferredReviews.map((review, index) => (
                     <Card key={review.id} className="review-row border-slate-200" style={{ animationDelay: `${index * 65}ms` }}>
-                      <CardContent className="p-4">
+                      <CardContent className="p-5">
                         <div className="mb-2 flex items-start justify-between">
                           <div>
                             <p className="font-semibold text-slate-900">Client</p>
@@ -370,7 +370,7 @@ function MetricCard({
 }) {
   return (
     <Card className="border-slate-200 bg-white/90">
-      <CardContent className="flex flex-col items-center justify-center p-4 text-center">
+      <CardContent className="flex flex-col items-center justify-center p-5 text-center">
         {icon}
         <p className={`${displayFont} mt-2 text-2xl font-bold tracking-[-0.02em] text-slate-900`}>{value}</p>
         <p className="text-xs text-slate-500">{title}</p>
