@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { ok, err } from '@/server/response'
 import { config } from '@/server/config'
 import { paymentLifecycleService } from '@/server/services/payment-lifecycle.service'
+import { timingSafeEqual } from 'crypto'
 
 // POST /api/v1/jobs/reconcile
 // Intended for cron/scheduler usage.
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   const provided = req.headers.get('x-jobs-secret')
-  if (!provided || provided !== config.JOBS_SECRET) {
+  if (!provided || !safeSecretEqual(provided, config.JOBS_SECRET)) {
     return err('Unauthorized', 401)
   }
 
@@ -26,4 +27,11 @@ export async function POST(req: NextRequest) {
     captures: captureSummary,
     auto_completions: autoCompletionSummary,
   })
+}
+
+function safeSecretEqual(a: string, b: string) {
+  const aBuf = Buffer.from(a)
+  const bBuf = Buffer.from(b)
+  if (aBuf.length !== bBuf.length) return false
+  return timingSafeEqual(aBuf, bBuf)
 }

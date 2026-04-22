@@ -8,6 +8,9 @@ export const paymentRepo = {
   findByStripeIntentId: (stripePaymentIntentId: string) =>
     db.payment.findUnique({ where: { stripePaymentIntentId } }),
 
+  findByStripeChargeId: (stripeChargeId: string) =>
+    db.payment.findUnique({ where: { stripeChargeId } }),
+
   create: (data: {
     bookingId: string
     stripePaymentIntentId: string

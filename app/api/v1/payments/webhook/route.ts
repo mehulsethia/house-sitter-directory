@@ -92,9 +92,9 @@ export async function POST(req: NextRequest) {
 
       case 'transfer.created': {
         const transfer = event.data.object as Stripe.Transfer
-        const piId = typeof transfer.source_transaction === 'string' ? transfer.source_transaction : null
-        if (piId) {
-          const payment = await paymentRepo.findByStripeIntentId(piId)
+        const chargeId = typeof transfer.source_transaction === 'string' ? transfer.source_transaction : null
+        if (chargeId) {
+          const payment = await paymentRepo.findByStripeChargeId(chargeId)
           if (payment) {
             const wasTransferred = payment.status === 'transferred'
             await paymentRepo.update(payment.id, {
