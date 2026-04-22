@@ -43,7 +43,7 @@ function StatCard({
   return (
     <Link href={href}>
       <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-        <CardContent className="p-5">
+        <CardContent className="px-5 pb-5 pt-6">
           <div className="flex items-start justify-between mb-3">
             <p className="text-xs text-muted-foreground font-medium">{label}</p>
             <div className={`p-2 rounded-lg ${color}`}>

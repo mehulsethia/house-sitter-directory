@@ -717,7 +717,7 @@ export default function BookingFlowPage() {
           {/* ── Step 4: Confirmation ───────────────────────────────── */}
           {step === 4 && booking && (
             <Card className="border-slate-200">
-              <CardContent className="p-5 sm:p-8 text-center space-y-5">
+              <CardContent className="px-5 pb-5 pt-6 text-center space-y-5 sm:px-8 sm:pb-8 sm:pt-6">
                 <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center border-4 border-emerald-50">
                   <Check className="h-8 w-8 text-emerald-600" strokeWidth={3} />
                 </div>

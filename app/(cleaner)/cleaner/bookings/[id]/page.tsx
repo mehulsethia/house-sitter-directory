@@ -182,7 +182,7 @@ export default function CleanerBookingDetailPage() {
 
       {/* Job info */}
       <Card>
-        <CardContent className="p-5 space-y-3">
+        <CardContent className="space-y-3 px-5 pb-5 pt-6">
           <span className="font-semibold">{SERVICE_LABELS[booking.service_type]}</span>
           <Separator />
           <div className="space-y-2 text-sm text-muted-foreground">
@@ -202,7 +202,7 @@ export default function CleanerBookingDetailPage() {
 
       {/* Earnings */}
       <Card>
-        <CardContent className="p-5">
+        <CardContent className="px-5 pb-5 pt-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Your payout</p>

@@ -288,7 +288,7 @@ function CleanerOnboardingPageContent() {
   return (
     <div className="max-w-xl mx-auto">
       <Card className="bg-[#F7F7F8] border-[#ECECEF]">
-        <CardContent className="p-6 md:p-8">
+        <CardContent className="px-6 pb-6 pt-6 md:px-8 md:pb-8 md:pt-6">
           <StepDots current={step} />
 
           <p className="text-center text-[32px] leading-none text-primary font-semibold mb-1">

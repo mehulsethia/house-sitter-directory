@@ -291,7 +291,7 @@ function CleanerProfilePageContent() {
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <div className="space-y-4">
           <Card className="border-slate-200">
-            <CardContent className="p-5 !pt-5 text-center">
+            <CardContent className="p-5 !pt-6 text-center">
               <div className="mx-auto mb-3">
                 <AvatarUpload
                   currentUrl={profileImageUrl}
@@ -313,7 +313,7 @@ function CleanerProfilePageContent() {
           </Card>
 
           <Card className="border-slate-200">
-            <CardContent className="space-y-2 p-5 !pt-5 text-sm">
+            <CardContent className="space-y-2 p-5 !pt-6 text-sm">
               <p className="font-semibold text-slate-900">Performance Stats</p>
               <div className="flex items-center justify-between text-slate-600"><span>Total Jobs</span><strong>{stats.totalJobs}</strong></div>
               <div className="flex items-center justify-between text-slate-600"><span>Completion Rate</span><strong>{stats.completionRate}%</strong></div>
@@ -323,7 +323,7 @@ function CleanerProfilePageContent() {
           </Card>
 
           <Card className="border-slate-200">
-            <CardContent className="space-y-2 p-5 !pt-5">
+            <CardContent className="space-y-2 p-5 !pt-6">
               <p className="font-semibold text-slate-900">Quick Actions</p>
               <button onClick={() => setTab('overview')} className="flex w-full items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"><ChartNoAxesCombined className="h-4 w-4 text-primary" />View Overview</button>
               <button onClick={() => setTab('availability')} className="flex w-full items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"><CalendarDays className="h-4 w-4 text-primary" />Update Availability</button>
@@ -334,7 +334,7 @@ function CleanerProfilePageContent() {
         </div>
 
         <Card className="border-slate-200">
-          <CardContent className="p-4 md:p-6">
+          <CardContent className="px-4 pb-4 pt-6 md:px-6 md:pb-6 md:pt-6">
             <div className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-4">
               {([
                 ['overview', 'Overview'],

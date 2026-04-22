@@ -1,9 +1,9 @@
 'use client'
 
 import { Suspense, useDeferredValue, useEffect, useState, startTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
-import { ArrowLeft, CalendarDays, Search } from 'lucide-react'
+import { CalendarDays, Search } from 'lucide-react'
 import { bookingsApi, disputesApi } from '@/lib/api'
 import { EmptyState } from '@/components/empty-state'
 import { ReportPageSkeleton } from '@/components/page-skeletons'
@@ -58,7 +58,6 @@ function getDisputeResolutionNote(dispute: any) {
 }
 
 function ClientReportPageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const bookingFromQuery = searchParams.get('booking') ?? ''
 
@@ -247,18 +246,6 @@ function ClientReportPageContent() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-fit rounded-full border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                onClick={() =>
-                  router.push(bookingFromQuery ? `/client/bookings/${bookingFromQuery}` : '/client/bookings')
-                }
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Resolution Desk
               </p>

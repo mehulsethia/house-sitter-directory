@@ -68,7 +68,7 @@ function DisputeCard({
 
   return (
     <Card>
-      <CardContent className="p-5">
+      <CardContent className="px-5 pb-5 pt-6">
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">

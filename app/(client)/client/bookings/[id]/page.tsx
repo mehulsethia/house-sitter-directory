@@ -195,10 +195,10 @@ export default function ClientBookingDetailPage() {
         <section className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
           <div className="space-y-4">
             <Card className="border-slate-200 bg-white/90">
-              <CardContent className="space-y-3 p-5">
-                <span className={`${displayFont.className} text-xl font-semibold tracking-[-0.02em]`}>
+              <CardContent className="space-y-3 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
+                <h2 className={`${displayFont.className} text-xl font-semibold tracking-[-0.02em]`}>
                   Booking Information
-                </span>
+                </h2>
                 <Separator />
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <p className="flex items-center gap-2"><Calendar className="h-4 w-4" />{formatDate(booking.scheduled_start)}</p>
@@ -265,10 +265,10 @@ export default function ClientBookingDetailPage() {
             )}
 
             <Card className="border-slate-200 bg-white/90">
-              <CardContent className="space-y-2 p-5">
-                <p className={`${displayFont.className} text-lg font-semibold tracking-[-0.02em] text-slate-900`}>
+              <CardContent className="space-y-2 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
+                <h2 className={`${displayFont.className} text-lg font-semibold tracking-[-0.02em] text-slate-900`}>
                   Next actions
-                </p>
+                </h2>
                 <div className="flex flex-col gap-2">
                   {isPending && cleanerProposed && (
                     <>

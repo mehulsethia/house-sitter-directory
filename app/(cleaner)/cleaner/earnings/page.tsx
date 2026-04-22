@@ -37,25 +37,25 @@ export default function EarningsPage() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="px-4 pb-4 pt-6">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total earned</p>
             <p className="text-2xl font-bold">{formatCurrency(totalEarned)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="px-4 pb-4 pt-6">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Jobs completed</p>
             <p className="text-2xl font-bold">{settled.length}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="px-4 pb-4 pt-6">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Hours worked</p>
             <p className="text-2xl font-bold">{totalHours}h</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="px-4 pb-4 pt-6">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Pending payout</p>
             <p className="text-2xl font-bold text-yellow-600">{upcoming.length}</p>
           </CardContent>

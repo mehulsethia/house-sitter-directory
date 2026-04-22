@@ -132,7 +132,7 @@ export default function CleanerProfilePage() {
           <MetricCard title="Completion Rate" value={`${completionRate}%`} icon={<TrendingUp className="h-6 w-6 text-emerald-500" />} displayFont={displayFont.className} />
         </section>
 
-        <section className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
+        <section className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:p-6">
           <div className="flex justify-center border-b border-slate-200">
             <button
               onClick={() => setTab('overview')}
@@ -157,10 +157,10 @@ export default function CleanerProfilePage() {
           </div>
 
           {tab === 'overview' && (
-            <div className="grid gap-4 p-4 lg:grid-cols-[1fr_300px]">
+            <div className="grid gap-4 px-4 pb-4 pt-6 sm:px-5 sm:pb-5 sm:pt-6 lg:grid-cols-[1fr_300px]">
               <div className="space-y-4">
                 <Card className="border-slate-200">
-                  <CardContent className="p-5">
+                  <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
                     <h3 className={`${displayFont.className} mb-2 text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
                       About {cleanerName}
                     </h3>
@@ -183,7 +183,7 @@ export default function CleanerProfilePage() {
               </div>
 
               <Card className="h-fit border-slate-200">
-                <CardContent className="space-y-4 p-5">
+                <CardContent className="space-y-4 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
                   <h3 className="font-semibold text-slate-900">Contact Information</h3>
                   {cleaner.user?.phone && (
                     <InfoLine icon={<Phone className="h-4 w-4 text-slate-400" />} title="Phone Number" value={cleaner.user.phone} />
@@ -215,9 +215,9 @@ export default function CleanerProfilePage() {
           )}
 
           {tab === 'reviews' && (
-            <div className="grid gap-4 p-4 lg:grid-cols-[240px_1fr]">
+            <div className="grid gap-4 px-4 pb-4 pt-6 sm:px-5 sm:pb-5 sm:pt-6 lg:grid-cols-[240px_1fr]">
               <Card className="h-fit border-slate-200">
-                <CardContent className="p-5 text-center">
+                <CardContent className="px-5 pb-5 pt-6 text-center sm:px-6 sm:pb-6 sm:pt-6">
                   <p className={`${displayFont.className} text-4xl font-bold tracking-[-0.02em] text-slate-900`}>
                     {avgRating > 0 ? avgRating.toFixed(1) : '—'}
                   </p>
@@ -248,12 +248,12 @@ export default function CleanerProfilePage() {
               <div className="space-y-3">
                 {deferredReviews.length === 0 ? (
                   <Card className="border-slate-200">
-                    <CardContent className="p-8 text-center text-sm text-slate-500">No reviews yet.</CardContent>
+                    <CardContent className="px-8 pb-8 pt-6 text-center text-sm text-slate-500">No reviews yet.</CardContent>
                   </Card>
                 ) : (
                   deferredReviews.map((review, index) => (
                     <Card key={review.id} className="review-row border-slate-200" style={{ animationDelay: `${index * 65}ms` }}>
-                      <CardContent className="p-5">
+                      <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
                         <div className="mb-2 flex items-start justify-between">
                           <div>
                             <p className="font-semibold text-slate-900">Client</p>
@@ -370,7 +370,7 @@ function MetricCard({
 }) {
   return (
     <Card className="border-slate-200 bg-white/90">
-      <CardContent className="flex min-h-[124px] flex-col items-center justify-center gap-2 p-6 text-center">
+      <CardContent className="flex min-h-[124px] flex-col items-center justify-center gap-2 px-6 pb-6 pt-6 text-center">
         <span className="grid h-9 w-9 place-items-center rounded-full bg-slate-100">{icon}</span>
         <p className={`${displayFont} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>{value}</p>
         <p className="text-xs font-medium text-slate-500">{title}</p>

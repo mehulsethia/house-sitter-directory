@@ -67,7 +67,7 @@ function CleanerCard({
   const sb = STATUS_BADGE[cleaner.status]
   return (
     <Card className="rounded-2xl border-slate-200">
-      <CardContent className="p-5 sm:p-6">
+      <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
         {/* Header: avatar, name, badges, rate */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-start gap-3 min-w-0">
