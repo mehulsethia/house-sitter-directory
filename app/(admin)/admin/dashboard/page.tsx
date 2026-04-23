@@ -117,7 +117,7 @@ export default function AdminDashboard() {
           icon={TrendingUp}
           color="bg-emerald-50 text-emerald-600"
           href="/admin/bookings"
-          sub="15% platform fee"
+          sub="10% platform fee"
         />
         <StatCard
           label="Active bookings"

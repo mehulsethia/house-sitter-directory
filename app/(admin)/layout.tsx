@@ -178,7 +178,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Admin Console
               </p>
-              <h1 className={`${displayFont.className} mt-2 text-3xl font-extrabold tracking-[-0.03em]`}>Restricted Access</h1>
               <p className="mt-2 text-sm text-slate-100/90">Sign in with authorized admin credentials to continue.</p>
             </div>
           </section>

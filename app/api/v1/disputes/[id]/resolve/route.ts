@@ -16,7 +16,11 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
 
     const dispute = await disputeRepo.findById(id)
     if (!dispute) return err('Dispute not found', 404)
-    if (dispute.status === 'resolved') return err('Dispute already resolved', 400)
+    if (dispute.status === 'resolved' || dispute.status === 'closed') {
+      // Idempotent behavior prevents confusing "already resolved" hard failures
+      // when admin retries resolution from a stale UI state.
+      return ok(dispute)
+    }
 
     const payment = await paymentRepo.findByBookingId(dispute.bookingId)
     let resolvedRefundAmount: number | undefined = parsed.data.refund_amount
@@ -152,7 +156,12 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
       resolvedAt: new Date(),
     })
 
-    await bookingRepo.update(dispute.bookingId, { status: 'completed' })
+    try {
+      await bookingRepo.update(dispute.bookingId, { status: 'completed' })
+    } catch (bookingUpdateError) {
+      // Do not roll back a successfully resolved dispute due to a booking update side-effect.
+      console.error('Resolved dispute but failed to update booking status:', bookingUpdateError)
+    }
 
     return ok(updated)
   } catch (error: any) {

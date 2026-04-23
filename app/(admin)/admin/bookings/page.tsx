@@ -16,6 +16,11 @@ import { toast } from 'sonner'
 
 const GROUPS: { key: string; label: string; statuses: BookingStatus[] }[] = [
   {
+    key: 'all',
+    label: 'All',
+    statuses: [],
+  },
+  {
     key: 'active',
     label: 'Active',
     statuses: ['pending', 'accepted', 'confirmed', 'in_progress'],
@@ -29,11 +34,6 @@ const GROUPS: { key: string; label: string; statuses: BookingStatus[] }[] = [
     key: 'issues',
     label: 'Issues',
     statuses: ['disputed', 'cancelled', 'expired'],
-  },
-  {
-    key: 'all',
-    label: 'All',
-    statuses: [],
   },
 ]
 

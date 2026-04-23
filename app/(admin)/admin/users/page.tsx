@@ -79,8 +79,8 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-48 max-w-sm">
+      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name or email…"
@@ -92,7 +92,7 @@ export default function AdminUsersPage() {
         <Select
           value={roleFilter}
           onChange={e => { setRoleFilter(e.target.value); setPage(1) }}
-          className="w-36"
+          className="w-full"
         >
           <option value="">All roles</option>
           <option value="client">Clients</option>

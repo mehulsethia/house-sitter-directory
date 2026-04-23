@@ -7,6 +7,7 @@ import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { ok, err } from '@/server/response'
 import { createDisputeSchema } from '@/server/schemas/dispute.schema'
 import { loopsEmailService } from '@/server/services/loops-email.service'
+import { config } from '@/server/config'
 
 const ISSUE_LABELS: Record<string, string> = {
   cleaner_didnt_arrive: "Cleaner didn't arrive",
@@ -66,9 +67,9 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
 
     if (booking.status !== 'in_progress') {
       if (!booking.completedAt) return err('Completed timestamp missing for this booking', 400)
-      const disputeWindowMs = 24 * 60 * 60 * 1000
+      const disputeWindowMs = config.DISPUTE_WINDOW_HOURS * 60 * 60 * 1000
       if (Date.now() > booking.completedAt.getTime() + disputeWindowMs) {
-        return err('Dispute window has expired (24 hours after completion)', 400)
+        return err(`Dispute window has expired (${config.DISPUTE_WINDOW_HOURS} hours after completion)`, 400)
       }
     }
   }

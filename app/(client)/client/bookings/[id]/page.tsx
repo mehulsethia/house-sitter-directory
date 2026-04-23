@@ -40,9 +40,7 @@ export default function ClientBookingDetailPage() {
   const [booking, setBooking] = useState<BookingRead | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [cancelOpen, setCancelOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
-  const [cancelReason, setCancelReason] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
@@ -74,24 +72,6 @@ export default function ClientBookingDetailPage() {
         // webhook may still complete the transition shortly
       })
   }, [id, searchParams])
-
-  async function handleCancel() {
-    if (!cancelReason.trim()) {
-      toast.error('Please provide a cancellation reason.')
-      return
-    }
-    setActionLoading(true)
-    try {
-      await bookingsApi.cancel(id, cancelReason)
-      toast.success('Booking cancelled.')
-      setCancelOpen(false)
-      await refresh()
-    } catch (err: any) {
-      toast.error(err.message)
-    } finally {
-      setActionLoading(false)
-    }
-  }
 
   async function handleReview() {
     setActionLoading(true)
@@ -134,7 +114,6 @@ export default function ClientBookingDetailPage() {
   if (loading) return <DetailPageSkeleton />
   if (!booking) return <div className="py-16 text-center text-muted-foreground">Booking not found.</div>
 
-  const canCancel = ['pending', 'accepted', 'confirmed'].includes(booking.status)
   const paymentStatus = booking.payment?.status ?? null
   const isAuthorized = ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
   const canAuthorize = ['pending', 'accepted'].includes(booking.status) && !isAuthorized
@@ -229,20 +208,6 @@ export default function ClientBookingDetailPage() {
               }}
             />
 
-            {showChat && currentUserId ? (
-              <Card className="border-slate-200 bg-white/90">
-                <CardHeader>
-                  <CardTitle className="text-base">Messages</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Chat bookingId={id} currentUserId={currentUserId} />
-                </CardContent>
-              </Card>
-            ) : !showChat ? (
-              <p className="text-center text-xs text-muted-foreground">
-                Chat will be available once the cleaner accepts and card authorization is confirmed.
-              </p>
-            ) : null}
           </div>
 
           <div className="space-y-4">
@@ -300,41 +265,27 @@ export default function ClientBookingDetailPage() {
                       Leave a review
                     </Button>
                   )}
-                  {canCancel && (
-                    <Button variant="destructive" onClick={() => setCancelOpen(true)}>
-                      Cancel booking
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
+
+            {showChat && currentUserId ? (
+              <Card className="border-slate-200 bg-white/90">
+                <CardHeader>
+                  <CardTitle className="text-base">Messages</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Chat bookingId={id} currentUserId={currentUserId} />
+                </CardContent>
+              </Card>
+            ) : !showChat ? (
+              <p className="text-center text-xs text-muted-foreground">
+                Chat will be available once the cleaner accepts and card authorization is confirmed.
+              </p>
+            ) : null}
           </div>
         </section>
       </div>
-
-      <Dialog open={cancelOpen} onClose={() => setCancelOpen(false)}>
-        <DialogTitle>Cancel booking</DialogTitle>
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            {booking.status === 'confirmed'
-              ? 'Cancelling after payment may result in a partial or no refund depending on timing.'
-              : 'Cancellation before payment is free.'}
-          </p>
-          <div>
-            <Label>Reason</Label>
-            <Textarea
-              value={cancelReason}
-              onChange={(event) => setCancelReason(event.target.value)}
-              placeholder="Why are you cancelling?"
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-          <Button onClick={handleCancel} variant="destructive" className="w-full" loading={actionLoading}>
-            Confirm cancellation
-          </Button>
-        </div>
-      </Dialog>
 
       <Dialog open={counterOpen} onClose={() => setCounterOpen(false)}>
         <DialogTitle>Counter with one new time</DialogTitle>

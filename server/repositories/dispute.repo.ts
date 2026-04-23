@@ -6,6 +6,8 @@ const disputeSelect = {
   bookingId: true,
   raisedBy: true,
   reason: true,
+  issueType: true,
+  explanation: true,
   evidence: true,
   status: true,
   resolutionType: true,

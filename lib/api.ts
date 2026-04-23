@@ -72,6 +72,11 @@ async function executeRequest<T>(path: string, options: RequestInit, method: str
     headers: { ...headers, ...options.headers },
   })
   if (!res.ok) {
+    if (method !== 'GET') {
+      // A failed mutation can still change server state (e.g. idempotent endpoints).
+      // Clear cached reads so admin pages don't keep stale status cards.
+      clearApiCache()
+    }
     const error = await res.json().catch(() => ({ detail: 'Unknown error' }))
     throw new Error(error.detail ?? error.message ?? `Request failed: ${res.status}`)
   }

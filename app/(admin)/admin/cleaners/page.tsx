@@ -64,6 +64,10 @@ function CleanerCard({
   onToggleSuspend?: () => void
   loading: boolean
 }) {
+  const fallbackUser = (cleaner as any).user as { name?: string; email?: string; phone?: string } | undefined
+  const cleanerName = cleaner.user_name || fallbackUser?.name || 'Cleaner'
+  const cleanerEmail = cleaner.user_email || fallbackUser?.email || ''
+  const cleanerPhone = cleaner.user_phone || fallbackUser?.phone
   const sb = STATUS_BADGE[cleaner.status]
   return (
     <Card className="rounded-2xl border-slate-200">
@@ -80,7 +84,7 @@ function CleanerCard({
             )}
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <span className="font-semibold text-lg">{cleaner.user_name}</span>
+                <span className="font-semibold text-lg">{cleanerName}</span>
                 <Badge variant={sb.variant}>{sb.label}</Badge>
                 {cleaner.identity_verified && (
                   <Badge variant="outline" className="text-[10px] py-0">ID verified</Badge>
@@ -90,16 +94,20 @@ function CleanerCard({
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{cleaner.user_email}</span>
-                {cleaner.user_phone && (
-                  <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{cleaner.user_phone}</span>
+                {cleanerEmail && (
+                  <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{cleanerEmail}</span>
+                )}
+                {cleanerPhone && (
+                  <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{cleanerPhone}</span>
                 )}
               </div>
             </div>
           </div>
           <div className="text-right shrink-0">
             <p className="text-sm font-medium">{formatCurrency(cleaner.hourly_rate)}/hr</p>
-            <p className="text-xs text-muted-foreground">{cleaner.years_experience}y experience</p>
+            <p className="text-xs text-muted-foreground">
+              {cleaner.years_experience > 0 ? `${cleaner.years_experience}y experience` : 'Experience not set'}
+            </p>
             {cleaner.average_rating !== undefined && cleaner.average_rating !== null && (
               <div className="flex items-center justify-end gap-1 mt-0.5">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -245,7 +253,7 @@ export default function AdminCleanersPage() {
     setActionLoading(cleaner.id)
     try {
       await adminApi.approveCleaner(cleaner.id, 'approve')
-      toast.success(`${cleaner.user_name} approved.`)
+      toast.success(`${cleaner.user_name || 'Cleaner'} approved.`)
       loadTab('pending')
       loadTab('approved')
     } catch (err: any) {
@@ -261,7 +269,7 @@ export default function AdminCleanersPage() {
     setRejecting(true)
     try {
       await adminApi.approveCleaner(rejectTarget.id, 'reject', rejectReason)
-      toast.success(`${rejectTarget.user_name} rejected.`)
+      toast.success(`${rejectTarget.user_name || 'Cleaner'} rejected.`)
       setRejectTarget(null)
       setRejectReason('')
       loadTab('pending')
@@ -280,8 +288,8 @@ export default function AdminCleanersPage() {
       const newStatus = res.data?.status
       toast.success(
         newStatus === 'suspended'
-          ? `${cleaner.user_name} suspended.`
-          : `${cleaner.user_name} reinstated.`,
+          ? `${cleaner.user_name || 'Cleaner'} suspended.`
+          : `${cleaner.user_name || 'Cleaner'} reinstated.`,
       )
       loadTab('approved')
       loadTab('suspended')

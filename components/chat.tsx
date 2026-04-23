@@ -23,6 +23,32 @@ export function Chat({ bookingId, currentUserId, fullHeight = false }: ChatProps
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  const mergeMessages = useCallback((existing: MessageRead[], incoming: MessageRead[]) => {
+    const byId = new Map<string, MessageRead>()
+    for (const message of existing) byId.set(message.id, message)
+    for (const message of incoming) byId.set(message.id, message)
+    return Array.from(byId.values()).sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    )
+  }, [])
+
+  const loadHistory = useCallback(
+    async (background = false) => {
+      try {
+        const response = await messagesApi.getHistory(bookingId)
+        const next = response.data ?? []
+        setMessages((prev) => (background ? mergeMessages(prev, next) : next))
+      } catch {
+        if (!background) {
+          toast.error('Failed to load messages')
+        }
+      } finally {
+        if (!background) setLoading(false)
+      }
+    },
+    [bookingId, mergeMessages],
+  )
+
   // Scroll to bottom whenever messages change
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -30,12 +56,9 @@ export function Chat({ bookingId, currentUserId, fullHeight = false }: ChatProps
 
   // Load message history
   useEffect(() => {
-    messagesApi
-      .getHistory(bookingId)
-      .then(r => setMessages(r.data ?? []))
-      .catch(() => toast.error('Failed to load messages'))
-      .finally(() => setLoading(false))
-  }, [bookingId])
+    setLoading(true)
+    loadHistory(false)
+  }, [bookingId, loadHistory])
 
   useEffect(() => {
     if (!loading) scrollToBottom()
@@ -50,25 +73,30 @@ export function Chat({ bookingId, currentUserId, fullHeight = false }: ChatProps
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'messages',
           filter: `booking_id=eq.${bookingId}`,
         },
         (payload) => {
-          const newMsg = payload.new as MessageRead
-          // Only append if we don't already have this message (avoid duplicates from optimistic update)
-          setMessages(prev =>
-            prev.some(m => m.id === newMsg.id) ? prev : [...prev, newMsg],
-          )
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const nextMessage = payload.new as MessageRead
+            setMessages((prev) => mergeMessages(prev, [nextMessage]))
+          }
         },
       )
       .subscribe()
 
+    // Fallback polling keeps chats fresh if Realtime is not enabled on Supabase publication.
+    const poll = setInterval(() => {
+      loadHistory(true)
+    }, 3000)
+
     return () => {
+      clearInterval(poll)
       supabase.removeChannel(channel)
     }
-  }, [bookingId])
+  }, [bookingId, loadHistory, mergeMessages])
 
   async function handleSend() {
     const content = input.trim()

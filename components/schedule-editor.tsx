@@ -48,6 +48,27 @@ function formatTime12(t: string): string {
   return `${h12}:${mm.toString().padStart(2, '0')} ${suffix}`
 }
 
+function dateInputTodayLocal(): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function parseDateInputLocal(dateInput: string): Date {
+  const [year, month, day] = dateInput.split('-').map(Number)
+  return new Date(year, month - 1, day, 0, 0, 0, 0)
+}
+
+function blockedDateLabel(isoDateTime: string): string {
+  return new Date(isoDateTime).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 /** Generate time options in 30-min intervals (00:00 to 23:30) */
 function generateTimeOptions(): { value: string; label: string }[] {
   const opts: { value: string; label: string }[] = []
@@ -387,8 +408,9 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
       toast.error('Select a date to block.')
       return
     }
-    const date = new Date(blockInput)
-    if (date < new Date(new Date().toDateString())) {
+    const date = parseDateInputLocal(blockInput)
+    const todayLocal = parseDateInputLocal(dateInputTodayLocal())
+    if (date < todayLocal) {
       toast.error('Cannot block past dates.')
       return
     }
@@ -589,7 +611,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
               <Input
                 type="date"
                 value={blockInput}
-                min={new Date().toISOString().split('T')[0]}
+                min={dateInputTodayLocal()}
                 disabled={addingBlocked}
                 onChange={(e) => setBlockInput(e.target.value)}
                 placeholder="Select days when you are unavailable"
@@ -612,12 +634,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
                       className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm"
                     >
                       <span className="text-slate-600">
-                        {new Date(b.start_datetime).toLocaleDateString('en-IE', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          timeZone: 'Europe/Nicosia',
-                        })}
+                        {blockedDateLabel(b.start_datetime)}
                       </span>
                       <button
                         onClick={() => removeBlockedDate(b.id)}
@@ -661,7 +678,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
             <Input
               type="date"
               value={blockInput}
-              min={new Date().toISOString().split('T')[0]}
+              min={dateInputTodayLocal()}
               disabled={addingBlocked}
               onChange={(e) => setBlockInput(e.target.value)}
               className="flex-1"
@@ -678,11 +695,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
                   className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-xs"
                 >
                   <span className="text-slate-600">
-                    {new Date(b.start_datetime).toLocaleDateString(undefined, {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {blockedDateLabel(b.start_datetime)}
                   </span>
                   <button
                     onClick={() => removeBlockedDate(b.id)}

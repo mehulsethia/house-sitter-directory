@@ -3,19 +3,51 @@ import { db } from '@/server/db'
 import { ok } from '@/server/response'
 
 export const GET = requireAdmin(async () => {
-  const [totalUsers, totalCleaners, totalBookings, totalRevenue, openDisputes] = await Promise.all([
+  const [
+    totalUsers,
+    totalClients,
+    totalCleaners,
+    pendingCleaners,
+    approvedCleaners,
+    suspendedCleaners,
+    totalBookings,
+    activeBookings,
+    completedBookings,
+    revenueAgg,
+    openDisputes,
+  ] = await Promise.all([
     db.user.count({ where: { deletedAt: null } }),
+    db.client.count(),
+    db.cleaner.count(),
+    db.cleaner.count({ where: { status: 'pending' } }),
     db.cleaner.count({ where: { status: 'approved' } }),
+    db.cleaner.count({ where: { status: 'suspended' } }),
     db.booking.count(),
-    db.payment.aggregate({ _sum: { platformFee: true }, where: { status: { in: ['captured', 'transferred'] } } }),
-    db.dispute.count({ where: { status: { not: 'closed' } } }),
+    db.booking.count({
+      where: {
+        status: { in: ['pending', 'accepted', 'confirmed', 'in_progress', 'disputed'] },
+      },
+    }),
+    db.booking.count({ where: { status: 'completed' } }),
+    db.booking.aggregate({
+      _sum: { totalAmount: true, platformFee: true },
+      where: { status: 'completed' },
+    }),
+    db.dispute.count({ where: { status: { in: ['open', 'under_review'] } } }),
   ])
 
   return ok({
     total_users: totalUsers,
+    total_clients: totalClients,
     total_cleaners: totalCleaners,
+    pending_cleaners: pendingCleaners,
+    approved_cleaners: approvedCleaners,
+    suspended_cleaners: suspendedCleaners,
     total_bookings: totalBookings,
-    total_platform_revenue: Number(totalRevenue._sum.platformFee ?? 0),
+    active_bookings: activeBookings,
+    completed_bookings: completedBookings,
+    total_revenue: Number(revenueAgg._sum.totalAmount ?? 0),
+    platform_earnings: Number(revenueAgg._sum.platformFee ?? 0),
     open_disputes: openDisputes,
   })
 })

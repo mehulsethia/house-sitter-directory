@@ -14,7 +14,7 @@ import {
   Star,
   TrendingUp,
 } from 'lucide-react'
-import { cleanersApi, reviewsApi } from '@/lib/api'
+import { availabilityApi, cleanersApi, reviewsApi } from '@/lib/api'
 import { StarRating } from '@/components/star-rating'
 import { DetailPageSkeleton } from '@/components/page-skeletons'
 import { Button } from '@/components/ui/button'
@@ -31,15 +31,22 @@ export default function CleanerProfilePage() {
   const router = useRouter()
   const [cleaner, setCleaner] = useState<CleanerRead | null>(null)
   const [reviews, setReviews] = useState<ReviewRead[]>([])
+  const [bookableDates, setBookableDates] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'overview' | 'reviews'>('overview')
+  const [tab, setTab] = useState<'overview' | 'reviews' | 'availability'>('overview')
 
   useEffect(() => {
-    Promise.all([cleanersApi.getById(id), reviewsApi.getForCleaner(id)])
-      .then(([cleanerRes, reviewsRes]) => {
+    Promise.allSettled([
+      cleanersApi.getById(id),
+      reviewsApi.getForCleaner(id),
+      availabilityApi.getBookableDates(id, 2, 30),
+    ])
+      .then(([cleanerRes, reviewsRes, availabilityRes]) => {
+        if (cleanerRes.status !== 'fulfilled') throw new Error('Failed to load cleaner profile')
         startTransition(() => {
-          setCleaner(cleanerRes.data ?? null)
-          setReviews(reviewsRes.data ?? [])
+          setCleaner(cleanerRes.value.data ?? null)
+          setReviews(reviewsRes.status === 'fulfilled' ? (reviewsRes.value.data ?? []) : [])
+          setBookableDates(availabilityRes.status === 'fulfilled' ? (availabilityRes.value.data ?? []) : [])
           setLoading(false)
         })
       })
@@ -153,6 +160,16 @@ export default function CleanerProfilePage() {
               }`}
             >
               Reviews
+            </button>
+            <button
+              onClick={() => setTab('availability')}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                tab === 'availability'
+                  ? 'border-[#0d4bc9] text-[#0d4bc9]'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Availability
             </button>
           </div>
 
@@ -271,6 +288,41 @@ export default function CleanerProfilePage() {
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {tab === 'availability' && (
+            <div className="px-4 pb-4 pt-6 sm:px-5 sm:pb-5 sm:pt-6">
+              {bookableDates.length === 0 ? (
+                <Card className="border-slate-200">
+                  <CardContent className="px-8 pb-8 pt-6 text-center text-sm text-slate-500">
+                    No upcoming availability currently shown.
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="border-slate-200">
+                  <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
+                    <h3 className={`${displayFont.className} mb-3 text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
+                      Upcoming Available Dates
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {bookableDates.slice(0, 14).map((dateStr) => (
+                        <div
+                          key={dateStr}
+                          className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                        >
+                          {new Date(`${dateStr}T12:00:00`).toLocaleDateString(undefined, {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </section>
