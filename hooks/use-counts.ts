@@ -1,18 +1,18 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { toApiV1Url } from '@/lib/api-base'
 
 async function fetchCounts(): Promise<{ unread_chats: number; pending_bookings: number; unread_notifications: number }> {
   const { getAccessToken } = await import('@/lib/auth-cache')
   const token = await getAccessToken()
-  if (!token) return { unread_chats: 0, pending_bookings: 0, unread_notifications: 0 }
 
-  const BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
-  const res = await fetch(`${BASE}/api/v1/counts`, {
+  const res = await fetch(toApiV1Url('/counts'), {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    credentials: 'include',
     cache: 'no-store',
   })
 
