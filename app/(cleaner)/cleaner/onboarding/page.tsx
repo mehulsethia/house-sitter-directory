@@ -19,6 +19,46 @@ import { toast } from 'sonner'
 
 const STEP_LABELS = ['1', '2', '3', '4']
 const SKILLS = ['Ironing', 'Windows', 'Deep Cleaning', 'Move In/Out']
+const BIO_MAX_CHARS = 1000
+const MIN_HOURLY_RATE = 6
+const MAX_HOURLY_RATE = 20
+
+type ValidationIssue = {
+  code?: string
+  message?: string
+  path?: string[] | string
+}
+
+function parseValidationIssues(raw: string | undefined): ValidationIssue[] {
+  if (!raw) return []
+  const candidates = [raw]
+  const start = raw.indexOf('[{')
+  const end = raw.lastIndexOf('}]')
+  if (start >= 0 && end > start) {
+    candidates.push(raw.slice(start, end + 2))
+  }
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate)
+      if (Array.isArray(parsed)) return parsed as ValidationIssue[]
+      if (parsed && Array.isArray((parsed as any).detail)) return (parsed as any).detail as ValidationIssue[]
+      if (parsed && typeof parsed === 'object' && 'path' in parsed) return [parsed as ValidationIssue]
+    } catch {
+      // noop
+    }
+  }
+  return []
+}
+
+function getStep1FriendlyError(raw: string | undefined): string | null {
+  const issues = parseValidationIssues(raw)
+  for (const issue of issues) {
+    const field = Array.isArray(issue.path) ? String(issue.path[0] ?? '') : String(issue.path ?? '')
+    if (field === 'hourly_rate') return `Hourly rate must be between €${MIN_HOURLY_RATE} and €${MAX_HOURLY_RATE}.`
+    if (field === 'bio' && issue.code === 'too_big') return `Professional bio can be up to ${BIO_MAX_CHARS} characters.`
+  }
+  return null
+}
 
 
 function StepDots({ current }: { current: number }) {
@@ -70,6 +110,8 @@ function CleanerOnboardingPageContent() {
   const [pickupLocation, setPickupLocation] = useState('')
   const [idType, setIdType] = useState('')
   const [idFileName, setIdFileName] = useState('')
+  const [idFileUrl, setIdFileUrl] = useState('')
+  const [uploadingKyc, setUploadingKyc] = useState(false)
   const [petAcceptance, setPetAcceptance] = useState(false)
   const [workEligibilityConfirmed, setWorkEligibilityConfirmed] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -106,6 +148,7 @@ function CleanerOnboardingPageContent() {
       setPickupLocation(c.transport_pickup_location ?? c.transportPickupLocation ?? '')
       setIdType(c.id_type ?? c.idType ?? '')
       setIdFileName(c.id_file_name ?? c.idFileName ?? '')
+      setIdFileUrl(c.id_file_url ?? c.idFileUrl ?? '')
       setPetAcceptance(Boolean(c.pet_acceptance ?? c.petAcceptance))
       setWorkEligibilityConfirmed(Boolean(c.work_eligibility_confirmed ?? c.workEligibilityConfirmed))
       setTermsAccepted(Boolean(c.terms_accepted ?? c.termsAccepted))
@@ -181,8 +224,9 @@ function CleanerOnboardingPageContent() {
     if (uploadingProfileImage) return toast.error('Please wait for image upload to finish.')
     if (!profileImage) return toast.error('Profile picture is required.')
     if (!bio.trim()) return toast.error('Professional bio is required.')
-    if (!hourlyRate || Number(hourlyRate) < 15) return toast.error('Min hourly rate is €15.')
-    if (Number(hourlyRate) > 100) return toast.error('Max hourly rate is €100.')
+    if (bio.trim().length > BIO_MAX_CHARS) return toast.error(`Professional bio can be up to ${BIO_MAX_CHARS} characters.`)
+    if (!hourlyRate || Number(hourlyRate) < MIN_HOURLY_RATE) return toast.error(`Min hourly rate is €${MIN_HOURLY_RATE}.`)
+    if (Number(hourlyRate) > MAX_HOURLY_RATE) return toast.error(`Max hourly rate is €${MAX_HOURLY_RATE}.`)
     if (skills.length === 0) return toast.error('Select at least one skill.')
 
     setSaving(true)
@@ -198,7 +242,8 @@ function CleanerOnboardingPageContent() {
       setProgress(res.data?.onboarding ?? progress)
       setStep(2)
     } catch (err: any) {
-      toast.error(err.message ?? 'Failed to save step 1.')
+      const friendly = getStep1FriendlyError(err?.message)
+      toast.error(friendly ?? err?.message ?? 'Failed to save step 1.')
     } finally {
       setSaving(false)
     }
@@ -206,6 +251,7 @@ function CleanerOnboardingPageContent() {
 
   async function saveStep2() {
     if (saving) return
+    if (uploadingKyc) return toast.error('Please wait for KYC document upload to finish.')
     if (!transportMode) return toast.error('Select mode of transport.')
     if (transportMode === 'requires_pickup' && !pickupLocation.trim()) {
       return toast.error('Pick-up/drop-off location is required.')
@@ -222,6 +268,7 @@ function CleanerOnboardingPageContent() {
         transport_pickup_location: transportMode === 'requires_pickup' ? pickupLocation : null,
         id_type: idType,
         id_file_name: idFileName,
+        id_file_url: idFileUrl || null,
         pet_acceptance: petAcceptance,
         work_eligibility_confirmed: workEligibilityConfirmed,
         terms_accepted: termsAccepted,
@@ -266,9 +313,40 @@ function CleanerOnboardingPageContent() {
         : await paymentsApi.createConnectOnboardLink()
       const url = res.data?.url
       if (!url) throw new Error('Could not open Stripe.')
-      window.location.href = url
+      const opened = window.open(url, '_blank', 'noopener,noreferrer')
+      if (!opened) throw new Error('Please allow popups to open Stripe.')
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to open Stripe.')
+    }
+  }
+
+  async function handleKycUpload(file: File) {
+    if (!file) return
+    setUploadingKyc(true)
+    try {
+      const token = await getAccessToken()
+      const BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
+      const form = new FormData()
+      form.append('file', file)
+
+      const res = await fetch(`${BASE}/api/v1/upload/kyc-document`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      })
+
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !json.success || !json.data?.url) {
+        throw new Error(json.message ?? 'Failed to upload KYC document.')
+      }
+
+      setIdFileName(String(json.data.file_name ?? file.name))
+      setIdFileUrl(String(json.data.url))
+      toast.success('KYC document uploaded.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to upload KYC document.')
+    } finally {
+      setUploadingKyc(false)
     }
   }
 
@@ -332,22 +410,24 @@ function CleanerOnboardingPageContent() {
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="Enter your professional bio"
                   rows={4}
+                  maxLength={BIO_MAX_CHARS}
                   className="mt-2"
                 />
+                <p className="text-xs text-gray-500 mt-1">Maximum {BIO_MAX_CHARS} characters.</p>
               </div>
 
               <div>
                 <Label className="text-sm font-medium">Hourly Rate <span className="text-red-500">*</span></Label>
                 <Input
                   type="number"
-                  min={15}
-                  max={100}
+                  min={MIN_HOURLY_RATE}
+                  max={MAX_HOURLY_RATE}
                   value={hourlyRate}
                   onChange={(e) => setHourlyRate(e.target.value)}
-                  placeholder="Enter your hourly rate (€15 – €100)"
+                  placeholder={`Enter your hourly rate (€${MIN_HOURLY_RATE} – €${MAX_HOURLY_RATE})`}
                   className="mt-2"
                 />
-                <p className="text-xs text-gray-500 text-right mt-1">€15 – €100 per hour</p>
+                <p className="text-xs text-gray-500 text-right mt-1">€{MIN_HOURLY_RATE} – €{MAX_HOURLY_RATE} per hour</p>
               </div>
 
               <div>
@@ -417,14 +497,25 @@ function CleanerOnboardingPageContent() {
                 <div className="mt-2 space-y-2">
                   <Input
                     value={idFileName}
-                    onChange={(e) => setIdFileName(e.target.value)}
-                    placeholder="Click to upload a file"
+                    readOnly
+                    placeholder="Upload a file below"
                   />
                   <input
                     type="file"
                     className="text-xs"
-                    onChange={(e) => setIdFileName(e.target.files?.[0]?.name ?? '')}
+                    accept=".pdf,image/*"
+                    disabled={uploadingKyc}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      await handleKycUpload(file)
+                    }}
                   />
+                  {idFileUrl && (
+                    <a href={idFileUrl} target="_blank" rel="noreferrer" className="block text-xs font-medium text-primary hover:underline">
+                      View uploaded KYC document
+                    </a>
+                  )}
                 </div>
               </div>
 

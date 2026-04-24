@@ -15,6 +15,7 @@ interface ChatProps {
   fullHeight?: boolean
   readOnly?: boolean
   readOnlyMessage?: string
+  autoScroll?: boolean
 }
 
 export function Chat({
@@ -23,6 +24,7 @@ export function Chat({
   fullHeight = false,
   readOnly = false,
   readOnlyMessage,
+  autoScroll = true,
 }: ChatProps) {
   const [messages, setMessages] = useState<MessageRead[]>([])
   const [input, setInput] = useState('')
@@ -69,8 +71,9 @@ export function Chat({
   }, [bookingId, loadHistory])
 
   useEffect(() => {
+    if (!autoScroll) return
     if (!loading) scrollToBottom()
-  }, [messages, loading, scrollToBottom])
+  }, [messages, loading, autoScroll, scrollToBottom])
 
   // Supabase Realtime: listen for new messages on this booking
   useEffect(() => {

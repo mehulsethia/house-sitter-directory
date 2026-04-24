@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Star, ChartNoAxesCombined, CalendarDays, Wallet } from 'lucide-react'
-import { bookingsApi, cleanersApi, paymentsApi, reviewsApi, usersApi } from '@/lib/api'
+import { bookingsApi, cleanersApi, googleCalendarApi, paymentsApi, reviewsApi, usersApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,7 @@ import { ProfilePageSkeleton } from '@/components/page-skeletons'
 import { AvatarUpload } from '@/components/avatar-upload'
 import { PhoneInput } from '@/components/phone-input'
 import { ScheduleEditor } from '@/components/schedule-editor'
+import { getAccessToken } from '@/lib/auth-cache'
 import { formatCurrency } from '@/lib/utils'
 import type { BookingRead, ReviewRead } from '@/types'
 import { toast } from 'sonner'
@@ -31,6 +32,9 @@ const DAYS = [
 ]
 
 const SKILLS = ['Ironing', 'Windows', 'Deep Cleaning', 'Move In/Out']
+const BIO_MAX_CHARS = 1000
+const MIN_HOURLY_RATE = 6
+const MAX_HOURLY_RATE = 20
 
 function CleanerProfilePageContent() {
   const params = useSearchParams()
@@ -51,6 +55,10 @@ function CleanerProfilePageContent() {
   const [hourlyRate, setHourlyRate] = useState('15')
   const [transportMode, setTransportMode] = useState('')
   const [homeAddress, setHomeAddress] = useState('')
+  const [idType, setIdType] = useState('')
+  const [idFileName, setIdFileName] = useState('')
+  const [idFileUrl, setIdFileUrl] = useState('')
+  const [uploadingKyc, setUploadingKyc] = useState(false)
   const [bio, setBio] = useState('')
   const [skills, setSkills] = useState<string[]>([])
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null)
@@ -102,6 +110,9 @@ function CleanerProfilePageContent() {
       setHourlyRate(String(c.hourly_rate ?? c.hourlyRate ?? 15))
       setTransportMode(c.transport_mode ?? c.transportMode ?? '')
       setHomeAddress(c.transport_pickup_location ?? c.transportPickupLocation ?? '')
+      setIdType(c.id_type ?? c.idType ?? '')
+      setIdFileName(c.id_file_name ?? c.idFileName ?? '')
+      setIdFileUrl(c.id_file_url ?? c.idFileUrl ?? '')
       setBio(c.bio ?? '')
       setSkills(c.skills ?? [])
       setProfileImageUrl(c.profile_image_url ?? c.profileImageUrl ?? null)
@@ -135,6 +146,17 @@ function CleanerProfilePageContent() {
   useEffect(() => {
     loadAll()
   }, [])
+
+  const googleCalendarState = params.get('google_calendar')
+  useEffect(() => {
+    if (!googleCalendarState) return
+    if (googleCalendarState === 'connected') {
+      toast.success('Google Calendar connected successfully.')
+      googleCalendarApi.getStatus().catch(() => null)
+    } else if (googleCalendarState === 'failed') {
+      toast.error('Google Calendar connection failed. Please try again.')
+    }
+  }, [googleCalendarState])
 
   const stats = useMemo(() => {
     const totalJobs = bookings.length
@@ -177,8 +199,11 @@ function CleanerProfilePageContent() {
     if (!firstName.trim()) return toast.error('First name is required.')
     if (!lastName.trim()) return toast.error('Last name is required.')
     if (!phone.trim()) return toast.error('Phone is required.')
-    if (Number(hourlyRate) < 15) return toast.error('Hourly rate must be at least 15.')
+    if (Number(hourlyRate) < MIN_HOURLY_RATE || Number(hourlyRate) > MAX_HOURLY_RATE) {
+      return toast.error(`Hourly rate must be between €${MIN_HOURLY_RATE} and €${MAX_HOURLY_RATE}.`)
+    }
     if (!bio.trim()) return toast.error('Professional bio is required.')
+    if (bio.trim().length > BIO_MAX_CHARS) return toast.error(`Professional bio can be up to ${BIO_MAX_CHARS} characters.`)
     if (skills.length === 0) return toast.error('Select at least one skill.')
     if (!transportMode) return toast.error('Mode of transport is required.')
 
@@ -190,6 +215,9 @@ function CleanerProfilePageContent() {
         hourly_rate: Number(hourlyRate),
         transport_mode: transportMode,
         transport_pickup_location: homeAddress || null,
+        id_type: idType || null,
+        id_file_name: idFileName || null,
+        id_file_url: idFileUrl || null,
         bio,
         skills,
       })
@@ -224,9 +252,40 @@ function CleanerProfilePageContent() {
         : await paymentsApi.createConnectOnboardLink()
       const url = res.data?.url
       if (!url) throw new Error('Could not generate Stripe link.')
-      window.location.href = url
+      const opened = window.open(url, '_blank', 'noopener,noreferrer')
+      if (!opened) throw new Error('Please allow popups to open Stripe.')
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to open Stripe.')
+    }
+  }
+
+  async function uploadKycDocument(file: File) {
+    if (!file) return
+    setUploadingKyc(true)
+    try {
+      const token = await getAccessToken()
+      const BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
+      const form = new FormData()
+      form.append('file', file)
+
+      const res = await fetch(`${BASE}/api/v1/upload/kyc-document`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      })
+
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !json.success || !json.data?.url) {
+        throw new Error(json.message ?? 'Failed to upload KYC document.')
+      }
+
+      setIdFileName(String(json.data.file_name ?? file.name))
+      setIdFileUrl(String(json.data.url))
+      toast.success('KYC document uploaded.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to upload KYC document.')
+    } finally {
+      setUploadingKyc(false)
     }
   }
 
@@ -368,7 +427,7 @@ function CleanerProfilePageContent() {
                   <div><Label>Phone Number</Label><PhoneInput value={phone} onChange={setPhone} className="mt-1" /></div>
                   <div><Label>Home Address</Label><Input value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="mt-1" /></div>
                   <div><Label>Years of Experience</Label><Input type="number" min={0} value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} className="mt-1" /></div>
-                  <div><Label>Hourly Rate</Label><Input type="number" min={15} value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} className="mt-1" /></div>
+                  <div><Label>Hourly Rate (€{MIN_HOURLY_RATE}–€{MAX_HOURLY_RATE})</Label><Input type="number" min={MIN_HOURLY_RATE} max={MAX_HOURLY_RATE} value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} className="mt-1" /></div>
                 </div>
 
                 <div>
@@ -381,9 +440,54 @@ function CleanerProfilePageContent() {
                   </Select>
                 </div>
 
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-semibold text-slate-900">KYC Verification Document</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Upload your latest KYC file. If your application was rejected for document issues, upload the corrected document here and resubmit.
+                  </p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div>
+                      <Label>ID Type</Label>
+                      <Select value={idType} onChange={(e) => setIdType(e.target.value)} className="mt-1">
+                        <option value="">Choose an option...</option>
+                        <option value="passport">Passport</option>
+                        <option value="national_id">National ID card</option>
+                        <option value="drivers_licence">Driver&apos;s licence</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>KYC File</Label>
+                      <Input
+                        type="file"
+                        className="mt-1"
+                        accept=".pdf,image/*"
+                        disabled={uploadingKyc}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          await uploadKycDocument(file)
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {(idFileName || idFileUrl) && (
+                    <p className="mt-2 text-xs text-slate-600">
+                      Current file:{' '}
+                      {idFileUrl ? (
+                        <a href={idFileUrl} target="_blank" rel="noreferrer" className="font-medium text-primary hover:underline">
+                          {idFileName || 'View document'}
+                        </a>
+                      ) : (
+                        <span className="font-medium">{idFileName}</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+
                 <div>
                   <Label>Professional Bio</Label>
-                  <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={5} className="mt-1" />
+                  <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={5} maxLength={BIO_MAX_CHARS} className="mt-1" />
+                  <p className="text-xs text-slate-500 mt-1">Maximum {BIO_MAX_CHARS} characters.</p>
                 </div>
 
                 <div>
@@ -413,7 +517,7 @@ function CleanerProfilePageContent() {
             )}
 
             {tab === 'availability' && (
-              <div className="-mx-4 -mb-4 sm:-mx-5 sm:-mb-5">
+              <div className="pb-1">
                 <ScheduleEditor />
               </div>
             )}

@@ -130,6 +130,19 @@ export const authApi = {
     request<APIResponse<UserRead>>('/auth/sync', { method: 'POST', body: JSON.stringify(body) }),
 }
 
+export const googleCalendarApi = {
+  getConnectUrl: (returnTo = '/cleaner/profile?tab=availability') =>
+    request<APIResponse<{ url: string }>>(
+      `/auth/google/connect?return_to=${encodeURIComponent(returnTo)}`,
+    ),
+  getStatus: () =>
+    request<APIResponse<{ connected: boolean; calendar_id?: string | null; expires_at?: string | null }>>(
+      '/auth/google/status',
+    ),
+  disconnect: () =>
+    request<APIResponse<{ connected: boolean }>>('/auth/google/disconnect', { method: 'POST' }),
+}
+
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------

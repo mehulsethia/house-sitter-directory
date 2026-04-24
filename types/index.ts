@@ -61,6 +61,7 @@ export interface CleanerRead {
   transport_pickup_location?: string
   id_type?: 'passport' | 'national_id' | 'drivers_licence'
   id_file_name?: string
+  id_file_url?: string
   pet_acceptance?: boolean
   work_eligibility_confirmed?: boolean
   terms_accepted?: boolean
@@ -301,6 +302,7 @@ export interface AdminCleaner {
   transport_mode?: string
   id_type?: string
   id_file_name?: string
+  id_file_url?: string
   profile_image_url?: string
   status: 'pending' | 'approved' | 'rejected' | 'suspended'
   rejection_reason?: string

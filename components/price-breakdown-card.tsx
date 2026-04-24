@@ -2,7 +2,13 @@ import { Separator } from '@/components/ui/separator'
 import { formatCurrency } from '@/lib/utils'
 import type { PriceBreakdown } from '@/types'
 
-export function PriceBreakdownCard({ breakdown }: { breakdown: PriceBreakdown }) {
+export function PriceBreakdownCard({
+  breakdown,
+  showPlatformFee = true,
+}: {
+  breakdown: PriceBreakdown
+  showPlatformFee?: boolean
+}) {
   return (
     <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm">
       <h4 className="font-semibold tracking-tight">Price breakdown</h4>
@@ -13,10 +19,12 @@ export function PriceBreakdownCard({ breakdown }: { breakdown: PriceBreakdown })
         </span>
         <span>{formatCurrency(breakdown.subtotal)}</span>
       </div>
-      <div className="flex justify-between text-muted-foreground">
-        <span>Platform fee ({breakdown.platform_fee_pct}%)</span>
-        <span>{formatCurrency(breakdown.platform_fee)}</span>
-      </div>
+      {showPlatformFee && (
+        <div className="flex justify-between text-muted-foreground">
+          <span>Platform fee ({breakdown.platform_fee_pct}%)</span>
+          <span>{formatCurrency(breakdown.platform_fee)}</span>
+        </div>
+      )}
       <Separator />
       <div className="flex justify-between font-semibold text-base">
         <span>Total</span>

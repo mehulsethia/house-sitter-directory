@@ -49,6 +49,7 @@ model Cleaner {
   transportPickupLocation  String?   @map("transport_pickup_location")
   idType                   String?   @map("id_type")
   idFileName               String?   @map("id_file_name")
+  idFileUrl                String?   @map("id_file_url")
   petAcceptance            Boolean   @default(false) @map("pet_acceptance")
   workEligibilityConfirmed Boolean   @default(false) @map("work_eligibility_confirmed")
   termsAccepted            Boolean   @default(false) @map("terms_accepted")

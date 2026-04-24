@@ -43,6 +43,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
       : {}),
     ...(parsed.data.id_type !== undefined ? { idType: parsed.data.id_type } : {}),
     ...(parsed.data.id_file_name !== undefined ? { idFileName: parsed.data.id_file_name } : {}),
+    ...(parsed.data.id_file_url !== undefined ? { idFileUrl: parsed.data.id_file_url } : {}),
     ...(parsed.data.pet_acceptance !== undefined ? { petAcceptance: parsed.data.pet_acceptance } : {}),
     ...(parsed.data.work_eligibility_confirmed !== undefined
       ? { workEligibilityConfirmed: parsed.data.work_eligibility_confirmed }

@@ -3,6 +3,7 @@ import { paymentRepo } from '../repositories/payment.repo'
 import { bookingRepo } from '../repositories/booking.repo'
 import { loopsEmailService } from './loops-email.service'
 import { pushInAppNotification } from './in-app-notification.service'
+import { googleCalendarService } from './google-calendar.service'
 
 export const paymentAuthorizationService = {
   async syncFromPaymentIntent(pi: Stripe.PaymentIntent) {
@@ -64,6 +65,9 @@ export const paymentAuthorizationService = {
 
     if (booking.status === 'accepted') {
       await bookingRepo.update(booking.id, { status: 'confirmed', confirmedAt: new Date() })
+      void googleCalendarService.upsertCleanerBookingEvent(booking.id).catch((e) => {
+        console.error('Failed to sync cleaner Google Calendar event:', e)
+      })
       await pushInAppNotification({
         userId: booking.client.userId,
         type: 'booking_confirmed',

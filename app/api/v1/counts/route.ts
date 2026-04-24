@@ -59,18 +59,7 @@ export const GET = requireAuth(async (_req, _ctx, user) => {
           })
           const adminIds = adminUsers.map((u) => u.id)
           if (adminIds.length === 0) return 0
-          return db.notification.count({
-            where: {
-              userId: { in: adminIds },
-              isRead: false,
-              NOT: {
-                data: {
-                  path: ['_archived'],
-                  equals: true,
-                },
-              },
-            },
-          })
+          return notificationRepo.countUnreadForUsers(adminIds)
         })()
       : await notificationRepo.countUnread(userId)
 

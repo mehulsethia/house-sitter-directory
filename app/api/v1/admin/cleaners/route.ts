@@ -22,6 +22,7 @@ export const GET = requireAdmin(async (req: NextRequest) => {
     transport_mode: cleaner.transportMode,
     id_type: cleaner.idType,
     id_file_name: cleaner.idFileName,
+    id_file_url: cleaner.idFileUrl,
     profile_image_url: cleaner.profileImageUrl,
     status: cleaner.status,
     rejection_reason: cleaner.rejectionReason,

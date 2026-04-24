@@ -29,6 +29,7 @@ export const cleanerRepo = {
     transportPickupLocation: string | null
     idType: string | null
     idFileName: string | null
+    idFileUrl: string | null
     petAcceptance: boolean
     workEligibilityConfirmed: boolean
     termsAccepted: boolean

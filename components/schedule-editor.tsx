@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Download, Plus, X, Trash2 } from 'lucide-react'
-import { availabilityApi } from '@/lib/api'
+import { availabilityApi, googleCalendarApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -168,7 +168,7 @@ function TimeSelect({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+      className="h-10 w-[120px] rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-primary/40 focus:ring-2 focus:ring-primary/20 sm:w-[128px]"
     >
       {filtered.map((o) => (
         <option key={o.value} value={o.value}>
@@ -197,6 +197,8 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [addingBlocked, setAddingBlocked] = useState(false)
+  const [googleConnected, setGoogleConnected] = useState(false)
+  const [googleBusy, setGoogleBusy] = useState(false)
 
   // ── Load ──────────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -243,6 +245,13 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
           // Filter out past blocked dates
           .filter((b) => new Date(b.end_datetime) > new Date())
         setBlocked(items)
+      }
+
+      if (!compact) {
+        const gcalRes = await googleCalendarApi.getStatus().catch(() => null)
+        if (gcalRes) {
+          setGoogleConnected(Boolean(gcalRes.data?.connected))
+        }
       }
     } catch {
       toast.error('Failed to load availability.')
@@ -453,6 +462,38 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
     }
   }
 
+  async function connectGoogleCalendar() {
+    if (googleBusy) return
+    setGoogleBusy(true)
+    try {
+      const res = await googleCalendarApi.getConnectUrl('/cleaner/profile?tab=availability')
+      const url = res.data?.url
+      if (!url) throw new Error('Could not start Google Calendar connection.')
+      const opened = window.open(url, '_blank', 'noopener,noreferrer')
+      if (!opened) {
+        throw new Error('Please allow popups to connect Google Calendar.')
+      }
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to open Google OAuth.')
+    } finally {
+      setGoogleBusy(false)
+    }
+  }
+
+  async function disconnectGoogleCalendar() {
+    if (googleBusy) return
+    setGoogleBusy(true)
+    try {
+      await googleCalendarApi.disconnect()
+      setGoogleConnected(false)
+      toast.success('Google Calendar disconnected.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to disconnect Google Calendar.')
+    } finally {
+      setGoogleBusy(false)
+    }
+  }
+
   // ── Get external state for onboarding ─────────────────────────────────────
   const schedulePayload = useMemo(
     () =>
@@ -479,9 +520,9 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
   }
 
   return (
-    <div className={cn('grid gap-5', compact ? '' : 'lg:grid-cols-[1fr_340px]')}>
+    <div className={cn('grid gap-4', compact ? '' : 'xl:grid-cols-[minmax(0,1fr)_320px]')}>
       {/* ── Left: Schedule ──────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200 bg-white">
+      <div className="min-w-0 rounded-2xl border border-slate-200 bg-white">
         {/* Header */}
         <div className="border-b border-slate-100 px-5 pt-4 pb-3">
           <p className="text-sm font-semibold text-slate-900">Schedule</p>
@@ -501,13 +542,13 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
             </div>
 
             {/* Day rows */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {days.map((d) => {
                 const meta = DAYS.find((dd) => dd.value === d.dayOfWeek)!
                 const hasSlots = d.slots.length > 0
 
                 return (
-                  <div key={d.dayOfWeek} className="flex gap-4">
+                  <div key={d.dayOfWeek} className="flex gap-3">
                     {/* Day circle */}
                     <div className="flex w-12 shrink-0 flex-col items-center pt-1.5">
                       <button
@@ -525,7 +566,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
                     </div>
 
                     {/* Slots */}
-                    <div className="flex-1 space-y-2">
+                    <div className="min-w-0 flex-1 space-y-2">
                       {!hasSlots ? (
                         <div className="flex h-11 items-center rounded-lg bg-slate-50 px-4">
                           <span className="text-sm text-slate-400">Unavailable</span>
@@ -535,7 +576,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
                           const isLast = slotIdx === d.slots.length - 1
 
                           return (
-                            <div key={slot.id} className="flex items-center gap-2">
+                            <div key={slot.id} className="flex flex-wrap items-center gap-2">
                               <TimeSelect
                                 value={slot.start}
                                 onChange={(v) => updateSlot(d.dayOfWeek, slot.id, 'start', v)}
@@ -546,7 +587,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
                                 onChange={(v) => updateSlot(d.dayOfWeek, slot.id, 'end', v)}
                               />
 
-                              <div className="flex items-center gap-1 ml-2">
+                              <div className="ml-0 flex items-center gap-0.5 sm:ml-1">
                                 {/* Add button: only on last slot */}
                                 {isLast && (
                                   <button
@@ -599,7 +640,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
 
       {/* ── Right: Block Dates + Google Calendar ────────────────────────── */}
       {!compact && (
-        <div className="space-y-4">
+        <div className="space-y-4 xl:w-[320px]">
           {/* Block Dates */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="text-base font-semibold text-slate-900">Block Dates</p>
@@ -655,14 +696,27 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
                 <CalendarDays className="h-8 w-8 text-primary" />
                 <p className="text-sm font-semibold text-slate-900">Google Calendar</p>
               </div>
-              <Button size="sm" variant="outline">
-                Connect
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={googleConnected ? disconnectGoogleCalendar : connectGoogleCalendar}
+                loading={googleBusy}
+              >
+                {googleConnected ? 'Disconnect' : 'Connect'}
               </Button>
             </div>
             <p className="mt-3 text-xs text-slate-500">
               Sync your personal and work calendar to avoid any clashes with your schedule
             </p>
-            <a href="#" className="mt-1 block text-xs font-medium text-primary hover:underline">
+            <p className="mt-2 text-xs font-medium text-slate-700">
+              Status: {googleConnected ? 'Connected' : 'Not connected'}
+            </p>
+            <a
+              href="https://workspace.google.com/products/calendar/"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block text-xs font-medium text-primary hover:underline"
+            >
               Click here to learn more.
             </a>
           </div>

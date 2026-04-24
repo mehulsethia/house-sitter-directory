@@ -1,5 +1,20 @@
 import { db } from '../db'
-import type { Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
+
+const NOT_ARCHIVED_WHERE = {
+  OR: [
+    { data: { equals: Prisma.DbNull } },
+    { data: { equals: Prisma.JsonNull } },
+    {
+      NOT: {
+        data: {
+          path: ['_archived'],
+          equals: true,
+        },
+      },
+    },
+  ],
+}
 
 export const notificationRepo = {
   findByUserId: (
@@ -13,16 +28,7 @@ export const notificationRepo = {
     const where = {
       userId,
       ...(unreadOnly ? { isRead: false } : {}),
-      ...(includeArchived
-        ? {}
-        : {
-            NOT: {
-              data: {
-                path: ['_archived'],
-                equals: true,
-              },
-            },
-          }),
+      ...(includeArchived ? {} : NOT_ARCHIVED_WHERE),
     }
     return Promise.all([
       db.notification.findMany({
@@ -45,12 +51,7 @@ export const notificationRepo = {
     db.notification.updateMany({
       where: {
         userId,
-        NOT: {
-          data: {
-            path: ['_archived'],
-            equals: true,
-          },
-        },
+        ...NOT_ARCHIVED_WHERE,
       },
       data: { isRead: true },
     }),
@@ -60,12 +61,7 @@ export const notificationRepo = {
       where: {
         userId,
         isRead: false,
-        NOT: {
-          data: {
-            path: ['_archived'],
-            equals: true,
-          },
-        },
+        ...NOT_ARCHIVED_WHERE,
       },
     }),
 
@@ -103,16 +99,7 @@ export const notificationRepo = {
     const where = {
       userId: { in: userIds },
       ...(unreadOnly ? { isRead: false } : {}),
-      ...(includeArchived
-        ? {}
-        : {
-            NOT: {
-              data: {
-                path: ['_archived'],
-                equals: true,
-              },
-            },
-          }),
+      ...(includeArchived ? {} : NOT_ARCHIVED_WHERE),
     }
     return Promise.all([
       db.notification.findMany({
@@ -129,14 +116,18 @@ export const notificationRepo = {
     db.notification.updateMany({
       where: {
         userId: { in: userIds },
-        NOT: {
-          data: {
-            path: ['_archived'],
-            equals: true,
-          },
-        },
+        ...NOT_ARCHIVED_WHERE,
       },
       data: { isRead: true },
+    }),
+
+  countUnreadForUsers: (userIds: string[]) =>
+    db.notification.count({
+      where: {
+        userId: { in: userIds },
+        isRead: false,
+        ...NOT_ARCHIVED_WHERE,
+      },
     }),
 
   markReadForUsers: (id: string, userIds: string[]) =>

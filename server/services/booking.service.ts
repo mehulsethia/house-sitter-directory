@@ -6,6 +6,7 @@ import { paymentRepo } from '../repositories/payment.repo'
 import { disputeRepo } from '../repositories/dispute.repo'
 import { loopsEmailService } from './loops-email.service'
 import { pushInAppNotification } from './in-app-notification.service'
+import { googleCalendarService } from './google-calendar.service'
 import { stripe } from '../stripe'
 import { config } from '../config'
 import type { User } from '@prisma/client'
@@ -174,6 +175,9 @@ export const bookingService = {
         body: 'Cleaner accepted your booking request.',
         data: { booking_id: bookingId },
       })
+      void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
+        console.error('Failed to sync cleaner Google Calendar event:', e)
+      })
       return updated
     }
 
@@ -284,6 +288,9 @@ export const bookingService = {
         body: 'The proposed booking time has been accepted and confirmed.',
         data: { booking_id: bookingId },
       })
+      void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
+        console.error('Failed to sync cleaner Google Calendar event:', e)
+      })
       return updated
     }
 
@@ -313,6 +320,9 @@ export const bookingService = {
         title: 'Booking request closed',
         body: 'No final agreement was reached for this booking request.',
         data: { booking_id: bookingId },
+      })
+      void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
+        console.error('Failed to remove cleaner Google Calendar event:', e)
       })
       return updated
     }
@@ -391,6 +401,9 @@ export const bookingService = {
       title: 'Booking Cancelled',
       body: 'A booking has been cancelled',
       data: { booking_id: bookingId },
+    })
+    void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
+      console.error('Failed to remove cleaner Google Calendar event:', e)
     })
 
     try {

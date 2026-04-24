@@ -152,7 +152,7 @@ export default function ClientBookingDetailPage() {
                 {SERVICE_LABELS[booking.service_type]}
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
-                Manage actions, view payment breakdown, and continue chat for this booking.
+                Manage actions, review booking details, and continue chat for this booking.
               </p>
             </div>
 
@@ -198,6 +198,7 @@ export default function ClientBookingDetailPage() {
             </Card>
 
             <PriceBreakdownCard
+              showPlatformFee={false}
               breakdown={{
                 hourly_rate: booking.hourly_rate,
                 duration_hours: booking.duration_hours,
@@ -281,6 +282,7 @@ export default function ClientBookingDetailPage() {
                     currentUserId={currentUserId}
                     readOnly={chatIsReadOnly}
                     readOnlyMessage="Dispute window is over for this booking. Chat is now read-only."
+                    autoScroll={false}
                   />
                 </CardContent>
               </Card>

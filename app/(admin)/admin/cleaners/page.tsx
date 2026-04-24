@@ -137,7 +137,18 @@ function CleanerCard({
                 <p className="text-xs text-muted-foreground">KYC Document</p>
                 <p className="font-medium">{ID_TYPE_LABELS[cleaner.id_type] ?? cleaner.id_type}</p>
                 {cleaner.id_file_name && (
-                  <p className="text-xs text-muted-foreground truncate max-w-[160px]">{cleaner.id_file_name}</p>
+                  cleaner.id_file_url ? (
+                    <a
+                      href={cleaner.id_file_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-primary underline underline-offset-2 hover:text-primary/80"
+                    >
+                      {cleaner.id_file_name}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-muted-foreground truncate max-w-[160px]">{cleaner.id_file_name}</p>
+                  )
                 )}
               </div>
             </div>

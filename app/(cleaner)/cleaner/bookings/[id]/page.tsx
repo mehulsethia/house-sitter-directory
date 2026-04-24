@@ -309,6 +309,7 @@ export default function CleanerBookingDetailPage() {
             currentUserId={currentUserId}
             readOnly={chatIsReadOnly}
             readOnlyMessage="Dispute window is over for this booking. Chat is now read-only."
+            autoScroll={false}
           />
         </CardContent>
       </Card>
