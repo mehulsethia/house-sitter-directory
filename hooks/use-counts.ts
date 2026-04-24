@@ -20,7 +20,7 @@ async function fetchCounts(): Promise<{ unread_chats: number; pending_bookings: 
     }),
     // Use notifications endpoint for unread count so badge remains reliable
     // even if aggregate count query logic changes.
-    fetch(toApiV1Url('/notifications?unread_only=true&include_archived=true&page=1&page_size=1'), {
+    fetch(toApiV1Url('/notifications?unread_only=true&page=1&page_size=1'), {
       headers,
       credentials: 'include',
       cache: 'no-store',

@@ -51,7 +51,6 @@ export const notificationRepo = {
     db.notification.updateMany({
       where: {
         userId,
-        ...NOT_ARCHIVED_WHERE,
       },
       data: { isRead: true },
     }),
@@ -116,7 +115,6 @@ export const notificationRepo = {
     db.notification.updateMany({
       where: {
         userId: { in: userIds },
-        ...NOT_ARCHIVED_WHERE,
       },
       data: { isRead: true },
     }),
