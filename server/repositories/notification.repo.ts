@@ -1,21 +1,6 @@
 import { db } from '../db'
 import { Prisma } from '@prisma/client'
 
-const NOT_ARCHIVED_WHERE = {
-  OR: [
-    { data: { equals: Prisma.DbNull } },
-    { data: { equals: Prisma.JsonNull } },
-    {
-      NOT: {
-        data: {
-          path: ['_archived'],
-          equals: true,
-        },
-      },
-    },
-  ],
-}
-
 export const notificationRepo = {
   findByUserId: (
     userId: string,
@@ -23,12 +8,10 @@ export const notificationRepo = {
     pageSize: number,
     options?: { includeArchived?: boolean; unreadOnly?: boolean },
   ) => {
-    const includeArchived = options?.includeArchived ?? false
     const unreadOnly = options?.unreadOnly ?? false
     const where = {
       userId,
       ...(unreadOnly ? { isRead: false } : {}),
-      ...(includeArchived ? {} : NOT_ARCHIVED_WHERE),
     }
     return Promise.all([
       db.notification.findMany({
@@ -65,7 +48,6 @@ export const notificationRepo = {
       where: {
         userId,
         isRead: false,
-        ...NOT_ARCHIVED_WHERE,
       },
     }),
 
@@ -98,12 +80,10 @@ export const notificationRepo = {
     pageSize: number,
     options?: { includeArchived?: boolean; unreadOnly?: boolean },
   ) => {
-    const includeArchived = options?.includeArchived ?? false
     const unreadOnly = options?.unreadOnly ?? false
     const where = {
       userId: { in: userIds },
       ...(unreadOnly ? { isRead: false } : {}),
-      ...(includeArchived ? {} : NOT_ARCHIVED_WHERE),
     }
     return Promise.all([
       db.notification.findMany({
@@ -129,7 +109,6 @@ export const notificationRepo = {
       where: {
         userId: { in: userIds },
         isRead: false,
-        ...NOT_ARCHIVED_WHERE,
       },
     }),
 
