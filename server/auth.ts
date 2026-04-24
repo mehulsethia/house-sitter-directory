@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from './db'
+import { db, ensureDbSchema } from './db'
 import type { User } from '@prisma/client'
 
 export type RouteContext = { params: Promise<Record<string, string>> }
@@ -9,6 +9,8 @@ type AuthedHandler = (req: NextRequest, ctx: RouteContext, user: User) => Promis
 type Handler = (req: NextRequest, ctx: RouteContext) => Promise<NextResponse>
 
 export async function getAuthUser(req: NextRequest): Promise<User | null> {
+  await ensureDbSchema()
+
   const authHeader = req.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '').trim()
 
