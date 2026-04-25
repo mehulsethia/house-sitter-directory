@@ -23,6 +23,7 @@ export const cleanerRepo = {
     bio: string | null
     profileImageUrl: string | null
     skills: string[]
+    cleaningSupplies: string | null
     yearsExperience: number
     hourlyRate: number
     transportMode: string | null
@@ -31,8 +32,13 @@ export const cleanerRepo = {
     idFileName: string | null
     idFileUrl: string | null
     petAcceptance: boolean
+    petComfortable: boolean | null
+    workEligibilityAnswer: boolean | null
     workEligibilityConfirmed: boolean
     termsAccepted: boolean
+    cleaningStandardsAccepted: boolean
+    cleaningQuizScore: number | null
+    cleaningQuizPassedAt: Date | null
     onboardingStep: number
     onboardingSkippedStep3: boolean
     onboardingSkippedStep4: boolean
@@ -56,7 +62,6 @@ export const cleanerRepo = {
     const where = {
       status: 'approved' as const,
       profileComplete: true,
-      stripeOnboardingComplete: true,
       ...(params.city
         ? { serviceAreas: { some: { city: { contains: params.city, mode: 'insensitive' as const } } } }
         : {}),

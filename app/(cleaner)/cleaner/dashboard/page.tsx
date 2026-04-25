@@ -29,6 +29,7 @@ export default function CleanerDashboardPage() {
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [completionPct, setCompletionPct] = useState<number>(0)
   const [cleanerStatus, setCleanerStatus] = useState<string>('pending')
+  const [stripeConnected, setStripeConnected] = useState(false)
   const [rejectionReason, setRejectionReason] = useState<string>('')
   const [profileComplete, setProfileComplete] = useState(false)
   const [avgRating, setAvgRating] = useState<number | null>(null)
@@ -44,6 +45,7 @@ export default function CleanerDashboardPage() {
         setCompletionPct(cleanerRes.data?.onboarding?.completion_pct ?? 0)
         const cleaner = cleanerRes.data?.cleaner as any
         setCleanerStatus(cleaner?.status ?? 'pending')
+        setStripeConnected(Boolean(cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete))
         setRejectionReason(cleaner?.rejection_reason ?? '')
         setProfileComplete(cleaner?.profile_complete ?? false)
         setAvgRating(cleaner?.average_rating ?? null)
@@ -109,6 +111,12 @@ export default function CleanerDashboardPage() {
     }
   }, [bookings])
 
+  const profileLifecycleStatus = useMemo(() => {
+    if (cleanerStatus !== 'approved') return 'Pending approval'
+    if (!stripeConnected) return 'Approved — connect Stripe to go live'
+    return 'Live'
+  }, [cleanerStatus, stripeConnected])
+
   if (loading) return <DashboardPageSkeleton />
 
   return (
@@ -124,12 +132,29 @@ export default function CleanerDashboardPage() {
         </div>
       </div>
 
+      {cleanerStatus !== 'approved' && (
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-900">Complete your profile and submit for approval to start receiving bookings.</p>
+        </div>
+      )}
+
       {cleanerStatus === 'approved' && (
         <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
           <div className="flex items-center gap-2">
             <CircleCheck className="h-5 w-5 text-emerald-600 shrink-0" />
             <p className="text-sm font-semibold text-emerald-900">Your profile is approved and visible to clients.</p>
           </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <p className="text-xs uppercase tracking-wide text-slate-500">Profile status</p>
+        <p className="text-sm font-semibold text-slate-900">{profileLifecycleStatus}</p>
+      </div>
+
+      {cleanerStatus === 'approved' && !stripeConnected && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-900">You must connect Stripe to receive payouts.</p>
         </div>
       )}
 
@@ -272,12 +297,13 @@ export default function CleanerDashboardPage() {
                       >
                         Decline
                       </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleAction(b.id, 'accept')}
-                        loading={actionLoading === `${b.id}-accept`}
-                      >
-                        Accept
+                        <Button
+                          size="sm"
+                          onClick={() => handleAction(b.id, 'accept')}
+                          disabled={!stripeConnected}
+                          loading={actionLoading === `${b.id}-accept`}
+                        >
+                          Accept
                       </Button>
                     </div>
                   </div>

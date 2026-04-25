@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarCheck2, ClipboardList, Clock3, Search } from 'lucide-react'
-import { bookingsApi } from '@/lib/api'
+import { bookingsApi, cleanersApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { EmptyState } from '@/components/empty-state'
 import { ListPageSkeleton } from '@/components/page-skeletons'
@@ -42,6 +42,7 @@ const SERVICE_LABELS: Record<string, string> = {
 
 export default function CleanerBookingsPage() {
   const [bookings, setBookings] = useState<BookingRead[]>([])
+  const [stripeConnected, setStripeConnected] = useState(false)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | BookingStatus>('all')
@@ -52,6 +53,13 @@ export default function CleanerBookingsPage() {
 
   async function refresh() {
     try {
+      try {
+        const cleanerRes = await cleanersApi.me()
+        const cleaner = cleanerRes.data?.cleaner as any
+        setStripeConnected(Boolean(cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete))
+      } catch {
+        // no-op: page can still load bookings
+      }
       const res = await bookingsApi.my()
       setBookings(res.data?.items ?? [])
     } catch {
@@ -147,6 +155,12 @@ export default function CleanerBookingsPage() {
 
   return (
     <div className="space-y-6">
+      {!stripeConnected && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-semibold text-amber-900">You must connect Stripe to receive payouts.</p>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-slate-200">
           <CardContent className="flex min-h-[102px] items-start justify-between px-5 pb-5 pt-6 sm:px-6 sm:pb-5 sm:pt-6">
@@ -264,6 +278,7 @@ export default function CleanerBookingsPage() {
                         <Button
                           size="sm"
                           onClick={() => action(b.id, 'accept')}
+                          disabled={!stripeConnected}
                           loading={actionLoading === `${b.id}-accept`}
                         >
                           Accept

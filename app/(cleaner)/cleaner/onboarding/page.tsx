@@ -19,7 +19,61 @@ import type { CleanerOnboardingProgress, CleanerRead } from '@/types'
 import { toast } from 'sonner'
 
 const STEP_LABELS = ['1', '2', '3', '4']
-const SKILLS = ['Ironing', 'Windows', 'Deep Cleaning', 'Move In/Out']
+const SERVICE_OPTIONS = [
+  'Regular home cleaning',
+  'One-off cleaning',
+  'Airbnb / short-term rental cleaning',
+  'Laundry / folding clothes',
+  'Kitchen deep clean',
+  'Bathroom deep clean',
+  'Ironing',
+  'Windows',
+  'Deep cleaning',
+  'Move in/out',
+]
+const QUIZ_PASS_PERCENT = 80
+const STANDARDS_QUIZ = [
+  {
+    id: 'quality_checklist',
+    question: 'Before marking a job complete, what should you always do?',
+    options: [
+      'Quickly leave once the time is up',
+      'Review against checklist and confirm agreed tasks are finished',
+      'Ask client to finish remaining tasks',
+    ],
+    answer: 1,
+  },
+  {
+    id: 'client_comms',
+    question: 'If you are running late, what is the correct behaviour?',
+    options: [
+      'Inform the client in chat as early as possible',
+      'Arrive whenever possible without updating anyone',
+      'Cancel at the last minute',
+    ],
+    answer: 0,
+  },
+  {
+    id: 'property_care',
+    question: 'How should you handle items in the client home?',
+    options: [
+      'Move anything freely if it helps speed',
+      'Handle items carefully and avoid moving valuables unless necessary',
+      'Ignore care instructions',
+    ],
+    answer: 1,
+  },
+  {
+    id: 'platform_rules',
+    question: 'Which is required by MaidHive policy?',
+    options: [
+      'Keep all booking agreements and updates inside the platform',
+      'Move communication to private channels only',
+      'Skip status updates in-app',
+    ],
+    answer: 0,
+  },
+]
 const BIO_MAX_CHARS = 1000
 const MIN_HOURLY_RATE = 6
 const MAX_HOURLY_RATE = 20
@@ -106,6 +160,7 @@ function CleanerOnboardingPageContent() {
   const [bio, setBio] = useState('')
   const [hourlyRate, setHourlyRate] = useState('')
   const [skills, setSkills] = useState<string[]>([])
+  const [cleaningSupplies, setCleaningSupplies] = useState<'own_supplies' | 'client_supplies' | ''>('')
 
   const [transportMode, setTransportMode] = useState('')
   const [pickupLocation, setPickupLocation] = useState('')
@@ -113,10 +168,14 @@ function CleanerOnboardingPageContent() {
   const [idFileName, setIdFileName] = useState('')
   const [idFileUrl, setIdFileUrl] = useState('')
   const [uploadingKyc, setUploadingKyc] = useState(false)
-  const [petAcceptance, setPetAcceptance] = useState(false)
+  const [petComfortable, setPetComfortable] = useState<boolean | null>(null)
+  const [workEligibilityAnswer, setWorkEligibilityAnswer] = useState<boolean | null>(null)
   const [workEligibilityConfirmed, setWorkEligibilityConfirmed] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
 
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({})
+  const [quizScore, setQuizScore] = useState<number | null>(null)
+  const [quizPassed, setQuizPassed] = useState(false)
 
   const [stripeConnected, setStripeConnected] = useState(false)
   const scheduleSaveRef = useRef<(() => Promise<void>) | null>(null)
@@ -144,15 +203,28 @@ function CleanerOnboardingPageContent() {
       setBio(c.bio ?? '')
       setHourlyRate(c.hourly_rate ?? c.hourlyRate ? String(c.hourly_rate ?? c.hourlyRate) : '')
       setSkills(c.skills ?? [])
+      setCleaningSupplies(c.cleaning_supplies ?? c.cleaningSupplies ?? '')
 
       setTransportMode(c.transport_mode ?? c.transportMode ?? '')
       setPickupLocation(c.transport_pickup_location ?? c.transportPickupLocation ?? '')
       setIdType(c.id_type ?? c.idType ?? '')
       setIdFileName(c.id_file_name ?? c.idFileName ?? '')
       setIdFileUrl(c.id_file_url ?? c.idFileUrl ?? '')
-      setPetAcceptance(Boolean(c.pet_acceptance ?? c.petAcceptance))
+      setPetComfortable(
+        (c.pet_comfortable ?? c.petComfortable) === null || (c.pet_comfortable ?? c.petComfortable) === undefined
+          ? null
+          : Boolean(c.pet_comfortable ?? c.petComfortable),
+      )
+      setWorkEligibilityAnswer(
+        (c.work_eligibility_answer ?? c.workEligibilityAnswer) === null || (c.work_eligibility_answer ?? c.workEligibilityAnswer) === undefined
+          ? null
+          : Boolean(c.work_eligibility_answer ?? c.workEligibilityAnswer),
+      )
       setWorkEligibilityConfirmed(Boolean(c.work_eligibility_confirmed ?? c.workEligibilityConfirmed))
       setTermsAccepted(Boolean(c.terms_accepted ?? c.termsAccepted))
+      const existingScore = c.cleaning_quiz_score ?? c.cleaningQuizScore ?? null
+      setQuizScore(existingScore)
+      setQuizPassed(Boolean(existingScore !== null && Number(existingScore) >= QUIZ_PASS_PERCENT))
 
       setStripeConnected(Boolean(stripeRes.data?.connected))
     } catch (err: any) {
@@ -227,7 +299,8 @@ function CleanerOnboardingPageContent() {
     if (bio.trim().length > BIO_MAX_CHARS) return toast.error(`Professional bio can be up to ${BIO_MAX_CHARS} characters.`)
     if (!hourlyRate || Number(hourlyRate) < MIN_HOURLY_RATE) return toast.error(`Min hourly rate is €${MIN_HOURLY_RATE}.`)
     if (Number(hourlyRate) > MAX_HOURLY_RATE) return toast.error(`Max hourly rate is €${MAX_HOURLY_RATE}.`)
-    if (skills.length === 0) return toast.error('Select at least one skill.')
+    if (skills.length === 0) return toast.error('Select at least one service.')
+    if (!cleaningSupplies) return toast.error('Cleaning supplies preference is required.')
 
     setSaving(true)
     try {
@@ -236,6 +309,7 @@ function CleanerOnboardingPageContent() {
         bio,
         hourly_rate: Number(hourlyRate),
         skills,
+        cleaning_supplies: cleaningSupplies,
         onboarding_step: 2,
       })
       setCleaner(res.data?.cleaner ?? cleaner)
@@ -258,6 +332,8 @@ function CleanerOnboardingPageContent() {
     }
     if (!idType) return toast.error('Select ID type.')
     if (!idFileName.trim()) return toast.error('Valid ID file is required.')
+    if (petComfortable === null) return toast.error('Please answer the pets question.')
+    if (workEligibilityAnswer !== true) return toast.error('You must be legally allowed to work independently in Cyprus.')
     if (!workEligibilityConfirmed) return toast.error('Please confirm legal work eligibility.')
     if (!termsAccepted) return toast.error('Please accept terms and platform rules.')
 
@@ -269,7 +345,8 @@ function CleanerOnboardingPageContent() {
         id_type: idType,
         id_file_name: idFileName,
         id_file_url: idFileUrl || null,
-        pet_acceptance: petAcceptance,
+        pet_comfortable: petComfortable,
+        work_eligibility_answer: workEligibilityAnswer,
         work_eligibility_confirmed: workEligibilityConfirmed,
         terms_accepted: termsAccepted,
         onboarding_step: 3,
@@ -286,8 +363,18 @@ function CleanerOnboardingPageContent() {
 
   async function finishStep4() {
     if (saving) return
-    if (!stripeConnected) {
-      toast.error('Stripe connection is required to continue.')
+    const answeredAll = STANDARDS_QUIZ.every((q) => typeof quizAnswers[q.id] === 'number')
+    if (!answeredAll) {
+      toast.error('Please answer all quiz questions.')
+      return
+    }
+    const correct = STANDARDS_QUIZ.reduce((count, q) => (quizAnswers[q.id] === q.answer ? count + 1 : count), 0)
+    const score = Math.round((correct / STANDARDS_QUIZ.length) * 100)
+    const passed = score >= QUIZ_PASS_PERCENT
+    setQuizScore(score)
+    setQuizPassed(passed)
+    if (!passed) {
+      toast.error(`Quiz score ${score}%. You need at least ${QUIZ_PASS_PERCENT}% to continue.`)
       return
     }
 
@@ -296,6 +383,8 @@ function CleanerOnboardingPageContent() {
       await cleanersApi.updateMyOnboarding({
         onboarding_step: 4,
         onboarding_skipped_step4: false,
+        cleaning_standards_accepted: true,
+        cleaning_quiz_score: score,
       })
       router.push('/cleaner/dashboard')
     } catch (err: any) {
@@ -430,9 +519,9 @@ function CleanerOnboardingPageContent() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium">Skills <span className="text-red-500">*</span></Label>
+                <Label className="text-sm font-medium">Services you offer <span className="text-red-500">*</span></Label>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {SKILLS.map((skill) => {
+                  {SERVICE_OPTIONS.map((skill) => {
                     const active = skills.includes(skill)
                     return (
                       <button
@@ -451,6 +540,30 @@ function CleanerOnboardingPageContent() {
                 </div>
               </div>
 
+              <div>
+                <Label className="text-sm font-medium">Cleaning supplies <span className="text-red-500">*</span></Label>
+                <div className="mt-2 grid gap-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="radio"
+                      name="cleaning-supplies"
+                      checked={cleaningSupplies === 'own_supplies'}
+                      onChange={() => setCleaningSupplies('own_supplies')}
+                    />
+                    I bring my own supplies
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="radio"
+                      name="cleaning-supplies"
+                      checked={cleaningSupplies === 'client_supplies'}
+                      onChange={() => setCleaningSupplies('client_supplies')}
+                    />
+                    Client must provide supplies
+                  </label>
+                </div>
+              </div>
+
               <div className="flex justify-end pt-1">
                 <Button onClick={saveStep1} loading={saving} className="min-w-36">Save & Continue</Button>
               </div>
@@ -461,6 +574,7 @@ function CleanerOnboardingPageContent() {
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium">Mode of Transport <span className="text-red-500">*</span></Label>
+                <p className="mt-1 text-xs text-gray-500">This helps clients understand how you travel to jobs.</p>
                 <Select value={transportMode} onChange={(e) => setTransportMode(e.target.value)} className="mt-2">
                   <option value="">Choose an option...</option>
                   <option value="own_car">Own Car</option>
@@ -493,6 +607,7 @@ function CleanerOnboardingPageContent() {
 
               <div>
                 <Label className="text-sm font-medium">Valid ID <span className="text-red-500">*</span></Label>
+                <p className="mt-1 text-xs text-gray-500">Upload a valid government-issued ID (required for approval).</p>
                 <div className="mt-2 space-y-2">
                   <Input
                     value={idFileName}
@@ -519,13 +634,37 @@ function CleanerOnboardingPageContent() {
               </div>
 
               <div className="space-y-3 pt-1">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input type="checkbox" checked={petAcceptance} onChange={(e) => setPetAcceptance(e.target.checked)} />
-                  Pet Acceptance
-                </label>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <p className="text-sm font-medium text-gray-800">Are you comfortable working in homes with pets? <span className="text-red-500">*</span></p>
+                  <p className="mt-1 text-xs text-gray-500">You may still receive requests where pets are present.</p>
+                  <div className="mt-2 flex gap-4">
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="radio" name="pet-comfort" checked={petComfortable === true} onChange={() => setPetComfortable(true)} />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="radio" name="pet-comfort" checked={petComfortable === false} onChange={() => setPetComfortable(false)} />
+                      No
+                    </label>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <p className="text-sm font-medium text-gray-800">Are you legally allowed to work in Cyprus and provide cleaning services independently? <span className="text-red-500">*</span></p>
+                  <p className="mt-1 text-xs text-gray-500">If your work permit only allows you to work for one employer, you cannot use MaidHive.</p>
+                  <div className="mt-2 flex gap-4">
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="radio" name="work-eligibility" checked={workEligibilityAnswer === true} onChange={() => setWorkEligibilityAnswer(true)} />
+                      Yes
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="radio" name="work-eligibility" checked={workEligibilityAnswer === false} onChange={() => setWorkEligibilityAnswer(false)} />
+                      No
+                    </label>
+                  </div>
+                </div>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={workEligibilityConfirmed} onChange={(e) => setWorkEligibilityConfirmed(e.target.checked)} />
-                  I confirm I am legally allowed to work <span className="text-red-500">*</span>
+                  I confirm that I am legally allowed to work in Cyprus and provide cleaning services independently, and I am not restricted to working for a single employer. <span className="text-red-500">*</span>
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
@@ -544,6 +683,10 @@ function CleanerOnboardingPageContent() {
 
           {step === 3 && (
             <div className="space-y-4">
+              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                <p>Set your general weekly availability. You can update this anytime in your dashboard. Booked time slots will automatically be blocked.</p>
+                <p className="mt-1 text-xs text-slate-500">Tip: use the + button to add multiple slots on the same day for split shifts (for example morning and evening).</p>
+              </div>
               <ScheduleEditor
                 compact
                 saveRef={scheduleSaveRef}
@@ -575,10 +718,51 @@ function CleanerOnboardingPageContent() {
 
           {step === 4 && (
             <div className="space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <p className="text-sm font-semibold text-slate-900">MaidHive Cleaning Standards</p>
+                <p className="mt-2 text-sm text-slate-600">
+                  Deliver consistent quality, be punctual, follow in-app communication, respect the client property, and complete all agreed tasks before marking a job complete.
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-600">
+                  <li>Arrive on time and message early if delayed.</li>
+                  <li>Use careful handling for client belongings and valuables.</li>
+                  <li>Follow the agreed checklist and special instructions.</li>
+                  <li>Keep communication and booking changes inside MaidHive.</li>
+                </ul>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-3">
+                <p className="text-sm font-semibold text-slate-900">Quick standards quiz (required)</p>
+                {STANDARDS_QUIZ.map((q) => (
+                  <div key={q.id} className="rounded-lg border border-slate-200 p-3">
+                    <p className="text-sm font-medium text-slate-800">{q.question}</p>
+                    <div className="mt-2 space-y-2">
+                      {q.options.map((opt, idx) => (
+                        <label key={`${q.id}-${idx}`} className="flex items-center gap-2 text-sm text-slate-700">
+                          <input
+                            type="radio"
+                            name={q.id}
+                            checked={quizAnswers[q.id] === idx}
+                            onChange={() => setQuizAnswers((prev) => ({ ...prev, [q.id]: idx }))}
+                          />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {quizScore !== null && (
+                  <p className={`text-sm font-medium ${quizPassed ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    Quiz score: {quizScore}% {quizPassed ? '— passed' : `— minimum ${QUIZ_PASS_PERCENT}% required`}
+                  </p>
+                )}
+              </div>
+
               <div className="border rounded-xl p-3 bg-white flex items-start justify-between gap-4">
                 <div>
                   <p className="text-2xl font-semibold text-[#635BFF] leading-none">stripe</p>
                   <p className="text-sm text-gray-500 mt-2">Manage your earnings and payouts seamlessly.</p>
+                  <p className="text-sm font-medium text-amber-700 mt-1">You must connect Stripe to receive payouts.</p>
                   <a href="https://stripe.com/connect" target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">Click here to learn more.</a>
                 </div>
                 <Button onClick={connectStripe} variant="outline">{stripeConnected ? 'Manage Stripe' : 'Connect with Stripe'}</Button>
@@ -594,7 +778,7 @@ function CleanerOnboardingPageContent() {
                 <Button variant="outline" onClick={() => setStep(3)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <Button onClick={finishStep4} loading={saving}>Launch your page</Button>
+                <Button onClick={finishStep4} loading={saving}>Complete onboarding</Button>
               </div>
             </div>
           )}
@@ -603,7 +787,7 @@ function CleanerOnboardingPageContent() {
 
       {progress && progress.completion_pct < 100 && (
         <p className="text-xs text-gray-600 mt-3 text-center">
-          Your profile is {progress.completion_pct}% complete. Cleaner profiles are visible to clients only at 100% completion.
+          Your profile is {progress.completion_pct}% complete. Cleaner profiles are visible to clients only after admin approval.
         </p>
       )}
     </div>

@@ -25,6 +25,15 @@ export function ensureDbSchema(): Promise<void> {
         ALTER TABLE public.cleaners
         ADD COLUMN IF NOT EXISTS id_file_url TEXT
       `)
+      await db.$executeRawUnsafe(`
+        ALTER TABLE public.cleaners
+        ADD COLUMN IF NOT EXISTS cleaning_supplies TEXT,
+        ADD COLUMN IF NOT EXISTS pet_comfortable BOOLEAN,
+        ADD COLUMN IF NOT EXISTS work_eligibility_answer BOOLEAN,
+        ADD COLUMN IF NOT EXISTS cleaning_standards_accepted BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS cleaning_quiz_score INTEGER,
+        ADD COLUMN IF NOT EXISTS cleaning_quiz_passed_at TIMESTAMPTZ
+      `)
     })().catch((error) => {
       schemaReadyPromise = null
       throw error

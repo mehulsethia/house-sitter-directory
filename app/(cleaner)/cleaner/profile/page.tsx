@@ -32,7 +32,18 @@ const DAYS = [
   { value: 7, label: 'Sun' },
 ]
 
-const SKILLS = ['Ironing', 'Windows', 'Deep Cleaning', 'Move In/Out']
+const SERVICE_OPTIONS = [
+  'Regular home cleaning',
+  'One-off cleaning',
+  'Airbnb / short-term rental cleaning',
+  'Laundry / folding clothes',
+  'Kitchen deep clean',
+  'Bathroom deep clean',
+  'Ironing',
+  'Windows',
+  'Deep cleaning',
+  'Move in/out',
+]
 const BIO_MAX_CHARS = 1000
 const MIN_HOURLY_RATE = 6
 const MAX_HOURLY_RATE = 20
@@ -192,6 +203,12 @@ function CleanerProfilePageContent() {
       .sort((a, b) => new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime())
   }, [bookings])
 
+  const profileLifecycleStatus = useMemo(() => {
+    if (cleanerStatus !== 'approved') return 'Pending approval'
+    if (!stripe.connected) return 'Approved — connect Stripe to go live'
+    return 'Live'
+  }, [cleanerStatus, stripe.connected])
+
   function toggleSkill(skill: string) {
     setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]))
   }
@@ -205,7 +222,7 @@ function CleanerProfilePageContent() {
     }
     if (!bio.trim()) return toast.error('Professional bio is required.')
     if (bio.trim().length > BIO_MAX_CHARS) return toast.error(`Professional bio can be up to ${BIO_MAX_CHARS} characters.`)
-    if (skills.length === 0) return toast.error('Select at least one skill.')
+    if (skills.length === 0) return toast.error('Select at least one service.')
     if (!transportMode) return toast.error('Mode of transport is required.')
 
     setSaving(true)
@@ -355,6 +372,11 @@ function CleanerProfilePageContent() {
         </div>
       )}
 
+      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+        <p className="text-xs uppercase tracking-wide text-slate-500">Profile status</p>
+        <p className="text-sm font-semibold text-slate-900">{profileLifecycleStatus}</p>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <div className="space-y-4">
           <Card className="border-slate-200">
@@ -486,14 +508,15 @@ function CleanerProfilePageContent() {
 
                 <div>
                   <Label>Professional Bio</Label>
+                  <p className="mt-1 text-xs text-slate-500">Describe your experience, the types of cleaning you specialise in, and how you like to work.</p>
                   <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={5} maxLength={BIO_MAX_CHARS} className="mt-1" />
                   <p className="text-xs text-slate-500 mt-1">Maximum {BIO_MAX_CHARS} characters.</p>
                 </div>
 
                 <div>
-                  <Label>Skills</Label>
+                  <Label>Services you offer</Label>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {SKILLS.map((skill) => (
+                    {SERVICE_OPTIONS.map((skill) => (
                       <button
                         key={skill}
                         type="button"
@@ -554,6 +577,7 @@ function CleanerProfilePageContent() {
                     <div>
                       <p className="text-2xl font-semibold leading-none text-[#635BFF]">stripe</p>
                       <p className="mt-2 text-sm text-slate-500">Manage earnings and payouts securely with Stripe Connect.</p>
+                      <p className="mt-1 text-sm font-medium text-amber-700">You must connect Stripe to receive payouts.</p>
                     </div>
                     <Button onClick={connectStripe} variant="outline">{stripe.connected ? 'Manage Stripe' : 'Connect Stripe'}</Button>
                   </div>

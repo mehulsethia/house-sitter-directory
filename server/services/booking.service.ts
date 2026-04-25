@@ -53,7 +53,9 @@ export const bookingService = {
 
     const cleaner = await cleanerRepo.findById(data.cleaner_id)
     if (!cleaner) throw new ServiceError('Cleaner not found', 404)
-    if (cleaner.status !== 'approved') throw new ServiceError('Cleaner is not available', 400)
+    if (cleaner.status !== 'approved' || !cleaner.profileComplete) {
+      throw new ServiceError('Cleaner is not available', 400)
+    }
 
     const scheduledStart = new Date(data.scheduled_start)
     const scheduledEnd = new Date(scheduledStart.getTime() + data.duration_hours * 60 * 60 * 1000)
@@ -155,6 +157,7 @@ export const bookingService = {
 
     if (action === 'accept') {
       if (!isCleaner) throw new ServiceError('Only cleaner can accept a booking', 403)
+      assertCleanerStripeReady(cleaner)
       if (booking.status !== 'pending') {
         throw new ServiceError(`Cannot accept a booking in status '${booking.status}'`, 400)
       }
@@ -308,6 +311,9 @@ export const bookingService = {
       }
       if (booking.proposalBy === 'client' && !isCleaner) {
         throw new ServiceError('Only cleaner can accept client counter-offer', 403)
+      }
+      if (booking.proposalBy === 'client') {
+        assertCleanerStripeReady(cleaner)
       }
 
       assertPaymentAuthorized(booking.payment?.status, 'accept')
@@ -577,6 +583,12 @@ function assertCompletionWindow(scheduledEnd: Date) {
       `Complete Job becomes available ${COMPLETE_JOB_EARLY_MINUTES} minutes before scheduled end`,
       400,
     )
+  }
+}
+
+function assertCleanerStripeReady(cleaner: Awaited<ReturnType<typeof cleanerRepo.findByUserId>> | null) {
+  if (!cleaner?.stripeOnboardingComplete) {
+    throw new ServiceError('You must connect Stripe to receive payouts', 403)
   }
 }
 

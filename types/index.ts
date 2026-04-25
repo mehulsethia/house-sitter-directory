@@ -55,6 +55,7 @@ export interface CleanerRead {
   bio?: string
   profile_image_url?: string
   skills?: string[]
+  cleaning_supplies?: 'own_supplies' | 'client_supplies'
   years_experience: number
   hourly_rate: number
   transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
@@ -63,8 +64,13 @@ export interface CleanerRead {
   id_file_name?: string
   id_file_url?: string
   pet_acceptance?: boolean
+  pet_comfortable?: boolean | null
+  work_eligibility_answer?: boolean | null
   work_eligibility_confirmed?: boolean
   terms_accepted?: boolean
+  cleaning_standards_accepted?: boolean
+  cleaning_quiz_score?: number | null
+  cleaning_quiz_passed_at?: string | null
   onboarding_step?: number
   onboarding_skipped_step3?: boolean
   onboarding_skipped_step4?: boolean
@@ -112,7 +118,7 @@ export interface CleanerOnboardingProgress {
     step1_basic_details: boolean
     step2_kyc: boolean
     step3_availability: boolean
-    step4_stripe: boolean
+    step4_training: boolean
   }
 }
 

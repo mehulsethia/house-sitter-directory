@@ -25,6 +25,9 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const body = await req.json()
   const parsed = updateCleanerSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
+  if (parsed.data.cleaning_standards_accepted && (parsed.data.cleaning_quiz_score ?? 0) < 80) {
+    return err('Quiz pass score is required before confirming standards.', 422)
+  }
 
   let cleaner = await cleanerRepo.findByUserId(user.id)
   if (!cleaner) {
@@ -35,6 +38,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
     ...(parsed.data.bio !== undefined ? { bio: parsed.data.bio } : {}),
     ...(parsed.data.profile_image_url !== undefined ? { profileImageUrl: parsed.data.profile_image_url } : {}),
     ...(parsed.data.skills !== undefined ? { skills: parsed.data.skills } : {}),
+    ...(parsed.data.cleaning_supplies !== undefined ? { cleaningSupplies: parsed.data.cleaning_supplies } : {}),
     ...(parsed.data.years_experience !== undefined ? { yearsExperience: parsed.data.years_experience } : {}),
     ...(parsed.data.hourly_rate !== undefined ? { hourlyRate: parsed.data.hourly_rate } : {}),
     ...(parsed.data.transport_mode !== undefined ? { transportMode: parsed.data.transport_mode } : {}),
@@ -45,10 +49,21 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
     ...(parsed.data.id_file_name !== undefined ? { idFileName: parsed.data.id_file_name } : {}),
     ...(parsed.data.id_file_url !== undefined ? { idFileUrl: parsed.data.id_file_url } : {}),
     ...(parsed.data.pet_acceptance !== undefined ? { petAcceptance: parsed.data.pet_acceptance } : {}),
+    ...(parsed.data.pet_comfortable !== undefined ? { petComfortable: parsed.data.pet_comfortable } : {}),
+    ...(parsed.data.work_eligibility_answer !== undefined
+      ? { workEligibilityAnswer: parsed.data.work_eligibility_answer }
+      : {}),
     ...(parsed.data.work_eligibility_confirmed !== undefined
       ? { workEligibilityConfirmed: parsed.data.work_eligibility_confirmed }
       : {}),
     ...(parsed.data.terms_accepted !== undefined ? { termsAccepted: parsed.data.terms_accepted } : {}),
+    ...(parsed.data.cleaning_standards_accepted !== undefined
+      ? { cleaningStandardsAccepted: parsed.data.cleaning_standards_accepted }
+      : {}),
+    ...(parsed.data.cleaning_quiz_score !== undefined ? { cleaningQuizScore: parsed.data.cleaning_quiz_score } : {}),
+    ...(parsed.data.cleaning_standards_accepted
+      ? { cleaningQuizPassedAt: new Date() }
+      : {}),
     ...(parsed.data.onboarding_skipped_step3 !== undefined
       ? { onboardingSkippedStep3: parsed.data.onboarding_skipped_step3 }
       : {}),
@@ -63,7 +78,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const onboarding = computeCleanerOnboardingProgress({ cleaner: interim, hasAvailabilitySlots })
 
   const updated = await cleanerRepo.update(cleaner.id, {
-    profileComplete: parsed.data.profile_complete ?? onboarding.can_be_listed,
+    profileComplete: parsed.data.profile_complete ?? interim.profileComplete,
     onboardingStep: parsed.data.onboarding_step ?? onboarding.current_step,
     onboardingCompletedAt: onboarding.can_be_listed ? interim.onboardingCompletedAt ?? new Date() : null,
   })

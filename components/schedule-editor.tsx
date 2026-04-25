@@ -530,6 +530,10 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
 
         {tab === 'schedule' && (
           <div className="p-5">
+            <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <p>Set your general weekly availability. You can update this anytime in your dashboard. Booked time slots will automatically be blocked.</p>
+              <p className="mt-1">Use the <span className="font-semibold">+</span> control to add multiple time slots on the same day for split shifts.</p>
+            </div>
             {/* Header */}
             <div className="mb-5 flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-700">Weeks</p>

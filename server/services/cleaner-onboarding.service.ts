@@ -8,7 +8,7 @@ export type CleanerOnboardingProgress = {
     step1_basic_details: boolean
     step2_kyc: boolean
     step3_availability: boolean
-    step4_stripe: boolean
+    step4_training: boolean
   }
 }
 
@@ -26,7 +26,8 @@ export function computeCleanerOnboardingProgress(args: {
     hasValue(cleaner.profileImageUrl) &&
     hasValue(cleaner.bio) &&
     Number(cleaner.hourlyRate) >= 6 &&
-    cleaner.skills.length > 0
+    cleaner.skills.length > 0 &&
+    hasValue(cleaner.cleaningSupplies)
 
   const needsPickupLocation = cleaner.transportMode === 'requires_pickup'
   const step2Kyc =
@@ -34,17 +35,23 @@ export function computeCleanerOnboardingProgress(args: {
     (!needsPickupLocation || hasValue(cleaner.transportPickupLocation)) &&
     hasValue(cleaner.idType) &&
     hasValue(cleaner.idFileName) &&
+    cleaner.petComfortable !== null &&
+    cleaner.workEligibilityAnswer === true &&
     cleaner.workEligibilityConfirmed &&
     cleaner.termsAccepted
 
   const step3Availability = hasAvailabilitySlots
-  const step4Stripe = cleaner.stripeOnboardingComplete
+  const step4Training =
+    cleaner.cleaningStandardsAccepted &&
+    cleaner.cleaningQuizScore !== null &&
+    cleaner.cleaningQuizScore >= 80 &&
+    cleaner.cleaningQuizPassedAt !== null
 
   const completedSteps = [
     step1BasicDetails,
     step2Kyc,
     step3Availability,
-    step4Stripe,
+    step4Training,
   ].filter(Boolean).length
 
   const completionPct = Math.round((completedSteps / 4) * 100)
@@ -53,7 +60,7 @@ export function computeCleanerOnboardingProgress(args: {
   if (!step1BasicDetails) currentStep = 1
   else if (!step2Kyc) currentStep = 2
   else if (!step3Availability) currentStep = cleaner.onboardingSkippedStep3 ? 4 : 3
-  else if (!step4Stripe) currentStep = 4
+  else if (!step4Training) currentStep = 4
   else currentStep = 4
 
   return {
@@ -64,7 +71,7 @@ export function computeCleanerOnboardingProgress(args: {
       step1_basic_details: step1BasicDetails,
       step2_kyc: step2Kyc,
       step3_availability: step3Availability,
-      step4_stripe: step4Stripe,
+      step4_training: step4Training,
     },
   }
 }

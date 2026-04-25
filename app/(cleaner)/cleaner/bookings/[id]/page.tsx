@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Calendar, Clock, MapPin, ArrowLeft } from 'lucide-react'
-import { authApi, bookingsApi } from '@/lib/api'
+import { authApi, bookingsApi, cleanersApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { Chat } from '@/components/chat'
 import { DetailPageSkeleton } from '@/components/page-skeletons'
@@ -39,6 +39,7 @@ export default function CleanerBookingDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [booking, setBooking] = useState<BookingRead | null>(null)
+  const [stripeConnected, setStripeConnected] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
@@ -58,6 +59,12 @@ export default function CleanerBookingDetailPage() {
     Promise.all([createClient().auth.getUser(), authApi.me().catch(() => null)]).then(([userRes, meRes]) => {
       setCurrentUserId(userRes.data.user?.id ?? meRes?.data?.id ?? null)
     })
+    cleanersApi.me()
+      .then((cleanerRes) => {
+        const cleaner = cleanerRes.data?.cleaner as any
+        setStripeConnected(Boolean(cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete))
+      })
+      .catch(() => null)
   }, [id])
 
   async function handleAction(action: 'start') {
@@ -236,6 +243,11 @@ export default function CleanerBookingDetailPage() {
 
       {/* Actions */}
       <div className="flex flex-col gap-2">
+        {!stripeConnected && (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            You must connect Stripe to receive payouts.
+          </p>
+        )}
         {booking.status === 'pending' && hasProposal && (
           <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
             {isCleanerProposal
@@ -245,7 +257,7 @@ export default function CleanerBookingDetailPage() {
         )}
         {canAcceptPending && (
           <>
-            <Button size="lg" onClick={() => handleBookingAction('accept')} loading={actionLoading}>
+            <Button size="lg" onClick={() => handleBookingAction('accept')} loading={actionLoading} disabled={!stripeConnected}>
               Accept booking
             </Button>
             <Button variant="destructive" onClick={() => setCancelOpen(true)}>Decline</Button>
@@ -271,7 +283,7 @@ export default function CleanerBookingDetailPage() {
         )}
         {canRespondToCounter && (
           <>
-            <Button size="lg" onClick={() => handleBookingAction('accept_proposal')} loading={actionLoading}>
+            <Button size="lg" onClick={() => handleBookingAction('accept_proposal')} loading={actionLoading} disabled={!stripeConnected}>
               Accept counter-offer
             </Button>
             <Button variant="destructive" onClick={() => handleBookingAction('decline_proposal')} loading={actionLoading}>

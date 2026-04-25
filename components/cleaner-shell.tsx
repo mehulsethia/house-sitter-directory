@@ -7,7 +7,7 @@ import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { LayoutGrid, CalendarDays, MessagesSquare, Bell, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { clearAuthCache } from '@/lib/auth-cache'
-import { clearApiCache, cleanersApi, paymentsApi } from '@/lib/api'
+import { clearApiCache, cleanersApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { useCounts } from '@/hooks/use-counts'
 import { SidebarProfile } from '@/components/sidebar-profile'
@@ -113,12 +113,9 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const [me, stripe] = await Promise.all([
-          cleanersApi.me(),
-          paymentsApi.getConnectStatus(),
-        ])
+        const me = await cleanersApi.me()
         const completion = me.data?.onboarding?.completion_pct ?? 0
-        if (completion < 100 || !stripe.data?.connected) {
+        if (completion < 100) {
           router.replace('/cleaner/onboarding')
           return
         }
