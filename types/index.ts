@@ -113,12 +113,13 @@ export interface CleanerSummary {
 export interface CleanerOnboardingProgress {
   completion_pct: number
   can_be_listed: boolean
-  current_step: 1 | 2 | 3 | 4
+  current_step: 1 | 2 | 3 | 4 | 5
   steps: {
     step1_basic_details: boolean
     step2_kyc: boolean
     step3_availability: boolean
-    step4_training: boolean
+    step4_stripe_setup: boolean
+    step5_training: boolean
   }
 }
 

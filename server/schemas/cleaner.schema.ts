@@ -19,7 +19,7 @@ export const updateCleanerSchema = z.object({
   terms_accepted: z.boolean().optional(),
   cleaning_standards_accepted: z.boolean().optional(),
   cleaning_quiz_score: z.number().int().min(0).max(100).optional().nullable(),
-  onboarding_step: z.number().int().min(1).max(4).optional(),
+  onboarding_step: z.number().int().min(1).max(5).optional(),
   onboarding_skipped_step3: z.boolean().optional(),
   onboarding_skipped_step4: z.boolean().optional(),
   profile_complete: z.boolean().optional(),

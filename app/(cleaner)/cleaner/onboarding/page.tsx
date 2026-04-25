@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import type { CleanerOnboardingProgress, CleanerRead } from '@/types'
 import { toast } from 'sonner'
 
-const STEP_LABELS = ['1', '2', '3', '4']
+const STEP_LABELS = ['1', '2', '3', '4', '5']
 const SERVICE_OPTIONS = [
   'Regular home cleaning',
   'One-off cleaning',
@@ -361,7 +361,25 @@ function CleanerOnboardingPageContent() {
     }
   }
 
-  async function finishStep4() {
+  async function completeStripeStep() {
+    if (saving) return
+    setSaving(true)
+    try {
+      const res = await cleanersApi.updateMyOnboarding({
+        onboarding_step: 5,
+        onboarding_skipped_step4: !stripeConnected,
+      })
+      setCleaner(res.data?.cleaner ?? cleaner)
+      setProgress(res.data?.onboarding ?? progress)
+      setStep(5)
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to continue.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function finishStep5() {
     if (saving) return
     const answeredAll = STANDARDS_QUIZ.every((q) => typeof quizAnswers[q.id] === 'number')
     if (!answeredAll) {
@@ -381,7 +399,7 @@ function CleanerOnboardingPageContent() {
     setSaving(true)
     try {
       await cleanersApi.updateMyOnboarding({
-        onboarding_step: 4,
+        onboarding_step: 5,
         onboarding_skipped_step4: false,
         cleaning_standards_accepted: true,
         cleaning_quiz_score: score,
@@ -683,10 +701,6 @@ function CleanerOnboardingPageContent() {
 
           {step === 3 && (
             <div className="space-y-4">
-              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                <p>Set your general weekly availability. You can update this anytime in your dashboard. Booked time slots will automatically be blocked.</p>
-                <p className="mt-1 text-xs text-slate-500">Tip: use the + button to add multiple slots on the same day for split shifts (for example morning and evening).</p>
-              </div>
               <ScheduleEditor
                 compact
                 saveRef={scheduleSaveRef}
@@ -717,6 +731,37 @@ function CleanerOnboardingPageContent() {
           )}
 
           {step === 4 && (
+            <div className="space-y-4">
+              <div className="border rounded-xl p-3 bg-white flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-2xl font-semibold text-[#635BFF] leading-none">stripe</p>
+                  <p className="text-sm text-gray-500 mt-2">Manage your earnings and payouts seamlessly.</p>
+                  <p className="text-sm font-medium text-amber-700 mt-1">You must connect Stripe to receive payouts.</p>
+                  <a href="https://stripe.com/connect" target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">Click here to learn more.</a>
+                </div>
+                <Button onClick={connectStripe} variant="outline">{stripeConnected ? 'Manage Stripe' : 'Connect with Stripe'}</Button>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white p-2 text-sm text-slate-600">
+                You can continue now and connect Stripe later. Stripe is required before you can accept bookings and confirm jobs.
+              </div>
+
+              {stripeConnected && (
+                <div className="rounded-xl border border-green-200 bg-green-50 p-2 text-sm text-green-700">
+                  Stripe is connected. You can now receive payouts.
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-1">
+                <Button variant="outline" onClick={() => setStep(3)}>
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                </Button>
+                <Button onClick={completeStripeStep} loading={saving}>Continue to standards quiz</Button>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
             <div className="space-y-4">
               <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <p className="text-sm font-semibold text-slate-900">MaidHive Cleaning Standards</p>
@@ -758,27 +803,11 @@ function CleanerOnboardingPageContent() {
                 )}
               </div>
 
-              <div className="border rounded-xl p-3 bg-white flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-2xl font-semibold text-[#635BFF] leading-none">stripe</p>
-                  <p className="text-sm text-gray-500 mt-2">Manage your earnings and payouts seamlessly.</p>
-                  <p className="text-sm font-medium text-amber-700 mt-1">You must connect Stripe to receive payouts.</p>
-                  <a href="https://stripe.com/connect" target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary hover:underline">Click here to learn more.</a>
-                </div>
-                <Button onClick={connectStripe} variant="outline">{stripeConnected ? 'Manage Stripe' : 'Connect with Stripe'}</Button>
-              </div>
-
-              {stripeConnected && (
-                <div className="rounded-xl border border-green-200 bg-green-50 p-2 text-sm text-green-700">
-                  Stripe is connected. You can now receive payouts.
-                </div>
-              )}
-
               <div className="flex items-center justify-between pt-1">
-                <Button variant="outline" onClick={() => setStep(3)}>
+                <Button variant="outline" onClick={() => setStep(4)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <Button onClick={finishStep4} loading={saving}>Complete onboarding</Button>
+                <Button onClick={finishStep5} loading={saving}>Complete onboarding</Button>
               </div>
             </div>
           )}

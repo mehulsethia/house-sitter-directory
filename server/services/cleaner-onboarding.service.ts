@@ -3,12 +3,13 @@ import type { Cleaner } from '@prisma/client'
 export type CleanerOnboardingProgress = {
   completion_pct: number
   can_be_listed: boolean
-  current_step: 1 | 2 | 3 | 4
+  current_step: 1 | 2 | 3 | 4 | 5
   steps: {
     step1_basic_details: boolean
     step2_kyc: boolean
     step3_availability: boolean
-    step4_training: boolean
+    step4_stripe_setup: boolean
+    step5_training: boolean
   }
 }
 
@@ -41,7 +42,11 @@ export function computeCleanerOnboardingProgress(args: {
     cleaner.termsAccepted
 
   const step3Availability = hasAvailabilitySlots
-  const step4Training =
+  const step4StripeSetup =
+    cleaner.stripeOnboardingComplete ||
+    cleaner.onboardingSkippedStep4 ||
+    cleaner.onboardingStep >= 5
+  const step5Training =
     cleaner.cleaningStandardsAccepted &&
     cleaner.cleaningQuizScore !== null &&
     cleaner.cleaningQuizScore >= 80 &&
@@ -51,17 +56,19 @@ export function computeCleanerOnboardingProgress(args: {
     step1BasicDetails,
     step2Kyc,
     step3Availability,
-    step4Training,
+    step4StripeSetup,
+    step5Training,
   ].filter(Boolean).length
 
-  const completionPct = Math.round((completedSteps / 4) * 100)
+  const completionPct = Math.round((completedSteps / 5) * 100)
 
-  let currentStep: 1 | 2 | 3 | 4 = 1
+  let currentStep: 1 | 2 | 3 | 4 | 5 = 1
   if (!step1BasicDetails) currentStep = 1
   else if (!step2Kyc) currentStep = 2
   else if (!step3Availability) currentStep = cleaner.onboardingSkippedStep3 ? 4 : 3
-  else if (!step4Training) currentStep = 4
-  else currentStep = 4
+  else if (!step4StripeSetup) currentStep = 4
+  else if (!step5Training) currentStep = 5
+  else currentStep = 5
 
   return {
     completion_pct: completionPct,
@@ -71,7 +78,8 @@ export function computeCleanerOnboardingProgress(args: {
       step1_basic_details: step1BasicDetails,
       step2_kyc: step2Kyc,
       step3_availability: step3Availability,
-      step4_training: step4Training,
+      step4_stripe_setup: step4StripeSetup,
+      step5_training: step5Training,
     },
   }
 }
