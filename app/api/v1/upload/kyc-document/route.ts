@@ -9,13 +9,37 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const KYC_BUCKET = process.env.SUPABASE_KYC_BUCKET ?? 'cleaner-kyc'
+const KYC_BUCKET = (process.env.SUPABASE_KYC_BUCKET ?? 'cleaner-kyc').trim()
 const ALLOWED_MIME = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
 const EXT_BY_MIME: Record<string, string> = {
   'application/pdf': 'pdf',
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
+}
+
+let bucketEnsured = false
+
+async function ensureKycBucketExists() {
+  if (bucketEnsured) return
+
+  const { data: existing, error: fetchError } = await supabaseAdmin.storage.getBucket(KYC_BUCKET)
+  if (!fetchError && existing) {
+    bucketEnsured = true
+    return
+  }
+
+  const { error: createError } = await supabaseAdmin.storage.createBucket(KYC_BUCKET, {
+    public: true,
+    fileSizeLimit: 10 * 1024 * 1024,
+    allowedMimeTypes: Array.from(ALLOWED_MIME),
+  })
+
+  if (createError && !String(createError.message ?? '').toLowerCase().includes('already exists')) {
+    throw createError
+  }
+
+  bucketEnsured = true
 }
 
 export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
@@ -43,6 +67,15 @@ export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const ext = EXT_BY_MIME[file.type] ?? 'bin'
   const path = `${user.id}/${Date.now()}-${randomUUID()}.${ext}`
   const arrayBuffer = await file.arrayBuffer()
+
+  try {
+    await ensureKycBucketExists()
+  } catch (bucketError: any) {
+    return NextResponse.json(
+      { success: false, message: bucketError?.message ?? 'Failed to initialize KYC storage bucket' },
+      { status: 500 },
+    )
+  }
 
   const { error: uploadError } = await supabaseAdmin.storage
     .from(KYC_BUCKET)
