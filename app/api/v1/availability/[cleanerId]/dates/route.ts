@@ -5,7 +5,7 @@ import { ok, err } from '@/server/response'
 import { availableDatesQuerySchema } from '@/server/schemas/availability.schema'
 
 /**
- * GET /api/v1/availability/:cleanerId/dates?duration_hours=2&days_ahead=30
+ * GET /api/v1/availability/:cleanerId/dates?duration_hours=2&days_ahead=28
  * 
  * Returns an array of YYYY-MM-DD date strings where the cleaner has 
  * bookable slots for the given duration.

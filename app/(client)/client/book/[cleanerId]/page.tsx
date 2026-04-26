@@ -518,7 +518,7 @@ export default function BookingFlowPage() {
     setBookableDatesLoading(true)
     setDate('')
     setBookableDates([])
-    availabilityApi.getBookableDates(cleanerId, duration, 45)
+    availabilityApi.getBookableDates(cleanerId, duration, 28)
       .then((r) => setBookableDates(r.data ?? []))
       .catch(() => setBookableDates([]))
       .finally(() => setBookableDatesLoading(false))

@@ -92,6 +92,7 @@ export const bookingRepo = {
     cleanerPayout: number
     totalAmount: number
     acceptBy: Date
+    originalScheduledStart?: Date
   }) =>
     db.booking.create({ data, include: bookingInclude }),
 

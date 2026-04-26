@@ -146,6 +146,12 @@ export const paymentLifecycleService = {
           proposedStart: null,
           proposedEnd: null,
           proposalBy: null,
+          proposalContext: null,
+          proposalExpiresAt: null,
+          cleanerProposals: 0,
+          clientProposals: 0,
+          postCleanerProposals: 0,
+          postClientProposals: 0,
         },
       })
       expiredPendingCount += 1
@@ -209,21 +215,35 @@ export const paymentLifecycleService = {
     let cancelledIntents = 0
 
     for (const booking of acceptedExpired) {
-      await db.booking.update({ where: { id: booking.id }, data: { status: 'expired' } })
+      const isReauthFlow = Boolean(booking.reauthorizationRequired)
+      await db.booking.update({
+        where: { id: booking.id },
+        data: {
+          status: isReauthFlow ? 'cancelled' : 'expired',
+          cancellationReason: isReauthFlow
+            ? 'Re-authorization was not completed within the grace period after reschedule. No penalties applied.'
+            : null,
+          cancelledAt: isReauthFlow ? new Date() : null,
+        },
+      })
       accepted += 1
 
       await pushInAppNotification({
         userId: booking.client.userId,
-        type: 'booking_request_expired',
-        title: 'Booking payment window expired',
-        body: 'This booking was closed because payment authorization did not complete in time.',
+        type: isReauthFlow ? 'booking_cancelled' : 'booking_request_expired',
+        title: isReauthFlow ? 'Booking cancelled after unresolved re-authorization' : 'Booking payment window expired',
+        body: isReauthFlow
+          ? 'Re-authorization remained unresolved after the 24-hour grace period. Booking was auto-cancelled with no penalties.'
+          : 'This booking was closed because payment authorization did not complete in time.',
         data: { booking_id: booking.id },
       })
       await pushInAppNotification({
         userId: booking.cleaner.userId,
-        type: 'booking_request_expired',
-        title: 'Booking payment window expired',
-        body: 'This booking was closed because client authorization did not complete in time.',
+        type: isReauthFlow ? 'booking_cancelled' : 'booking_request_expired',
+        title: isReauthFlow ? 'Booking cancelled after unresolved re-authorization' : 'Booking payment window expired',
+        body: isReauthFlow
+          ? 'Client did not complete re-authorization during the grace period. Booking was auto-cancelled with no penalties.'
+          : 'This booking was closed because client authorization did not complete in time.',
         data: { booking_id: booking.id },
       })
 
@@ -254,9 +274,49 @@ export const paymentLifecycleService = {
       }
     }
 
+    const expiredRescheduleNegotiations = await db.booking.findMany({
+      where: {
+        status: { in: ['accepted', 'confirmed'] },
+        proposalContext: { in: ['post_confirmation', 'amend_start'] },
+        proposalExpiresAt: { lt: now },
+      },
+      include: {
+        client: { include: { user: true } },
+        cleaner: { include: { user: true } },
+      },
+    })
+
+    for (const booking of expiredRescheduleNegotiations) {
+      await db.booking.update({
+        where: { id: booking.id },
+        data: {
+          proposedStart: null,
+          proposedEnd: null,
+          proposalBy: null,
+          proposalContext: null,
+          proposalExpiresAt: null,
+        },
+      })
+      await pushInAppNotification({
+        userId: booking.client.userId,
+        type: 'booking_request_expired',
+        title: booking.proposalContext === 'amend_start' ? 'Amend Start Time expired' : 'Reschedule request expired',
+        body: 'No agreement was reached before the cutoff. Original booking remains active.',
+        data: { booking_id: booking.id },
+      })
+      await pushInAppNotification({
+        userId: booking.cleaner.userId,
+        type: 'booking_request_expired',
+        title: booking.proposalContext === 'amend_start' ? 'Amend Start Time expired' : 'Reschedule request expired',
+        body: 'No agreement was reached before the cutoff. Original booking remains active.',
+        data: { booking_id: booking.id },
+      })
+    }
+
     return {
       expired_pending: expiredPendingCount,
       expired_accepted: accepted,
+      expired_reschedule_negotiations: expiredRescheduleNegotiations.length,
       cancelled_pending_intents: cancelledIntents + cancelledPendingIntents,
     }
   },

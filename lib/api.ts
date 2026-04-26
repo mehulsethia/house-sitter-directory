@@ -240,7 +240,7 @@ export const availabilityApi = {
       `/availability/${cleanerId}/slots?${qs}`,
     )
   },
-  getBookableDates: (cleanerId: string, durationHours: number, daysAhead = 30) => {
+  getBookableDates: (cleanerId: string, durationHours: number, daysAhead = 28) => {
     const qs = new URLSearchParams({
       duration_hours: String(durationHours),
       days_ahead: String(daysAhead),
@@ -275,7 +275,8 @@ export const bookingsApi = {
       | 'propose_alternative'
       | 'counter_proposal'
       | 'accept_proposal'
-      | 'decline_proposal',
+      | 'decline_proposal'
+      | 'amend_start_time',
     proposedStart?: string,
     startLocation?: {
       latitude: number

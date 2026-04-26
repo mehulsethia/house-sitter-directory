@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarCheck2, ClipboardList, Clock3, Search } from 'lucide-react'
-import { bookingsApi, cleanersApi } from '@/lib/api'
+import { availabilityApi, bookingsApi, cleanersApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { EmptyState } from '@/components/empty-state'
 import { ListPageSkeleton } from '@/components/page-skeletons'
@@ -15,7 +15,6 @@ import { Label } from '@/components/ui/label'
 import {
   getCleanerProposalEligibility,
   RESCHEDULE_CUTOFF_HOURS,
-  THIRTY_MIN_TIME_OPTIONS,
   toDateInputValue,
   toIsoFromDateAndTimeLocal,
   toTimeInputValue,
@@ -50,6 +49,7 @@ export default function CleanerBookingsPage() {
   const [proposalBooking, setProposalBooking] = useState<BookingRead | null>(null)
   const [proposalDate, setProposalDate] = useState('')
   const [proposalTime, setProposalTime] = useState('')
+  const [proposalTimeOptions, setProposalTimeOptions] = useState<Array<{ value: string; label: string }>>([])
   const [, setNowTick] = useState(() => Date.now())
 
   async function refresh() {
@@ -78,6 +78,39 @@ export default function CleanerBookingsPage() {
     const timer = setInterval(() => setNowTick(Date.now()), 60_000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (!proposalBooking || !proposalDate) {
+      setProposalTimeOptions([])
+      setProposalTime('')
+      return
+    }
+
+    availabilityApi
+      .getSlots(proposalBooking.cleaner_id, proposalDate, proposalBooking.duration_hours)
+      .then((res) => {
+        const options = (res.data ?? [])
+          .filter((slot) => !slot.disabled)
+          .map((slot) => {
+            const start = new Date(slot.start)
+            const value = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+            const label = start.toLocaleTimeString('en-IE', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            })
+            return { value, label }
+          })
+        setProposalTimeOptions(options)
+        if (!options.some((o) => o.value === proposalTime)) {
+          setProposalTime(options[0]?.value ?? '')
+        }
+      })
+      .catch(() => {
+        setProposalTimeOptions([])
+        setProposalTime('')
+      })
+  }, [proposalBooking, proposalDate, proposalTime])
 
   async function action(
     id: string,
@@ -372,13 +405,15 @@ export default function CleanerBookingsPage() {
                 onChange={(e) => setProposalTime(e.target.value)}
                 className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
               >
-                <option value="" disabled>Select time</option>
-                {THIRTY_MIN_TIME_OPTIONS.map((o) => (
+                <option value="" disabled>{proposalDate ? 'Select time' : 'Select date first'}</option>
+                {proposalTimeOptions.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
             </div>
-            <p className="mt-2 text-xs text-slate-500">Time options are in 30-minute intervals.</p>
+            <p className="mt-2 text-xs text-slate-500">
+              Only valid availability slots are shown for the selected date and duration.
+            </p>
           </div>
           <Button
             className="w-full"

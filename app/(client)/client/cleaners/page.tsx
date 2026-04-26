@@ -182,7 +182,7 @@ export default function ClientCleanersPage() {
         </section>
 
         <section className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:p-6">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             <Input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search name, bio, skills" />
             <Input value={city} onChange={(event) => setCity(event.target.value)} placeholder="City" />
             <Select value={availability} onChange={(event) => setAvailability(event.target.value as AvailabilityFilter)}>
@@ -211,27 +211,26 @@ export default function ClientCleanersPage() {
             </Select>
             <Input type="number" min="0" value={minRate} onChange={(event) => setMinRate(event.target.value)} placeholder="Min €/hr" />
             <Input type="number" min="0" value={maxRate} onChange={(event) => setMaxRate(event.target.value)} placeholder="Max €/hr" />
-          </div>
-
-          <div className="mt-3 inline-flex h-10 w-full rounded-full border border-slate-200 p-0.5 sm:w-auto">
-            <button
-              type="button"
-              onClick={() => setView('list')}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 text-sm font-semibold ${
-                view === 'list' ? 'bg-[#0d4bc9] text-white' : 'text-slate-600'
-              }`}
-            >
-              <List className="h-4 w-4" /> List
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('card')}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 text-sm font-semibold ${
-                view === 'card' ? 'bg-[#0d4bc9] text-white' : 'text-slate-600'
-              }`}
-            >
-              <Grid3x3 className="h-4 w-4" /> Card
-            </button>
+            <div className="inline-flex h-10 w-full rounded-full border border-slate-200 p-0.5">
+              <button
+                type="button"
+                onClick={() => setView('list')}
+                className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 text-sm font-semibold ${
+                  view === 'list' ? 'bg-[#0d4bc9] text-white' : 'text-slate-600'
+                }`}
+              >
+                <List className="h-4 w-4" /> List
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('card')}
+                className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 text-sm font-semibold ${
+                  view === 'card' ? 'bg-[#0d4bc9] text-white' : 'text-slate-600'
+                }`}
+              >
+                <Grid3x3 className="h-4 w-4" /> Card
+              </button>
+            </div>
           </div>
         </section>
 
@@ -244,15 +243,15 @@ export default function ClientCleanersPage() {
             {filtered.map((cleaner, index) => (
               <article
                 key={cleaner.id}
-                className="cleaner-row rounded-2xl border border-slate-200 bg-white p-4 transition duration-300 hover:-translate-y-0.5 hover:border-[#9eb7ec] hover:bg-[#f8fbff]"
+                className="cleaner-row rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_6px_16px_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:border-[#8aa8e2] hover:shadow-[0_14px_30px_rgba(15,23,42,0.09)]"
                 style={{ animationDelay: `${index * 65}ms` }}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2.5">
                   <UserAvatar
                     name={cleaner.name}
                     imageUrl={cleaner.profile_image_url}
                     alt={`${cleaner.name} profile`}
-                    className="h-16 w-16 border border-slate-200"
+                    className="h-14 w-14 border border-slate-200"
                     textClassName="text-xl font-bold"
                     fallback="C"
                   />
@@ -260,11 +259,11 @@ export default function ClientCleanersPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3
-                          className={`${displayFont.className} truncate text-2xl font-semibold tracking-[-0.02em] text-slate-900`}
+                          className={`${displayFont.className} truncate text-[2rem] leading-none font-semibold tracking-[-0.02em] text-slate-900`}
                         >
                           {cleaner.name}
                         </h3>
-                        <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.14em] text-slate-500`}>
+                        <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.04em] text-slate-500`}>
                           ID {cleanerKey(cleaner)}
                           {joinedLabel(cleaner.created_at) ? ` • Joined ${joinedLabel(cleaner.created_at)}` : ''}
                         </p>
@@ -278,7 +277,7 @@ export default function ClientCleanersPage() {
                       </p>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-slate-500">
                       {cleaner.city && (
                         <span className="inline-flex items-center gap-1">
                           <MapPin className="h-4 w-4" />
@@ -301,17 +300,17 @@ export default function ClientCleanersPage() {
                       </span>
                     </div>
 
-                    {cleaner.bio && <p className="mt-2 line-clamp-2 text-sm text-slate-600">{cleaner.bio}</p>}
+                    {cleaner.bio && <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-slate-600">{cleaner.bio}</p>}
 
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {(cleaner.skills ?? []).slice(0, 3).map((skill) => (
-                        <span key={skill} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">
+                        <span key={skill} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-700">
                           {skill}
                         </span>
                       ))}
                     </div>
 
-                    <div className="mt-4 flex items-center justify-end gap-2">
+                    <div className="mt-3 flex items-center justify-end gap-2">
                       <Link
                         href={`/client/cleaners/${cleaner.id}`}
                         className="inline-flex h-9 items-center rounded-full border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
@@ -335,7 +334,7 @@ export default function ClientCleanersPage() {
             {filtered.map((cleaner, index) => (
               <article
                 key={cleaner.id}
-                className="cleaner-row rounded-2xl border border-slate-200 bg-white p-4 transition duration-300 hover:-translate-y-0.5 hover:border-[#9eb7ec] hover:bg-[#f8fbff]"
+                className="cleaner-row rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_6px_16px_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:border-[#8aa8e2] hover:shadow-[0_14px_30px_rgba(15,23,42,0.09)]"
                 style={{ animationDelay: `${index * 65}ms` }}
               >
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -354,7 +353,7 @@ export default function ClientCleanersPage() {
                       >
                         {cleaner.name}
                       </h3>
-                      <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.14em] text-slate-500`}>
+                      <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.04em] text-slate-500`}>
                         ID {cleanerKey(cleaner)}
                         {joinedLabel(cleaner.created_at) ? ` • Joined ${joinedLabel(cleaner.created_at)}` : ''}
                       </p>

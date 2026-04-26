@@ -64,7 +64,13 @@ export const paymentAuthorizationService = {
     }
 
     if (booking.status === 'accepted') {
-      await bookingRepo.update(booking.id, { status: 'confirmed', confirmedAt: new Date() })
+      await bookingRepo.update(booking.id, {
+        status: 'confirmed',
+        confirmedAt: new Date(),
+        payBy: null,
+        reauthorizationRequired: false,
+        reauthorizationGraceExpiresAt: null,
+      })
       void googleCalendarService.upsertCleanerBookingEvent(booking.id).catch((e) => {
         console.error('Failed to sync cleaner Google Calendar event:', e)
       })

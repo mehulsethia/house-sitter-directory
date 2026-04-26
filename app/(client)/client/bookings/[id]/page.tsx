@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { ArrowLeft, Calendar, Clock, MapPin } from 'lucide-react'
-import { authApi, bookingsApi, paymentsApi, reviewsApi } from '@/lib/api'
+import { authApi, availabilityApi, bookingsApi, paymentsApi, reviewsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { PriceBreakdownCard } from '@/components/price-breakdown-card'
 import { Chat } from '@/components/chat'
@@ -16,6 +16,7 @@ import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { toDateInputValue, toIsoFromDateAndTimeLocal, toTimeInputValue } from '@/lib/booking-proposal'
 import { formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { isChatReadOnly } from '@/lib/chat-window'
@@ -46,7 +47,9 @@ export default function ClientBookingDetailPage() {
   const [reviewComment, setReviewComment] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [counterOpen, setCounterOpen] = useState(false)
-  const [counterStart, setCounterStart] = useState('')
+  const [counterDate, setCounterDate] = useState('')
+  const [counterTime, setCounterTime] = useState('')
+  const [counterTimeOptions, setCounterTimeOptions] = useState<Array<{ value: string; label: string }>>([])
 
   const refresh = () =>
     bookingsApi
@@ -73,6 +76,38 @@ export default function ClientBookingDetailPage() {
         // webhook may still complete the transition shortly
       })
   }, [id, searchParams])
+
+  useEffect(() => {
+    if (!booking || !counterOpen || !counterDate) {
+      setCounterTimeOptions([])
+      return
+    }
+
+    availabilityApi
+      .getSlots(booking.cleaner_id, counterDate, booking.duration_hours)
+      .then((res) => {
+        const options = (res.data ?? [])
+          .filter((slot) => !slot.disabled)
+          .map((slot) => {
+            const start = new Date(slot.start)
+            const value = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+            const label = start.toLocaleTimeString('en-IE', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            })
+            return { value, label }
+          })
+        setCounterTimeOptions(options)
+        if (!options.some((o) => o.value === counterTime)) {
+          setCounterTime(options[0]?.value ?? '')
+        }
+      })
+      .catch(() => {
+        setCounterTimeOptions([])
+        setCounterTime('')
+      })
+  }, [booking, counterOpen, counterDate, counterTime])
 
   async function handleReview() {
     setActionLoading(true)
@@ -102,7 +137,9 @@ export default function ClientBookingDetailPage() {
       toast.success(labels[action])
       if (action === 'counter_proposal') {
         setCounterOpen(false)
-        setCounterStart('')
+        setCounterDate('')
+        setCounterTime('')
+        setCounterTimeOptions([])
       }
       await refresh()
     } catch (err: any) {
@@ -242,7 +279,15 @@ export default function ClientBookingDetailPage() {
                         Accept proposed time
                       </Button>
                       {canCounterProposal && (
-                        <Button variant="outline" onClick={() => setCounterOpen(true)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const seed = booking.proposed_start ?? booking.scheduled_start
+                            setCounterDate(toDateInputValue(seed))
+                            setCounterTime(toTimeInputValue(seed))
+                            setCounterOpen(true)
+                          }}
+                        >
                           Counter once with another time
                         </Button>
                       )}
@@ -294,7 +339,15 @@ export default function ClientBookingDetailPage() {
         </section>
       </div>
 
-      <Dialog open={counterOpen} onClose={() => setCounterOpen(false)}>
+      <Dialog
+        open={counterOpen}
+        onClose={() => {
+          setCounterOpen(false)
+          setCounterDate('')
+          setCounterTime('')
+          setCounterTimeOptions([])
+        }}
+      >
         <DialogTitle>Counter with one new time</DialogTitle>
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
@@ -302,17 +355,36 @@ export default function ClientBookingDetailPage() {
           </p>
           <div>
             <Label>Counter start time</Label>
-            <Input
-              type="datetime-local"
-              value={counterStart}
-              onChange={(e) => setCounterStart(e.target.value)}
-              className="mt-1"
-            />
+            <div className="mt-1 grid gap-2 sm:grid-cols-2">
+              <Input
+                type="date"
+                value={counterDate}
+                onChange={(e) => setCounterDate(e.target.value)}
+              />
+              <select
+                value={counterTime}
+                onChange={(e) => setCounterTime(e.target.value)}
+                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition-colors hover:border-slate-400 focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="" disabled>{counterDate ? 'Select time' : 'Select date first'}</option>
+                {counterTimeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">Only valid availability slots are shown for the selected date and duration.</p>
           </div>
           <Button
             className="w-full"
-            onClick={() => handleBookingAction('counter_proposal', new Date(counterStart).toISOString())}
-            disabled={!counterStart}
+            onClick={() => {
+              const iso = toIsoFromDateAndTimeLocal(counterDate, counterTime)
+              if (!iso) {
+                toast.error('Select a valid date and time.')
+                return
+              }
+              handleBookingAction('counter_proposal', iso)
+            }}
+            disabled={!counterDate || !counterTime}
             loading={actionLoading}
           >
             Send counter-offer

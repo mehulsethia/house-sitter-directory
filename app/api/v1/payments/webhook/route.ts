@@ -32,6 +32,33 @@ export async function POST(req: NextRequest) {
         const payment = await paymentRepo.findByStripeIntentId(pi.id)
         if (payment) {
           await paymentRepo.update(payment.id, { status: 'failed', failedAt: new Date() })
+          const booking = await bookingRepo.findById(payment.bookingId)
+          if (booking && booking.status === 'accepted' && booking.reauthorizationRequired) {
+            const graceEndsAt = new Date(
+              Math.min(
+                booking.scheduledStart.getTime(),
+                Date.now() + 24 * 60 * 60 * 1000,
+              ),
+            )
+            await bookingRepo.update(booking.id, {
+              payBy: graceEndsAt,
+              reauthorizationGraceExpiresAt: graceEndsAt,
+            })
+            await pushInAppNotification({
+              userId: booking.client.userId,
+              type: 'booking_payment_required',
+              title: 'Re-authorization failed',
+              body: 'Please fix your payment method within 24 hours to keep this rescheduled booking active.',
+              data: { booking_id: booking.id },
+            })
+            await pushInAppNotification({
+              userId: booking.cleaner.userId,
+              type: 'booking_payment_required',
+              title: 'Waiting for client re-authorization',
+              body: 'Client has up to 24 hours to resolve payment for this rescheduled booking.',
+              data: { booking_id: booking.id },
+            })
+          }
         }
         break
       }

@@ -92,8 +92,6 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
       client_id: client.id,
       cleaner_id: cleaner.id,
     },
-  }, {
-    idempotencyKey: `booking_intent_${booking.id}`,
   })
 
   await paymentRepo.upsert({

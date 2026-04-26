@@ -11,6 +11,7 @@ interface StarRatingProps {
 
 export function StarRating({ rating, max = 5, size = 'sm', showValue = true, className }: StarRatingProps) {
   const iconSize = size === 'sm' ? 'h-3.5 w-3.5' : 'h-5 w-5'
+  const hasRating = rating > 0
   return (
     <span className={cn('inline-flex items-center gap-0.5', className)}>
       {Array.from({ length: max }).map((_, i) => (
@@ -19,8 +20,8 @@ export function StarRating({ rating, max = 5, size = 'sm', showValue = true, cla
           className={cn(iconSize, i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-muted text-muted-foreground')}
         />
       ))}
-      {showValue && (
-        <span className="ml-1 text-xs text-muted-foreground">{rating > 0 ? rating.toFixed(1) : 'New'}</span>
+      {showValue && hasRating && (
+        <span className="ml-1 text-xs text-muted-foreground">{rating.toFixed(1)}</span>
       )}
     </span>
   )

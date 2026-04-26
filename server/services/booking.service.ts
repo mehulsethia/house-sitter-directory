@@ -15,6 +15,14 @@ const PLATFORM_FEE_PCT = 10
 const BOOKING_ACCEPT_TTL_MINUTES = Number(process.env.BOOKING_ACCEPT_TTL_MINUTES ?? 1440)
 const BOOKING_PAY_TTL_MINUTES = Number(process.env.BOOKING_PAY_TTL_MINUTES ?? 15)
 const RESCHEDULE_CUTOFF_HOURS = 24
+const MAX_BOOKING_WINDOW_DAYS = 28
+const POST_CONFIRM_RESCHEDULE_WINDOW_DAYS = 14
+const AMEND_WITHIN_HOURS = 24
+const AMEND_MAX_SHIFT_HOURS = 3
+const AMEND_FAST_RESPONSE_MINUTES = 15
+const AMEND_STANDARD_RESPONSE_MINUTES = 60
+const REAUTH_IMMEDIATE_THRESHOLD_HOURS = 48
+const REAUTH_FAILURE_GRACE_HOURS = 24
 const BOOKING_PRE_BUFFER_MS = 15 * 60 * 1000
 const BOOKING_POST_BUFFER_MS = 15 * 60 * 1000
 const NO_SHOW_REPORT_DELAY_MINUTES = 30
@@ -93,6 +101,7 @@ export const bookingService = {
       cleanerPayout: pricing.cleaner_payout,
       totalAmount: pricing.total_amount,
       acceptBy,
+      originalScheduledStart: scheduledStart,
     })
 
     await pushInAppNotification({
@@ -128,6 +137,7 @@ export const bookingService = {
         | 'counter_proposal'
         | 'accept_proposal'
         | 'decline_proposal'
+        | 'amend_start_time'
       proposed_start?: string
       start_location?: {
         latitude: number
@@ -173,9 +183,7 @@ export const bookingService = {
         acceptedAt: now,
         confirmedAt: isPaymentAuthorized ? now : null,
         payBy: null,
-        proposedStart: null,
-        proposedEnd: null,
-        proposalBy: null,
+        ...clearedProposalState(),
       })
       await pushInAppNotification({
         userId: booking.client.userId,
@@ -199,9 +207,7 @@ export const bookingService = {
 
       const updated = await bookingRepo.update(bookingId, {
         status: 'expired',
-        proposedStart: null,
-        proposedEnd: null,
-        proposalBy: null,
+        ...clearedProposalState(),
       })
       await releasePaymentAuthorization(
         booking.payment?.id,
@@ -231,18 +237,15 @@ export const bookingService = {
     }
 
     if (action === 'propose_alternative') {
-      if (!isCleaner) throw new ServiceError('Only cleaner can propose an alternative time', 403)
-      if (booking.status !== 'pending') {
+      if (!isCleaner && !isClient) throw new ServiceError('Forbidden', 403)
+
+      const isPreConfirmation = booking.status === 'pending'
+      const isPostConfirmation = ['accepted', 'confirmed'].includes(booking.status)
+      if (!isPreConfirmation && !isPostConfirmation) {
         throw new ServiceError(`Cannot propose a new time in status '${booking.status}'`, 400)
       }
-      assertWithinRequestWindow(booking.acceptBy)
-      assertRescheduleWindow(booking.scheduledStart)
-      if (booking.proposalBy) {
-        throw new ServiceError('A proposal is already active for this booking', 400)
-      }
-      if (booking.cleanerProposals >= 1) {
-        throw new ServiceError('Cleaner can only propose an alternative time once', 400)
-      }
+
+      const actor = isCleaner ? 'cleaner' : 'client'
       const proposedStart = parseProposedStart(payload.proposed_start)
       assertHalfHourBoundary(proposedStart)
       if (proposedStart.getTime() === booking.scheduledStart.getTime()) {
@@ -251,130 +254,316 @@ export const bookingService = {
       const proposedEnd = new Date(proposedStart.getTime() + Number(booking.durationHours) * 60 * 60 * 1000)
       await validateBookingWindow(booking.cleanerId, proposedStart, proposedEnd)
 
+      if (isPreConfirmation) {
+        assertWithinRequestWindow(booking.acceptBy)
+        assertRescheduleWindow(booking.scheduledStart)
+        if (booking.proposalBy) {
+          throw new ServiceError('A proposal is already active for this booking', 400)
+        }
+        if (actor === 'cleaner' && booking.cleanerProposals >= 1) {
+          throw new ServiceError('Cleaner can only propose an alternative time once', 400)
+        }
+        if (actor === 'client' && booking.clientProposals >= 1) {
+          throw new ServiceError('Client can only propose an alternative time once', 400)
+        }
+
+        const updated = await bookingRepo.update(bookingId, {
+          proposedStart,
+          proposedEnd,
+          proposalBy: actor,
+          proposalContext: 'pre_confirmation',
+          proposalExpiresAt: booking.acceptBy,
+          cleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
+          clientProposals: actor === 'client' ? { increment: 1 } : undefined,
+        })
+        await pushInAppNotification({
+          userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+          type: 'booking_proposed_new_time',
+          title: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed a new time`,
+          body: 'Review and accept, decline, or counter once before the request expires.',
+          data: { booking_id: bookingId },
+        })
+        return updated
+      }
+
+      assertPostConfirmationRescheduleWindow(booking.scheduledStart)
+      const originalStart = booking.originalScheduledStart ?? booking.scheduledStart
+      assertPostConfirmationDateLimit(originalStart, proposedStart)
+      if (booking.proposalBy) {
+        throw new ServiceError('A proposal is already active for this booking', 400)
+      }
+      if (actor === 'cleaner' && booking.postCleanerProposals >= 1) {
+        throw new ServiceError('Cleaner can only make one counter-proposal in post-confirmation rescheduling', 400)
+      }
+      if (actor === 'client' && booking.postClientProposals >= 1) {
+        throw new ServiceError('Client can only make one counter-proposal in post-confirmation rescheduling', 400)
+      }
+
+      const proposalExpiresAt = new Date(booking.scheduledStart.getTime() - RESCHEDULE_CUTOFF_HOURS * 60 * 60 * 1000)
       const updated = await bookingRepo.update(bookingId, {
         proposedStart,
         proposedEnd,
-        proposalBy: 'cleaner',
-        cleanerProposals: { increment: 1 },
+        proposalBy: actor,
+        proposalContext: 'post_confirmation',
+        proposalExpiresAt,
+        postCleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
+        postClientProposals: actor === 'client' ? { increment: 1 } : undefined,
       })
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
         type: 'booking_proposed_new_time',
-        title: 'Cleaner proposed a new time',
-        body: 'Review and accept, decline, or counter once before the request expires.',
+        title: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed a reschedule`,
+        body: 'Accept or decline before the 24-hour cutoff; otherwise original booking remains active.',
         data: { booking_id: bookingId },
       })
       return updated
     }
 
     if (action === 'counter_proposal') {
-      if (!isClient) throw new ServiceError('Only client can counter a proposal', 403)
-      if (booking.status !== 'pending') {
+      if (!isCleaner && !isClient) throw new ServiceError('Forbidden', 403)
+      const actor = isCleaner ? 'cleaner' : 'client'
+      if (!['pending', 'accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot counter a proposal in status '${booking.status}'`, 400)
       }
-      assertWithinRequestWindow(booking.acceptBy)
-      assertRescheduleWindow(booking.scheduledStart)
-      if (booking.proposalBy !== 'cleaner' || !booking.proposedStart || !booking.proposedEnd) {
-        throw new ServiceError('No cleaner proposal available to counter', 400)
+      if (!booking.proposalBy || !booking.proposedStart || !booking.proposedEnd) {
+        throw new ServiceError('No active proposal available to counter', 400)
       }
-      if (booking.clientProposals >= 1) {
-        throw new ServiceError('Client can only counter once', 400)
+      if (booking.proposalBy === actor) {
+        throw new ServiceError('You cannot counter your own proposal', 400)
       }
+
       const proposedStart = parseProposedStart(payload.proposed_start)
       assertHalfHourBoundary(proposedStart)
       const proposedEnd = new Date(proposedStart.getTime() + Number(booking.durationHours) * 60 * 60 * 1000)
       await validateBookingWindow(booking.cleanerId, proposedStart, proposedEnd)
 
+      const isPreConfirmation = booking.status === 'pending' && booking.proposalContext !== 'post_confirmation'
+      if (isPreConfirmation) {
+        assertWithinRequestWindow(booking.acceptBy)
+        assertRescheduleWindow(booking.scheduledStart)
+        if (actor === 'client' && booking.clientProposals >= 1) {
+          throw new ServiceError('Client can only counter once', 400)
+        }
+        if (actor === 'cleaner' && booking.cleanerProposals >= 1) {
+          throw new ServiceError('Cleaner can only counter once', 400)
+        }
+
+        const updated = await bookingRepo.update(bookingId, {
+          proposedStart,
+          proposedEnd,
+          proposalBy: actor,
+          proposalContext: 'pre_confirmation',
+          proposalExpiresAt: booking.acceptBy,
+          cleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
+          clientProposals: actor === 'client' ? { increment: 1 } : undefined,
+        })
+        await pushInAppNotification({
+          userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+          type: 'booking_counter_proposal',
+          title: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} sent a counter-offer`,
+          body: 'Accept or decline this counter-offer before the request expires.',
+          data: { booking_id: bookingId },
+        })
+        return updated
+      }
+
+      assertPostConfirmationRescheduleWindow(booking.scheduledStart)
+      if (booking.proposalContext === 'amend_start') {
+        throw new ServiceError('Counter-proposals are not allowed for Amend Start Time requests', 400)
+      }
+      const originalStart = booking.originalScheduledStart ?? booking.scheduledStart
+      assertPostConfirmationDateLimit(originalStart, proposedStart)
+      if (actor === 'client' && booking.postClientProposals >= 1) {
+        throw new ServiceError('Client has already used the single allowed counter-proposal', 400)
+      }
+      if (actor === 'cleaner' && booking.postCleanerProposals >= 1) {
+        throw new ServiceError('Cleaner has already used the single allowed counter-proposal', 400)
+      }
+      const proposalExpiresAt = booking.proposalExpiresAt ??
+        new Date(booking.scheduledStart.getTime() - RESCHEDULE_CUTOFF_HOURS * 60 * 60 * 1000)
+
       const updated = await bookingRepo.update(bookingId, {
         proposedStart,
         proposedEnd,
-        proposalBy: 'client',
-        clientProposals: { increment: 1 },
+        proposalBy: actor,
+        proposalContext: 'post_confirmation',
+        proposalExpiresAt,
+        postCleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
+        postClientProposals: actor === 'client' ? { increment: 1 } : undefined,
       })
       await pushInAppNotification({
-        userId: booking.cleaner.userId,
+        userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
         type: 'booking_counter_proposal',
-        title: 'Client sent one counter-offer',
-        body: 'Accept or decline this counter-offer before the request expires.',
+        title: 'Reschedule counter-offer received',
+        body: 'No further countering is allowed once both sides used their single counter.',
         data: { booking_id: bookingId },
       })
       return updated
     }
 
     if (action === 'accept_proposal') {
-      if (booking.status !== 'pending') {
+      if (!['pending', 'accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot accept a proposal in status '${booking.status}'`, 400)
       }
-      assertWithinRequestWindow(booking.acceptBy)
       if (!booking.proposedStart || !booking.proposedEnd || !booking.proposalBy) {
         throw new ServiceError('No proposal available to accept', 400)
       }
+      const proposalContext = booking.proposalContext ?? (booking.status === 'pending' ? 'pre_confirmation' : 'post_confirmation')
 
       if (booking.proposalBy === 'cleaner' && !isClient) {
         throw new ServiceError('Only client can accept cleaner proposal', 403)
       }
       if (booking.proposalBy === 'client' && !isCleaner) {
-        throw new ServiceError('Only cleaner can accept client counter-offer', 403)
+        throw new ServiceError('Only cleaner can accept client proposal', 403)
       }
       if (booking.proposalBy === 'client') {
         assertCleanerStripeReady(cleaner)
       }
 
-      const isPaymentAuthorized = ['authorized', 'captured', 'transferred'].includes(String(booking.payment?.status ?? ''))
-      const now = new Date()
+      if (proposalContext === 'pre_confirmation') {
+        assertWithinRequestWindow(booking.acceptBy)
+        const isPaymentAuthorized = ['authorized', 'captured', 'transferred'].includes(String(booking.payment?.status ?? ''))
+        const now = new Date()
+        const updated = await bookingRepo.update(bookingId, {
+          status: isPaymentAuthorized ? 'confirmed' : 'accepted',
+          scheduledStart: booking.proposedStart,
+          scheduledEnd: booking.proposedEnd,
+          acceptedAt: now,
+          confirmedAt: isPaymentAuthorized ? now : null,
+          payBy: null,
+          ...clearedProposalState(),
+        })
+        await pushInAppNotification({
+          userId: isClient ? booking.cleaner.userId : booking.client.userId,
+          type: 'booking_time_agreed',
+          title: 'Booking time confirmed',
+          body: 'The proposed booking time has been accepted and confirmed.',
+          data: { booking_id: bookingId },
+        })
+        void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
+          console.error('Failed to sync cleaner Google Calendar event:', e)
+        })
+        return updated
+      }
+
+      if (proposalContext === 'amend_start') {
+        assertAmendRequestStillValid(booking)
+        const updated = await bookingRepo.update(bookingId, {
+          scheduledStart: booking.proposedStart,
+          scheduledEnd: booking.proposedEnd,
+          ...clearedProposalState(),
+        })
+        await pushInAppNotification({
+          userId: isClient ? booking.cleaner.userId : booking.client.userId,
+          type: 'booking_time_agreed',
+          title: 'Start time amended',
+          body: 'The amended start time was accepted.',
+          data: { booking_id: bookingId },
+        })
+        void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
+          console.error('Failed to sync cleaner Google Calendar event:', e)
+        })
+        return updated
+      }
+
+      assertPostConfirmationRescheduleWindow(booking.scheduledStart)
+      assertPostConfirmationProposalOpen(booking.proposalExpiresAt)
       const updated = await bookingRepo.update(bookingId, {
-        status: isPaymentAuthorized ? 'confirmed' : 'accepted',
         scheduledStart: booking.proposedStart,
         scheduledEnd: booking.proposedEnd,
-        acceptedAt: now,
-        confirmedAt: isPaymentAuthorized ? now : null,
-        payBy: null,
-        proposedStart: null,
-        proposedEnd: null,
-        proposalBy: null,
+        ...clearedProposalState(),
       })
+      await resetAuthorizationAfterReschedule(updated.id)
       await pushInAppNotification({
         userId: isClient ? booking.cleaner.userId : booking.client.userId,
         type: 'booking_time_agreed',
-        title: 'Booking time confirmed',
-        body: 'The proposed booking time has been accepted and confirmed.',
+        title: 'Reschedule accepted',
+        body: 'Booking time updated. Client re-authorization is now required.',
         data: { booking_id: bookingId },
       })
-      void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
-        console.error('Failed to sync cleaner Google Calendar event:', e)
-      })
-      return updated
+      const refreshed = await bookingRepo.findById(updated.id)
+      if (!refreshed) throw new ServiceError('Booking not found after reschedule update', 404)
+      return refreshed
     }
 
     if (action === 'decline_proposal') {
-      if (booking.status !== 'pending') {
+      if (!['pending', 'accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot decline a proposal in status '${booking.status}'`, 400)
       }
-      assertWithinRequestWindow(booking.acceptBy)
       if (!booking.proposalBy) throw new ServiceError('No active proposal to decline', 400)
       if (booking.proposalBy === 'cleaner' && !isClient) {
         throw new ServiceError('Only client can decline cleaner proposal', 403)
       }
       if (booking.proposalBy === 'client' && !isCleaner) {
-        throw new ServiceError('Only cleaner can decline client counter-offer', 403)
+        throw new ServiceError('Only cleaner can decline client proposal', 403)
+      }
+
+      const proposalContext = booking.proposalContext ?? (booking.status === 'pending' ? 'pre_confirmation' : 'post_confirmation')
+      if (proposalContext === 'pre_confirmation') {
+        const updated = await bookingRepo.update(bookingId, {
+          status: 'expired',
+          ...clearedProposalState(),
+        })
+        await releasePaymentAuthorization(booking.payment?.id, booking.payment?.stripePaymentIntentId, booking.payment?.status)
+        await pushInAppNotification({
+          userId: isClient ? booking.cleaner.userId : booking.client.userId,
+          type: 'booking_request_expired',
+          title: 'Booking request closed',
+          body: 'No final agreement was reached for this booking request.',
+          data: { booking_id: bookingId },
+        })
+        void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
+          console.error('Failed to remove cleaner Google Calendar event:', e)
+        })
+        return updated
       }
 
       const updated = await bookingRepo.update(bookingId, {
-        status: 'expired',
-        proposedStart: null,
-        proposedEnd: null,
-        proposalBy: null,
+        ...clearedProposalState(),
       })
-      await releasePaymentAuthorization(booking.payment?.id, booking.payment?.stripePaymentIntentId, booking.payment?.status)
       await pushInAppNotification({
         userId: isClient ? booking.cleaner.userId : booking.client.userId,
         type: 'booking_request_expired',
-        title: 'Booking request closed',
-        body: 'No final agreement was reached for this booking request.',
+        title: proposalContext === 'amend_start' ? 'Amendment declined' : 'Reschedule declined',
+        body: proposalContext === 'amend_start'
+          ? 'Start-time amendment was declined. Original schedule remains active.'
+          : 'Reschedule request was declined. Original booking remains active.',
         data: { booking_id: bookingId },
       })
-      void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
-        console.error('Failed to remove cleaner Google Calendar event:', e)
+      return updated
+    }
+
+    if (action === 'amend_start_time') {
+      if (!isClient && !isCleaner) throw new ServiceError('Forbidden', 403)
+      if (!['accepted', 'confirmed'].includes(booking.status)) {
+        throw new ServiceError(`Cannot amend start time in status '${booking.status}'`, 400)
+      }
+      if (booking.proposalBy) {
+        throw new ServiceError('Another proposal is already active for this booking', 400)
+      }
+      const proposedStart = parseProposedStart(payload.proposed_start)
+      assertHalfHourBoundary(proposedStart)
+      assertAmendWindow(booking.scheduledStart, proposedStart)
+      const proposedEnd = new Date(proposedStart.getTime() + Number(booking.durationHours) * 60 * 60 * 1000)
+      await validateBookingWindow(booking.cleanerId, proposedStart, proposedEnd)
+
+      const hoursUntilBooking = (booking.scheduledStart.getTime() - Date.now()) / (60 * 60 * 1000)
+      const ttlMinutes = hoursUntilBooking < 2 ? AMEND_FAST_RESPONSE_MINUTES : AMEND_STANDARD_RESPONSE_MINUTES
+      const proposalExpiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000)
+      const actor = isCleaner ? 'cleaner' : 'client'
+      const updated = await bookingRepo.update(bookingId, {
+        proposedStart,
+        proposedEnd,
+        proposalBy: actor,
+        proposalContext: 'amend_start',
+        proposalExpiresAt,
+      })
+      await pushInAppNotification({
+        userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+        type: 'booking_proposed_new_time',
+        title: 'Start time amendment requested',
+        body: `Respond within ${ttlMinutes} minutes. Counter-offers are not allowed for this amendment.`,
+        data: { booking_id: bookingId },
       })
       return updated
     }
@@ -548,6 +737,107 @@ function assertRescheduleWindow(scheduledStart: Date) {
   if (hoursUntilStart <= RESCHEDULE_CUTOFF_HOURS) {
     throw new ServiceError('Alternative proposals are only allowed for bookings more than 24 hours away', 400)
   }
+}
+
+function assertPostConfirmationRescheduleWindow(scheduledStart: Date) {
+  const hoursUntilStart = (scheduledStart.getTime() - Date.now()) / (60 * 60 * 1000)
+  if (hoursUntilStart <= RESCHEDULE_CUTOFF_HOURS) {
+    throw new ServiceError('Post-confirmation rescheduling is only allowed more than 24 hours before start', 400)
+  }
+}
+
+function assertPostConfirmationProposalOpen(proposalExpiresAt: Date | null) {
+  if (!proposalExpiresAt) return
+  if (proposalExpiresAt.getTime() <= Date.now()) {
+    throw new ServiceError('Reschedule request has expired. Original booking remains active.', 400)
+  }
+}
+
+function assertPostConfirmationDateLimit(originalScheduledStart: Date, proposedStart: Date) {
+  const originalStart = new Date(originalScheduledStart)
+  originalStart.setHours(0, 0, 0, 0)
+  const maxAllowed = new Date(originalStart)
+  maxAllowed.setDate(maxAllowed.getDate() + POST_CONFIRM_RESCHEDULE_WINDOW_DAYS)
+
+  if (proposedStart.getTime() > maxAllowed.getTime()) {
+    throw new ServiceError(`Post-confirmation reschedules must be within ${POST_CONFIRM_RESCHEDULE_WINDOW_DAYS} days of the original booking date`, 400)
+  }
+}
+
+function assertAmendWindow(currentStart: Date, proposedStart: Date) {
+  const now = Date.now()
+  const hoursUntilCurrentStart = (currentStart.getTime() - now) / (60 * 60 * 1000)
+  if (hoursUntilCurrentStart > AMEND_WITHIN_HOURS) {
+    throw new ServiceError(`Amend Start Time is only allowed within ${AMEND_WITHIN_HOURS} hours of booking start`, 400)
+  }
+
+  const currentLocalDate = cyprusDateStr(currentStart)
+  const proposedLocalDate = cyprusDateStr(proposedStart)
+  if (currentLocalDate !== proposedLocalDate) {
+    throw new ServiceError('Amend Start Time must stay on the same calendar day', 400)
+  }
+
+  const shiftHours = Math.abs(proposedStart.getTime() - currentStart.getTime()) / (60 * 60 * 1000)
+  if (shiftHours > AMEND_MAX_SHIFT_HOURS) {
+    throw new ServiceError(`Amend Start Time can only shift by +/-${AMEND_MAX_SHIFT_HOURS} hours`, 400)
+  }
+}
+
+function assertAmendRequestStillValid(booking: Awaited<ReturnType<typeof bookingRepo.findById>>) {
+  if (!booking?.proposalExpiresAt) return
+  if (booking.proposalExpiresAt.getTime() < Date.now()) {
+    throw new ServiceError('Amend Start Time request expired. Original schedule remains active.', 400)
+  }
+}
+
+function clearedProposalState() {
+  return {
+    proposedStart: null,
+    proposedEnd: null,
+    proposalBy: null,
+    proposalContext: null,
+    proposalExpiresAt: null,
+    cleanerProposals: 0,
+    clientProposals: 0,
+    postCleanerProposals: 0,
+    postClientProposals: 0,
+  }
+}
+
+async function resetAuthorizationAfterReschedule(bookingId: string) {
+  const booking = await bookingRepo.findById(bookingId)
+  if (!booking) throw new ServiceError('Booking not found', 404)
+
+  await releasePaymentAuthorization(
+    booking.payment?.id,
+    booking.payment?.stripePaymentIntentId,
+    booking.payment?.status,
+  )
+
+  const now = Date.now()
+  const hoursToStart = (booking.scheduledStart.getTime() - now) / (60 * 60 * 1000)
+  const requiresImmediateReauth = hoursToStart < REAUTH_IMMEDIATE_THRESHOLD_HOURS
+  const payBy = requiresImmediateReauth
+    ? new Date(Math.min(booking.scheduledStart.getTime(), now + REAUTH_FAILURE_GRACE_HOURS * 60 * 60 * 1000))
+    : new Date(booking.scheduledStart.getTime() - REAUTH_IMMEDIATE_THRESHOLD_HOURS * 60 * 60 * 1000)
+
+  await bookingRepo.update(bookingId, {
+    status: 'accepted',
+    confirmedAt: null,
+    payBy,
+    reauthorizationRequired: true,
+    reauthorizationGraceExpiresAt: requiresImmediateReauth ? payBy : null,
+  })
+
+  await pushInAppNotification({
+    userId: booking.client.userId,
+    type: 'booking_payment_required',
+    title: 'Card re-authorization required',
+    body: requiresImmediateReauth
+      ? 'Your rescheduled booking is less than 48 hours away. Re-authorize your card now.'
+      : 'Please re-authorize your card before 48 hours prior to the rescheduled start time.',
+    data: { booking_id: bookingId },
+  })
 }
 
 function assertPaymentAuthorized(paymentStatus: string | null | undefined, action: string) {
@@ -782,6 +1072,11 @@ async function validateBookingWindow(cleanerId: string, scheduledStart: Date, sc
   const leadTimeCutoff = now + 2 * 60 * 60 * 1000
   if (scheduledStart.getTime() < leadTimeCutoff) {
     throw new ServiceError('Selected time must be at least 2 hours from now', 422)
+  }
+
+  const maxAdvanceWindow = now + MAX_BOOKING_WINDOW_DAYS * 24 * 60 * 60 * 1000
+  if (scheduledStart.getTime() > maxAdvanceWindow) {
+    throw new ServiceError(`Bookings can only be made up to ${MAX_BOOKING_WINDOW_DAYS} days in advance`, 422)
   }
 
   const dayStart = startOfDayCyprus(scheduledStart)

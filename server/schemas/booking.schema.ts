@@ -13,6 +13,7 @@ export const BOOKING_ACTIONS = [
   'counter_proposal',
   'accept_proposal',
   'decline_proposal',
+  'amend_start_time',
 ] as const
 
 export const previewPriceSchema = z.object({
@@ -43,10 +44,10 @@ export const bookingActionSchema = z.object({
     accuracy_m: z.number().positive().optional(),
   }).optional(),
 }).superRefine((val, ctx) => {
-  if ((val.action === 'propose_alternative' || val.action === 'counter_proposal') && !val.proposed_start) {
+  if ((val.action === 'propose_alternative' || val.action === 'counter_proposal' || val.action === 'amend_start_time') && !val.proposed_start) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'proposed_start is required for proposal actions',
+      message: 'proposed_start is required for proposal/amendment actions',
       path: ['proposed_start'],
     })
   }

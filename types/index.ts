@@ -185,8 +185,15 @@ export interface BookingRead {
   proposed_start?: string
   proposed_end?: string
   proposal_by?: 'client' | 'cleaner' | null
+  proposal_context?: 'pre_confirmation' | 'post_confirmation' | 'amend_start' | null
+  proposal_expires_at?: string | null
   cleaner_proposals?: number
   client_proposals?: number
+  post_cleaner_proposals?: number
+  post_client_proposals?: number
+  original_scheduled_start?: string | null
+  reauthorization_required?: boolean
+  reauthorization_grace_expires_at?: string | null
   accepted_at?: string
   confirmed_at?: string
   started_at?: string

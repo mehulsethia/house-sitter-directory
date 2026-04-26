@@ -10,6 +10,7 @@ interface TimeSlot {
 const SLOT_INTERVAL_MS = 30 * 60 * 1000 // 30 minutes
 const BOOKING_PRE_BUFFER_MS = 15 * 60 * 1000
 const BOOKING_POST_BUFFER_MS = 15 * 60 * 1000
+const MAX_BOOKABLE_DAYS_AHEAD = 28
 const APP_TIMEZONE = 'Europe/Nicosia'
 
 /**
@@ -150,6 +151,7 @@ export const availabilityService = {
     daysAhead: number,
   ): Promise<string[]> {
     if (daysAhead <= 0) return []
+    const effectiveDaysAhead = Math.min(daysAhead, MAX_BOOKABLE_DAYS_AHEAD)
 
     // Start from today in Cyprus timezone
     const todayStr = todayInCyprus()
@@ -157,7 +159,7 @@ export const availabilityService = {
 
     // Build date strings for the range
     const dateStrings: string[] = []
-    for (let i = 0; i < daysAhead; i++) {
+    for (let i = 0; i < effectiveDaysAhead; i++) {
       const d = new Date(todayDate)
       d.setUTCDate(d.getUTCDate() + i)
       dateStrings.push(d.toISOString().slice(0, 10))

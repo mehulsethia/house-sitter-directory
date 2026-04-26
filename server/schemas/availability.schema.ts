@@ -81,5 +81,5 @@ export const availableSlotsQuerySchema = z.object({
 
 export const availableDatesQuerySchema = z.object({
   duration_hours: z.coerce.number().min(1),
-  days_ahead: z.coerce.number().int().min(1).max(120).default(30),
+  days_ahead: z.coerce.number().int().min(1).max(28).default(28),
 })
