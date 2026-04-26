@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input'
 import { toDateInputValue, toIsoFromDateAndTimeLocal, toTimeInputValue } from '@/lib/booking-proposal'
 import { formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
-import { isChatReadOnly } from '@/lib/chat-window'
+import { isChatActiveForBooking, isChatReadOnly } from '@/lib/chat-window'
 import type { BookingRead } from '@/types'
 import { toast } from 'sonner'
 
@@ -32,8 +32,6 @@ const SERVICE_LABELS: Record<string, string> = {
   end_of_tenancy: 'End of Tenancy',
   move_in: 'Move-in Clean',
 }
-
-const CHAT_STATUSES = ['confirmed', 'in_progress', 'completed', 'disputed']
 
 export default function ClientBookingDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -161,7 +159,7 @@ export default function ClientBookingDetailPage() {
   const cleanerProposed = booking.proposal_by === 'cleaner'
   const moreThan24HoursAway = new Date(booking.scheduled_start).getTime() - Date.now() > 24 * 60 * 60 * 1000
   const canCounterProposal = isPending && cleanerProposed && (booking.client_proposals ?? 0) < 1 && moreThan24HoursAway
-  const showChat = CHAT_STATUSES.includes(booking.status)
+  const showChat = isChatActiveForBooking(booking)
   const chatIsReadOnly = isChatReadOnly(booking.scheduled_end)
 
   return (
@@ -325,14 +323,14 @@ export default function ClientBookingDetailPage() {
                     bookingId={id}
                     currentUserId={currentUserId}
                     readOnly={chatIsReadOnly}
-                    readOnlyMessage="Dispute window is over for this booking. Chat is now read-only."
+                    readOnlyMessage="Chat closes 30 minutes after the scheduled end time."
                     autoScroll={false}
                   />
                 </CardContent>
               </Card>
             ) : !showChat ? (
               <p className="text-center text-xs text-muted-foreground">
-                Chat will be available once the cleaner accepts and card authorization is confirmed.
+                Chat is available for confirmed bookings and closes 30 minutes after scheduled end.
               </p>
             ) : null}
           </div>

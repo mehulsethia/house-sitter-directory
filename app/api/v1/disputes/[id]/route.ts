@@ -61,13 +61,21 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
       return err('No-show cannot be reported for cancelled or expired bookings', 400)
     }
   } else {
-    if (!isClient) return err('Only the client can submit this report type', 403)
+    if (!isClient && !isCleaner) {
+      return err('Only the client or assigned cleaner can submit this report type', 403)
+    }
 
     if (!['in_progress', 'completed', 'disputed'].includes(booking.status)) {
       return err('This report can only be raised during or after the cleaning', 400)
     }
 
-    if (booking.status !== 'in_progress') {
+    if (isCleaner) {
+      const cleanerWindowMs = 24 * 60 * 60 * 1000
+      const cleanerDeadlineMs = booking.scheduledEnd.getTime() + cleanerWindowMs
+      if (Date.now() > cleanerDeadlineMs) {
+        return err('Cleaner reporting window has expired (24 hours after scheduled completion)', 400)
+      }
+    } else if (booking.status !== 'in_progress') {
       if (!booking.completedAt) return err('Completed timestamp missing for this booking', 400)
       const disputeWindowMs = config.DISPUTE_WINDOW_HOURS * 60 * 60 * 1000
       if (Date.now() > booking.completedAt.getTime() + disputeWindowMs) {

@@ -19,6 +19,7 @@ import { StarRating } from '@/components/star-rating'
 import { DetailPageSkeleton } from '@/components/page-skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { isChatActiveForBooking } from '@/lib/chat-window'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { CleanerRead, ReviewRead } from '@/types'
 import { toast } from 'sonner'
@@ -41,7 +42,7 @@ export default function CleanerProfilePage() {
     Promise.allSettled([
       cleanersApi.getById(id),
       reviewsApi.getForCleaner(id),
-      availabilityApi.getBookableDates(id, 2, 30),
+      availabilityApi.getBookableDates(id, 2, 28),
       bookingsApi.my(),
     ])
       .then(([cleanerRes, reviewsRes, availabilityRes, bookingsRes]) => {
@@ -56,7 +57,7 @@ export default function CleanerProfilePage() {
             const canMessage = clientBookings.some(
               (booking) =>
                 booking.cleaner_id === id &&
-                ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status),
+                isChatActiveForBooking(booking),
             )
             setCanMessageCleaner(canMessage)
           } else {

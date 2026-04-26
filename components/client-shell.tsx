@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { href: '/client/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { href: '/client/cleaners', label: 'Cleaners', icon: Users },
   { href: '/client/bookings', label: 'Bookings', icon: CalendarDays },
-  { href: '/client/chats', label: 'Chats', icon: MessagesSquare },
+  { href: '/client/chats', label: 'Messages', icon: MessagesSquare },
   { href: '/client/notifications', label: 'Notifications', icon: Bell },
   { href: '/client/profile', label: 'Profile', icon: User },
   { href: '/client/report', label: 'Report', icon: Flag },

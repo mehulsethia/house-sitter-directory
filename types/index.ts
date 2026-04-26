@@ -439,11 +439,23 @@ export interface AdminOpsQueues {
     count: number
     items: AdminOpsQueueItemDispute[]
   }
+  pending_booking_requests: {
+    count: number
+    items: AdminOpsQueueItemBooking[]
+  }
+  todays_jobs: {
+    count: number
+    items: AdminOpsQueueItemBooking[]
+  }
   upcoming_jobs: {
     today_count: number
     tomorrow_count: number
     today_items: AdminOpsQueueItemBooking[]
     tomorrow_items: AdminOpsQueueItemBooking[]
+  }
+  payment_failures: {
+    count: number
+    items: AdminOpsQueueItemPaymentIssue[]
   }
   payment_issues: {
     count: number

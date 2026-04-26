@@ -4,6 +4,7 @@ import { clientRepo } from '../repositories/client.repo'
 import { availabilityRepo } from '../repositories/availability.repo'
 import { paymentRepo } from '../repositories/payment.repo'
 import { disputeRepo } from '../repositories/dispute.repo'
+import { db } from '../db'
 import { loopsEmailService } from './loops-email.service'
 import { pushInAppNotification } from './in-app-notification.service'
 import { googleCalendarService } from './google-calendar.service'
@@ -23,6 +24,7 @@ const AMEND_FAST_RESPONSE_MINUTES = 15
 const AMEND_STANDARD_RESPONSE_MINUTES = 60
 const REAUTH_IMMEDIATE_THRESHOLD_HOURS = 48
 const REAUTH_FAILURE_GRACE_HOURS = 24
+const CLEANER_REPEAT_CANCELLATION_WINDOW_DAYS = 30
 const BOOKING_PRE_BUFFER_MS = 15 * 60 * 1000
 const BOOKING_POST_BUFFER_MS = 15 * 60 * 1000
 const NO_SHOW_REPORT_DELAY_MINUTES = 30
@@ -655,6 +657,15 @@ export const bookingService = {
       cancelledAt: new Date(),
     })
 
+    if (cleaner && booking.cleanerId === cleaner.id) {
+      await maybeApplyCleanerCancellationStrike({
+        booking,
+        cleanerId: cleaner.id,
+        cancelledByUserId: user.id,
+        cancellationReason: reason,
+      })
+    }
+
     // Notify the other party
     const notifyUserId =
       client && booking.clientId === client.id
@@ -958,6 +969,78 @@ async function completeBookingFlow(
   }
 
   return updated
+}
+
+async function maybeApplyCleanerCancellationStrike(args: {
+  booking: NonNullable<Awaited<ReturnType<typeof bookingRepo.findById>>>
+  cleanerId: string
+  cancelledByUserId: string
+  cancellationReason?: string
+}) {
+  const { booking, cleanerId, cancelledByUserId, cancellationReason } = args
+  if (!['accepted', 'confirmed'].includes(booking.status)) return
+
+  const now = new Date()
+  const cancelledLocalDay = cyprusDateStr(now)
+  const bookingLocalDay = cyprusDateStr(booking.scheduledStart)
+  if (cancelledLocalDay !== bookingLocalDay) return
+
+  const normalizedReason = normalizeCancellationReason(cancellationReason)
+  const eventKey = `${bookingLocalDay}|${normalizedReason}`
+  const eventReason = `event_key=${eventKey}|Same-day cleaner cancellation event`
+
+  const dayStart = startOfDayCyprus(now)
+  const dayEnd = endOfDayCyprus(now)
+  const existingTodayEvent = await db.cleanerStrike.findFirst({
+    where: {
+      cleanerId,
+      strikeType: 'cleaner_same_day_cancellation_event',
+      reason: { startsWith: `event_key=${eventKey}|` },
+      createdAt: { gte: dayStart, lte: dayEnd },
+    },
+  })
+  if (existingTodayEvent) return
+
+  await db.cleanerStrike.create({
+    data: {
+      cleanerId,
+      bookingId: booking.id,
+      strikeType: 'cleaner_same_day_cancellation_event',
+      reason: eventReason,
+      issuedBy: cancelledByUserId,
+    },
+  })
+
+  const repeatWindowStart = new Date(now.getTime() - CLEANER_REPEAT_CANCELLATION_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+  const previousEvents = await db.cleanerStrike.count({
+    where: {
+      cleanerId,
+      strikeType: 'cleaner_same_day_cancellation_event',
+      reason: { contains: `|${normalizedReason}|` },
+      createdAt: { gte: repeatWindowStart, lt: dayStart },
+    },
+  })
+
+  if (previousEvents < 1) return
+
+  await db.cleanerStrike.create({
+    data: {
+      cleanerId,
+      bookingId: booking.id,
+      strikeType: 'cleaner_repeat_cancellation_strike',
+      reason: `Repeat same-day cancellation event within ${CLEANER_REPEAT_CANCELLATION_WINDOW_DAYS} days (${normalizedReason})`,
+      issuedBy: cancelledByUserId,
+    },
+  })
+}
+
+function normalizeCancellationReason(reason?: string) {
+  const normalized = String(reason ?? 'unspecified')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .slice(0, 120)
+  return normalized || 'unspecified'
 }
 
 async function applyCancellationPaymentPolicy(booking: Awaited<ReturnType<typeof bookingRepo.findById>>) {

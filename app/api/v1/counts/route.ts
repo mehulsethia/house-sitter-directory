@@ -6,6 +6,7 @@ import { notificationRepo } from '@/server/repositories/notification.repo'
 export const GET = requireAuth(async (_req, _ctx, user) => {
   const userId = user.id
   const role = user.role
+  const chatCutoff = new Date(Date.now() - 30 * 60 * 1000)
 
   // Unread chat messages (messages in my bookings, sent by others, unread)
   const bookingFilter =
@@ -23,6 +24,7 @@ export const GET = requireAuth(async (_req, _ctx, user) => {
           booking: {
             ...bookingFilter,
             status: { in: ['confirmed', 'in_progress', 'completed', 'disputed'] },
+            scheduledEnd: { gte: chatCutoff },
           },
         },
       })

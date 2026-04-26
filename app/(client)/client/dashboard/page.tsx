@@ -253,7 +253,7 @@ export default function ClientDashboardPage() {
               <div className="mt-4 space-y-2">
                 <ActionLink href="/client/cleaners" icon={<Search className="h-4 w-4" />} label="Browse cleaners" />
                 <ActionLink href="/client/bookings" icon={<Sparkles className="h-4 w-4" />} label="Manage bookings" />
-                <ActionLink href="/client/report" icon={<CircleAlert className="h-4 w-4" />} label="Raise dispute" />
+                <ActionLink href="/client/report" icon={<CircleAlert className="h-4 w-4" />} label="Report a problem" />
               </div>
             </div>
 

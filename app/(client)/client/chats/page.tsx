@@ -11,15 +11,13 @@ import { Chat } from '@/components/chat'
 import { SplitChatPageSkeleton } from '@/components/page-skeletons'
 import { Input } from '@/components/ui/input'
 import { UserAvatar } from '@/components/ui/user-avatar'
-import { isChatReadOnly } from '@/lib/chat-window'
+import { isChatActiveForBooking, isChatReadOnly } from '@/lib/chat-window'
 import { formatDate } from '@/lib/utils'
 import type { BookingRead } from '@/types'
 import { toast } from 'sonner'
 
 const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
 const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
-
-const CHAT_AVAILABLE = ['confirmed', 'in_progress', 'completed', 'disputed']
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',
@@ -48,8 +46,7 @@ function ClientChatsPageContent() {
         ])
 
         const chatBookings = (data?.items ?? []).filter((booking) => {
-          if (!CHAT_AVAILABLE.includes(booking.status)) return false
-          return true
+          return isChatActiveForBooking(booking)
         })
 
         startTransition(() => {
@@ -112,7 +109,7 @@ function ClientChatsPageContent() {
                 MaidHive Message Channel
               </p>
               <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
-                Client Chats
+                Messages
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 Keep every cleaner conversation in one continuous workspace tied directly to each booking.
@@ -224,7 +221,7 @@ function ClientChatsPageContent() {
                     currentUserId={currentUserId}
                     fullHeight
                     readOnly={isChatReadOnly(selected.scheduled_end)}
-                    readOnlyMessage="Dispute window is over for this booking. Chat is now read-only."
+                    readOnlyMessage="Chat closes 30 minutes after the scheduled end time."
                   />
                 </div>
               </div>

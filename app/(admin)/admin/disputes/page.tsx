@@ -40,14 +40,13 @@ const ISSUE_QUEUE_LABEL: Record<string, string> = {
   other_issue: 'Payment / Booking',
 }
 
-const DISPUTE_FILTERS = ['all', 'urgent', 'no_show', 'payment', 'resolved'] as const
+const DISPUTE_FILTERS = ['all', 'urgent', 'no_show', 'payment'] as const
 type DisputeFilter = (typeof DISPUTE_FILTERS)[number]
 const DISPUTE_FILTER_LABELS: Record<DisputeFilter, string> = {
   all: 'All',
   urgent: 'Urgent Safety',
   no_show: 'No-Show',
   payment: 'Payment / Booking',
-  resolved: 'Resolved',
 }
 
 function classifyQueue(dispute: AdminDispute): 'urgent' | 'no_show' | 'payment' {
@@ -251,13 +250,11 @@ export default function AdminDisputesPage() {
   const urgent = active.filter((d) => classifyQueue(d) === 'urgent')
   const noShow = active.filter((d) => classifyQueue(d) === 'no_show')
   const paymentBooking = active.filter((d) => classifyQueue(d) === 'payment')
-  const resolved = disputes.filter(d => ['resolved', 'closed'].includes(d.status))
   const activeByFilter: Record<DisputeFilter, AdminDispute[]> = {
-    all: disputes,
+    all: active,
     urgent,
     no_show: noShow,
     payment: paymentBooking,
-    resolved,
   }
 
   return (
@@ -286,9 +283,7 @@ export default function AdminDisputesPage() {
                 title={
                   filter === 'all'
                     ? 'No disputes'
-                    : filter === 'resolved'
-                      ? 'No resolved disputes'
-                      : `No ${DISPUTE_FILTER_LABELS[filter].toLowerCase()} disputes`
+                    : `No ${DISPUTE_FILTER_LABELS[filter].toLowerCase()} disputes`
                 }
               />
             ) : (

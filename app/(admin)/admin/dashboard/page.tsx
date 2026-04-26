@@ -6,10 +6,10 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
+  CalendarDays,
   Clock,
   CreditCard,
   ShieldCheck,
-  UserCheck,
   UserRound,
   XCircle,
 } from 'lucide-react'
@@ -134,28 +134,28 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          label="Pending Approvals"
-          value={queues?.pending_cleaner_approvals.count ?? stats?.pending_cleaners ?? 0}
-          sub={`${stats?.approved_cleaners ?? 0} approved · ${stats?.live_cleaners ?? 0} live`}
-          icon={UserCheck}
+          label="Pending booking requests"
+          value={queues?.pending_booking_requests.count ?? 0}
+          sub="Awaiting cleaner acceptance"
+          icon={Clock}
+        />
+        <KpiCard
+          label="Today's jobs"
+          value={queues?.todays_jobs.count ?? 0}
+          sub="Accepted, confirmed, in-progress"
+          icon={CalendarDays}
+        />
+        <KpiCard
+          label="Payment failures"
+          value={queues?.payment_failures.count ?? 0}
+          sub="Recent failed payment attempts"
+          icon={CreditCard}
         />
         <KpiCard
           label="Active Disputes"
           value={queues?.active_disputes.count ?? stats?.open_disputes ?? 0}
           sub="Open + under review"
           icon={AlertTriangle}
-        />
-        <KpiCard
-          label="Payment Issues"
-          value={queues?.payment_issues.count ?? 0}
-          sub="Recent re-auth/authorization failures"
-          icon={CreditCard}
-        />
-        <KpiCard
-          label="Cancellations / No-shows"
-          value={queues?.cancellations_no_shows.count ?? 0}
-          sub="Recent operational incidents"
-          icon={XCircle}
         />
       </div>
 
@@ -213,6 +213,40 @@ export default function AdminDashboard() {
           )}
         </WidgetShell>
 
+        <WidgetShell title="Pending booking requests" count={queues?.pending_booking_requests.count ?? 0} href="/admin/bookings">
+          {queues?.pending_booking_requests.items.length ? (
+            queues.pending_booking_requests.items.map((booking) => (
+              <div key={booking.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-900">{booking.city}</p>
+                  <Badge variant="outline">{booking.status}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-slate-600">{booking.client_name} → {booking.cleaner_name}</p>
+                <p className="text-xs text-muted-foreground">{formatDate(booking.scheduled_start)}</p>
+              </div>
+            ))
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">No pending booking requests.</p>
+          )}
+        </WidgetShell>
+
+        <WidgetShell title="Today&apos;s jobs" count={queues?.todays_jobs.count ?? 0} href="/admin/bookings">
+          {queues?.todays_jobs.items.length ? (
+            queues.todays_jobs.items.map((job) => (
+              <div key={job.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-900">{job.city}</p>
+                  <Badge variant="outline">{job.status}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-slate-600">{job.client_name} → {job.cleaner_name}</p>
+                <p className="text-xs text-muted-foreground">{formatDate(job.scheduled_start)}</p>
+              </div>
+            ))
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">No jobs scheduled for today.</p>
+          )}
+        </WidgetShell>
+
         <WidgetShell
           title="Upcoming Jobs (Today / Tomorrow)"
           count={(queues?.upcoming_jobs.today_count ?? 0) + (queues?.upcoming_jobs.tomorrow_count ?? 0)}
@@ -241,12 +275,33 @@ export default function AdminDashboard() {
         </WidgetShell>
 
         <WidgetShell
-          title="Payment Issues (Re-auth Failures)"
+          title="Payment issues"
           count={queues?.payment_issues.count ?? 0}
           href="/admin/bookings"
         >
           {queues?.payment_issues.items.length ? (
             queues.payment_issues.items.map((issue) => (
+              <div key={issue.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-mono text-muted-foreground">Booking #{issue.booking_id.slice(0, 8)}</p>
+                  <Badge variant="warning">{issue.payment_status}</Badge>
+                </div>
+                <p className="mt-1 text-sm text-slate-800">Client: {issue.client_name}</p>
+                <p className="text-xs text-muted-foreground">Re-authorize by {issue.failed_at ? formatDate(issue.failed_at) : 'soon'}</p>
+              </div>
+            ))
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">No active payment issues.</p>
+          )}
+        </WidgetShell>
+
+        <WidgetShell
+          title="Payment failures"
+          count={queues?.payment_failures.count ?? 0}
+          href="/admin/bookings"
+        >
+          {queues?.payment_failures.items.length ? (
+            queues.payment_failures.items.map((issue) => (
               <div key={issue.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-mono text-muted-foreground">Booking #{issue.booking_id.slice(0, 8)}</p>

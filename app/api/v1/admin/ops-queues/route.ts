@@ -22,7 +22,17 @@ export const GET = requireAdmin(async () => {
   const tomorrowEnd = endOfUtcDate(tomorrow)
   const afterTomorrowStart = startOfUtcDate(dayAfterTomorrow)
 
-  const [pendingCleaners, activeDisputes, todayJobs, tomorrowJobs, failedPayments, cancelledBookings, noShowDisputes] =
+  const [
+    pendingCleaners,
+    activeDisputes,
+    pendingBookingRequests,
+    todayJobs,
+    tomorrowJobs,
+    paymentIssues,
+    failedPayments,
+    cancelledBookings,
+    noShowDisputes,
+  ] =
     await Promise.all([
       db.cleaner.findMany({
         where: { status: 'pending' },
@@ -34,6 +44,15 @@ export const GET = requireAdmin(async () => {
         where: { status: { in: ['open', 'under_review'] } },
         orderBy: { createdAt: 'asc' },
         take: 10,
+      }),
+      db.booking.findMany({
+        where: {
+          status: 'pending',
+          acceptBy: { gte: new Date() },
+        },
+        include: { cleaner: { include: { user: true } }, client: { include: { user: true } } },
+        orderBy: { acceptBy: 'asc' },
+        take: 20,
       }),
       db.booking.findMany({
         where: {
@@ -52,6 +71,17 @@ export const GET = requireAdmin(async () => {
         include: { cleaner: { include: { user: true } }, client: { include: { user: true } } },
         orderBy: { scheduledStart: 'asc' },
         take: 20,
+      }),
+      db.booking.findMany({
+        where: {
+          status: 'accepted',
+          reauthorizationRequired: true,
+        },
+        include: {
+          client: { include: { user: true } },
+        },
+        orderBy: { payBy: 'asc' },
+        take: 15,
       }),
       db.payment.findMany({
         where: {
@@ -135,6 +165,28 @@ export const GET = requireAdmin(async () => {
         created_at: dispute.createdAt.toISOString(),
       })),
     },
+    pending_booking_requests: {
+      count: pendingBookingRequests.length,
+      items: pendingBookingRequests.map((booking) => ({
+        id: booking.id,
+        status: booking.status,
+        city: booking.city,
+        scheduled_start: booking.scheduledStart.toISOString(),
+        cleaner_name: bestEffortName(booking.cleaner.user?.name, booking.cleaner.user?.email),
+        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
+      })),
+    },
+    todays_jobs: {
+      count: todayJobs.length,
+      items: todayJobs.map((booking) => ({
+        id: booking.id,
+        status: booking.status,
+        city: booking.city,
+        scheduled_start: booking.scheduledStart.toISOString(),
+        cleaner_name: bestEffortName(booking.cleaner.user?.name, booking.cleaner.user?.email),
+        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
+      })),
+    },
     upcoming_jobs: {
       today_count: todayJobs.length,
       tomorrow_count: tomorrowJobs.length,
@@ -155,7 +207,7 @@ export const GET = requireAdmin(async () => {
         client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
       })),
     },
-    payment_issues: {
+    payment_failures: {
       count: failedPayments.length,
       items: failedPayments.map((payment) => ({
         id: payment.id,
@@ -163,6 +215,16 @@ export const GET = requireAdmin(async () => {
         payment_status: payment.status,
         failed_at: payment.failedAt?.toISOString() ?? null,
         client_name: bestEffortName(payment.booking.client.user?.name, payment.booking.client.user?.email),
+      })),
+    },
+    payment_issues: {
+      count: paymentIssues.length,
+      items: paymentIssues.map((booking) => ({
+        id: booking.id,
+        booking_id: booking.id,
+        payment_status: 'reauthorization_required',
+        failed_at: booking.payBy?.toISOString() ?? null,
+        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
       })),
     },
     cancellations_no_shows: {

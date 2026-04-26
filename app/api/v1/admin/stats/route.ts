@@ -15,7 +15,7 @@ export const GET = requireAdmin(async () => {
     totalBookings,
     activeBookings,
     completedBookings,
-    revenueAgg,
+    releasedRevenueAgg,
     openDisputes,
   ] = await Promise.all([
     db.user.count({ where: { deletedAt: null } }),
@@ -33,9 +33,12 @@ export const GET = requireAdmin(async () => {
       },
     }),
     db.booking.count({ where: { status: 'completed' } }),
-    db.booking.aggregate({
-      _sum: { totalAmount: true, platformFee: true },
-      where: { status: 'completed' },
+    db.payment.aggregate({
+      _sum: { amount: true, platformFee: true },
+      where: {
+        status: 'transferred',
+        booking: { status: 'completed' },
+      },
     }),
     db.dispute.count({ where: { status: { in: ['open', 'under_review'] } } }),
   ])
@@ -52,8 +55,8 @@ export const GET = requireAdmin(async () => {
     total_bookings: totalBookings,
     active_bookings: activeBookings,
     completed_bookings: completedBookings,
-    total_revenue: Number(revenueAgg._sum.totalAmount ?? 0),
-    platform_earnings: Number(revenueAgg._sum.platformFee ?? 0),
+    total_revenue: Number(releasedRevenueAgg._sum.amount ?? 0),
+    platform_earnings: Number(releasedRevenueAgg._sum.platformFee ?? 0),
     open_disputes: openDisputes,
   })
 })

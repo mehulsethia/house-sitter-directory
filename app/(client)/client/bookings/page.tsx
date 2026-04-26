@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/empty-state'
 import { ListPageSkeleton } from '@/components/page-skeletons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { getDisputeWindowMs } from '@/lib/chat-window'
+import { getDisputeWindowMs, isChatActiveForBooking } from '@/lib/chat-window'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { BookingRead, BookingStatus } from '@/types'
 import { toast } from 'sonner'
@@ -121,7 +121,7 @@ export default function ClientBookingsPage() {
                 MaidHive Booking Command
               </p>
               <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
-                Your Booking Ledger
+                Your Bookings
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 Track status, complete active jobs, and jump to details from one focused booking stream.
@@ -199,7 +199,7 @@ export default function ClientBookingsPage() {
                   const canDispute = booking.status === 'completed' && isWithinDisputeWindow && !disputeStatusForBooking
                   const isActiveBooking = ['pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status)
                   const canComplete = booking.status === 'in_progress'
-                  const canChat = ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status)
+                  const canChat = isChatActiveForBooking(booking)
 
                   return (
                     <article
@@ -249,7 +249,7 @@ export default function ClientBookingsPage() {
                             href={`/client/report?booking=${booking.id}`}
                             className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
                           >
-                            Report a Problem
+                            Report a problem
                           </Link>
                         )}
                         {disputeStatusForBooking === 'under_review' && (
@@ -266,11 +266,11 @@ export default function ClientBookingsPage() {
                             disabled={!canComplete}
                             title={
                               canComplete
-                                ? 'Mark this booking as complete'
+                                ? 'Mark job as complete'
                                 : 'Available when booking is in progress'
                             }
                           >
-                            Mark as Complete
+                            Mark job as complete
                           </Button>
                         )}
                       </div>

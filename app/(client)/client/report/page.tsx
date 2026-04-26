@@ -270,7 +270,7 @@ function ClientReportPageContent() {
         <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
           <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
             <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
-              Raise a new dispute
+              Report a problem
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               Report active issues during cleaning, or report completed bookings within the {DISPUTE_WINDOW_HOURS}-hour dispute window.
@@ -283,7 +283,7 @@ function ClientReportPageContent() {
 
             {eligibleBookings.length === 0 ? (
               <div className="mt-4">
-                <EmptyState title="No eligible bookings" description="No active/completed bookings are currently eligible for reporting." />
+                <EmptyState title="No bookings available to report." description="No active/completed bookings are currently eligible for reporting." />
               </div>
             ) : (
               <div className="mt-4 space-y-4">
