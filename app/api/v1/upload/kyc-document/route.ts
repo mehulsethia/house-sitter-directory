@@ -3,6 +3,7 @@ import { requireCleaner } from '@/server/auth'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
+import { DOCUMENT_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,7 +11,7 @@ const supabaseAdmin = createClient(
 )
 
 const KYC_BUCKET = (process.env.SUPABASE_KYC_BUCKET ?? 'cleaner-kyc').trim()
-const ALLOWED_MIME = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
+const ALLOWED_MIME = new Set(DOCUMENT_MIME_TYPES)
 const EXT_BY_MIME: Record<string, string> = {
   'application/pdf': 'pdf',
   'image/jpeg': 'jpg',
@@ -76,6 +77,9 @@ export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const ext = EXT_BY_MIME[file.type] ?? 'bin'
   const path = `${user.id}/${Date.now()}-${randomUUID()}.${ext}`
   const arrayBuffer = await file.arrayBuffer()
+  if (!matchesFileSignature(new Uint8Array(arrayBuffer), file.type)) {
+    return NextResponse.json({ success: false, message: 'Invalid file payload' }, { status: 400 })
+  }
 
   try {
     await ensureKycBucketExists()

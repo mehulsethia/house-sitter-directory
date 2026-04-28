@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/server/auth'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
+import { IMAGE_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,7 +10,7 @@ const supabaseAdmin = createClient(
 )
 
 const BOOKING_PHOTOS_BUCKET = (process.env.SUPABASE_BOOKING_PHOTOS_BUCKET ?? 'booking-photos').trim()
-const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const ALLOWED_MIME = new Set(IMAGE_MIME_TYPES)
 const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -53,7 +54,7 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   }
 
   const arrayBuffer = await file.arrayBuffer()
-  if (!matchesImageSignature(new Uint8Array(arrayBuffer), file.type)) {
+  if (!matchesFileSignature(new Uint8Array(arrayBuffer), file.type)) {
     return NextResponse.json({ success: false, message: 'Invalid image payload' }, { status: 400 })
   }
 
@@ -80,29 +81,3 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   const { data: urlData } = supabaseAdmin.storage.from(BOOKING_PHOTOS_BUCKET).getPublicUrl(path)
   return NextResponse.json({ success: true, data: { url: urlData.publicUrl } })
 })
-
-function matchesImageSignature(bytes: Uint8Array, mime: string) {
-  if (mime === 'image/jpeg') {
-    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
-  }
-  if (mime === 'image/png') {
-    return (
-      bytes.length >= 8 &&
-      bytes[0] === 0x89 &&
-      bytes[1] === 0x50 &&
-      bytes[2] === 0x4e &&
-      bytes[3] === 0x47 &&
-      bytes[4] === 0x0d &&
-      bytes[5] === 0x0a &&
-      bytes[6] === 0x1a &&
-      bytes[7] === 0x0a
-    )
-  }
-  if (mime === 'image/webp') {
-    if (bytes.length < 12) return false
-    const riff = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3])
-    const webp = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11])
-    return riff === 'RIFF' && webp === 'WEBP'
-  }
-  return false
-}
