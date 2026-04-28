@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { notificationsApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { triggerCountsRefresh } from '@/lib/counts-sync'
 import type { NotificationRead } from '@/types'
 
 // Notification type → route to navigate on click
@@ -88,11 +89,13 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     if (unreadCount === 0) return
     await notificationsApi.markAllRead().catch(() => {})
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+    triggerCountsRefresh()
   }
 
   async function markRead(id: string) {
     await notificationsApi.markRead(id).catch(() => {})
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
+    triggerCountsRefresh()
   }
 
   return (

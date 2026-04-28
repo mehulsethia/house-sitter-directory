@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { messagesApi } from '@/lib/api'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { triggerCountsRefresh } from '@/lib/counts-sync'
 import type { MessageRead } from '@/types'
 import { toast } from 'sonner'
 
@@ -48,6 +49,9 @@ export function Chat({
         const response = await messagesApi.getHistory(bookingId)
         const next = response.data ?? []
         setMessages((prev) => (background ? mergeMessages(prev, next) : next))
+        if (!background) {
+          triggerCountsRefresh()
+        }
       } catch {
         if (!background) {
           toast.error('Failed to load messages')

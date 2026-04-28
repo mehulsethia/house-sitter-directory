@@ -1,7 +1,10 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { toApiV1Url } from '@/lib/api-base'
+import { subscribeCountsRefresh } from '@/lib/counts-sync'
 
 async function fetchCounts(): Promise<{ unread_chats: number; pending_bookings: number; unread_notifications: number }> {
   const { getAccessToken } = await import('@/lib/auth-cache')
@@ -54,6 +57,14 @@ async function fetchCounts(): Promise<{ unread_chats: number; pending_bookings: 
 }
 
 export function useCounts() {
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    return subscribeCountsRefresh(() => {
+      queryClient.invalidateQueries({ queryKey: ['sidebar-counts'] })
+    })
+  }, [queryClient])
+
   return useQuery({
     queryKey: ['sidebar-counts'],
     queryFn: fetchCounts,

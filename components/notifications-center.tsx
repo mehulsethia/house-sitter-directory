@@ -7,6 +7,7 @@ import { notificationsApi } from '@/lib/api'
 import { getNotificationHref } from '@/lib/notification-links'
 import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { triggerCountsRefresh } from '@/lib/counts-sync'
 import type { NotificationRead } from '@/types'
 import { toast } from 'sonner'
 
@@ -87,6 +88,7 @@ export function NotificationsCenter({ role }: { role: NotificationRole }) {
       setNotifications((prev) => prev.map((notification) => (
         notification.id === id ? { ...notification, is_read: true } : notification
       )))
+      triggerCountsRefresh()
     } catch {
       toast.error('Failed to mark notification as read.')
     } finally {
@@ -99,6 +101,7 @@ export function NotificationsCenter({ role }: { role: NotificationRole }) {
     try {
       await notificationsApi.markAllRead()
       setNotifications((prev) => prev.map((notification) => ({ ...notification, is_read: true })))
+      triggerCountsRefresh()
     } catch {
       toast.error('Failed to mark all notifications as read.')
     } finally {
@@ -111,6 +114,7 @@ export function NotificationsCenter({ role }: { role: NotificationRole }) {
     try {
       await notificationsApi.delete(id)
       setNotifications((prev) => prev.filter((notification) => notification.id !== id))
+      triggerCountsRefresh()
     } catch {
       toast.error('Failed to delete notification.')
     } finally {

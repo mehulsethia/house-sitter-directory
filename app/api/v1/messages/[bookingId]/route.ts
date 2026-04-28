@@ -37,6 +37,7 @@ export const GET = requireAuth(async (_req, ctx, user) => {
     return err('Chat is unavailable for this booking.', 400)
   }
 
+  await messageRepo.markReadForBooking(bookingId, user.id)
   const messages = await messageRepo.findByBookingId(bookingId)
   return ok(messages)
 })
