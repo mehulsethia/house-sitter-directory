@@ -33,17 +33,6 @@ type CleanerVM = CleanerSummary & {
 const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
 const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
-function cleanerKey(cleaner: CleanerVM) {
-  return cleaner.unique_key.slice(-6).toUpperCase()
-}
-
-function joinedLabel(createdAt?: string) {
-  if (!createdAt) return null
-  const date = new Date(createdAt)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
 function transportLabel(value?: string) {
   if (value === 'own_car') return 'Own car'
   if (value === 'bus_walk') return 'Bus / walk'
@@ -181,8 +170,8 @@ export default function ClientCleanersPage() {
           </div>
         </section>
 
-        <section className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:p-6">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-12">
+        <section className="w-full rounded-[1.5rem] border border-slate-200/80 bg-white/90 px-4 py-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:px-6 sm:py-6">
+          <div className="grid w-full gap-2 sm:grid-cols-2 lg:grid-cols-12">
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -285,21 +274,17 @@ export default function ClientCleanersPage() {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <h3
-                          className={`${displayFont.className} truncate text-[1.7rem] leading-none font-semibold tracking-[-0.02em] text-slate-900`}
+                          className={`${displayFont.className} truncate text-[1.35rem] leading-none font-semibold tracking-[-0.02em] text-slate-900`}
                         >
                           {cleaner.name}
                         </h3>
-                        <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.04em] text-slate-500`}>
-                          ID {cleanerKey(cleaner)}
-                          {joinedLabel(cleaner.created_at) ? ` • Joined ${joinedLabel(cleaner.created_at)}` : ''}
-                        </p>
                         <div className="mt-0.5">
                           <StarRating rating={Number(cleaner.average_rating ?? 0)} />
                         </div>
                       </div>
-                      <p className={`${displayFont.className} text-xl font-bold tracking-[-0.02em] text-slate-900`}>
+                      <p className={`${displayFont.className} shrink-0 text-lg font-bold tracking-[-0.02em] text-slate-900`}>
                         {formatCurrency(Number(cleaner.hourly_rate ?? 0))}
                         <span className="text-xs font-medium text-slate-500">/hr</span>
                       </p>
@@ -328,7 +313,7 @@ export default function ClientCleanersPage() {
                       </span>
                     </div>
 
-                    {cleaner.bio && <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-600">{cleaner.bio}</p>}
+                    {cleaner.bio && <p className="mt-1 line-clamp-1 text-[12px] leading-5 text-slate-600">{cleaner.bio}</p>}
 
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {(cleaner.skills ?? []).slice(0, 2).map((skill) => (
@@ -381,10 +366,6 @@ export default function ClientCleanersPage() {
                       >
                         {cleaner.name}
                       </h3>
-                      <p className={`${monoFont.className} mt-0.5 text-[0.68rem] uppercase tracking-[0.04em] text-slate-500`}>
-                        ID {cleanerKey(cleaner)}
-                        {joinedLabel(cleaner.created_at) ? ` • Joined ${joinedLabel(cleaner.created_at)}` : ''}
-                      </p>
                       <div className="mt-1">
                         <StarRating rating={Number(cleaner.average_rating ?? 0)} />
                       </div>
