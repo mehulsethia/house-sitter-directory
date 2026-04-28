@@ -981,7 +981,19 @@ function CleanerOnboardingPageContent() {
                       <p key={`${standardsCardIndex}-${idx}`}>{line}</p>
                     ))}
                   </div>
-                  <div className="flex justify-end pt-2">
+                  <div className="flex items-center justify-between pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (standardsCardIndex > 0) {
+                          setStandardsCardIndex((prev) => prev - 1)
+                          return
+                        }
+                        setStep(4)
+                      }}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                    </Button>
                     <Button onClick={handleStandardsContinue} className="gap-1.5">
                       Continue <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -1014,7 +1026,10 @@ function CleanerOnboardingPageContent() {
                     />
                     I understand and agree
                   </label>
-                  <div className="flex justify-end pt-2">
+                  <div className="flex items-center justify-between pt-2">
+                    <Button variant="outline" onClick={() => setStep5Mode('standards')}>
+                      <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                    </Button>
                     <Button onClick={continueToQuiz} disabled={!standardsConfirmChecked} loading={saving}>
                       Continue to quiz
                     </Button>
@@ -1050,7 +1065,19 @@ function CleanerOnboardingPageContent() {
                       </label>
                     ))}
                   </div>
-                  <div className="flex justify-end pt-2">
+                  <div className="flex items-center justify-between pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (quizQuestionIndex > 0) {
+                          setQuizQuestionIndex((prev) => prev - 1)
+                          return
+                        }
+                        setStep5Mode('confirmation')
+                      }}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                    </Button>
                     <Button
                       onClick={continueQuiz}
                       disabled={typeof quizAnswers[STANDARDS_QUIZ[quizQuestionIndex].id] !== 'number'}
@@ -1070,7 +1097,10 @@ function CleanerOnboardingPageContent() {
                   <p className="text-xs text-emerald-800">
                     Quiz score: {quizScore ?? 0}% {quizPassed ? '— passed' : ''}
                   </p>
-                  <div className="flex justify-end pt-2">
+                  <div className="flex items-center justify-between pt-2">
+                    <Button variant="outline" onClick={() => setStep5Mode('quiz')}>
+                      <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                    </Button>
                     <Button onClick={() => router.push('/cleaner/dashboard')}>Go to dashboard</Button>
                   </div>
                 </div>
