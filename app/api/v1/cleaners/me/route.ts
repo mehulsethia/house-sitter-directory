@@ -8,12 +8,55 @@ import { updateCleanerSchema } from '@/server/schemas/cleaner.schema'
 import { deriveCleanerLifecycleStatus } from '@/lib/cleaner-status'
 
 function withCleanerAliases(cleaner: any) {
+  const rawSupplies = cleaner.cleaningSupplies
+  const normalizedSupplies =
+    rawSupplies === 'cleaner_brings'
+      ? 'own_supplies'
+      : rawSupplies === 'client_provides'
+        ? 'client_supplies'
+        : rawSupplies
+
+  const rawIdType = cleaner.idType
+  const normalizedIdType = rawIdType === 'drivers_license' ? 'drivers_licence' : rawIdType
+
   return {
     ...cleaner,
+    cleaningSupplies: normalizedSupplies,
+    idType: normalizedIdType,
     standards_completed: cleaner.standardsCompleted,
     quiz_passed: cleaner.quizPassed,
     quiz_score: cleaner.quizScore,
   }
+}
+
+function normalizeCleaningSuppliesInput(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  if (value === 'cleaner_brings') return 'own_supplies'
+  if (value === 'client_provides') return 'client_supplies'
+  return String(value)
+}
+
+function toLegacyCleaningSupplies(value: string | null | undefined): string | null | undefined {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  if (value === 'own_supplies') return 'cleaner_brings'
+  if (value === 'client_supplies') return 'client_provides'
+  return value
+}
+
+function normalizeIdTypeInput(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  if (value === 'drivers_license') return 'drivers_licence'
+  return String(value)
+}
+
+function toLegacyIdType(value: string | null | undefined): string | null | undefined {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  if (value === 'drivers_licence') return 'drivers_license'
+  return value
 }
 
 export const GET = requireCleaner(async (_req, _ctx, user) => {
@@ -65,18 +108,21 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
     return err('KYC document cannot be changed after submission unless your application is rejected.', 409)
   }
 
-  const interim = await cleanerRepo.update(cleaner.id, {
+  const normalizedCleaningSupplies = normalizeCleaningSuppliesInput(parsed.data.cleaning_supplies)
+  const normalizedIdType = normalizeIdTypeInput(parsed.data.id_type)
+
+  const updatePayload = {
     ...(parsed.data.bio !== undefined ? { bio: parsed.data.bio } : {}),
     ...(parsed.data.profile_image_url !== undefined ? { profileImageUrl: parsed.data.profile_image_url } : {}),
     ...(parsed.data.skills !== undefined ? { skills: parsed.data.skills } : {}),
-    ...(parsed.data.cleaning_supplies !== undefined ? { cleaningSupplies: parsed.data.cleaning_supplies } : {}),
+    ...(normalizedCleaningSupplies !== undefined ? { cleaningSupplies: normalizedCleaningSupplies } : {}),
     ...(parsed.data.years_experience !== undefined ? { yearsExperience: parsed.data.years_experience } : {}),
     ...(parsed.data.hourly_rate !== undefined ? { hourlyRate: parsed.data.hourly_rate } : {}),
     ...(parsed.data.transport_mode !== undefined ? { transportMode: parsed.data.transport_mode } : {}),
     ...(parsed.data.transport_pickup_location !== undefined
       ? { transportPickupLocation: parsed.data.transport_pickup_location }
       : {}),
-    ...(parsed.data.id_type !== undefined ? { idType: parsed.data.id_type } : {}),
+    ...(normalizedIdType !== undefined ? { idType: normalizedIdType } : {}),
     ...(parsed.data.id_file_name !== undefined ? { idFileName: parsed.data.id_file_name } : {}),
     ...(parsed.data.id_file_url !== undefined ? { idFileUrl: parsed.data.id_file_url } : {}),
     ...(parsed.data.pet_acceptance !== undefined ? { petAcceptance: parsed.data.pet_acceptance } : {}),
@@ -105,7 +151,27 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
       ? { onboardingSkippedStep4: parsed.data.onboarding_skipped_step4 }
       : {}),
     ...(parsed.data.onboarding_step !== undefined ? { onboardingStep: parsed.data.onboarding_step } : {}),
-  })
+  }
+
+  let interim
+  try {
+    interim = await cleanerRepo.update(cleaner.id, updatePayload)
+  } catch (error) {
+    const legacyCleaningSupplies = toLegacyCleaningSupplies(normalizedCleaningSupplies)
+    const legacyIdType = toLegacyIdType(normalizedIdType)
+    const shouldRetryWithLegacy =
+      (normalizedCleaningSupplies !== undefined &&
+        legacyCleaningSupplies !== normalizedCleaningSupplies) ||
+      (normalizedIdType !== undefined && legacyIdType !== normalizedIdType)
+
+    if (!shouldRetryWithLegacy) throw error
+
+    interim = await cleanerRepo.update(cleaner.id, {
+      ...updatePayload,
+      ...(normalizedCleaningSupplies !== undefined ? { cleaningSupplies: legacyCleaningSupplies } : {}),
+      ...(normalizedIdType !== undefined ? { idType: legacyIdType } : {}),
+    })
+  }
 
   const schedules = await availabilityRepo.getSchedule(cleaner.id)
   const hasAvailabilitySlots = schedules.some((s) => s.isActive)
