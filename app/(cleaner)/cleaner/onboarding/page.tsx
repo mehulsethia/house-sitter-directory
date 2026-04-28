@@ -529,7 +529,6 @@ function CleanerOnboardingPageContent() {
       await cleanersApi.updateMyOnboarding({
         onboarding_step: 5,
         onboarding_skipped_step4: false,
-        cleaning_standards_accepted: true,
         standards_completed: true,
       })
       setStandardsCompleted(true)

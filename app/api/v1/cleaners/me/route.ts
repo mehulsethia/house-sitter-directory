@@ -45,7 +45,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const parsed = updateCleanerSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
   if (
-    (parsed.data.cleaning_standards_accepted || parsed.data.standards_completed) &&
+    (parsed.data.quiz_passed === true || parsed.data.cleaning_standards_accepted === true) &&
     ((parsed.data.cleaning_quiz_score ?? parsed.data.quiz_score ?? 0) < 80)
   ) {
     return err('Quiz pass score is required before confirming standards.', 422)
