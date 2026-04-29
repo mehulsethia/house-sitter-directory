@@ -49,6 +49,7 @@ export default function ClientBookingDetailPage() {
   const [counterDate, setCounterDate] = useState('')
   const [counterTime, setCounterTime] = useState('')
   const [counterTimeOptions, setCounterTimeOptions] = useState<Array<{ value: string; label: string }>>([])
+  const [phoneRevealed, setPhoneRevealed] = useState(false)
 
   const refresh = () =>
     bookingsApi
@@ -108,6 +109,10 @@ export default function ClientBookingDetailPage() {
       })
   }, [booking, counterOpen, counterDate, counterTime])
 
+  useEffect(() => {
+    setPhoneRevealed(false)
+  }, [booking?.id, booking?.status, booking?.cleaner?.user?.phone])
+
   async function handleReview() {
     setActionLoading(true)
     try {
@@ -162,6 +167,8 @@ export default function ClientBookingDetailPage() {
   const canCounterProposal = isPending && cleanerProposed && (booking.client_proposals ?? 0) < 1 && moreThan24HoursAway
   const showChat = isChatActiveForBooking(booking)
   const chatIsReadOnly = isChatReadOnly(booking.scheduled_end)
+  const canRevealCleanerPhone = ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status)
+  const cleanerPhone = booking.cleaner?.user?.phone ?? ''
 
   return (
     <>
@@ -248,6 +255,29 @@ export default function ClientBookingDetailPage() {
           </div>
 
           <div className="space-y-4">
+            <Card className="border-slate-200 bg-white/90">
+              <CardContent className="space-y-2 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
+                <h2 className={`${displayFont.className} text-lg font-semibold tracking-[-0.02em] text-slate-900`}>
+                  Cleaner contact
+                </h2>
+                {canRevealCleanerPhone ? (
+                  cleanerPhone ? (
+                    phoneRevealed ? (
+                      <p className="text-sm text-slate-600">{cleanerPhone}</p>
+                    ) : (
+                      <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => setPhoneRevealed(true)}>
+                        Reveal number
+                      </Button>
+                    )
+                  ) : (
+                    <p className="text-sm text-slate-500">Cleaner phone is not available yet.</p>
+                  )
+                ) : (
+                  <p className="text-sm text-slate-500">Cleaner number becomes available once booking is confirmed.</p>
+                )}
+              </CardContent>
+            </Card>
+
             {isPending && hasProposal && (
               <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
                 Cleaner proposed {formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.
