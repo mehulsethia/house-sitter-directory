@@ -173,7 +173,9 @@ export default function CleanerBookingsPage() {
 
   const filtered = useMemo(() => {
     return bookings.filter((b) => {
-      if (filter !== 'all' && b.status !== filter) return false
+      if (filter === 'pending' && b.status !== 'pending') return false
+      if (filter === 'accepted' && !['accepted', 'confirmed'].includes(b.status)) return false
+      if (filter !== 'all' && filter !== 'pending' && filter !== 'accepted' && b.status !== filter) return false
       if (!query.trim()) return true
       const q = query.toLowerCase()
       return (
@@ -276,13 +278,29 @@ export default function CleanerBookingsPage() {
             <div className="space-y-4">
               {filtered.map((b) => {
                 const eligibility = getCleanerProposalEligibility(b)
+                const trust = (b.client as any)?.trust as { memberSince?: string | null; completedBookingsCount?: number } | undefined
+                const memberSinceRaw = trust?.memberSince ?? (b.client as any)?.created_at ?? (b.client as any)?.createdAt
+                const memberSinceLabel = memberSinceRaw
+                  ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
+                  : null
+                const completedBookingsCount = Number(trust?.completedBookingsCount ?? 0)
                 return (
                   <div key={b.id} className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)] sm:p-5">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="text-base font-semibold text-slate-900">{SERVICE_LABELS[b.service_type] ?? b.service_type}</p>
                       <p className="text-sm text-slate-600">Client: {b.client?.user?.name ?? 'Client'}</p>
-                      {(b.client as any)?.idFileUrl && (
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        {memberSinceLabel && (
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                            Member since {memberSinceLabel}
+                          </span>
+                        )}
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                          {completedBookingsCount} completed bookings
+                        </span>
+                      </div>
+                      {((b.client as any)?.idFileUrl || (b.client as any)?.id_file_url) && (
                         <p className="text-xs font-medium text-emerald-700">ID submitted</p>
                       )}
                       <p className="text-sm text-slate-500">{formatDate(b.scheduled_start)}</p>

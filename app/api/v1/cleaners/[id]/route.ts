@@ -55,8 +55,11 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const sanitizedUser = cleaner.user
     ? {
-        ...cleaner.user,
+        id: cleaner.user.id,
+        name: cleaner.user.name,
+        avatarUrl: cleaner.user.avatarUrl,
         phone: null,
+        email: null,
       }
     : cleaner.user
 

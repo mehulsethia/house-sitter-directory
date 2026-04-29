@@ -306,12 +306,29 @@ export default function CleanerDashboardPage() {
             {stats.requests.length === 0 ? (
               <EmptyState title="No new requests" description="You're all caught up for now." />
             ) : (
-              stats.requests.slice(0, 4).map((b) => (
+              stats.requests.slice(0, 4).map((b) => {
+                  const trust = (b.client as any)?.trust as { memberSince?: string | null; completedBookingsCount?: number } | undefined
+                  const memberSinceRaw = trust?.memberSince ?? (b.client as any)?.created_at ?? (b.client as any)?.createdAt
+                  const memberSinceLabel = memberSinceRaw
+                    ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
+                    : null
+                  const completedBookingsCount = Number(trust?.completedBookingsCount ?? 0)
+                  return (
                 <div key={b.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="font-semibold text-slate-900">{SERVICE_LABELS[b.service_type] ?? b.service_type}</p>
                       <p className="text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        {memberSinceLabel && (
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                            Member since {memberSinceLabel}
+                          </span>
+                        )}
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                          {completedBookingsCount} completed bookings
+                        </span>
+                      </div>
                     </div>
                     <BookingStatusBadge status={b.status} />
                   </div>
@@ -346,7 +363,8 @@ export default function CleanerDashboardPage() {
                     </div>
                   </div>
                 </div>
-              ))
+                  )
+                })
             )}
           </CardContent>
         </Card>

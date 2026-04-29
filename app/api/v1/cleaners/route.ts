@@ -55,7 +55,6 @@ export async function GET(req: NextRequest) {
       ? {
           id: cleaner.user.id,
           name: cleaner.user.name,
-          email: cleaner.user.email,
           avatar_url: cleaner.user.avatarUrl,
         }
       : undefined,

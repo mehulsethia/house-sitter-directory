@@ -2,7 +2,18 @@ import { db } from '../db'
 import type { Prisma } from '@prisma/client'
 
 const bookingInclude = {
-  client: { include: { user: true } },
+  client: {
+    include: {
+      user: true,
+      _count: {
+        select: {
+          bookings: {
+            where: { status: 'completed' },
+          },
+        },
+      },
+    },
+  },
   cleaner: { include: { user: true } },
   payment: true,
   review: true,

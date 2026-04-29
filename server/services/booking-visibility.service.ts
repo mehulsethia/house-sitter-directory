@@ -33,12 +33,23 @@ function sanitizeBookingForCleaner<T extends Record<string, any>>(booking: T): T
   const firstName = fullClientName ? fullClientName.split(/\s+/)[0] : 'Client'
 
   if (copy.client?.user) {
+    const completedBookingsCount = Number(copy?.client?._count?.bookings ?? 0)
+    const memberSince = copy?.client?.createdAt
+      ? new Date(copy.client.createdAt).toISOString()
+      : null
+
     copy.client = {
       ...copy.client,
+      _count: undefined,
       user: {
         ...copy.client.user,
         name: firstName,
         phone: isPhoneVisible ? copy.client.user.phone : null,
+      },
+      trust: {
+        memberSince,
+        completedBookingsCount,
+        idSubmitted: Boolean(copy.client.idFileUrl ?? copy.client.id_file_url),
       },
     }
   }

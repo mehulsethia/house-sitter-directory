@@ -173,6 +173,8 @@ export default function ClientProfilePage() {
     .map((part) => part[0] ?? '')
     .join('')
     .toUpperCase()
+  const hasAvatar = Boolean(avatarUrl)
+  const hasIdSubmitted = Boolean(idFileUrl)
 
   return (
     <>
@@ -252,6 +254,15 @@ export default function ClientProfilePage() {
             </h2>
             <p className="mt-1 text-sm text-slate-500">These details are used to prefill future bookings.</p>
 
+            {(!hasAvatar || !hasIdSubmitted) && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <p className="text-sm font-semibold text-amber-900">Complete trust signals</p>
+                <p className="mt-1 text-xs text-amber-800">
+                  Add a profile photo and optional ID to improve cleaner acceptance rates.
+                </p>
+              </div>
+            )}
+
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               <Field label="First Name"><Input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="mt-1" /></Field>
               <Field label="Last Name"><Input value={lastName} onChange={(event) => setLastName(event.target.value)} className="mt-1" /></Field>
@@ -276,8 +287,8 @@ export default function ClientProfilePage() {
               <p className="text-sm font-semibold text-slate-900">Trust Signals</p>
               <p className="mt-1 text-xs text-slate-600">Complete this to improve cleaner acceptance rates.</p>
               <ul className="mt-2 space-y-1 text-xs text-slate-600">
-                <li>- Add a clear profile photo</li>
-                <li>- Submit an optional ID document</li>
+                <li>- Profile photo: {hasAvatar ? 'Added' : 'Pending'}</li>
+                <li>- Optional ID: {hasIdSubmitted ? 'Submitted' : 'Pending'}</li>
               </ul>
               <div className="mt-3">
                 <Label>Optional ID Upload (PDF or image)</Label>

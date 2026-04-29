@@ -52,6 +52,7 @@ export default function CleanerBookingDetailPage() {
   const [reportIssueType, setReportIssueType] = useState<'client_no_show' | 'service_not_completed' | 'property_damage_safety' | 'other_issue'>('other_issue')
   const [reportExplanation, setReportExplanation] = useState('')
   const [reportLoading, setReportLoading] = useState(false)
+  const [phoneRevealed, setPhoneRevealed] = useState(false)
   const [, setNowTick] = useState(() => Date.now())
 
   const refresh = () =>
@@ -77,6 +78,10 @@ export default function CleanerBookingDetailPage() {
     const timer = setInterval(() => setNowTick(Date.now()), 60_000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    setPhoneRevealed(false)
+  }, [booking?.id, booking?.status, booking?.client?.user?.phone])
 
   useEffect(() => {
     if (!booking || !proposalDate || !proposalOpen) {
@@ -261,6 +266,21 @@ export default function CleanerBookingDetailPage() {
     : 0
   const canReportProblem = ['in_progress', 'completed', 'disputed'].includes(booking.status) &&
     Date.now() <= cleanerReportWindowEndsAtMs
+  const clientTrust = (booking.client as any)?.trust as {
+    memberSince?: string | null
+    completedBookingsCount?: number
+  } | undefined
+  const memberSinceRaw = clientTrust?.memberSince ?? (booking.client as any)?.created_at ?? (booking.client as any)?.createdAt
+  const memberSinceLabel = memberSinceRaw
+    ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
+    : null
+  const completedBookingsCount = Number(clientTrust?.completedBookingsCount ?? 0)
+  const cleanerPrivacy = (booking as any)?.cleanerPrivacy as {
+    phoneVisible?: boolean
+    phoneVisibleAt?: string | null
+  } | undefined
+  const canRevealPhone = ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status) && Boolean(cleanerPrivacy?.phoneVisible)
+  const clientPhone = booking.client?.user?.phone ?? ''
 
   return (
     <div className="w-full space-y-5">
@@ -281,9 +301,19 @@ export default function CleanerBookingDetailPage() {
             <p className="flex items-center gap-2"><Calendar className="h-4 w-4" />{formatDate(booking.scheduled_start)}</p>
             <p className="flex items-center gap-2"><Clock className="h-4 w-4" />{booking.duration_hours} hours</p>
             <p className="flex items-center gap-2"><MapPin className="h-4 w-4" />{booking.address}, {booking.city}, {booking.postcode}</p>
-            {(booking.client as any)?.idFileUrl && (
+            {((booking.client as any)?.idFileUrl || (booking.client as any)?.id_file_url) && (
               <p className="text-xs font-medium text-emerald-700">Client trust badge: ID submitted</p>
             )}
+            <div className="flex flex-wrap items-center gap-2">
+              {memberSinceLabel && (
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                  Member since {memberSinceLabel}
+                </span>
+              )}
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                {completedBookingsCount} completed bookings
+              </span>
+            </div>
             {booking.status === 'pending' && (
               <p className="text-xs text-slate-500">Approximate map location shown with 50-100m privacy offset until acceptance.</p>
             )}
@@ -293,8 +323,24 @@ export default function CleanerBookingDetailPage() {
             {booking.access_notes && (
               <p className="text-xs text-slate-500">Access notes: {booking.access_notes}</p>
             )}
-            {booking.client?.user?.phone && (
-              <p className="text-xs text-slate-500">Phone: {booking.client.user.phone}</p>
+            {canRevealPhone ? (
+              phoneRevealed ? (
+                <p className="text-xs text-slate-500">Phone: {clientPhone}</p>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-fit px-3 text-xs"
+                  onClick={() => setPhoneRevealed(true)}
+                >
+                  Reveal number
+                </Button>
+              )
+            ) : (
+              <p className="text-xs text-slate-500">
+                Client phone can be revealed only inside confirmed bookings.
+                {cleanerPrivacy?.phoneVisibleAt ? ` Available from ${formatDate(cleanerPrivacy.phoneVisibleAt)}.` : ''}
+              </p>
             )}
           </div>
           {booking.special_instructions && (
