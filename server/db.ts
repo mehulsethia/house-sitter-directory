@@ -73,6 +73,12 @@ export function ensureDbSchema(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `)
+      await db.$executeRawUnsafe(`
+        ALTER TABLE public.clients
+        ADD COLUMN IF NOT EXISTS id_file_name TEXT,
+        ADD COLUMN IF NOT EXISTS id_file_url TEXT,
+        ADD COLUMN IF NOT EXISTS id_submitted_at TIMESTAMPTZ
+      `)
     })().catch((error) => {
       schemaReadyPromise = null
       throw error

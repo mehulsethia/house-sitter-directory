@@ -60,9 +60,9 @@ const SUPPLIES_OPTIONS = [
 ] as const
 
 const STEP_INFO = [
-  { num: 1, title: 'Select Date\n& Time', desc: 'Choose duration, date, and time' },
-  { num: 2, title: 'Service\nAddress', desc: 'Contact and location info' },
-  { num: 3, title: 'Job\nDetails', desc: 'Card authorization' },
+  { num: 1, title: 'Select Date & Time', desc: 'Choose duration, date, and time' },
+  { num: 2, title: 'Service Address', desc: 'Contact and location info' },
+  { num: 3, title: 'Job Details', desc: 'Card authorization' },
   { num: 4, title: 'Confirmation', desc: 'Booking confirmation' },
 ]
 
@@ -82,7 +82,7 @@ function StepIndicator({ current }: { current: number }) {
               >
                 {done ? <Check className="h-4 w-4" /> : s.num}
               </div>
-              <p className={`mt-1.5 text-center text-[10px] leading-tight whitespace-pre-line ${active || done ? 'font-semibold text-slate-900' : 'text-slate-400'}`}>
+              <p className={`mt-1.5 text-center text-[10px] leading-tight whitespace-nowrap ${active || done ? 'font-semibold text-slate-900' : 'text-slate-400'}`}>
                 {s.title}
               </p>
               <p className="text-[9px] text-slate-400 text-center leading-tight hidden sm:block">{s.desc}</p>
