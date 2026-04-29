@@ -876,7 +876,7 @@ function CleanerOnboardingPageContent() {
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
-                  <span>Accept <a href="/terms" target="_blank" className="text-primary font-medium underline hover:text-primary/80">Terms & Platform Rules</a> <span className="text-red-500">*</span></span>
+                  <span>Accept <a href="/terms-and-conditions" target="_blank" rel="noreferrer" className="text-primary font-medium underline hover:text-primary/80">Terms & Platform Rules</a> <span className="text-red-500">*</span></span>
                 </label>
               </div>
 
