@@ -11,8 +11,6 @@ export const updateCleanerSchema = z.object({
   transport_mode: z.enum(['own_car', 'bus_walk', 'requires_pickup']).optional().nullable(),
   transport_pickup_location: z.string().max(200).optional().nullable(),
   id_type: z.enum(['passport', 'national_id', 'drivers_licence', 'drivers_license']).optional().nullable(),
-  id_file_name: z.string().max(255).optional().nullable(),
-  id_file_url: z.string().max(2000).optional().nullable(),
   pet_acceptance: z.boolean().optional(),
   pet_comfortable: z.boolean().optional().nullable(),
   work_eligibility_answer: z.boolean().optional().nullable(),

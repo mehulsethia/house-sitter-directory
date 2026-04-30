@@ -100,9 +100,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
   }
 
   const kycMutationRequested =
-    parsed.data.id_type !== undefined ||
-    parsed.data.id_file_name !== undefined ||
-    parsed.data.id_file_url !== undefined
+    parsed.data.id_type !== undefined
   const kycLocked = cleaner.profileComplete && cleaner.status !== 'rejected'
   if (kycMutationRequested && kycLocked) {
     return err('KYC document cannot be changed after submission unless your application is rejected.', 409)
@@ -123,8 +121,6 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
       ? { transportPickupLocation: parsed.data.transport_pickup_location }
       : {}),
     ...(normalizedIdType !== undefined ? { idType: normalizedIdType } : {}),
-    ...(parsed.data.id_file_name !== undefined ? { idFileName: parsed.data.id_file_name } : {}),
-    ...(parsed.data.id_file_url !== undefined ? { idFileUrl: parsed.data.id_file_url } : {}),
     ...(parsed.data.pet_acceptance !== undefined ? { petAcceptance: parsed.data.pet_acceptance } : {}),
     ...(parsed.data.pet_comfortable !== undefined ? { petComfortable: parsed.data.pet_comfortable } : {}),
     ...(parsed.data.work_eligibility_answer !== undefined
