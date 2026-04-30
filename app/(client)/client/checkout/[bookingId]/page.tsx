@@ -191,15 +191,6 @@ export default function CheckoutPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-fit rounded-full border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                onClick={() => router.push(`/client/bookings/${bookingId}`)}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to booking
-              </Button>
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Secure Checkout
               </p>
@@ -224,6 +215,18 @@ export default function CheckoutPage() {
             </div>
           </div>
         </section>
+
+        <div className="mx-auto w-full max-w-5xl">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-fit rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            onClick={() => router.push(`/client/bookings/${bookingId}`)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to booking
+          </Button>
+        </div>
 
         <section className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[1fr_0.9fr]">
           <div className="space-y-4">

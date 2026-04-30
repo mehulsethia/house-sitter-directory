@@ -153,13 +153,6 @@ export default function CleanerProfilePage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <button
-                onClick={() => router.back()}
-                className="inline-flex items-center gap-1 rounded-full border border-white/35 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                <ArrowLeft className="h-4 w-4" /> Back
-              </button>
-
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Cleaner Profile
               </p>
@@ -197,6 +190,15 @@ export default function CleanerProfilePage() {
             </div>
           </div>
         </section>
+
+        <div>
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back
+          </button>
+        </div>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard title="Jobs Completed" value={cleaner.total_jobs} icon={<CheckCircle className="h-6 w-6 text-[#0d4bc9]" />} displayFont={displayFont.className} />

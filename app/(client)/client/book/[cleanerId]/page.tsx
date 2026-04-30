@@ -787,12 +787,6 @@ export default function BookingFlowPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <button
-                onClick={() => step > 1 && step < 4 ? setStep(step - 1) : router.back()}
-                className="inline-flex items-center gap-1 rounded-full border border-white/35 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                <ArrowLeft className="h-4 w-4" /> {step > 1 && step < 4 ? 'Previous' : 'Back to All Cleaners'}
-              </button>
               <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 MaidHive Booking Flow
               </p>
@@ -821,6 +815,14 @@ export default function BookingFlowPage() {
         </section>
 
         <div className="mx-auto max-w-5xl">
+          <div className="mb-5">
+            <button
+              onClick={() => step > 1 && step < 4 ? setStep(step - 1) : router.back()}
+              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-900"
+            >
+              <ArrowLeft className="h-4 w-4" /> {step > 1 && step < 4 ? 'Previous' : 'Back to All Cleaners'}
+            </button>
+          </div>
           <StepIndicator current={step} />
 
           <div className={cn('grid gap-6', step < 4 ? 'lg:grid-cols-[1fr_320px]' : 'max-w-2xl mx-auto w-full')}>
