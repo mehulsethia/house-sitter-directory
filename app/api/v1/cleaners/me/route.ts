@@ -99,15 +99,22 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
     cleaner = await cleanerRepo.create(user.id)
   }
 
+  const normalizedIdType = normalizeIdTypeInput(parsed.data.id_type)
+  const currentIdType = normalizeIdTypeInput(cleaner.idType)
+  const idTypeChangeRequested =
+    normalizedIdType !== undefined && normalizedIdType !== currentIdType
+  const idFileNameChangeRequested =
+    parsed.data.id_file_name !== undefined && parsed.data.id_file_name !== cleaner.idFileName
+  const idFileUrlChangeRequested =
+    parsed.data.id_file_url !== undefined && parsed.data.id_file_url !== cleaner.idFileUrl
   const kycMutationRequested =
-    parsed.data.id_type !== undefined
+    idTypeChangeRequested || idFileNameChangeRequested || idFileUrlChangeRequested
   const kycLocked = cleaner.profileComplete && cleaner.status !== 'rejected'
   if (kycMutationRequested && kycLocked) {
     return err('KYC document cannot be changed after submission unless your application is rejected.', 409)
   }
 
   const normalizedCleaningSupplies = normalizeCleaningSuppliesInput(parsed.data.cleaning_supplies)
-  const normalizedIdType = normalizeIdTypeInput(parsed.data.id_type)
 
   const updatePayload = {
     ...(parsed.data.bio !== undefined ? { bio: parsed.data.bio } : {}),

@@ -209,7 +209,7 @@ export default function CleanerBookingsPage() {
     <div className="space-y-6">
       {!stripeConnected && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-semibold text-amber-900">Connect Stripe to accept bookings and receive payouts.</p>
+          <p className="text-sm font-semibold text-amber-900">Connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.</p>
         </div>
       )}
 
@@ -339,7 +339,7 @@ export default function CleanerBookingsPage() {
                         </Button>
                         {!stripeConnected && (
                           <p className="text-xs font-medium text-amber-700">
-                            Connect Stripe to accept bookings and receive payouts.
+                            Connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.
                           </p>
                         )}
                         {eligibility.canProposeAlternative && (

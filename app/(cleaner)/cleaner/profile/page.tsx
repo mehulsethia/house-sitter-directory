@@ -354,10 +354,20 @@ function CleanerProfilePageContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-end gap-3">
-        <Button variant="outline" onClick={saveOverview} disabled={tab !== 'overview'} loading={saving && tab === 'overview'}>
-          Update profile
+        <Button
+          variant="outline"
+          onClick={saveOverview}
+          disabled={tab !== 'overview'}
+          loading={saving && tab === 'overview'}
+        >
+          Save overview
         </Button>
       </div>
+      {(tab !== 'overview' || !stripe.connected) && (
+        <p className="text-xs text-slate-500">
+          Some profile updates may be limited until Stripe setup is completed.
+        </p>
+      )}
 
       {lifecycleStatus === 'rejected' ? (
         <div className="rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3">
@@ -420,7 +430,7 @@ function CleanerProfilePageContent() {
         </div>
       ) : lifecycleStatus === 'approved' && !stripe.connected ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-semibold text-amber-900">Approved — connect Stripe to go live. You must connect Stripe to accept bookings and receive payouts.</p>
+          <p className="text-sm font-semibold text-amber-900">Approved — connect Stripe to go live. You must connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.</p>
         </div>
       ) : lifecycleStatus === 'live' ? (
         <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
@@ -680,7 +690,7 @@ function CleanerProfilePageContent() {
                     <div>
                       <p className="text-2xl font-semibold leading-none text-[#635BFF]">stripe</p>
                       <p className="mt-2 text-sm text-slate-500">Manage earnings and payouts securely with Stripe Connect.</p>
-                      <p className="mt-1 text-sm font-medium text-amber-700">You must connect Stripe to accept bookings and receive payouts.</p>
+                      <p className="mt-1 text-sm font-medium text-amber-700">You must connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.</p>
                     </div>
                     <Button onClick={connectStripe} variant="outline">{stripe.connected ? 'Manage Stripe' : 'Connect Stripe'}</Button>
                   </div>
@@ -715,7 +725,7 @@ function CleanerProfilePageContent() {
 
                 {!stripe.connected && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    Connect Stripe to accept bookings and receive payouts.
+                    Connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.
                   </div>
                 )}
 
