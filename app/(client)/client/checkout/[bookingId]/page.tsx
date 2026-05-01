@@ -7,7 +7,6 @@ import { ArrowLeft } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { bookingsApi, paymentsApi } from '@/lib/api'
-import { PriceBreakdownCard } from '@/components/price-breakdown-card'
 import { CheckoutPageSkeleton } from '@/components/page-skeletons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -153,6 +152,7 @@ export default function CheckoutPage() {
   const [booking, setBooking] = useState<BookingRead | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -250,17 +250,41 @@ export default function CheckoutPage() {
               </CardContent>
             </Card>
 
-            <PriceBreakdownCard
-              breakdown={{
-                hourly_rate: booking.hourly_rate,
-                duration_hours: booking.duration_hours,
-                subtotal: booking.subtotal ?? booking.total_amount - booking.platform_fee,
-                platform_fee_pct: 10,
-                platform_fee: booking.platform_fee,
-                cleaner_payout: booking.cleaner_payout,
-                total_amount: booking.total_amount,
-              }}
-            />
+            <Card className="border-slate-200 bg-white/90">
+              <CardHeader>
+                <CardTitle>Total</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p className="text-2xl font-bold text-primary">
+                  {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
+                </p>
+                <p className="text-xs text-slate-500">Includes secure booking &amp; support fee</p>
+                <button
+                  type="button"
+                  onClick={() => setShowBreakdown((value) => !value)}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {showBreakdown ? 'Hide price breakdown' : 'View price breakdown'}
+                </button>
+                {showBreakdown && (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 space-y-1">
+                    <p>
+                      {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.hourly_rate)} × {booking.duration_hours}h ={' '}
+                      {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(
+                        booking.subtotal ?? (booking.total_amount - booking.platform_fee),
+                      )}
+                    </p>
+                    <p>
+                      Secure booking &amp; support fee (10%) ={' '}
+                      {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.platform_fee)}
+                    </p>
+                    <p className="font-semibold text-slate-900">
+                      Total = {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           <Card className="border-slate-200 bg-white/90">
