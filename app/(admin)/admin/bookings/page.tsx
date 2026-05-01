@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { adminApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
@@ -14,16 +15,21 @@ import { toast } from 'sonner'
 
 // ── Status groupings ──────────────────────────────────────────────────────────
 
-const GROUPS: { key: string; label: string; statuses: BookingStatus[] }[] = [
+const GROUPS: { key: string; label: string; statuses: string[] }[] = [
   {
     key: 'all',
     label: 'All',
     statuses: [],
   },
   {
-    key: 'active',
-    label: 'Active',
-    statuses: ['pending', 'accepted', 'confirmed', 'in_progress'],
+    key: 'pending',
+    label: 'Pending',
+    statuses: ['pending'],
+  },
+  {
+    key: 'confirmed',
+    label: 'Confirmed',
+    statuses: ['confirmed', 'accepted', 'in_progress'],
   },
   {
     key: 'completed',
@@ -31,9 +37,19 @@ const GROUPS: { key: string; label: string; statuses: BookingStatus[] }[] = [
     statuses: ['completed'],
   },
   {
-    key: 'issues',
-    label: 'Issues',
-    statuses: ['disputed', 'cancelled', 'expired'],
+    key: 'cancelled',
+    label: 'Cancelled',
+    statuses: ['cancelled'],
+  },
+  {
+    key: 'expired',
+    label: 'Expired',
+    statuses: ['expired'],
+  },
+  {
+    key: 'failed_payments',
+    label: 'Failed payments',
+    statuses: ['failed_payments'],
   },
 ]
 
@@ -92,6 +108,7 @@ function BookingTable({ bookings }: { bookings: BookingRead[] }) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export default function AdminBookingsPage() {
+  const searchParams = useSearchParams()
   const [activeGroup, setActiveGroup] = useState('all')
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [page, setPage] = useState(1)
@@ -126,6 +143,14 @@ export default function AdminBookingsPage() {
   useEffect(() => {
     load(activeGroup, page)
   }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const filter = searchParams.get('filter')
+    if (filter && GROUPS.some((g) => g.key === filter)) {
+      setActiveGroup(filter)
+      setPage(1)
+    }
+  }, [searchParams])
 
   return (
     <div className="space-y-6">

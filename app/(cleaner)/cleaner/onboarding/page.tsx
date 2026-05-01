@@ -186,7 +186,7 @@ const STANDARDS_QUIZ = [
 ] as const
 const BIO_MAX_CHARS = 1000
 const MIN_HOURLY_RATE = 6
-const MAX_HOURLY_RATE = 20
+const MAX_HOURLY_RATE = 25
 const IMAGE_FILE_EXT_REGEX = /\.(png|jpe?g|webp|gif|bmp|svg)(?:[?#].*)?$/i
 const STANDARDS_TOTAL_STEPS = 9
 

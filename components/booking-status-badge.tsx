@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import type { BookingStatus } from '@/types'
 
 const STATUS_CONFIG: Record<BookingStatus, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline' | 'info' }> = {
+  draft:       { label: 'Draft', variant: 'outline' },
   pending:     { label: 'Pending Cleaner Acceptance',     variant: 'warning' },
   accepted:    { label: 'Accepted',    variant: 'info' },
   confirmed:   { label: 'Confirmed',   variant: 'info' },

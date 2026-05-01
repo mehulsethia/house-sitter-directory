@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const SERVICE_TYPES = ['standard', 'deep_clean', 'end_of_tenancy', 'move_in'] as const
 export const BOOKING_STATUSES = [
-  'pending', 'accepted', 'confirmed', 'in_progress',
+  'draft', 'pending', 'accepted', 'confirmed', 'in_progress',
   'completed', 'cancelled', 'expired', 'disputed',
 ] as const
 export const BOOKING_ACTIONS = [

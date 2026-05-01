@@ -26,6 +26,7 @@ const STATUS_FILTERS: Array<{ key: 'all' | BookingStatus; label: string }> = [
   { key: 'in_progress', label: 'In Progress' },
   { key: 'completed', label: 'Completed' },
   { key: 'cancelled', label: 'Cancelled' },
+  { key: 'expired', label: 'Expired' },
   { key: 'disputed', label: 'Disputed' },
 ]
 
@@ -48,7 +49,7 @@ export default function ClientBookingsPage() {
 
   async function loadBookings() {
     try {
-      const [res, disputesRes] = await Promise.all([bookingsApi.my(), disputesApi.listMine()])
+      const [res, disputesRes] = await Promise.all([bookingsApi.my(1), disputesApi.listMine()])
       const disputeMap = new Map<string, string>()
       for (const dispute of disputesRes.data?.items ?? []) {
         if (dispute?.booking_id) disputeMap.set(dispute.booking_id, dispute.status)
@@ -272,6 +273,22 @@ export default function ClientBookingsPage() {
                           >
                             Mark job as complete
                           </Button>
+                        )}
+                        {booking.status === 'expired' && (
+                          <>
+                            <Link
+                              href={`/client/book/${booking.cleaner_id}`}
+                              className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
+                            >
+                              Book again
+                            </Link>
+                            <Link
+                              href="/client/cleaners"
+                              className="inline-flex h-8 items-center rounded-full border border-slate-300 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                            >
+                              Choose another cleaner
+                            </Link>
+                          </>
                         )}
                       </div>
                     </article>

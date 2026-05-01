@@ -27,13 +27,7 @@ export const bookingRepo = {
     const where: Prisma.BookingWhereInput = {
       clientId,
       ...(params.status ? { status: params.status } : {}),
-      NOT: [
-        {
-          status: 'expired',
-          acceptedAt: null,
-          confirmedAt: null,
-        },
-      ],
+      ...(params.status ? {} : { status: { not: 'draft' } }),
     }
     return Promise.all([
       db.booking.findMany({
@@ -51,15 +45,8 @@ export const bookingRepo = {
     const where: Prisma.BookingWhereInput = {
       cleanerId,
       ...(params.status ? { status: params.status } : {}),
-      NOT: [
-        {
-          status: 'expired',
-          acceptedAt: null,
-          confirmedAt: null,
-        },
-      ],
       OR: [
-        { status: { not: 'pending' } },
+        { status: { notIn: ['pending', 'draft'] } },
         {
           status: 'pending',
           payment: {
@@ -104,6 +91,7 @@ export const bookingRepo = {
     totalAmount: number
     acceptBy: Date
     originalScheduledStart?: Date
+    status?: string
   }) =>
     db.booking.create({ data, include: bookingInclude }),
 
@@ -117,12 +105,20 @@ export const bookingRepo = {
           .map((s) => s.trim())
           .filter(Boolean)
       : []
-    const where: Prisma.BookingWhereInput =
-      statuses.length > 0
-        ? statuses.length === 1
-          ? { status: statuses[0] as any }
-          : { status: { in: statuses as any[] } }
+    const includesFailedPayments = statuses.includes('failed_payments')
+    const filteredStatuses = statuses.filter((s) => s !== 'failed_payments')
+    const baseStatusWhere: Prisma.BookingWhereInput =
+      filteredStatuses.length > 0
+        ? filteredStatuses.length === 1
+          ? { status: filteredStatuses[0] as any }
+          : { status: { in: filteredStatuses as any[] } }
         : {}
+    const where: Prisma.BookingWhereInput = includesFailedPayments
+      ? {
+          ...baseStatusWhere,
+          payment: { is: { status: 'failed' } },
+        }
+      : baseStatusWhere
     return Promise.all([
       db.booking.findMany({
         where,

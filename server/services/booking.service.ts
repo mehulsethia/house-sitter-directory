@@ -104,25 +104,8 @@ export const bookingService = {
       totalAmount: pricing.total_amount,
       acceptBy,
       originalScheduledStart: scheduledStart,
+      status: 'draft',
     })
-
-    await pushInAppNotification({
-      userId: booking.client.userId,
-      type: 'booking_created_pending',
-      title: 'Booking request created',
-      body: 'Your booking request was created and is waiting for cleaner response.',
-      data: { booking_id: booking.id },
-    })
-
-    try {
-      await loopsEmailService.sendClientBookingCreatedPending({
-        email: booking.client.user.email,
-        fullName: booking.client.user.name ?? 'Client',
-        cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-      })
-    } catch (emailError) {
-      console.error('Failed to send client booking created pending email via Loops:', emailError)
-    }
 
     return booking
   },

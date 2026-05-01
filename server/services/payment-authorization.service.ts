@@ -34,7 +34,8 @@ export const paymentAuthorizationService = {
       return { updated: true, reason: 'authorized_booking_not_found' as const }
     }
 
-    if (booking.status === 'pending') {
+    if (booking.status === 'draft' || booking.status === 'pending') {
+      const movedToPending = booking.status === 'draft'
       await bookingRepo.update(booking.id, { status: 'pending' })
 
       if (!wasAuthorized) {
@@ -45,6 +46,16 @@ export const paymentAuthorizationService = {
           body: `You have a new booking request from ${booking.client.user?.name ?? 'a client'}`,
           data: { booking_id: booking.id },
         })
+
+        if (movedToPending) {
+          await pushInAppNotification({
+            userId: booking.client.userId,
+            type: 'booking_created_pending',
+            title: 'Booking request created',
+            body: 'Your booking request was created and sent to the cleaner.',
+            data: { booking_id: booking.id },
+          })
+        }
 
         try {
           await loopsEmailService.sendCleanerNewBookingRequest({
@@ -58,9 +69,21 @@ export const paymentAuthorizationService = {
         } catch (emailError) {
           console.error('Failed to send cleaner new booking request email via Loops:', emailError)
         }
+
+        if (movedToPending) {
+          try {
+            await loopsEmailService.sendClientBookingCreatedPending({
+              email: booking.client.user.email,
+              fullName: booking.client.user.name ?? 'Client',
+              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+            })
+          } catch (emailError) {
+            console.error('Failed to send client booking created pending email via Loops:', emailError)
+          }
+        }
       }
 
-      return { updated: true, reason: 'authorized_pending_notified' as const }
+      return { updated: true, reason: movedToPending ? 'authorized_draft_pending_notified' as const : 'authorized_pending_notified' as const }
     }
 
     if (booking.status === 'accepted') {

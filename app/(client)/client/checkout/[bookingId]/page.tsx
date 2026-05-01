@@ -57,10 +57,10 @@ function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess:
       setSubmitting(true)
       try {
         await paymentsApi.confirmWithSavedMethod(booking.id, selectedSavedCardId)
-        toast.success('Saved card authorized. Your booking request is now sent to the cleaner.')
+        toast.success('Saved card authorised. Your booking request is now sent to the cleaner.')
         onSuccess()
       } catch (err: any) {
-        toast.error(err.message ?? 'Failed to authorize saved card.')
+        toast.error(err.message ?? 'Failed to authorise saved card.')
       } finally {
         setSubmitting(false)
       }
@@ -141,7 +141,7 @@ function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess:
         loading={submitting}
         disabled={mode === 'new' ? (!stripe || !elements) : !selectedSavedCardId}
       >
-        Authorize {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
+        Authorise {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
       </Button>
     </form>
   )
@@ -161,8 +161,8 @@ export default function CheckoutPage() {
         const nextBooking = bookingRes.data
         if (!nextBooking) throw new Error('Booking not found')
 
-        if (!['pending', 'accepted'].includes(nextBooking.status)) {
-          toast.error('This booking cannot be authorized right now.')
+        if (!['draft', 'pending', 'accepted'].includes(nextBooking.status)) {
+          toast.error('This booking cannot be authorised right now.')
           router.push(`/client/bookings/${bookingId}`)
           return
         }
@@ -195,7 +195,7 @@ export default function CheckoutPage() {
                 MaidHive Secure Checkout
               </p>
               <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
-                Authorize Card
+                Authorise Card
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 Reserve payment securely now. Capture happens only after service completion and dispute window.
@@ -205,7 +205,7 @@ export default function CheckoutPage() {
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
                 <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
-                  Total to authorize
+                  Total to authorise
                 </p>
                 <p className={`${displayFont.className} mt-1 text-4xl font-bold tracking-[-0.02em] text-white`}>
                   {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
@@ -265,7 +265,7 @@ export default function CheckoutPage() {
 
           <Card className="border-slate-200 bg-white/90">
             <CardHeader>
-              <CardTitle>Card authorization</CardTitle>
+              <CardTitle>Card authorisation</CardTitle>
             </CardHeader>
             <CardContent>
               <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'stripe' } }}>

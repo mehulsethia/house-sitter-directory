@@ -141,6 +141,7 @@ export interface CleanerOnboardingProgress {
 // Bookings
 // ---------------------------------------------------------------------------
 export type BookingStatus =
+  | 'draft'
   | 'pending'
   | 'accepted'
   | 'confirmed'

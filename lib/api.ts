@@ -261,8 +261,10 @@ export const bookingsApi = {
   },
   create: (body: BookingCreate) =>
     request<APIResponse<BookingRead>>('/bookings', { method: 'POST', body: JSON.stringify(body) }),
-  my: async (page = 1) => {
-    const res = await request<APIResponse<any>>(`/bookings?page=${page}`)
+  my: async (page = 1, status?: string) => {
+    const qs = new URLSearchParams({ page: String(page) })
+    if (status) qs.set('status', status)
+    const res = await request<APIResponse<any>>(`/bookings?${qs.toString()}`)
     return { ...res, data: normalizePaginated<BookingRead>(res.data ?? {}, 'bookings') }
   },
   getById: (id: string) => request<APIResponse<BookingRead>>(`/bookings/${id}`),

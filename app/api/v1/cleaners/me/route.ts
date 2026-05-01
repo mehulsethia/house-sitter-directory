@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireCleaner } from '@/server/auth'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { availabilityRepo } from '@/server/repositories/availability.repo'
-import { computeCleanerOnboardingProgress } from '@/server/services/cleaner-onboarding.service'
+import { computeCleanerOnboardingProgress, validateCleanerSubmissionRequirements } from '@/server/services/cleaner-onboarding.service'
 import { ok, err } from '@/server/response'
 import { updateCleanerSchema } from '@/server/schemas/cleaner.schema'
 import { deriveCleanerLifecycleStatus } from '@/lib/cleaner-status'
@@ -172,9 +172,17 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const schedules = await availabilityRepo.getSchedule(cleaner.id)
   const hasAvailabilitySlots = schedules.some((s) => s.isActive)
   const onboarding = computeCleanerOnboardingProgress({ cleaner: interim, hasAvailabilitySlots })
+  const submissionValidation = validateCleanerSubmissionRequirements({ cleaner: interim, hasAvailabilitySlots })
+
+  if (parsed.data.profile_complete === true && (!onboarding.can_be_listed || !submissionValidation.valid)) {
+    const missing = submissionValidation.missingFields.length > 0
+      ? ` Missing: ${submissionValidation.missingFields.join(', ')}.`
+      : ''
+    return err(`Cannot mark onboarding as complete until all required steps are valid.${missing}`, 422)
+  }
 
   const updated = await cleanerRepo.update(cleaner.id, {
-    profileComplete: parsed.data.profile_complete ?? interim.profileComplete,
+    profileComplete: parsed.data.profile_complete === true ? true : interim.profileComplete,
     onboardingStep: parsed.data.onboarding_step ?? onboarding.current_step,
     onboardingCompletedAt: onboarding.can_be_listed ? interim.onboardingCompletedAt ?? new Date() : null,
   })

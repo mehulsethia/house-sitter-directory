@@ -2,8 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Routes that require a logged-in user
-const PROTECTED_PREFIXES = ['/client', '/cleaner']
-// Admin routes handle their own auth — separate login screen at /admin
+const PROTECTED_PREFIXES = ['/client', '/cleaner', '/admin']
 // Routes only for unauthenticated users
 const AUTH_ROUTES = ['/login', '/signup', '/verify-email']
 
@@ -74,9 +73,17 @@ export async function proxy(request: NextRequest) {
 
   // Logged-in users should stay inside the app area only.
   // Landing/legal/static pages remain visible only after logout.
-  // Admin routes handle their own auth, so skip them here.
   const isAdminRoute = pathname.startsWith('/admin')
-  if (user && !isProtected && !isApiRoute && !isAdminRoute) {
+  if (isAdminRoute && user) {
+    const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : null
+    if (role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = getPostLoginPath(user)
+      return NextResponse.redirect(url)
+    }
+  }
+
+  if (user && !isProtected && !isApiRoute) {
     const url = request.nextUrl.clone()
     url.pathname = getPostLoginPath(user)
     return NextResponse.redirect(url)

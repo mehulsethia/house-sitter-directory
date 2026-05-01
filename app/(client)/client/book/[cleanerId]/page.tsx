@@ -62,8 +62,8 @@ const SUPPLIES_OPTIONS = [
 
 const STEP_INFO = [
   { num: 1, title: 'Select Date & Time', desc: 'Choose duration, date, and time' },
-  { num: 2, title: 'Service Address', desc: 'Contact and location info' },
-  { num: 3, title: 'Job Details', desc: 'Card authorization' },
+  { num: 2, title: 'Address & Job Details', desc: 'Contact and job information' },
+  { num: 3, title: 'Payment', desc: 'Card authorisation' },
   { num: 4, title: 'Confirmation', desc: 'Booking confirmation' },
 ]
 
@@ -198,6 +198,7 @@ function BookingSummary({
   duration: number
   breakdown: PriceBreakdown | null
 }) {
+  const [showBreakdown, setShowBreakdown] = useState(false)
   const cleanerName = cleaner.user?.name ?? 'Professional Cleaner'
   return (
     <Card className="rounded-2xl border-slate-200 sticky top-6">
@@ -248,6 +249,20 @@ function BookingSummary({
         {/* Price breakdown */}
         {breakdown && (
           <div className="space-y-2 text-sm pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-900 font-semibold">Total</span>
+              <span className="text-lg text-primary font-bold">{formatCurrency(breakdown.total_amount)}</span>
+            </div>
+            <p className="text-xs text-slate-500">Includes secure booking &amp; support fee</p>
+            <button
+              type="button"
+              onClick={() => setShowBreakdown((v) => !v)}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              {showBreakdown ? 'Hide price breakdown' : 'View price breakdown'}
+            </button>
+            {showBreakdown && (
+              <>
             <div className="flex justify-between items-center">
               <span className="text-slate-500">Service ({duration}h)</span>
               <span className="font-semibold text-slate-900">{formatCurrency(breakdown.subtotal)}</span>
@@ -261,6 +276,8 @@ function BookingSummary({
               <span className="text-slate-900">Total</span>
               <span className="text-lg text-primary">{formatCurrency(breakdown.total_amount)}</span>
             </div>
+              </>
+            )}
           </div>
         )}
 
@@ -301,6 +318,7 @@ function StripePaymentForm({
     exp_year: number | null
   }>>([])
   const [selectedSavedCardId, setSelectedSavedCardId] = useState<string>('')
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
   useEffect(() => {
     paymentsApi.listMethods()
@@ -330,9 +348,9 @@ function StripePaymentForm({
       try {
         await paymentsApi.confirmWithSavedMethod(booking.id, selectedSavedCardId)
         await onSuccess()
-        toast.success('Saved card authorized. Booking request sent to the cleaner.')
+        toast.success('Saved card authorised. Booking request sent to the cleaner.')
       } catch (err: any) {
-        toast.error(err.message ?? 'Failed to authorize saved card.')
+        toast.error(err.message ?? 'Failed to authorise saved card.')
       } finally {
         setSubmitting(false)
       }
@@ -356,7 +374,7 @@ function StripePaymentForm({
         toast.success('Card authorised. Booking request sent to the cleaner.')
       }
     } catch {
-      toast.error('Card was authorized, but booking sync failed. Please retry in Bookings.')
+      toast.error('Card was authorised, but booking sync failed. Please retry in Bookings.')
     } finally {
       setSubmitting(false)
     }
@@ -426,14 +444,31 @@ function StripePaymentForm({
         This request is valid for 24 hours. If not accepted, it will expire automatically and your card authorisation will be released.
       </p>
 
-      <div className="flex items-center justify-between pt-2">
-        <span className="text-sm text-slate-500">Total: <strong className="text-slate-900">{formatCurrency(booking.total_amount)}</strong></span>
+      <div className="space-y-2 pt-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-900 font-semibold">Total: {formatCurrency(booking.total_amount)}</span>
+          <button
+            type="button"
+            onClick={() => setShowBreakdown((v) => !v)}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            {showBreakdown ? 'Hide price breakdown' : 'View price breakdown'}
+          </button>
+        </div>
+        <p className="text-xs text-slate-500">Includes secure booking &amp; support fee</p>
+        {showBreakdown && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 space-y-1">
+            <p>{formatCurrency(booking.hourly_rate)} × {booking.duration_hours}h = {formatCurrency(booking.subtotal ?? (booking.total_amount - booking.platform_fee))}</p>
+            <p>Secure booking &amp; support fee (10%) = {formatCurrency(booking.platform_fee)}</p>
+            <p className="font-semibold text-slate-900">Total = {formatCurrency(booking.total_amount)}</p>
+          </div>
+        )}
         <Button
           onClick={handleSubmit}
           loading={submitting}
           disabled={mode === 'new' ? (!stripe || !elements) : !selectedSavedCardId}
         >
-          Authorize Card & Send Request
+          Authorise & Send Request
         </Button>
       </div>
     </div>
@@ -700,11 +735,11 @@ export default function BookingFlowPage() {
         toast.error(`You can upload up to ${MAX_JOB_PHOTOS} photos.`)
         return
       }
-      createBookingAndProceed()
+      createDraftBookingAndProceed()
     }
   }
 
-  async function createBookingAndProceed() {
+  async function createDraftBookingAndProceed() {
     setSubmitting(true)
     try {
       const selectedJobType = JOB_TYPE_OPTIONS.find((option) => option.value === jobType)
@@ -730,7 +765,7 @@ export default function BookingFlowPage() {
         special_instructions: buildSpecialInstructions(uploadedPhotoUrls),
       })
       const b = res.data
-      if (!b) throw new Error('Failed to create booking')
+      if (!b) throw new Error('Failed to create draft booking')
       setBooking(b)
 
       const intentRes = await paymentsApi.createIntent(b.id)
@@ -755,7 +790,7 @@ export default function BookingFlowPage() {
       }
       setStep(3)
     } catch (err: any) {
-      toast.error(err.message ?? 'Failed to create booking')
+      toast.error(err.message ?? 'Failed to create draft booking')
     } finally {
       setSubmitting(false)
     }
@@ -794,7 +829,7 @@ export default function BookingFlowPage() {
                 Book {cleanerName}
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
-                Select schedule, fill details, authorize payment, and confirm your booking in one guided flow.
+                Select schedule, fill details, authorise payment, and confirm your booking in one guided flow.
               </p>
             </div>
 
@@ -807,7 +842,7 @@ export default function BookingFlowPage() {
                   {step} / 4
                 </p>
                 <p className="mt-1 text-sm text-white/80">
-                  {step === 1 ? 'Select Date & Time' : step === 2 ? 'Service Address' : step === 3 ? 'Job Details' : 'Confirmation'}
+                  {step === 1 ? 'Select Date & Time' : step === 2 ? 'Address & Job Details' : step === 3 ? 'Payment' : 'Confirmation'}
                 </p>
               </div>
             </div>
@@ -817,10 +852,10 @@ export default function BookingFlowPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-5">
             <button
-              onClick={() => step > 1 && step < 4 ? setStep(step - 1) : router.back()}
+              onClick={() => (step > 1 ? setStep(step - 1) : router.back())}
               className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-900"
             >
-              <ArrowLeft className="h-4 w-4" /> {step > 1 && step < 4 ? 'Previous' : 'Back to All Cleaners'}
+              <ArrowLeft className="h-4 w-4" /> {step > 1 ? 'Previous' : 'Back to All Cleaners'}
             </button>
           </div>
           <StepIndicator current={step} />
@@ -851,7 +886,7 @@ export default function BookingFlowPage() {
                   <div>
                     <Label className="text-sm font-semibold text-slate-700">Service Cost</Label>
                     <p className="mt-1 text-lg font-bold text-primary">{formatCurrency(estimatedCost)}</p>
-                    <p className="mt-1 text-xs text-slate-500">Total price based on selected duration. Final amount will be confirmed before payment.</p>
+                    <p className="mt-1 text-xs text-slate-500">Final price includes secure booking &amp; support fee.</p>
                   </div>
                 </div>
 
@@ -945,7 +980,7 @@ export default function BookingFlowPage() {
           {step === 2 && (
             <Card className="rounded-2xl border-slate-200">
               <CardHeader>
-                <CardTitle>Service Address</CardTitle>
+                <CardTitle>Address &amp; Job Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
 
@@ -1076,6 +1111,11 @@ export default function BookingFlowPage() {
                   {showDeepCleanAdvisory && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                       Deep and move-out cleans often take significantly longer than regular cleaning. Underestimating time may result in incomplete tasks or cleaners declining the request.
+                      <div className="mt-2">
+                        <button type="button" onClick={() => setStep(1)} className="text-xs font-semibold text-amber-900 underline">
+                          Adjust duration
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -1257,7 +1297,7 @@ export default function BookingFlowPage() {
           {step === 3 && clientSecret && booking && (
             <Card className="rounded-2xl border-slate-200">
               <CardHeader>
-                <CardTitle>Job Details</CardTitle>
+                <CardTitle>Payment</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
 
@@ -1286,7 +1326,7 @@ export default function BookingFlowPage() {
                   <p className="text-sm text-slate-500 mt-1">
                     {booking.status === 'confirmed'
                       ? `Your service has been successfully booked with ${cleanerName}`
-                      : `Your card is authorized and your request has been sent to ${cleanerName}`}
+                      : `Your card is authorised and your request has been sent to ${cleanerName}`}
                   </p>
                   {booking.status === 'pending' && (
                     <p className="mt-1 text-xs text-slate-500">

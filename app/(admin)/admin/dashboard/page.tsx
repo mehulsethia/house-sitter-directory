@@ -28,13 +28,15 @@ function KpiCard({
   value,
   sub,
   icon: Icon,
+  href,
 }: {
   label: string
   value: string | number
   sub?: string
   icon: React.ElementType
+  href?: string
 }) {
-  return (
+  const card = (
     <Card className="border-slate-200">
       <CardContent className="px-5 pb-5 pt-6">
         <div className="mb-3 flex items-start justify-between">
@@ -48,6 +50,8 @@ function KpiCard({
       </CardContent>
     </Card>
   )
+  if (!href) return card
+  return <Link href={href} className="block transition hover:-translate-y-0.5">{card}</Link>
 }
 
 function WidgetShell({
@@ -138,18 +142,21 @@ export default function AdminDashboard() {
           value={queues?.pending_booking_requests.count ?? 0}
           sub="Awaiting cleaner acceptance"
           icon={Clock}
+          href="/admin/bookings?filter=pending"
         />
         <KpiCard
-          label="Today's jobs"
+          label="Active bookings today"
           value={queues?.todays_jobs.count ?? 0}
           sub="Accepted, confirmed, in-progress"
           icon={CalendarDays}
+          href="/admin/bookings?filter=confirmed"
         />
         <KpiCard
           label="Payment failures"
           value={queues?.payment_failures.count ?? 0}
           sub="Recent failed payment attempts"
           icon={CreditCard}
+          href="/admin/bookings?filter=failed_payments"
         />
         <KpiCard
           label="Active Disputes"
@@ -213,7 +220,7 @@ export default function AdminDashboard() {
           )}
         </WidgetShell>
 
-        <WidgetShell title="Pending booking requests" count={queues?.pending_booking_requests.count ?? 0} href="/admin/bookings">
+        <WidgetShell title="Pending booking requests" count={queues?.pending_booking_requests.count ?? 0} href="/admin/bookings?filter=pending">
           {queues?.pending_booking_requests.items.length ? (
             queues.pending_booking_requests.items.map((booking) => (
               <div key={booking.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
@@ -230,7 +237,7 @@ export default function AdminDashboard() {
           )}
         </WidgetShell>
 
-        <WidgetShell title="Today&apos;s jobs" count={queues?.todays_jobs.count ?? 0} href="/admin/bookings">
+        <WidgetShell title="Active bookings today" count={queues?.todays_jobs.count ?? 0} href="/admin/bookings?filter=confirmed">
           {queues?.todays_jobs.items.length ? (
             queues.todays_jobs.items.map((job) => (
               <div key={job.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
@@ -250,7 +257,7 @@ export default function AdminDashboard() {
         <WidgetShell
           title="Upcoming Jobs (Today / Tomorrow)"
           count={(queues?.upcoming_jobs.today_count ?? 0) + (queues?.upcoming_jobs.tomorrow_count ?? 0)}
-          href="/admin/bookings"
+          href="/admin/bookings?filter=failed_payments"
         >
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" />Today: {queues?.upcoming_jobs.today_count ?? 0}</Badge>

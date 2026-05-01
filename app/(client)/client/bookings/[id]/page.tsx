@@ -50,6 +50,7 @@ export default function ClientBookingDetailPage() {
   const [counterTime, setCounterTime] = useState('')
   const [counterTimeOptions, setCounterTimeOptions] = useState<Array<{ value: string; label: string }>>([])
   const [phoneRevealed, setPhoneRevealed] = useState(false)
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
 
   const refresh = () =>
     bookingsApi
@@ -153,12 +154,27 @@ export default function ClientBookingDetailPage() {
     }
   }
 
+  async function handleCancelRequest() {
+    setActionLoading(true)
+    try {
+      await bookingsApi.cancel(id, 'Cancelled by client while pending cleaner acceptance')
+      toast.success('Booking request cancelled')
+      setCancelConfirmOpen(false)
+      await refresh()
+      router.push('/client/bookings')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to cancel booking request')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   if (loading) return <DetailPageSkeleton />
   if (!booking) return <div className="py-16 text-center text-muted-foreground">Booking not found.</div>
 
   const paymentStatus = booking.payment?.status ?? null
   const isAuthorized = ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
-  const canAuthorize = ['pending', 'accepted'].includes(booking.status) && !isAuthorized
+  const canAuthorize = ['draft', 'pending', 'accepted'].includes(booking.status) && !isAuthorized
   const canReview = Boolean(booking.completed_at) && ['completed', 'disputed'].includes(booking.status)
   const isPending = booking.status === 'pending'
   const hasProposal = Boolean(booking.proposed_start && booking.proposal_by)
@@ -289,13 +305,13 @@ export default function ClientBookingDetailPage() {
             {booking.status === 'pending' && booking.accept_by && (
               <p className="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
                 {canAuthorize
-                  ? 'Authorize your card to send this booking request to the cleaner.'
+                  ? 'Authorise your card to send this booking request to the cleaner.'
                   : 'This request is valid for 24 hours. If not accepted, it will expire automatically and your card authorisation will be released.'}
               </p>
             )}
             {booking.status === 'accepted' && canAuthorize && (
               <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-                Authorize your card now to keep this booking active. Your card is reserved, not charged yet.
+                Authorise your card now to keep this booking active. Your card is reserved, not charged yet.
               </p>
             )}
 
@@ -330,8 +346,23 @@ export default function ClientBookingDetailPage() {
                   )}
                   {canAuthorize && (
                     <Button size="lg" onClick={() => router.push(`/client/checkout/${id}`)}>
-                      Authorize card
+                      Authorise card
                     </Button>
+                  )}
+                  {booking.status === 'pending' && (
+                    <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
+                      Cancel request
+                    </Button>
+                  )}
+                  {booking.status === 'expired' && (
+                    <>
+                      <Button onClick={() => router.push(`/client/book/${booking.cleaner_id}`)}>
+                        Book again
+                      </Button>
+                      <Button variant="outline" onClick={() => router.push('/client/cleaners')}>
+                        Choose another cleaner
+                      </Button>
+                    </>
                   )}
                   {booking.status === 'in_progress' && (
                     <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
@@ -421,6 +452,21 @@ export default function ClientBookingDetailPage() {
           >
             Send counter-offer
           </Button>
+        </div>
+      </Dialog>
+
+      <Dialog open={cancelConfirmOpen} onClose={() => setCancelConfirmOpen(false)}>
+        <DialogTitle>Cancel booking request</DialogTitle>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">Are you sure you want to cancel this request?</p>
+          <div className="flex gap-2">
+            <Button variant="outline" className="w-full" onClick={() => setCancelConfirmOpen(false)} disabled={actionLoading}>
+              Keep request
+            </Button>
+            <Button variant="destructive" className="w-full" onClick={handleCancelRequest} loading={actionLoading}>
+              Cancel request
+            </Button>
+          </div>
         </div>
       </Dialog>
 
