@@ -35,7 +35,9 @@ export const paymentAuthorizationService = {
     }
 
     if (booking.status === 'draft' || booking.status === 'pending') {
-      const movedToPending = booking.status === 'draft'
+      const movedToPending =
+        booking.status === 'draft' ||
+        (booking.status === 'pending' && !booking.acceptedAt && !booking.confirmedAt)
       await bookingRepo.update(booking.id, { status: 'pending' })
 
       if (!wasAuthorized) {

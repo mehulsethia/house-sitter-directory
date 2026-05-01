@@ -82,7 +82,7 @@ export const bookingService = {
       data.duration_hours,
     )
 
-    const booking = await bookingRepo.create({
+    const baseCreatePayload = {
       clientId: client.id,
       cleanerId: cleaner.id,
       serviceType: data.service_type,
@@ -104,8 +104,29 @@ export const bookingService = {
       totalAmount: pricing.total_amount,
       acceptBy,
       originalScheduledStart: scheduledStart,
-      status: 'draft',
-    })
+    }
+
+    let booking
+    try {
+      booking = await bookingRepo.create({
+        ...baseCreatePayload,
+        status: 'draft',
+      })
+    } catch (error) {
+      // Backward-compat: some DBs still enforce status CHECK without 'draft'.
+      // Fall back to 'pending' and rely on cleaner-visibility + auth sync flow.
+      const message = String((error as any)?.message ?? '')
+      const likelyLegacyStatusConstraint =
+        message.includes('status') &&
+        (message.includes('check') || message.includes('constraint'))
+
+      if (!likelyLegacyStatusConstraint) throw error
+
+      booking = await bookingRepo.create({
+        ...baseCreatePayload,
+        status: 'pending',
+      })
+    }
 
     return booking
   },

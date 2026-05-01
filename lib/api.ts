@@ -81,8 +81,14 @@ async function executeRequest<T>(path: string, options: RequestInit, method: str
       // Clear cached reads so admin pages don't keep stale status cards.
       clearApiCache()
     }
-    const error = await res.json().catch(() => ({ detail: 'Unknown error' }))
-    throw new Error(error.detail ?? error.message ?? `Request failed: ${res.status}`)
+    let parsedError: any = null
+    try {
+      parsedError = await res.json()
+    } catch {
+      const rawText = await res.text().catch(() => '')
+      parsedError = { detail: rawText || 'Unknown error' }
+    }
+    throw new Error(parsedError?.detail ?? parsedError?.message ?? `Request failed: ${res.status}`)
   }
 
   const json = (await res.json()) as T
