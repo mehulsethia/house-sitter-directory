@@ -39,6 +39,15 @@ export default function ClientProfilePage() {
   const [defaultPostcode, setDefaultPostcode] = useState('')
   const [memberSince, setMemberSince] = useState('')
   const [savedAddresses, setSavedAddresses] = useState<ClientAddressRead[]>([])
+  const [addingAddress, setAddingAddress] = useState(false)
+  const [newAddressLabel, setNewAddressLabel] = useState('')
+  const [newAddressLine1, setNewAddressLine1] = useState('')
+  const [newAddressCity, setNewAddressCity] = useState('')
+  const [newAddressPostcode, setNewAddressPostcode] = useState('')
+  const [newAddressCountry, setNewAddressCountry] = useState('IE')
+  const [newApartmentDetails, setNewApartmentDetails] = useState('')
+  const [newAccessNotes, setNewAccessNotes] = useState('')
+  const [newAddressDefault, setNewAddressDefault] = useState(false)
   const [idFileName, setIdFileName] = useState('')
   const [idFileUrl, setIdFileUrl] = useState('')
   const [uploadingId, setUploadingId] = useState(false)
@@ -203,6 +212,57 @@ export default function ClientProfilePage() {
       setSetupSecret(clientSecret)
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to initialize card setup.')
+    }
+  }
+
+  async function createSavedAddress() {
+    if (!newAddressLine1.trim() || !newAddressCity.trim() || !newAddressPostcode.trim()) {
+      toast.error('Address, city and postcode are required.')
+      return
+    }
+    if (!newAccessNotes.trim() || newAccessNotes.trim().length < 5) {
+      toast.error('Access notes must be at least 5 characters.')
+      return
+    }
+
+    setAddingAddress(true)
+    try {
+      const createdRes = await clientsApi.addAddress({
+        label: newAddressLabel.trim() || undefined,
+        address_line1: newAddressLine1.trim(),
+        city: newAddressCity.trim(),
+        postcode: newAddressPostcode.trim(),
+        country: newAddressCountry.trim().toUpperCase() || 'IE',
+        apartment_details: newApartmentDetails.trim() || undefined,
+        access_notes: newAccessNotes.trim(),
+        is_default: newAddressDefault || savedAddresses.length === 0,
+      })
+      const created = createdRes.data
+      if (created) {
+        setSavedAddresses((prev) => {
+          const next = [...prev.filter((entry) => entry.id !== created.id), created]
+          next.sort((a, b) => Number(b.is_default) - Number(a.is_default))
+          return next
+        })
+      }
+      if (newAddressDefault || !defaultAddress) {
+        setDefaultAddress(newAddressLine1.trim())
+        setDefaultCity(newAddressCity.trim())
+        setDefaultPostcode(newAddressPostcode.trim())
+      }
+      setNewAddressLabel('')
+      setNewAddressLine1('')
+      setNewAddressCity('')
+      setNewAddressPostcode('')
+      setNewAddressCountry('IE')
+      setNewApartmentDetails('')
+      setNewAccessNotes('')
+      setNewAddressDefault(false)
+      toast.success('Saved address added.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to add saved address.')
+    } finally {
+      setAddingAddress(false)
     }
   }
 
@@ -420,7 +480,7 @@ export default function ClientProfilePage() {
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-semibold text-slate-900">Saved Addresses</p>
                   {savedAddresses.length === 0 ? (
-                    <p className="mt-2 text-xs text-slate-600">No saved addresses yet. Add one during booking and save it for later.</p>
+                    <p className="mt-2 text-xs text-slate-600">No saved addresses yet. Add one below.</p>
                   ) : (
                     <div className="mt-3 space-y-2">
                       {savedAddresses.map((entry) => (
@@ -431,6 +491,53 @@ export default function ClientProfilePage() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-sm font-semibold text-slate-900">Add Saved Address</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <Field label="Label (optional)">
+                      <Input value={newAddressLabel} onChange={(event) => setNewAddressLabel(event.target.value)} className="mt-1" placeholder="Home, Office, etc." />
+                    </Field>
+                    <Field label="Country (2-letter code)">
+                      <Input value={newAddressCountry} onChange={(event) => setNewAddressCountry(event.target.value)} className="mt-1" placeholder="IE" maxLength={2} />
+                    </Field>
+                    <Field label="Address">
+                      <Input value={newAddressLine1} onChange={(event) => setNewAddressLine1(event.target.value)} className="mt-1" placeholder="Street address" />
+                    </Field>
+                    <Field label="City">
+                      <Input value={newAddressCity} onChange={(event) => setNewAddressCity(event.target.value)} className="mt-1" placeholder="Dublin" />
+                    </Field>
+                    <Field label="Postcode">
+                      <Input value={newAddressPostcode} onChange={(event) => setNewAddressPostcode(event.target.value)} className="mt-1" placeholder="D01 AB12" />
+                    </Field>
+                    <Field label="Apartment details (optional)">
+                      <Input value={newApartmentDetails} onChange={(event) => setNewApartmentDetails(event.target.value)} className="mt-1" placeholder="Unit / Floor / Building" />
+                    </Field>
+                  </div>
+                  <div className="mt-3">
+                    <Label>Access notes</Label>
+                    <Textarea
+                      value={newAccessNotes}
+                      onChange={(event) => setNewAccessNotes(event.target.value)}
+                      className="mt-1"
+                      rows={3}
+                      placeholder="Doorbell, gate code, entry instructions"
+                    />
+                  </div>
+                  <label className="mt-3 flex items-center gap-2 text-xs text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={newAddressDefault}
+                      onChange={(event) => setNewAddressDefault(event.target.checked)}
+                    />
+                    Set as default address
+                  </label>
+                  <div className="mt-3 flex justify-end">
+                    <Button type="button" onClick={createSavedAddress} loading={addingAddress} className="rounded-full">
+                      Add Address
+                    </Button>
+                  </div>
                 </div>
               </>
             )}

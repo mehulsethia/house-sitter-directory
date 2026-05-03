@@ -699,6 +699,15 @@ export default function BookingFlowPage() {
     setAccessNotes(selected.access_notes ?? '')
   }
 
+  useEffect(() => {
+    if (addressMode !== 'saved') return
+    if (savedAddresses.length !== 1) return
+    const only = savedAddresses[0]
+    if (!only) return
+    if (selectedAddressId === only.id) return
+    applySavedAddress(only.id)
+  }, [addressMode, savedAddresses, selectedAddressId])
+
   function mergeJobPhotos(selectedFiles: File[]) {
     setJobPhotos((prev) => {
       const merged = [...prev]
@@ -1161,7 +1170,7 @@ export default function BookingFlowPage() {
                     </label>
                   </div>
 
-                  {addressMode === 'saved' && savedAddresses.length > 0 && (
+                  {addressMode === 'saved' && savedAddresses.length > 1 && (
                     <div>
                       <Label className="text-sm font-semibold">Saved Addresses</Label>
                       <Select value={selectedAddressId} onChange={(e) => applySavedAddress(e.target.value)} className="mt-1">
@@ -1172,6 +1181,11 @@ export default function BookingFlowPage() {
                           </option>
                         ))}
                       </Select>
+                    </div>
+                  )}
+                  {addressMode === 'saved' && savedAddresses.length === 1 && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                      Using saved address: {savedAddresses[0].address_line1}, {savedAddresses[0].city}
                     </div>
                   )}
 
