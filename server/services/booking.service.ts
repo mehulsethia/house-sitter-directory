@@ -50,7 +50,7 @@ export const bookingService = {
   async create(user: User, data: {
     cleaner_id: string
     service_type: string
-    special_instructions?: string
+    special_instructions: string
     address: string
     city: string
     postcode: string
@@ -82,11 +82,22 @@ export const bookingService = {
       data.duration_hours,
     )
 
+    const requiresPickup = cleaner.transportMode === 'requires_pickup'
+    const pickupSnapshot = cleaner.transportPickupLocation?.trim() ?? ''
+    if (requiresPickup && !pickupSnapshot) {
+      throw new ServiceError('Cleaner pickup location is not configured. Please choose another cleaner or try again later.', 400)
+    }
+
+    const specialInstructionsWithSnapshot =
+      requiresPickup && !data.special_instructions.includes('Pickup location snapshot:')
+        ? `${data.special_instructions}\n\nPickup location snapshot: ${pickupSnapshot}`
+        : data.special_instructions
+
     const baseCreatePayload = {
       clientId: client.id,
       cleanerId: cleaner.id,
       serviceType: data.service_type,
-      specialInstructions: data.special_instructions,
+      specialInstructions: specialInstructionsWithSnapshot,
       address: data.address,
       city: data.city,
       postcode: data.postcode,

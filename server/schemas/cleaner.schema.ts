@@ -27,6 +27,16 @@ export const updateCleanerSchema = z.object({
   onboarding_skipped_step3: z.boolean().optional(),
   onboarding_skipped_step4: z.boolean().optional(),
   profile_complete: z.boolean().optional(),
+}).superRefine((payload, ctx) => {
+  if (payload.transport_mode !== 'requires_pickup') return
+  const pickup = payload.transport_pickup_location
+  if (!pickup || !pickup.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['transport_pickup_location'],
+      message: 'Pick-up/drop-off location is required when transport mode is Requires Pick-up.',
+    })
+  }
 })
 
 export const addServiceAreaSchema = z.object({

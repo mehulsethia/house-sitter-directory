@@ -17,7 +17,7 @@ import { formatCurrency } from '@/lib/utils'
 import { getAccessToken } from '@/lib/auth-cache'
 import { toApiV1Url } from '@/lib/api-base'
 import { createClient } from '@/lib/supabase'
-import type { BookingRead } from '@/types'
+import type { BookingRead, ClientAddressRead } from '@/types'
 import { toast } from 'sonner'
 
 const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
@@ -25,6 +25,7 @@ const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 export default function ClientProfilePage() {
+  const [tab, setTab] = useState<'overview' | 'address' | 'payments'>('overview')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [bookings, setBookings] = useState<BookingRead[]>([])
@@ -37,6 +38,7 @@ export default function ClientProfilePage() {
   const [defaultCity, setDefaultCity] = useState('')
   const [defaultPostcode, setDefaultPostcode] = useState('')
   const [memberSince, setMemberSince] = useState('')
+  const [savedAddresses, setSavedAddresses] = useState<ClientAddressRead[]>([])
   const [idFileName, setIdFileName] = useState('')
   const [idFileUrl, setIdFileUrl] = useState('')
   const [uploadingId, setUploadingId] = useState(false)
@@ -53,7 +55,12 @@ export default function ClientProfilePage() {
   useEffect(() => {
     ;(async () => {
       try {
-        const [clientRes, bookingRes, authUserRes] = await Promise.all([clientsApi.me(), bookingsApi.my(), createClient().auth.getUser()])
+        const [clientRes, bookingRes, authUserRes, addressesRes] = await Promise.all([
+          clientsApi.me(),
+          bookingsApi.my(),
+          createClient().auth.getUser(),
+          clientsApi.listAddresses().catch(() => ({ data: [] as ClientAddressRead[] })),
+        ])
         const client = clientRes.data as any
         const user = client?.user ?? {}
         const fullName = String(user?.name ?? '').trim()
@@ -76,6 +83,7 @@ export default function ClientProfilePage() {
           )
           setBio('')
           setAvatarUrl(user?.avatar_url ?? null)
+          setSavedAddresses((addressesRes as any)?.data ?? [])
           setEmailVerified(Boolean(authUserRes.data.user?.email_confirmed_at))
           setPhoneVerified(Boolean(authUserRes.data.user?.phone_confirmed_at))
           setVerifiedPhoneFromAuth(Boolean(authUserRes.data.user?.phone_confirmed_at) ? (authUserRes.data.user?.phone ?? '') : '')
@@ -310,130 +318,178 @@ export default function ClientProfilePage() {
           </div>
 
           <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
-            <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
-              Profile Details
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">These details are used to prefill future bookings.</p>
-
-            {(!hasAvatar || !hasIdSubmitted) && (
-              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                <p className="text-sm font-semibold text-amber-900">Complete trust signals</p>
-                <p className="mt-1 text-xs text-amber-800">
-                  Add a profile photo and optional ID to improve cleaner acceptance rates.
-                </p>
-              </div>
-            )}
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              <Field label="First Name"><Input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="mt-1" /></Field>
-              <Field label="Last Name"><Input value={lastName} onChange={(event) => setLastName(event.target.value)} className="mt-1" /></Field>
-              <Field label="Phone Number"><PhoneInput value={phone} onChange={setPhone} className="mt-1" /></Field>
-              <Field label="Default Address"><Input value={defaultAddress} onChange={(event) => setDefaultAddress(event.target.value)} className="mt-1" /></Field>
-              <Field label="Default City"><Input value={defaultCity} onChange={(event) => setDefaultCity(event.target.value)} className="mt-1" /></Field>
-              <Field label="Default Postcode"><Input value={defaultPostcode} onChange={(event) => setDefaultPostcode(event.target.value)} className="mt-1" /></Field>
+            <div className="mb-5 grid grid-cols-3 gap-2">
+              {([
+                ['overview', 'Overview'],
+                ['address', 'Address'],
+                ['payments', 'Payments'],
+              ] as Array<['overview' | 'address' | 'payments', string]>).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium ${tab === key ? 'bg-primary text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
-            <div className="mt-4">
-              <Label>Notes For Future Bookings (optional)</Label>
-              <Textarea
-                value={bio}
-                onChange={(event) => setBio(event.target.value)}
-                className="mt-1"
-                rows={4}
-                placeholder="Saved locally in this browser for now."
-              />
-            </div>
+            {tab === 'overview' && (
+              <>
+                <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
+                  Profile Details
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">These details are used to prefill future bookings.</p>
 
-            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Account Credentials</p>
-              <p className="mt-1 text-xs text-slate-600">Verified contact details are required for booking communication.</p>
-              <ul className="mt-2 space-y-1 text-xs text-slate-600">
-                <li>- Email: {email || 'Not set'} ({emailVerified ? 'Verified' : 'Not verified'})</li>
-                <li>- Phone: {phone || 'Not set'} ({phoneVerified ? 'Verified' : 'Not verified'})</li>
-              </ul>
-            </div>
-
-            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Trust Signals</p>
-              <p className="mt-1 text-xs text-slate-600">Complete this to improve cleaner acceptance rates.</p>
-              <ul className="mt-2 space-y-1 text-xs text-slate-600">
-                <li>- Profile photo: {hasAvatar ? 'Added' : 'Pending'}</li>
-                <li>- Optional ID: {hasIdSubmitted ? 'Submitted' : 'Pending'}</li>
-              </ul>
-              <div className="mt-3">
-                <Label>Optional ID Upload (PDF or image)</Label>
-                <Input
-                  type="file"
-                  accept=".pdf,image/*"
-                  className="mt-1"
-                  disabled={uploadingId}
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0]
-                    if (!file) return
-                    await uploadClientIdDocument(file)
-                  }}
-                />
-                {idFileName && (
-                  <p className="mt-2 text-xs font-medium text-emerald-700">
-                    ID provided: {idFileName}
-                  </p>
+                {(!hasAvatar || !hasIdSubmitted) && (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-sm font-semibold text-amber-900">Complete trust signals</p>
+                    <p className="mt-1 text-xs text-amber-800">
+                      Add a profile photo and optional ID to improve cleaner acceptance rates.
+                    </p>
+                  </div>
                 )}
-              </div>
-            </div>
 
-            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Payment Method</p>
-                  <p className="mt-1 text-xs text-slate-600">Add a card before booking, or add one during checkout.</p>
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <Field label="First Name"><Input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="mt-1" /></Field>
+                  <Field label="Last Name"><Input value={lastName} onChange={(event) => setLastName(event.target.value)} className="mt-1" /></Field>
+                  <Field label="Phone Number"><PhoneInput value={phone} onChange={setPhone} className="mt-1" /></Field>
                 </div>
-                <CreditCard className="h-5 w-5 text-slate-500" />
-              </div>
 
-              {loadingPayment ? (
-                <p className="mt-3 text-xs text-slate-500">Loading saved cards...</p>
-              ) : savedCards.length === 0 ? (
-                <p className="mt-3 text-xs text-slate-500">No saved cards yet.</p>
-              ) : (
-                <div className="mt-3 space-y-2">
-                  {savedCards.map((card) => (
-                    <div key={card.id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                      <div className="flex items-center justify-between gap-2">
-                        <span>
-                          {card.brand.toUpperCase()} •••• {card.last4}
-                          {card.exp_month && card.exp_year ? ` (exp ${card.exp_month}/${card.exp_year})` : ''}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => removeCard(card.id)}
-                          loading={removingCardId === card.id}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="mt-4">
+                  <Label>Notes For Future Bookings (optional)</Label>
+                  <Textarea
+                    value={bio}
+                    onChange={(event) => setBio(event.target.value)}
+                    className="mt-1"
+                    rows={4}
+                    placeholder="Saved locally in this browser for now."
+                  />
                 </div>
-              )}
 
-              {!setupSecret ? (
-                <Button onClick={initializeCardSetup} variant="outline" className="mt-3">
-                  Add Card
-                </Button>
-              ) : (
-                <div className="mt-3">
-                  <Elements stripe={stripePromise} options={{ clientSecret: setupSecret }}>
-                    <AddCardForm
-                      onAdded={async () => {
-                        setSetupSecret(null)
-                        await loadPaymentMethods()
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold text-slate-900">Account Credentials</p>
+                  <p className="mt-1 text-xs text-slate-600">Verified contact details are required for booking communication.</p>
+                  <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                    <li>- Email: {email || 'Not set'} ({emailVerified ? 'Verified' : 'Not verified'})</li>
+                    <li>- Phone: {phone || 'Not set'} ({phoneVerified ? 'Verified' : 'Not verified'})</li>
+                  </ul>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold text-slate-900">Trust Signals</p>
+                  <p className="mt-1 text-xs text-slate-600">Complete this to improve cleaner acceptance rates.</p>
+                  <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                    <li>- Profile photo: {hasAvatar ? 'Added' : 'Pending'}</li>
+                    <li>- Optional ID: {hasIdSubmitted ? 'Submitted' : 'Pending'}</li>
+                  </ul>
+                  <div className="mt-3">
+                    <Label>Optional ID Upload (PDF or image)</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,image/*"
+                      className="mt-1"
+                      disabled={uploadingId}
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0]
+                        if (!file) return
+                        await uploadClientIdDocument(file)
                       }}
                     />
-                  </Elements>
+                    {idFileName && (
+                      <p className="mt-2 text-xs font-medium text-emerald-700">
+                        ID provided: {idFileName}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              </>
+            )}
+
+            {tab === 'address' && (
+              <>
+                <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
+                  Addresses
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">Saved/default addresses used to prefill booking flow.</p>
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <Field label="Default Address"><Input value={defaultAddress} onChange={(event) => setDefaultAddress(event.target.value)} className="mt-1" /></Field>
+                  <Field label="Default City"><Input value={defaultCity} onChange={(event) => setDefaultCity(event.target.value)} className="mt-1" /></Field>
+                  <Field label="Default Postcode"><Input value={defaultPostcode} onChange={(event) => setDefaultPostcode(event.target.value)} className="mt-1" /></Field>
+                </div>
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold text-slate-900">Saved Addresses</p>
+                  {savedAddresses.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-600">No saved addresses yet. Add one during booking and save it for later.</p>
+                  ) : (
+                    <div className="mt-3 space-y-2">
+                      {savedAddresses.map((entry) => (
+                        <div key={entry.id} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                          <p className="font-medium">{entry.label?.trim() || 'Saved address'} {entry.is_default ? '(Default)' : ''}</p>
+                          <p className="text-xs text-slate-500">{entry.address_line1}, {entry.city}, {entry.postcode}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {tab === 'payments' && (
+              <div className="mt-1 rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Payment Method</p>
+                    <p className="mt-1 text-xs text-slate-600">Add a card before booking, or add one during checkout.</p>
+                  </div>
+                  <CreditCard className="h-5 w-5 text-slate-500" />
+                </div>
+
+                {loadingPayment ? (
+                  <p className="mt-3 text-xs text-slate-500">Loading saved cards...</p>
+                ) : savedCards.length === 0 ? (
+                  <p className="mt-3 text-xs text-slate-500">No saved cards yet.</p>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {savedCards.map((card) => (
+                      <div key={card.id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                        <div className="flex items-center justify-between gap-2">
+                          <span>
+                            {card.brand.toUpperCase()} •••• {card.last4}
+                            {card.exp_month && card.exp_year ? ` (exp ${card.exp_month}/${card.exp_year})` : ''}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => removeCard(card.id)}
+                            loading={removingCardId === card.id}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!setupSecret ? (
+                  <Button onClick={initializeCardSetup} variant="outline" className="mt-3">
+                    Add Card
+                  </Button>
+                ) : (
+                  <div className="mt-3">
+                    <Elements stripe={stripePromise} options={{ clientSecret: setupSecret }}>
+                      <AddCardForm
+                        onAdded={async () => {
+                          setSetupSecret(null)
+                          await loadPaymentMethods()
+                        }}
+                      />
+                    </Elements>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="mt-5 flex justify-end">
               <Button onClick={saveProfile} loading={saving} className="rounded-full bg-[#0d4bc9] hover:bg-[#0a3ea8]">

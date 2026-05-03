@@ -17,6 +17,7 @@ import type {
   CleanerOnboardingProgress,
   CleanerSummary,
   ClientAddressCreate,
+  ClientAddressUpdate,
   ClientAddressRead,
   ClientProfileRead,
   ClientDispute,
@@ -184,6 +185,15 @@ export const clientsApi = {
     request<APIResponse<ClientAddressRead>>('/clients/addresses', {
       method: 'POST',
       body: JSON.stringify(body),
+    }),
+  updateAddress: (id: string, body: ClientAddressUpdate) =>
+    request<APIResponse<ClientAddressRead>>(`/clients/addresses/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  deleteAddress: (id: string) =>
+    request<APIResponse<{ removed: true }>>(`/clients/addresses/${id}`, {
+      method: 'DELETE',
     }),
 }
 

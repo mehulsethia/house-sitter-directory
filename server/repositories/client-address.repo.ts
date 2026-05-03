@@ -112,4 +112,98 @@ export const clientAddressRepo = {
       `,
       clientId,
     ),
+
+  findById: (id: string) =>
+    db.$queryRawUnsafe<ClientAddressRow[]>(
+      `
+      SELECT
+        id,
+        client_id,
+        label,
+        address_line1,
+        city,
+        postcode,
+        country,
+        apartment_details,
+        access_notes,
+        latitude::float8 AS latitude,
+        longitude::float8 AS longitude,
+        is_default,
+        created_at,
+        updated_at
+      FROM public.client_addresses
+      WHERE id = $1
+      LIMIT 1
+      `,
+      id,
+    ).then((rows) => rows[0] ?? null),
+
+  updateById: (
+    id: string,
+    data: {
+      label?: string | null
+      addressLine1?: string
+      city?: string
+      postcode?: string
+      country?: string
+      apartmentDetails?: string | null
+      accessNotes?: string
+      latitude?: number | null
+      longitude?: number | null
+      isDefault?: boolean
+    },
+  ) =>
+    db.$queryRawUnsafe<ClientAddressRow[]>(
+      `
+      UPDATE public.client_addresses
+      SET
+        label = COALESCE($2, label),
+        address_line1 = COALESCE($3, address_line1),
+        city = COALESCE($4, city),
+        postcode = COALESCE($5, postcode),
+        country = COALESCE($6, country),
+        apartment_details = COALESCE($7, apartment_details),
+        access_notes = COALESCE($8, access_notes),
+        latitude = COALESCE($9, latitude),
+        longitude = COALESCE($10, longitude),
+        is_default = COALESCE($11, is_default),
+        updated_at = NOW()
+      WHERE id = $1
+      RETURNING
+        id,
+        client_id,
+        label,
+        address_line1,
+        city,
+        postcode,
+        country,
+        apartment_details,
+        access_notes,
+        latitude::float8 AS latitude,
+        longitude::float8 AS longitude,
+        is_default,
+        created_at,
+        updated_at
+      `,
+      id,
+      data.label ?? null,
+      data.addressLine1 ?? null,
+      data.city ?? null,
+      data.postcode ?? null,
+      data.country ?? null,
+      data.apartmentDetails ?? null,
+      data.accessNotes ?? null,
+      data.latitude ?? null,
+      data.longitude ?? null,
+      data.isDefault ?? null,
+    ).then((rows) => rows[0] ?? null),
+
+  deleteById: (id: string) =>
+    db.$executeRawUnsafe(
+      `
+      DELETE FROM public.client_addresses
+      WHERE id = $1
+      `,
+      id,
+    ),
 }

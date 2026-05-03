@@ -12,3 +12,16 @@ export const createClientAddressSchema = z.object({
   longitude: z.number().min(-180).max(180).optional(),
   is_default: z.boolean().optional(),
 })
+
+export const updateClientAddressSchema = z.object({
+  label: z.string().trim().max(80).optional(),
+  address_line1: z.string().trim().min(1).max(255).optional(),
+  city: z.string().trim().min(1).max(120).optional(),
+  postcode: z.string().trim().min(1).max(32).optional(),
+  country: z.string().trim().length(2).optional(),
+  apartment_details: z.string().trim().max(255).optional(),
+  access_notes: z.string().trim().min(5).max(1000).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  is_default: z.boolean().optional(),
+})

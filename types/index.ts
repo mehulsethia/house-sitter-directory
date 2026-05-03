@@ -271,6 +271,19 @@ export interface ClientAddressCreate {
   is_default?: boolean
 }
 
+export interface ClientAddressUpdate {
+  label?: string
+  address_line1?: string
+  city?: string
+  postcode?: string
+  country?: string
+  apartment_details?: string
+  access_notes?: string
+  latitude?: number
+  longitude?: number
+  is_default?: boolean
+}
+
 // ---------------------------------------------------------------------------
 // Payments
 // ---------------------------------------------------------------------------

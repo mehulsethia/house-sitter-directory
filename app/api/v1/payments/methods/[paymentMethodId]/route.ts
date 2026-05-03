@@ -110,14 +110,27 @@ export const DELETE = requireClient(async (req: NextRequest, ctx, user) => {
     }
   }
 
+  const updatedIntentIds: string[] = []
   try {
     for (const item of linked) {
       const updated = await stripe.paymentIntents.confirm(item.paymentIntentId, {
         payment_method: replacementMethodId,
       })
+      updatedIntentIds.push(item.paymentIntentId)
       await paymentAuthorizationService.syncFromPaymentIntent(updated)
     }
   } catch {
+    // Best-effort rollback for partial replacement success.
+    for (const paymentIntentId of updatedIntentIds) {
+      try {
+        const reverted = await stripe.paymentIntents.confirm(paymentIntentId, {
+          payment_method: paymentMethodId,
+        })
+        await paymentAuthorizationService.syncFromPaymentIntent(reverted)
+      } catch {
+        // If rollback fails on some intents, keep original card attached and return failure.
+      }
+    }
     return err('Card replacement failed: linked booking re-authorisation did not succeed. Original card remains active.', 409)
   }
 
