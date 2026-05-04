@@ -22,13 +22,29 @@ const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '5
 const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 const ACTIVE_STATUSES: BookingStatus[] = ['pending', 'accepted', 'confirmed', 'in_progress']
-const UPCOMING_STATUSES: BookingStatus[] = ['accepted', 'confirmed', 'in_progress']
+const UPCOMING_STATUSES: BookingStatus[] = ['pending', 'accepted', 'confirmed', 'in_progress']
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',
   deep_clean: 'Deep Clean',
   end_of_tenancy: 'End of Tenancy',
   move_in: 'Move-in Clean',
+}
+
+function isPaymentAuthorized(paymentStatus?: string | null) {
+  return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
+}
+
+function isValidUpcomingBooking(booking: BookingRead, nowMs: number) {
+  if (!UPCOMING_STATUSES.includes(booking.status)) return false
+  if (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)) return false
+
+  const scheduledStartMs = +new Date(booking.scheduled_start)
+  if (booking.status === 'in_progress') {
+    const scheduledEndMs = +new Date(booking.scheduled_end)
+    return scheduledEndMs >= nowMs
+  }
+  return scheduledStartMs >= nowMs
 }
 
 export default function ClientDashboardPage() {
@@ -75,8 +91,7 @@ export default function ClientDashboardPage() {
 
   const now = Date.now()
   const nextBooking = deferredBookings
-    .filter((b) => UPCOMING_STATUSES.includes(b.status))
-    .filter((b) => +new Date(b.scheduled_start) >= now)
+    .filter((b) => isValidUpcomingBooking(b, now))
     .sort((a, b) => +new Date(a.scheduled_start) - +new Date(b.scheduled_start))[0]
 
   if (loading) return <DashboardPageSkeleton />
