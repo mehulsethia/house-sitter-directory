@@ -4,6 +4,12 @@ import { clientRepo } from '@/server/repositories/client.repo'
 import { clientAddressRepo } from '@/server/repositories/client-address.repo'
 import { createClientAddressSchema } from '@/server/schemas/client-address.schema'
 import { ok, err } from '@/server/response'
+import {
+  MAX_SAVED_ADDRESSES,
+  MVP_CITY,
+  MVP_COUNTRY_CODE,
+  normalizeCyprusPostcode,
+} from '@/lib/location-policy'
 
 export const GET = requireClient(async (_req: NextRequest, _ctx, user) => {
   let client = await clientRepo.findByUserId(user.id)
@@ -19,6 +25,10 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
 
   let client = await clientRepo.findByUserId(user.id)
   if (!client) client = await clientRepo.create(user.id)
+  const existing = await clientAddressRepo.listByClientId(client.id)
+  if (existing.length >= MAX_SAVED_ADDRESSES) {
+    return err("You've reached the maximum number of saved addresses. Please remove an existing address to add a new one.", 422)
+  }
 
   if (parsed.data.is_default) {
     await clientAddressRepo.clearDefaultForClient(client.id)
@@ -28,9 +38,9 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     clientId: client.id,
     label: parsed.data.label,
     addressLine1: parsed.data.address_line1,
-    city: parsed.data.city,
-    postcode: parsed.data.postcode,
-    country: parsed.data.country,
+    city: MVP_CITY,
+    postcode: normalizeCyprusPostcode(parsed.data.postcode),
+    country: MVP_COUNTRY_CODE,
     apartmentDetails: parsed.data.apartment_details,
     accessNotes: parsed.data.access_notes,
     latitude: parsed.data.latitude,

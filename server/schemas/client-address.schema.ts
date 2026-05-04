@@ -1,11 +1,17 @@
 import { z } from 'zod'
+import {
+  isCyprusPostcode,
+  isMvpCity,
+  MVP_CITY,
+  MVP_COUNTRY_CODE,
+} from '@/lib/location-policy'
 
 export const createClientAddressSchema = z.object({
   label: z.string().trim().max(80).optional(),
   address_line1: z.string().trim().min(1).max(255),
-  city: z.string().trim().min(1).max(120),
-  postcode: z.string().trim().min(1).max(32),
-  country: z.string().trim().length(2).default('IE'),
+  city: z.string().trim().min(1).max(120).refine((value) => isMvpCity(value), `${MVP_CITY} only for MVP`),
+  postcode: z.string().trim().refine((value) => isCyprusPostcode(value), 'Postcode must be 4 digits'),
+  country: z.string().trim().length(2).default(MVP_COUNTRY_CODE).refine((value) => value.toUpperCase() === MVP_COUNTRY_CODE, `${MVP_COUNTRY_CODE} only for MVP`),
   apartment_details: z.string().trim().max(255).optional(),
   access_notes: z.string().trim().min(5).max(1000),
   latitude: z.number().min(-90).max(90).optional(),
@@ -16,9 +22,9 @@ export const createClientAddressSchema = z.object({
 export const updateClientAddressSchema = z.object({
   label: z.string().trim().max(80).optional(),
   address_line1: z.string().trim().min(1).max(255).optional(),
-  city: z.string().trim().min(1).max(120).optional(),
-  postcode: z.string().trim().min(1).max(32).optional(),
-  country: z.string().trim().length(2).optional(),
+  city: z.string().trim().min(1).max(120).refine((value) => isMvpCity(value), `${MVP_CITY} only for MVP`).optional(),
+  postcode: z.string().trim().refine((value) => isCyprusPostcode(value), 'Postcode must be 4 digits').optional(),
+  country: z.string().trim().length(2).refine((value) => value.toUpperCase() === MVP_COUNTRY_CODE, `${MVP_COUNTRY_CODE} only for MVP`).optional(),
   apartment_details: z.string().trim().max(255).optional(),
   access_notes: z.string().trim().min(5).max(1000).optional(),
   latitude: z.number().min(-90).max(90).optional(),

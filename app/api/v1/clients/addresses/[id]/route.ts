@@ -4,6 +4,7 @@ import { clientRepo } from '@/server/repositories/client.repo'
 import { clientAddressRepo } from '@/server/repositories/client-address.repo'
 import { updateClientAddressSchema } from '@/server/schemas/client-address.schema'
 import { ok, err } from '@/server/response'
+import { MVP_CITY, MVP_COUNTRY_CODE, normalizeCyprusPostcode } from '@/lib/location-policy'
 
 export const PATCH = requireClient(async (req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
@@ -24,9 +25,9 @@ export const PATCH = requireClient(async (req: NextRequest, ctx, user) => {
   const updated = await clientAddressRepo.updateById(id, {
     label: parsed.data.label ?? null,
     addressLine1: parsed.data.address_line1,
-    city: parsed.data.city,
-    postcode: parsed.data.postcode,
-    country: parsed.data.country,
+    city: parsed.data.city ? MVP_CITY : undefined,
+    postcode: parsed.data.postcode ? normalizeCyprusPostcode(parsed.data.postcode) : undefined,
+    country: parsed.data.country ? MVP_COUNTRY_CODE : undefined,
     apartmentDetails: parsed.data.apartment_details ?? null,
     accessNotes: parsed.data.access_notes,
     latitude: parsed.data.latitude ?? null,

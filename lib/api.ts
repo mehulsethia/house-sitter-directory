@@ -41,6 +41,21 @@ type CachedResponse = { expiresAt: number; data: unknown }
 const getResponseCache = new Map<string, CachedResponse>()
 const inFlightGetRequests = new Map<string, Promise<unknown>>()
 
+function toUserFriendlyErrorMessage(message: string, fallbackStatus: number): string {
+  const text = String(message || '').trim()
+  const lower = text.toLowerCase()
+
+  if (!text) return `Something went wrong. Please try again. (${fallbackStatus})`
+  if (lower.includes('invalid datetime')) return 'Please select a valid date and time.'
+  if (lower.includes('booking draft status is not enabled') || lower.includes('status migration')) {
+    return 'Booking is temporarily unavailable. Please try again in a few minutes.'
+  }
+  if (lower.includes('request failed:')) return 'Something went wrong. Please try again.'
+  if (lower.includes('zoderror') || lower.includes('validation')) return 'Some details are invalid. Please check and try again.'
+
+  return text
+}
+
 function normalizePaginated<T>(payload: AnyObj, key: string): PaginatedResponse<T> {
   const items = (payload?.items ?? payload?.[key] ?? []) as T[]
   const total = Number(payload?.total ?? items.length ?? 0)
@@ -89,7 +104,20 @@ async function executeRequest<T>(path: string, options: RequestInit, method: str
       const rawText = await res.text().catch(() => '')
       parsedError = { detail: rawText || 'Unknown error' }
     }
-    throw new Error(parsedError?.detail ?? parsedError?.message ?? `Request failed: ${res.status}`)
+    const detail = parsedError?.detail
+    const detailMessage =
+      typeof detail === 'string'
+        ? detail
+        : Array.isArray(detail)
+          ? detail
+            .map((entry) => entry?.message ?? entry?.msg ?? entry?.detail)
+            .filter(Boolean)
+            .join(', ')
+          : detail && typeof detail === 'object'
+            ? detail.message ?? detail.error ?? null
+            : null
+    const rawMessage = String(detailMessage ?? parsedError?.message ?? `Request failed: ${res.status}`)
+    throw new Error(toUserFriendlyErrorMessage(rawMessage, res.status))
   }
 
   const json = (await res.json()) as T

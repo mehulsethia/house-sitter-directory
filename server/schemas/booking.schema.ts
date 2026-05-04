@@ -1,4 +1,10 @@
 import { z } from 'zod'
+import {
+  isCyprusPostcode,
+  isMvpCity,
+  MVP_CITY,
+  MVP_COUNTRY_CODE,
+} from '@/lib/location-policy'
 
 export const SERVICE_TYPES = ['standard', 'deep_clean', 'end_of_tenancy', 'move_in'] as const
 export const BOOKING_STATUSES = [
@@ -38,9 +44,9 @@ export const createBookingSchema = z.object({
   service_type: z.enum(SERVICE_TYPES),
   special_instructions: z.string().trim().min(12, 'Job description must be at least 12 characters').max(5000),
   address: z.string().min(1),
-  city: z.string().min(1),
-  postcode: z.string().min(1),
-  country: z.string().default('IE'),
+  city: z.string().trim().min(1).refine((value) => isMvpCity(value), `${MVP_CITY} only for MVP`),
+  postcode: z.string().trim().refine((value) => isCyprusPostcode(value), 'Postcode must be 4 digits'),
+  country: z.string().trim().default(MVP_COUNTRY_CODE).refine((value) => value.toUpperCase() === MVP_COUNTRY_CODE, `${MVP_COUNTRY_CODE} only for MVP`),
   apartment_details: z.string().max(255).optional(),
   access_notes: z.string().trim().min(5, 'Access notes are required').max(1000),
   scheduled_start: datetimeInputSchema,

@@ -129,7 +129,7 @@ export const bookingService = {
         (message.includes('check') || message.includes('constraint'))
 
       if (likelyLegacyStatusConstraint) {
-        throw new ServiceError('Booking draft status is not enabled in database. Please run the latest booking status migration.', 500)
+        throw new ServiceError('Booking is temporarily unavailable. Please try again in a few minutes.', 500)
       }
 
       throw error

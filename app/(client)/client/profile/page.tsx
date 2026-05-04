@@ -19,6 +19,7 @@ import { toApiV1Url } from '@/lib/api-base'
 import { createClient } from '@/lib/supabase'
 import type { BookingRead, ClientAddressRead } from '@/types'
 import { toast } from 'sonner'
+import { MAX_SAVED_ADDRESSES, MVP_CITY, MVP_COUNTRY_CODE, MVP_COUNTRY_NAME, normalizeCyprusPostcode } from '@/lib/location-policy'
 
 const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
 const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
@@ -35,16 +36,16 @@ export default function ClientProfilePage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [defaultAddress, setDefaultAddress] = useState('')
-  const [defaultCity, setDefaultCity] = useState('')
+  const [defaultCity, setDefaultCity] = useState(MVP_CITY)
   const [defaultPostcode, setDefaultPostcode] = useState('')
   const [memberSince, setMemberSince] = useState('')
   const [savedAddresses, setSavedAddresses] = useState<ClientAddressRead[]>([])
   const [addingAddress, setAddingAddress] = useState(false)
   const [newAddressLabel, setNewAddressLabel] = useState('')
   const [newAddressLine1, setNewAddressLine1] = useState('')
-  const [newAddressCity, setNewAddressCity] = useState('')
+  const [newAddressCity, setNewAddressCity] = useState(MVP_CITY)
   const [newAddressPostcode, setNewAddressPostcode] = useState('')
-  const [newAddressCountry, setNewAddressCountry] = useState('IE')
+  const [newAddressCountry, setNewAddressCountry] = useState(MVP_COUNTRY_CODE)
   const [newApartmentDetails, setNewApartmentDetails] = useState('')
   const [newAccessNotes, setNewAccessNotes] = useState('')
   const [newAddressDefault, setNewAddressDefault] = useState(false)
@@ -60,6 +61,10 @@ export default function ClientProfilePage() {
   const [emailVerified, setEmailVerified] = useState(false)
   const [phoneVerified, setPhoneVerified] = useState(false)
   const [verifiedPhoneFromAuth, setVerifiedPhoneFromAuth] = useState('')
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
+  const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
+  const [phoneOtpCode, setPhoneOtpCode] = useState('')
+  const [resendingEmail, setResendingEmail] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -81,7 +86,7 @@ export default function ClientProfilePage() {
           setEmail(user?.email ?? '')
           setPhone(user?.phone ?? '')
           setDefaultAddress(client?.default_address ?? '')
-          setDefaultCity(client?.default_city ?? '')
+          setDefaultCity(client?.default_city ?? MVP_CITY)
           setDefaultPostcode(client?.default_postcode ?? '')
           setIdFileName(client?.id_file_name ?? '')
           setIdFileUrl(client?.id_file_url ?? '')
@@ -130,6 +135,9 @@ export default function ClientProfilePage() {
     if (!firstName.trim()) return toast.error('First name is required.')
     if (!lastName.trim()) return toast.error('Last name is required.')
     if (!phone.trim()) return toast.error('Phone number is required.')
+    if (defaultPostcode && !/^\d{4}$/.test(normalizeCyprusPostcode(defaultPostcode))) {
+      return toast.error('Default postcode must be 4 digits.')
+    }
 
     setSaving(true)
     try {
@@ -156,8 +164,8 @@ export default function ClientProfilePage() {
       } = {
         name: `${firstName.trim()} ${lastName.trim()}`,
         default_address: defaultAddress || null,
-        default_city: defaultCity || null,
-        default_postcode: defaultPostcode || null,
+        default_city: MVP_CITY,
+        default_postcode: defaultPostcode ? normalizeCyprusPostcode(defaultPostcode) : null,
       }
       if (currentVerifiedPhone) profilePayload.phone = currentVerifiedPhone
       await clientsApi.updateMe(profilePayload)
@@ -216,8 +224,16 @@ export default function ClientProfilePage() {
   }
 
   async function createSavedAddress() {
-    if (!newAddressLine1.trim() || !newAddressCity.trim() || !newAddressPostcode.trim()) {
+    if (!newAddressLine1.trim() || !newAddressPostcode.trim()) {
       toast.error('Address, city and postcode are required.')
+      return
+    }
+    if (!/^\d{4}$/.test(normalizeCyprusPostcode(newAddressPostcode))) {
+      toast.error('Postcode must be 4 digits.')
+      return
+    }
+    if (savedAddresses.length >= MAX_SAVED_ADDRESSES) {
+      toast.error("You've reached the maximum number of saved addresses. Please remove an existing address to add a new one.")
       return
     }
     if (!newAccessNotes.trim() || newAccessNotes.trim().length < 5) {
@@ -230,9 +246,9 @@ export default function ClientProfilePage() {
       const createdRes = await clientsApi.addAddress({
         label: newAddressLabel.trim() || undefined,
         address_line1: newAddressLine1.trim(),
-        city: newAddressCity.trim(),
-        postcode: newAddressPostcode.trim(),
-        country: newAddressCountry.trim().toUpperCase() || 'IE',
+        city: MVP_CITY,
+        postcode: normalizeCyprusPostcode(newAddressPostcode),
+        country: MVP_COUNTRY_CODE,
         apartment_details: newApartmentDetails.trim() || undefined,
         access_notes: newAccessNotes.trim(),
         is_default: newAddressDefault || savedAddresses.length === 0,
@@ -247,14 +263,14 @@ export default function ClientProfilePage() {
       }
       if (newAddressDefault || !defaultAddress) {
         setDefaultAddress(newAddressLine1.trim())
-        setDefaultCity(newAddressCity.trim())
-        setDefaultPostcode(newAddressPostcode.trim())
+        setDefaultCity(MVP_CITY)
+        setDefaultPostcode(normalizeCyprusPostcode(newAddressPostcode))
       }
       setNewAddressLabel('')
       setNewAddressLine1('')
-      setNewAddressCity('')
+      setNewAddressCity(MVP_CITY)
       setNewAddressPostcode('')
-      setNewAddressCountry('IE')
+      setNewAddressCountry(MVP_COUNTRY_CODE)
       setNewApartmentDetails('')
       setNewAccessNotes('')
       setNewAddressDefault(false)
@@ -263,6 +279,69 @@ export default function ClientProfilePage() {
       toast.error(err.message ?? 'Failed to add saved address.')
     } finally {
       setAddingAddress(false)
+    }
+  }
+
+  async function sendPhoneVerificationOtp() {
+    if (!phone.trim()) {
+      toast.error('Enter a phone number first.')
+      return
+    }
+    setSendingPhoneOtp(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phone.trim(),
+        options: { shouldCreateUser: false },
+      })
+      if (error) throw error
+      toast.success('Verification code sent by SMS.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to send phone verification code.')
+    } finally {
+      setSendingPhoneOtp(false)
+    }
+  }
+
+  async function verifyPhoneOtpCode() {
+    if (!phone.trim()) return toast.error('Phone number is required.')
+    if (!phoneOtpCode.trim()) return toast.error('Enter the verification code.')
+    setVerifyingPhoneOtp(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phone.trim(),
+        token: phoneOtpCode.trim(),
+        type: 'sms',
+      })
+      if (error) throw error
+      const authUserRes = await supabase.auth.getUser()
+      setPhoneVerified(Boolean(authUserRes.data.user?.phone_confirmed_at))
+      setVerifiedPhoneFromAuth(authUserRes.data.user?.phone ?? '')
+      setPhoneOtpCode('')
+      toast.success('Phone verified.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Invalid verification code.')
+    } finally {
+      setVerifyingPhoneOtp(false)
+    }
+  }
+
+  async function resendEmailVerification() {
+    if (!email.trim()) return toast.error('Email is required.')
+    setResendingEmail(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim(),
+      })
+      if (error) throw error
+      toast.success('Verification email sent.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to resend verification email.')
+    } finally {
+      setResendingEmail(false)
     }
   }
 
@@ -434,6 +513,32 @@ export default function ClientProfilePage() {
                     <li>- Email: {email || 'Not set'} ({emailVerified ? 'Verified' : 'Not verified'})</li>
                     <li>- Phone: {phone || 'Not set'} ({phoneVerified ? 'Verified' : 'Not verified'})</li>
                   </ul>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {!emailVerified && (
+                      <Button type="button" variant="outline" onClick={resendEmailVerification} loading={resendingEmail} className="h-8 px-3 text-xs">
+                        Verify Email
+                      </Button>
+                    )}
+                    {!phoneVerified && (
+                      <Button type="button" variant="outline" onClick={sendPhoneVerificationOtp} loading={sendingPhoneOtp} className="h-8 px-3 text-xs">
+                        Verify Phone
+                      </Button>
+                    )}
+                  </div>
+                  {!phoneVerified && (
+                    <div className="mt-2 flex gap-2">
+                      <Input
+                        value={phoneOtpCode}
+                        onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                        placeholder="Enter OTP code"
+                        inputMode="numeric"
+                        className="max-w-[180px]"
+                      />
+                      <Button type="button" variant="outline" onClick={verifyPhoneOtpCode} loading={verifyingPhoneOtp} className="h-10 px-3 text-xs">
+                        Confirm Code
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -461,6 +566,7 @@ export default function ClientProfilePage() {
                         ID provided: {idFileName}
                       </p>
                     )}
+                    <p className="mt-2 text-xs text-slate-600">To remove or update your ID, please contact support.</p>
                   </div>
                 </div>
               </>
@@ -474,11 +580,12 @@ export default function ClientProfilePage() {
                 <p className="mt-1 text-sm text-slate-500">Saved/default addresses used to prefill booking flow.</p>
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
                   <Field label="Default Address"><Input value={defaultAddress} onChange={(event) => setDefaultAddress(event.target.value)} className="mt-1" /></Field>
-                  <Field label="Default City"><Input value={defaultCity} onChange={(event) => setDefaultCity(event.target.value)} className="mt-1" /></Field>
-                  <Field label="Default Postcode"><Input value={defaultPostcode} onChange={(event) => setDefaultPostcode(event.target.value)} className="mt-1" /></Field>
+                  <Field label="Default City"><Input value={MVP_CITY} readOnly className="mt-1 bg-slate-50" /></Field>
+                  <Field label="Default Postcode"><Input value={defaultPostcode} onChange={(event) => setDefaultPostcode(normalizeCyprusPostcode(event.target.value))} className="mt-1" placeholder="6010" maxLength={4} inputMode="numeric" /></Field>
                 </div>
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-semibold text-slate-900">Saved Addresses</p>
+                  <p className="mt-1 text-xs text-slate-600">{savedAddresses.length}/{MAX_SAVED_ADDRESSES} saved</p>
                   {savedAddresses.length === 0 ? (
                     <p className="mt-2 text-xs text-slate-600">No saved addresses yet. Add one below.</p>
                   ) : (
@@ -499,17 +606,17 @@ export default function ClientProfilePage() {
                     <Field label="Label (optional)">
                       <Input value={newAddressLabel} onChange={(event) => setNewAddressLabel(event.target.value)} className="mt-1" placeholder="Home, Office, etc." />
                     </Field>
-                    <Field label="Country (2-letter code)">
-                      <Input value={newAddressCountry} onChange={(event) => setNewAddressCountry(event.target.value)} className="mt-1" placeholder="IE" maxLength={2} />
+                    <Field label="Country">
+                      <Input value={MVP_COUNTRY_NAME} readOnly className="mt-1 bg-slate-50" />
                     </Field>
                     <Field label="Address">
                       <Input value={newAddressLine1} onChange={(event) => setNewAddressLine1(event.target.value)} className="mt-1" placeholder="Street address" />
                     </Field>
                     <Field label="City">
-                      <Input value={newAddressCity} onChange={(event) => setNewAddressCity(event.target.value)} className="mt-1" placeholder="Dublin" />
+                      <Input value={MVP_CITY} readOnly className="mt-1 bg-slate-50" />
                     </Field>
                     <Field label="Postcode">
-                      <Input value={newAddressPostcode} onChange={(event) => setNewAddressPostcode(event.target.value)} className="mt-1" placeholder="D01 AB12" />
+                      <Input value={newAddressPostcode} onChange={(event) => setNewAddressPostcode(normalizeCyprusPostcode(event.target.value))} className="mt-1" placeholder="6010" maxLength={4} inputMode="numeric" />
                     </Field>
                     <Field label="Apartment details (optional)">
                       <Input value={newApartmentDetails} onChange={(event) => setNewApartmentDetails(event.target.value)} className="mt-1" placeholder="Unit / Floor / Building" />
@@ -534,10 +641,15 @@ export default function ClientProfilePage() {
                     Set as default address
                   </label>
                   <div className="mt-3 flex justify-end">
-                    <Button type="button" onClick={createSavedAddress} loading={addingAddress} className="rounded-full">
+                    <Button type="button" onClick={createSavedAddress} loading={addingAddress} disabled={savedAddresses.length >= MAX_SAVED_ADDRESSES} className="rounded-full">
                       Add Address
                     </Button>
                   </div>
+                  {savedAddresses.length >= MAX_SAVED_ADDRESSES && (
+                    <p className="mt-2 text-xs text-amber-700">
+                      You&apos;ve reached the maximum number of saved addresses. Please remove an existing address to add a new one.
+                    </p>
+                  )}
                 </div>
               </>
             )}

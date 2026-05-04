@@ -3,6 +3,7 @@ import { requireCleaner } from '@/server/auth'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { ok, err } from '@/server/response'
 import { addServiceAreaSchema } from '@/server/schemas/cleaner.schema'
+import { MVP_CITY } from '@/lib/location-policy'
 
 export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const body = await req.json()
@@ -13,7 +14,7 @@ export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
   if (!cleaner) return err('Cleaner profile not found', 404)
 
   const area = await cleanerRepo.addServiceArea(cleaner.id, {
-    city: parsed.data.city,
+    city: MVP_CITY,
     postcodePrefix: parsed.data.postcode_prefix,
     radiusKm: parsed.data.radius_km,
   })

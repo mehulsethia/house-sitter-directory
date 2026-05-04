@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookableCalendar } from '@/components/ui/bookable-calendar'
 import { UserAvatar } from '@/components/ui/user-avatar'
 import { formatCurrency, cn, APP_TIMEZONE } from '@/lib/utils'
+import { MAX_SAVED_ADDRESSES, MVP_CITY, normalizeCyprusPostcode } from '@/lib/location-policy'
 import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead, ClientAddressRead } from '@/types'
 import { PhoneInput } from '@/components/phone-input'
 import { toast } from 'sonner'
@@ -106,6 +107,10 @@ function normalizeToIsoDatetime(value: string): string | null {
   const parsed = new Date(raw)
   if (Number.isNaN(parsed.getTime())) return null
   return parsed.toISOString()
+}
+
+function normalizePostcodeInput(value: string): string {
+  return normalizeCyprusPostcode(value)
 }
 
 // ── Step indicator ────────────────────────────────────────────────────────
@@ -582,7 +587,7 @@ export default function BookingFlowPage() {
   const [addressMode, setAddressMode] = useState<'saved' | 'new'>('new')
   const [selectedAddressId, setSelectedAddressId] = useState('')
   const [address, setAddress] = useState('')
-  const [city, setCity] = useState('')
+  const [city, setCity] = useState(MVP_CITY)
   const [postcode, setPostcode] = useState('')
   const [apartmentDetails, setApartmentDetails] = useState('')
   const [accessNotes, setAccessNotes] = useState('')
@@ -627,7 +632,7 @@ export default function BookingFlowPage() {
       addressMode,
       selectedAddressId,
       address,
-      city,
+      city: MVP_CITY,
       postcode,
       apartmentDetails,
       accessNotes,
@@ -684,10 +689,10 @@ export default function BookingFlowPage() {
           if (user?.email) setEmail(user.email)
           if (user?.phone) setPhone(user.phone)
           const defaultAddressLine = (cpAny.default_address ?? cpAny.defaultAddress ?? '').trim()
-          const defaultCity = (cpAny.default_city ?? cpAny.defaultCity ?? '').trim()
+          const defaultCity = (cpAny.default_city ?? cpAny.defaultCity ?? '').trim() || MVP_CITY
           const defaultPostcode = (cpAny.default_postcode ?? cpAny.defaultPostcode ?? '').trim()
           if (defaultAddressLine) setAddress(defaultAddressLine)
-          if (defaultCity) setCity(defaultCity)
+          setCity(defaultCity)
           if (defaultPostcode) setPostcode(defaultPostcode)
           if (defaultAddressLine || defaultCity || defaultPostcode) {
             setAddressMode('saved')
@@ -698,8 +703,8 @@ export default function BookingFlowPage() {
           setAddressMode('saved')
           setSelectedAddressId(defaultAddress.id)
           setAddress(defaultAddress.address_line1)
-          setCity(defaultAddress.city)
-          setPostcode(defaultAddress.postcode)
+          setCity(MVP_CITY)
+          setPostcode(normalizePostcodeInput(defaultAddress.postcode))
           setApartmentDetails(defaultAddress.apartment_details ?? '')
           setAccessNotes(defaultAddress.access_notes ?? '')
         }
@@ -731,8 +736,8 @@ export default function BookingFlowPage() {
       setAddressMode(parsed.addressMode === 'saved' ? 'saved' : 'new')
       setSelectedAddressId(parsed.selectedAddressId || '')
       setAddress(parsed.address || '')
-      setCity(parsed.city || '')
-      setPostcode(parsed.postcode || '')
+      setCity(MVP_CITY)
+      setPostcode(normalizePostcodeInput(parsed.postcode || ''))
       setApartmentDetails(parsed.apartmentDetails || '')
       setAccessNotes(parsed.accessNotes || '')
       setJobType((parsed.jobType as (typeof JOB_TYPE_OPTIONS)[number]['value']) || '')
@@ -901,8 +906,8 @@ export default function BookingFlowPage() {
     if (!selected) return
     setSelectedAddressId(addressId)
     setAddress(selected.address_line1)
-    setCity(selected.city)
-    setPostcode(selected.postcode)
+      setCity(MVP_CITY)
+      setPostcode(normalizePostcodeInput(selected.postcode))
     setApartmentDetails(selected.apartment_details ?? '')
     setAccessNotes(selected.access_notes ?? '')
   }
@@ -920,12 +925,12 @@ export default function BookingFlowPage() {
     }
     const cpAny = (clientProfile ?? {}) as any
     const defaultAddressLine = (cpAny.default_address ?? cpAny.defaultAddress ?? '').trim()
-    const defaultCity = (cpAny.default_city ?? cpAny.defaultCity ?? '').trim()
+    const defaultCity = (cpAny.default_city ?? cpAny.defaultCity ?? '').trim() || MVP_CITY
     const defaultPostcode = (cpAny.default_postcode ?? cpAny.defaultPostcode ?? '').trim()
     if (defaultAddressLine || defaultCity || defaultPostcode) {
       setAddress(defaultAddressLine)
-      setCity(defaultCity)
-      setPostcode(defaultPostcode)
+      setCity(MVP_CITY)
+      setPostcode(normalizePostcodeInput(defaultPostcode))
     }
   }
 
@@ -933,7 +938,7 @@ export default function BookingFlowPage() {
     setAddressMode('new')
     setSelectedAddressId('')
     setAddress('')
-    setCity('')
+    setCity(MVP_CITY)
     setPostcode('')
     setApartmentDetails('')
     setAccessNotes('')
@@ -1074,8 +1079,8 @@ export default function BookingFlowPage() {
       if (!phone.trim()) { toast.error('Phone number is required.'); return }
       if (addressMode === 'saved' && !selectedAddressId) { toast.error('Select a saved address or add a new one.'); return }
       if (!address.trim()) { toast.error('Service address is required.'); return }
-      if (!city.trim()) { toast.error('City is required.'); return }
-      if (!postcode.trim()) { toast.error('ZIP code is required.'); return }
+      if (!postcode.trim()) { toast.error('Postcode is required.'); return }
+      if (!/^\d{4}$/.test(normalizePostcodeInput(postcode))) { toast.error('Postcode must be 4 digits.'); return }
       if (!accessNotes.trim()) { toast.error('Access notes are required.'); return }
       if (!jobType) { toast.error('Please select what type of clean this is.'); return }
       if (!bedrooms) { toast.error('Please select bedrooms.'); return }
@@ -1137,7 +1142,8 @@ export default function BookingFlowPage() {
           service_type: selectedJobType.serviceType,
           address: address.trim(),
           city: city.trim(),
-          postcode: postcode.trim(),
+          postcode: normalizePostcodeInput(postcode),
+          country: 'CY',
           apartment_details: apartmentDetails.trim() || undefined,
           access_notes: accessNotes.trim(),
           scheduled_start: normalizedScheduledStart,
@@ -1156,14 +1162,19 @@ export default function BookingFlowPage() {
       setClientSecret(nextClientSecret)
       if (addressMode === 'new' && saveAddressForLater) {
         try {
+          if (savedAddresses.length >= MAX_SAVED_ADDRESSES) {
+            toast.error("You've reached the maximum number of saved addresses. Please remove an existing address to add a new one.")
+          } else {
           await clientsApi.addAddress({
             address_line1: address.trim(),
-            city: city.trim(),
-            postcode: postcode.trim(),
+            city: MVP_CITY,
+            postcode: normalizePostcodeInput(postcode),
+            country: 'CY',
             apartment_details: apartmentDetails.trim() || undefined,
             access_notes: accessNotes.trim(),
             is_default: savedAddresses.length === 0,
           })
+          }
         } catch {
           // Booking should still proceed even if address save fails.
         }
@@ -1455,7 +1466,7 @@ export default function BookingFlowPage() {
                         <option value="">Select saved address</option>
                         {savedAddresses.map((entry) => (
                           <option key={entry.id} value={entry.id}>
-                            {(entry.label?.trim() || 'Saved address')} - {entry.address_line1}, {entry.city}
+                            {(entry.label?.trim() || 'Saved address')} - {entry.address_line1}, {MVP_CITY}
                           </option>
                         ))}
                       </Select>
@@ -1463,7 +1474,7 @@ export default function BookingFlowPage() {
                   )}
                   {addressMode === 'saved' && savedAddresses.length === 1 && (
                     <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                      Using saved address: {savedAddresses[0].address_line1}, {savedAddresses[0].city}
+                      Using saved address: {savedAddresses[0].address_line1}, {MVP_CITY}
                     </div>
                   )}
                   {addressMode === 'saved' && savedAddresses.length === 0 && (
@@ -1480,11 +1491,11 @@ export default function BookingFlowPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label className="text-sm font-semibold">City <span className="text-red-500">*</span></Label>
-                    <Input required value={city} onChange={e => setCity(e.target.value)} className="mt-1" placeholder="Dublin" />
+                    <Input required value={MVP_CITY} readOnly className="mt-1 bg-slate-50" />
                   </div>
                   <div>
-                    <Label className="text-sm font-semibold">ZIP Code <span className="text-red-500">*</span></Label>
-                    <Input required value={postcode} onChange={e => setPostcode(e.target.value)} className="mt-1" placeholder="D01 AB12" />
+                    <Label className="text-sm font-semibold">Postcode <span className="text-red-500">*</span></Label>
+                    <Input required value={postcode} onChange={e => setPostcode(normalizePostcodeInput(e.target.value))} className="mt-1" placeholder="6010" inputMode="numeric" maxLength={4} />
                   </div>
                 </div>
 
@@ -1505,14 +1516,21 @@ export default function BookingFlowPage() {
                     />
                   </div>
                   {addressMode === 'new' && (
-                    <label className="flex items-center gap-2 text-xs text-slate-600">
-                      <input
-                        type="checkbox"
-                        checked={saveAddressForLater}
-                        onChange={(event) => setSaveAddressForLater(event.target.checked)}
-                      />
-                      Save this address for future bookings
-                    </label>
+                    <div className="space-y-1">
+                      <label className="flex items-center gap-2 text-xs text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={saveAddressForLater}
+                          onChange={(event) => setSaveAddressForLater(event.target.checked)}
+                        />
+                        Save this address for future bookings
+                      </label>
+                      {savedAddresses.length >= MAX_SAVED_ADDRESSES && (
+                        <p className="text-xs text-amber-700">
+                          You&apos;ve reached the maximum number of saved addresses. Please remove an existing address to add a new one.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -1743,6 +1761,18 @@ export default function BookingFlowPage() {
                           <li key={item}>- {item}</li>
                         ))}
                       </ul>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {!phoneVerified && (
+                          <Button type="button" variant="outline" onClick={() => router.push('/client/profile')} className="h-8 px-3 text-xs">
+                            Verify phone to continue
+                          </Button>
+                        )}
+                        {!emailVerified && (
+                          <Button type="button" variant="outline" onClick={() => router.push('/client/profile')} className="h-8 px-3 text-xs">
+                            Verify email to continue
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
                   <StripePaymentForm

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { CLEANER_REJECTION_REASON_OPTIONS } from '@/lib/cleaner-status'
+import { isMvpCity, MVP_CITY } from '@/lib/location-policy'
 
 export const updateCleanerSchema = z.object({
   bio: z.string().max(1000).optional().nullable(),
@@ -40,7 +41,7 @@ export const updateCleanerSchema = z.object({
 })
 
 export const addServiceAreaSchema = z.object({
-  city: z.string().min(1),
+  city: z.string().trim().min(1).refine((value) => isMvpCity(value), `${MVP_CITY} only for MVP`),
   postcode_prefix: z.string().optional(),
   radius_km: z.number().positive().optional(),
 })
