@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Star, ChartNoAxesCombined, CalendarDays, Wallet } from 'lucide-react'
-import { bookingsApi, cleanersApi, googleCalendarApi, paymentsApi, reviewsApi, usersApi } from '@/lib/api'
+import { bookingsApi, cleanersApi, googleCalendarApi, paymentsApi, phoneVerificationApi, reviewsApi, usersApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -67,6 +67,11 @@ function CleanerProfilePageContent() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [persistedPhone, setPersistedPhone] = useState('')
+  const [phoneVerified, setPhoneVerified] = useState(false)
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
+  const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
+  const [phoneOtpCode, setPhoneOtpCode] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [yearsExperience, setYearsExperience] = useState('0')
@@ -136,6 +141,8 @@ function CleanerProfilePageContent() {
       setFullName(user.name ?? '')
       setEmail(user.email ?? '')
       setPhone(user.phone ?? '')
+      setPersistedPhone(user.phone ?? '')
+      setPhoneVerified(Boolean(user.phone_verified_at))
       setYearsExperience(String(c.years_experience ?? c.yearsExperience ?? 0))
       setHourlyRate(String(c.hourly_rate ?? c.hourlyRate ?? 15))
       setTransportMode(c.transport_mode ?? c.transportMode ?? '')
@@ -245,9 +252,17 @@ function CleanerProfilePageContent() {
     return labels.filter(([key]) => !onboardingSteps[key]).map(([, label]) => label)
   }, [onboardingSteps])
   const canEditKyc = lifecycleStatus === 'rejected' || !profileComplete
+  const phoneNeedsVerification = phone.trim() !== (persistedPhone ?? '') || !phoneVerified
 
   function toggleSkill(skill: string) {
     setSkills((prev) => (prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]))
+  }
+
+  function handlePhoneChange(nextPhone: string) {
+    setPhone(nextPhone)
+    if (nextPhone.trim() !== (persistedPhone ?? '')) {
+      setPhoneVerified(false)
+    }
   }
 
   async function saveOverview() {
@@ -267,7 +282,18 @@ function CleanerProfilePageContent() {
 
     setSaving(true)
     try {
-      await usersApi.updateMe({ name: `${firstName.trim()} ${lastName.trim()}`, phone })
+      const nextPhone = phone.trim()
+      const phoneChanged = nextPhone !== (persistedPhone ?? '')
+      if (phoneChanged && !phoneVerified) {
+        toast.error('Verify your new phone number before updating it.')
+      }
+      await usersApi.updateMe({
+        name: `${firstName.trim()} ${lastName.trim()}`,
+        ...(phoneChanged && !phoneVerified ? {} : { phone: nextPhone }),
+      })
+      if (!phoneChanged || phoneVerified) {
+        setPersistedPhone(nextPhone)
+      }
       await cleanersApi.updateMyOnboarding({
         years_experience: Number(yearsExperience),
         hourly_rate: Number(hourlyRate),
@@ -285,6 +311,37 @@ function CleanerProfilePageContent() {
       toast.error(err.message ?? 'Failed to save profile.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function sendPhoneVerificationOtp() {
+    if (!phone.trim()) return toast.error('Enter a phone number first.')
+    setSendingPhoneOtp(true)
+    try {
+      await phoneVerificationApi.sendCode(phone.trim())
+      setPhoneVerified(false)
+      toast.success('Verification code sent by SMS.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to send phone verification code.')
+    } finally {
+      setSendingPhoneOtp(false)
+    }
+  }
+
+  async function verifyPhoneOtpCode() {
+    if (!phone.trim()) return toast.error('Phone number is required.')
+    if (!phoneOtpCode.trim()) return toast.error('Enter the verification code.')
+    setVerifyingPhoneOtp(true)
+    try {
+      await phoneVerificationApi.verifyCode(phone.trim(), phoneOtpCode.trim())
+      setPhoneVerified(true)
+      setPersistedPhone(phone.trim())
+      setPhoneOtpCode('')
+      toast.success('Phone verified.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Invalid verification code.')
+    } finally {
+      setVerifyingPhoneOtp(false)
     }
   }
 
@@ -522,10 +579,38 @@ function CleanerProfilePageContent() {
                 <div className="grid gap-3 md:grid-cols-2">
                   <div><Label>First Name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="mt-1" /></div>
                   <div><Label>Last Name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} className="mt-1" /></div>
-                  <div><Label>Phone Number</Label><PhoneInput value={phone} onChange={setPhone} className="mt-1" /></div>
+                  <div><Label>Phone Number</Label><PhoneInput value={phone} onChange={handlePhoneChange} className="mt-1" /></div>
                   <div><Label>Home Address</Label><Input value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="mt-1" /></div>
                   <div><Label>Years of Experience</Label><Input type="number" min={0} value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} className="mt-1" /></div>
                   <div><Label>Hourly Rate (€{MIN_HOURLY_RATE}–€{MAX_HOURLY_RATE})</Label><Input type="number" min={MIN_HOURLY_RATE} max={MAX_HOURLY_RATE} value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} className="mt-1" /></div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-semibold text-slate-900">Phone Verification</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Status: {phoneNeedsVerification ? 'Not verified' : 'Verified'}
+                  </p>
+                  {phoneNeedsVerification && (
+                    <>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button type="button" variant="outline" onClick={sendPhoneVerificationOtp} loading={sendingPhoneOtp} className="h-8 px-3 text-xs">
+                          Verify now
+                        </Button>
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <Input
+                          value={phoneOtpCode}
+                          onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                          placeholder="Enter OTP code"
+                          inputMode="numeric"
+                          className="max-w-[180px]"
+                        />
+                        <Button type="button" variant="outline" onClick={verifyPhoneOtpCode} loading={verifyingPhoneOtp} className="h-10 px-3 text-xs">
+                          Confirm Code
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div>

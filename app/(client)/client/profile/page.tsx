@@ -35,6 +35,7 @@ export default function ClientProfilePage() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [persistedPhone, setPersistedPhone] = useState('')
   const [defaultAddress, setDefaultAddress] = useState('')
   const [defaultCity, setDefaultCity] = useState(MVP_CITY)
   const [defaultPostcode, setDefaultPostcode] = useState('')
@@ -72,6 +73,7 @@ export default function ClientProfilePage() {
   const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
   const [phoneOtpCode, setPhoneOtpCode] = useState('')
   const [resendingEmail, setResendingEmail] = useState(false)
+  const phoneNeedsVerification = phone.trim() !== (persistedPhone ?? '') || !phoneVerified
 
   useEffect(() => {
     ;(async () => {
@@ -94,6 +96,7 @@ export default function ClientProfilePage() {
           setLastName(parts.slice(1).join(' '))
           setEmail(user?.email ?? '')
           setPhone(user?.phone ?? '')
+          setPersistedPhone(user?.phone ?? '')
           setDefaultAddress(defaultEntry?.address_line1 ?? client?.default_address ?? '')
           setDefaultCity(client?.default_city ?? MVP_CITY)
           setDefaultPostcode(defaultEntry?.postcode ?? client?.default_postcode ?? '')
@@ -168,8 +171,20 @@ export default function ClientProfilePage() {
         default_city: MVP_CITY,
         default_postcode: defaultPostcode ? normalizeCyprusPostcode(defaultPostcode) : null,
       }
-      if (phone.trim()) profilePayload.phone = phone.trim()
+      const nextPhone = phone.trim()
+      const phoneChanged = nextPhone !== (persistedPhone ?? '')
+      if (phoneChanged && !phoneVerified) {
+        toast.error('Verify your new phone number before updating it.')
+      } else if (nextPhone) {
+        profilePayload.phone = nextPhone
+      }
       await clientsApi.updateMe(profilePayload)
+      if (!phoneChanged) {
+        setPersistedPhone(nextPhone)
+      }
+      if (phoneChanged && phoneVerified) {
+        setPersistedPhone(nextPhone)
+      }
       if (!phoneVerified) {
         toast.message('Phone is saved but not verified yet. Verify to complete account credentials.')
       }
@@ -178,6 +193,13 @@ export default function ClientProfilePage() {
       toast.error(err.message ?? 'Failed to save profile.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  function handlePhoneChange(nextPhone: string) {
+    setPhone(nextPhone)
+    if (nextPhone.trim() !== (persistedPhone ?? '')) {
+      setPhoneVerified(false)
     }
   }
 
@@ -403,6 +425,7 @@ export default function ClientProfilePage() {
     try {
       await phoneVerificationApi.verifyCode(phone.trim(), phoneOtpCode.trim())
       setPhoneVerified(true)
+      setPersistedPhone(phone.trim())
       setPhoneOtpCode('')
       toast.success('Phone verified.')
     } catch (err: any) {
@@ -581,7 +604,7 @@ export default function ClientProfilePage() {
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
                   <Field label="First Name"><Input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="mt-1" /></Field>
                   <Field label="Last Name"><Input value={lastName} onChange={(event) => setLastName(event.target.value)} className="mt-1" /></Field>
-                  <Field label="Phone Number"><PhoneInput value={phone} onChange={setPhone} className="mt-1" /></Field>
+                  <Field label="Phone Number"><PhoneInput value={phone} onChange={handlePhoneChange} className="mt-1" /></Field>
                 </div>
 
                 <div className="mt-4">
@@ -600,7 +623,7 @@ export default function ClientProfilePage() {
                   <p className="mt-1 text-xs text-slate-600">Verified contact details are required for booking communication.</p>
                   <ul className="mt-2 space-y-1 text-xs text-slate-600">
                     <li>- Email: {email || 'Not set'} ({emailVerified ? 'Verified' : 'Not verified'})</li>
-                    <li>- Phone: {phone || 'Not set'} ({phoneVerified ? 'Verified' : 'Not verified'})</li>
+                    <li>- Phone: {phone || 'Not set'} ({phoneNeedsVerification ? 'Not verified' : 'Verified'})</li>
                   </ul>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {!emailVerified && (
@@ -608,13 +631,13 @@ export default function ClientProfilePage() {
                         Verify Email
                       </Button>
                     )}
-                    {!phoneVerified && (
+                    {phoneNeedsVerification && (
                       <Button type="button" variant="outline" onClick={sendPhoneVerificationOtp} loading={sendingPhoneOtp} className="h-8 px-3 text-xs">
                         Verify Phone
                       </Button>
                     )}
                   </div>
-                  {!phoneVerified && (
+                  {phoneNeedsVerification && (
                     <div className="mt-2 flex gap-2">
                       <Input
                         value={phoneOtpCode}
