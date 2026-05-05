@@ -1,7 +1,6 @@
 import Link from 'next/link'
-import { Briefcase, Car, Heart, Package } from 'lucide-react'
+import { Briefcase, Car, Heart, Package, Star } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { StarRating } from '@/components/star-rating'
 import { UserAvatar } from '@/components/ui/user-avatar'
 import { formatCurrency } from '@/lib/utils'
 import type { CleanerSummary } from '@/types'
@@ -40,102 +39,115 @@ export function CleanerCard({ cleaner, isFavorite, onToggleFavorite }: CleanerCa
   const tags = ['Pro Cleaner', ...(cleaner.skills ?? []).slice(0, 3)]
   const bio = cleaner.bio?.trim() || 'Detail-oriented cleaner with a calm, methodical approach.'
   const name = cleaner.name ?? cleaner.user?.name ?? 'Cleaner'
+  const hasRating = averageRating > 0
+  const displayRating = hasRating ? averageRating.toFixed(1) : 'New'
+  const displayCount = hasRating ? `(${reviewCount})` : '(0)'
 
   return (
-    <Card className="rounded-[2rem] border-slate-200 bg-white shadow-[0_4px_12px_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:border-[#8aa8e2] hover:shadow-[0_10px_22px_rgba(15,23,42,0.08)]">
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex items-start gap-3.5 sm:gap-4">
+    <Card className="rounded-[20px] border-[#ecedf3] bg-white shadow-[0_1px_2px_rgba(15,23,51,0.04),0_12px_32px_-12px_rgba(15,23,51,0.10)]">
+      <CardContent className="p-4 sm:p-[22px]">
+        <div className="flex items-start gap-3.5">
           <UserAvatar
             name={name}
             imageUrl={cleaner.profile_image_url ?? cleaner.user?.avatar_url}
-            className="h-16 w-16 shrink-0 border border-slate-200 sm:h-[6.5rem] sm:w-[6.5rem]"
-            textClassName="text-base sm:text-lg"
+            className="h-14 w-14 shrink-0 border border-[#e3e6ef]"
+            textClassName="text-base"
             fallback="C"
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2.5 sm:gap-3">
               <div className="min-w-0 pr-2">
-                <h3 className="truncate text-[2rem] leading-none font-semibold tracking-[-0.02em] text-slate-900 sm:text-[2.2rem]">
+                <h3 className="truncate text-[18px] leading-[1.15] font-bold tracking-[-0.01em] text-[#0f1733]">
                   {name}
                 </h3>
-                <div className="mt-1.5 flex items-center gap-2 whitespace-nowrap">
-                  <StarRating rating={averageRating} />
-                  <span className="text-[2rem] font-semibold leading-none text-slate-900 sm:text-[2.1rem]">
-                    {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
+                <div className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="inline-flex items-center gap-0.5 text-[#f5b400]">
+                    {Array.from({ length: 5 }).map((_, index) => {
+                      const filled = hasRating && averageRating >= index + 1
+                      return (
+                        <Star
+                          key={index}
+                          className={cn('h-[13px] w-[13px]', filled ? 'fill-current text-[#f5b400]' : 'text-[#c9cdda]')}
+                        />
+                      )
+                    })}
                   </span>
-                  <span className="text-[1.8rem] leading-none text-slate-400 sm:text-[2rem]">({reviewCount})</span>
+                  <span className="text-[12.5px] font-semibold leading-none text-[#0f1733]">
+                    {displayRating}
+                  </span>
+                  <span className="text-[12.5px] leading-none text-[#8a90a8]">{displayCount}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <p className="text-[2rem] leading-none font-bold tracking-[-0.02em] text-slate-900 sm:text-[2.1rem]">
+                <p className="text-[18px] leading-none font-bold tracking-[-0.01em] text-[#0f1733]">
                   {formatCurrency(cleaner.hourly_rate)}
-                  <span className="ml-1 text-[1.9rem] font-medium text-slate-400 sm:text-[2rem]">/hr</span>
+                  <span className="ml-1 text-[12px] font-medium text-[#8a90a8]">/hr</span>
                 </p>
                 <button
                   type="button"
                   onClick={() => onToggleFavorite(cleaner.id)}
                   aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
                   className={cn(
-                    'inline-flex h-14 w-14 items-center justify-center rounded-full border transition',
+                    'inline-flex h-9 w-9 items-center justify-center rounded-full border transition',
                     isFavorite
-                      ? 'border-rose-300 bg-rose-50 text-rose-600'
-                      : 'border-rose-200 bg-white text-rose-400 hover:bg-rose-50',
+                      ? 'border-[#ffd9dd] bg-[#fff1f2] text-[#e11d48]'
+                      : 'border-[#ffd9dd] bg-white text-[#f06a84] hover:bg-[#fff1f2]',
                   )}
                 >
-                  <Heart className={cn('h-6 w-6', isFavorite ? 'fill-current' : '')} />
+                  <Heart className={cn('h-4 w-4', isFavorite ? 'fill-current' : '')} />
                 </button>
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[1.9rem] leading-tight text-slate-600 sm:text-[2rem]">
+            <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[#4a5170]">
               <span className="inline-flex items-center gap-1.5">
-                <Briefcase className="h-5 w-5 text-slate-400" />
+                <Briefcase className="h-[15px] w-[15px] text-[#8a90a8]" />
                 {years} yrs experience
               </span>
               {transportText && (
                 <>
-                  <span className="text-slate-300">•</span>
+                  <span className="text-[#e3e6ef]">•</span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Car className="h-5 w-5 text-slate-400" />
+                    <Car className="h-[15px] w-[15px] text-[#8a90a8]" />
                     {transportText}
                   </span>
                 </>
               )}
               {suppliesText && (
                 <>
-                  <span className="text-slate-300">•</span>
+                  <span className="text-[#e3e6ef]">•</span>
                   <span className="inline-flex items-center gap-1.5">
-                    <Package className="h-5 w-5 text-slate-400" />
+                    <Package className="h-[15px] w-[15px] text-[#8a90a8]" />
                     {suppliesText}
                   </span>
                 </>
               )}
             </div>
 
-            <p className="mt-4 text-[2rem] leading-[1.4] text-slate-600 line-clamp-3 sm:text-[2.1rem]">
+            <p className="mt-4 text-[15px] leading-[1.5] text-[#4a5170] line-clamp-3">
               {bio}
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2.5">
+            <div className="mt-4 flex flex-wrap gap-2">
               {tags.map((tag) => (
-                <span key={tag} className="rounded-full bg-[#e9eef9] px-4 py-2 text-[1.7rem] font-semibold leading-none text-[#3051ca] sm:text-[1.8rem]">
+                <span key={tag} className="rounded-full bg-[#eef1ff] px-[11px] py-[5px] text-[12.5px] font-semibold tracking-[0.005em] text-[#1f3bd6]">
                   {tag}
                 </span>
               ))}
             </div>
 
-            <div className="mt-5 h-px bg-slate-200" />
+            <div className="mt-5 h-px bg-[#ecedf3]" />
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
               <Link
                 href={`/client/cleaners/${cleaner.id}`}
-                className="inline-flex h-14 items-center justify-center rounded-full border border-slate-300 text-[2rem] font-semibold text-slate-800 hover:bg-slate-50 sm:text-[2.1rem]"
+                className="inline-flex h-[44px] items-center justify-center rounded-xl border border-[#e3e6ef] px-3 text-[14px] font-semibold text-[#0f1733] hover:bg-[#fafbfe]"
               >
                 View Profile
               </Link>
               <Link
                 href={`/client/book/${cleaner.id}`}
-                className="inline-flex h-14 items-center justify-center rounded-full bg-[#2846cc] text-[2rem] font-semibold text-white hover:bg-[#1f3cb6] sm:text-[2.1rem]"
+                className="inline-flex h-[44px] items-center justify-center rounded-xl bg-[#1f3bd6] px-3 text-[14px] font-semibold text-white hover:bg-[#182fb3]"
               >
                 Book Now
               </Link>
