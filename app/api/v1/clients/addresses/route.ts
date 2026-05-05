@@ -55,6 +55,12 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     if (message.includes('duplicate key')) {
       return err('This address is already saved.', 409)
     }
+    if (message.includes('column') && message.includes('client_addresses')) {
+      return err('Address saving is temporarily unavailable while setup completes. Please try again in 1 minute.', 503)
+    }
+    if (message.includes('violates not-null constraint')) {
+      return err('Unable to save this address due to missing required details. Please review the form and try again.', 422)
+    }
     return err('Unable to save this address right now. Please try again.', 500)
   }
 })
