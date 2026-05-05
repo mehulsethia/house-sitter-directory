@@ -142,6 +142,15 @@ export default function ClientCleanersPage() {
     }).sort((a, b) => Number(favoriteCleanerIds.has(b.id)) - Number(favoriteCleanerIds.has(a.id)))
   }, [deferredCleaners, searchQuery, favoriteCleanerIds])
 
+  const favoriteCleaners = useMemo(
+    () => filtered.filter((cleaner) => favoriteCleanerIds.has(cleaner.id)),
+    [filtered, favoriteCleanerIds],
+  )
+  const nonFavoriteCleaners = useMemo(
+    () => filtered.filter((cleaner) => !favoriteCleanerIds.has(cleaner.id)),
+    [filtered, favoriteCleanerIds],
+  )
+
   async function toggleFavorite(cleanerId: string) {
     const currentlyFavorite = favoriteCleanerIds.has(cleanerId)
     setFavoriteCleanerIds((prev) => {
@@ -292,16 +301,33 @@ export default function ClientCleanersPage() {
         ) : filtered.length === 0 ? (
           <EmptyState title="No cleaners available right now" description="Try adjusting your filters and search criteria." />
         ) : view === 'card' ? (
-          <section className="masonry-grid">
-            {filtered.map((cleaner, index) => (
-              <div key={cleaner.id} className="masonry-item cleaner-row" style={{ animationDelay: `${index * 65}ms` }}>
-                <CleanerCard
-                  cleaner={cleaner}
-                  isFavorite={favoriteCleanerIds.has(cleaner.id)}
-                  onToggleFavorite={toggleFavorite}
-                />
+          <section className="space-y-3">
+            {favoriteCleaners.length > 0 && (
+              <div className="masonry-grid">
+                {favoriteCleaners.map((cleaner, index) => (
+                  <div key={cleaner.id} className="masonry-item cleaner-row" style={{ animationDelay: `${index * 65}ms` }}>
+                    <CleanerCard
+                      cleaner={cleaner}
+                      isFavorite={true}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+            {nonFavoriteCleaners.length > 0 && (
+              <div className="masonry-grid">
+                {nonFavoriteCleaners.map((cleaner, index) => (
+                  <div key={cleaner.id} className="masonry-item cleaner-row" style={{ animationDelay: `${(index + favoriteCleaners.length) * 65}ms` }}>
+                    <CleanerCard
+                      cleaner={cleaner}
+                      isFavorite={false}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         ) : (
           <section className="space-y-2.5">
