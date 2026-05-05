@@ -283,6 +283,7 @@ function CleanerOnboardingPageContent() {
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
   const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
   const [phoneOtpCode, setPhoneOtpCode] = useState('')
+  const [showPhoneOtpEntry, setShowPhoneOtpEntry] = useState(false)
   const [idType, setIdType] = useState('')
   const [idFileName, setIdFileName] = useState('')
   const [idFileUrl, setIdFileUrl] = useState('')
@@ -510,6 +511,7 @@ function CleanerOnboardingPageContent() {
       return
     }
     setSendingPhoneOtp(true)
+    setShowPhoneOtpEntry(true)
     try {
       await usersApi.updateMe({ phone: phone.trim() })
       await phoneVerificationApi.sendCode(phone.trim())
@@ -836,7 +838,15 @@ function CleanerOnboardingPageContent() {
                 <p className="mt-1 text-xs text-gray-500">
                   This must be verified during onboarding before your profile can be reviewed.
                 </p>
-                <PhoneInput value={phone} onChange={setPhone} className="mt-2" />
+                <PhoneInput
+                  value={phone}
+                  onChange={(value) => {
+                    setPhone(value)
+                    setPhoneVerified(false)
+                    setShowPhoneOtpEntry(false)
+                  }}
+                  className="mt-2"
+                />
                 <p className={`mt-2 text-xs font-medium ${phoneVerified ? 'text-emerald-700' : 'text-amber-700'}`}>
                   {phoneVerified ? 'Verified' : 'Not verified'}
                 </p>
@@ -845,7 +855,7 @@ function CleanerOnboardingPageContent() {
                     Verify now
                   </Button>
                 </div>
-                {!phoneVerified && (
+                {!phoneVerified && showPhoneOtpEntry && (
                   <div className="mt-2 flex gap-2">
                     <Input
                       value={phoneOtpCode}

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { ProfilePageSkeleton } from '@/components/page-skeletons'
 import { AvatarUpload } from '@/components/avatar-upload'
 import { PhoneInput } from '@/components/phone-input'
@@ -73,6 +74,9 @@ export default function ClientProfilePage() {
   const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
   const [phoneOtpCode, setPhoneOtpCode] = useState('')
   const [resendingEmail, setResendingEmail] = useState(false)
+  const [phoneVerificationModalOpen, setPhoneVerificationModalOpen] = useState(false)
+  const [showInlinePhoneOtpEntry, setShowInlinePhoneOtpEntry] = useState(false)
+  const [showModalPhoneOtpEntry, setShowModalPhoneOtpEntry] = useState(false)
   const phoneNeedsVerification = phone.trim() !== (persistedPhone ?? '') || !phoneVerified
 
   useEffect(() => {
@@ -174,7 +178,8 @@ export default function ClientProfilePage() {
       const nextPhone = phone.trim()
       const phoneChanged = nextPhone !== (persistedPhone ?? '')
       if (phoneChanged && !phoneVerified) {
-        toast.error('Verify your new phone number before updating it.')
+        setPhoneVerificationModalOpen(true)
+        return
       } else if (nextPhone) {
         profilePayload.phone = nextPhone
       }
@@ -200,6 +205,8 @@ export default function ClientProfilePage() {
     setPhone(nextPhone)
     if (nextPhone.trim() !== (persistedPhone ?? '')) {
       setPhoneVerified(false)
+      setShowInlinePhoneOtpEntry(false)
+      setShowModalPhoneOtpEntry(false)
     }
   }
 
@@ -426,6 +433,9 @@ export default function ClientProfilePage() {
       await phoneVerificationApi.verifyCode(phone.trim(), phoneOtpCode.trim())
       setPhoneVerified(true)
       setPersistedPhone(phone.trim())
+      setShowInlinePhoneOtpEntry(false)
+      setShowModalPhoneOtpEntry(false)
+      setPhoneVerificationModalOpen(false)
       setPhoneOtpCode('')
       toast.success('Phone verified.')
     } catch (err: any) {
@@ -632,12 +642,21 @@ export default function ClientProfilePage() {
                       </Button>
                     )}
                     {phoneNeedsVerification && (
-                      <Button type="button" variant="outline" onClick={sendPhoneVerificationOtp} loading={sendingPhoneOtp} className="h-8 px-3 text-xs">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={async () => {
+                          setShowInlinePhoneOtpEntry(true)
+                          await sendPhoneVerificationOtp()
+                        }}
+                        loading={sendingPhoneOtp}
+                        className="h-8 px-3 text-xs"
+                      >
                         Verify Phone
                       </Button>
                     )}
                   </div>
-                  {phoneNeedsVerification && (
+                  {phoneNeedsVerification && showInlinePhoneOtpEntry && (
                     <div className="mt-2 flex gap-2">
                       <Input
                         value={phoneOtpCode}
@@ -896,6 +915,44 @@ export default function ClientProfilePage() {
           </div>
         </section>
       </div>
+
+      <Dialog
+        open={phoneVerificationModalOpen}
+        onClose={() => {
+          setPhoneVerificationModalOpen(false)
+          setShowModalPhoneOtpEntry(false)
+        }}
+      >
+        <DialogTitle>Verify phone number</DialogTitle>
+        <p className="text-sm text-slate-600">You changed your phone number. Verify it to continue saving.</p>
+        <p className="mt-2 text-sm font-medium text-slate-800">{phone || 'No phone set'}</p>
+        <div className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              setShowModalPhoneOtpEntry(true)
+              await sendPhoneVerificationOtp()
+            }}
+            loading={sendingPhoneOtp}
+          >
+            Verify now
+          </Button>
+        </div>
+        {showModalPhoneOtpEntry && (
+          <div className="mt-3 flex gap-2">
+            <Input
+              value={phoneOtpCode}
+              onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+              placeholder="Enter OTP code"
+              inputMode="numeric"
+            />
+            <Button type="button" variant="outline" onClick={verifyPhoneOtpCode} loading={verifyingPhoneOtp}>
+              Confirm Code
+            </Button>
+          </div>
+        )}
+      </Dialog>
 
       <style jsx>{`
         .client-stage {

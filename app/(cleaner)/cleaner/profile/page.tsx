@@ -6,6 +6,7 @@ import { Star, ChartNoAxesCombined, CalendarDays, Wallet } from 'lucide-react'
 import { bookingsApi, cleanersApi, googleCalendarApi, paymentsApi, phoneVerificationApi, reviewsApi, usersApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
@@ -72,6 +73,9 @@ function CleanerProfilePageContent() {
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
   const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
   const [phoneOtpCode, setPhoneOtpCode] = useState('')
+  const [phoneVerificationModalOpen, setPhoneVerificationModalOpen] = useState(false)
+  const [showInlinePhoneOtpEntry, setShowInlinePhoneOtpEntry] = useState(false)
+  const [showModalPhoneOtpEntry, setShowModalPhoneOtpEntry] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [yearsExperience, setYearsExperience] = useState('0')
@@ -262,6 +266,8 @@ function CleanerProfilePageContent() {
     setPhone(nextPhone)
     if (nextPhone.trim() !== (persistedPhone ?? '')) {
       setPhoneVerified(false)
+      setShowInlinePhoneOtpEntry(false)
+      setShowModalPhoneOtpEntry(false)
     }
   }
 
@@ -285,7 +291,8 @@ function CleanerProfilePageContent() {
       const nextPhone = phone.trim()
       const phoneChanged = nextPhone !== (persistedPhone ?? '')
       if (phoneChanged && !phoneVerified) {
-        toast.error('Verify your new phone number before updating it.')
+        setPhoneVerificationModalOpen(true)
+        return
       }
       await usersApi.updateMe({
         name: `${firstName.trim()} ${lastName.trim()}`,
@@ -336,6 +343,9 @@ function CleanerProfilePageContent() {
       await phoneVerificationApi.verifyCode(phone.trim(), phoneOtpCode.trim())
       setPhoneVerified(true)
       setPersistedPhone(phone.trim())
+      setShowInlinePhoneOtpEntry(false)
+      setShowModalPhoneOtpEntry(false)
+      setPhoneVerificationModalOpen(false)
       setPhoneOtpCode('')
       toast.success('Phone verified.')
     } catch (err: any) {
@@ -425,16 +435,6 @@ function CleanerProfilePageContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-end gap-3">
-        <Button
-          variant="outline"
-          onClick={saveOverview}
-          disabled={tab !== 'overview'}
-          loading={saving && tab === 'overview'}
-        >
-          Save overview
-        </Button>
-      </div>
       {(tab !== 'overview' || !stripe.connected) && (
         <p className="text-xs text-slate-500">
           Some profile updates may be limited until Stripe setup is completed.
@@ -593,22 +593,33 @@ function CleanerProfilePageContent() {
                   {phoneNeedsVerification && (
                     <>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <Button type="button" variant="outline" onClick={sendPhoneVerificationOtp} loading={sendingPhoneOtp} className="h-8 px-3 text-xs">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={async () => {
+                            setShowInlinePhoneOtpEntry(true)
+                            await sendPhoneVerificationOtp()
+                          }}
+                          loading={sendingPhoneOtp}
+                          className="h-8 px-3 text-xs"
+                        >
                           Verify now
                         </Button>
                       </div>
-                      <div className="mt-2 flex gap-2">
-                        <Input
-                          value={phoneOtpCode}
-                          onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
-                          placeholder="Enter OTP code"
-                          inputMode="numeric"
-                          className="max-w-[180px]"
-                        />
-                        <Button type="button" variant="outline" onClick={verifyPhoneOtpCode} loading={verifyingPhoneOtp} className="h-10 px-3 text-xs">
-                          Confirm Code
-                        </Button>
-                      </div>
+                      {showInlinePhoneOtpEntry && (
+                        <div className="mt-2 flex gap-2">
+                          <Input
+                            value={phoneOtpCode}
+                            onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                            placeholder="Enter OTP code"
+                            inputMode="numeric"
+                            className="max-w-[180px]"
+                          />
+                          <Button type="button" variant="outline" onClick={verifyPhoneOtpCode} loading={verifyingPhoneOtp} className="h-10 px-3 text-xs">
+                            Confirm Code
+                          </Button>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -876,6 +887,43 @@ function CleanerProfilePageContent() {
           </CardContent>
         </Card>
       </div>
+      <Dialog
+        open={phoneVerificationModalOpen}
+        onClose={() => {
+          setPhoneVerificationModalOpen(false)
+          setShowModalPhoneOtpEntry(false)
+        }}
+      >
+        <DialogTitle>Verify phone number</DialogTitle>
+        <p className="text-sm text-slate-600">You changed your phone number. Verify it to continue saving.</p>
+        <p className="mt-2 text-sm font-medium text-slate-800">{phone || 'No phone set'}</p>
+        <div className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              setShowModalPhoneOtpEntry(true)
+              await sendPhoneVerificationOtp()
+            }}
+            loading={sendingPhoneOtp}
+          >
+            Verify now
+          </Button>
+        </div>
+        {showModalPhoneOtpEntry && (
+          <div className="mt-3 flex gap-2">
+            <Input
+              value={phoneOtpCode}
+              onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+              placeholder="Enter OTP code"
+              inputMode="numeric"
+            />
+            <Button type="button" variant="outline" onClick={verifyPhoneOtpCode} loading={verifyingPhoneOtp}>
+              Confirm Code
+            </Button>
+          </div>
+        )}
+      </Dialog>
     </div>
   )
 }

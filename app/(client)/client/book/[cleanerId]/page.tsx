@@ -611,6 +611,7 @@ export default function BookingFlowPage() {
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
   const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
   const [phoneOtpCode, setPhoneOtpCode] = useState('')
+  const [showPhoneOtpEntry, setShowPhoneOtpEntry] = useState(false)
   const [transportAgreementConfirmed, setTransportAgreementConfirmed] = useState(false)
   const [suppliesAgreementConfirmed, setSuppliesAgreementConfirmed] = useState(false)
   const hasHydratedDraftRef = useRef(false)
@@ -674,6 +675,7 @@ export default function BookingFlowPage() {
       return
     }
     setSendingPhoneOtp(true)
+    setShowPhoneOtpEntry(true)
     try {
       await clientsApi.updateMe({ phone: phone.trim() })
       await phoneVerificationApi.sendCode(phone.trim())
@@ -1477,7 +1479,15 @@ export default function BookingFlowPage() {
                   </div>
                   <div>
                     <Label className="text-sm font-semibold">Phone Number <span className="text-red-500">*</span></Label>
-                    <PhoneInput value={phone} onChange={setPhone} className="mt-1" />
+                    <PhoneInput
+                      value={phone}
+                      onChange={(value) => {
+                        setPhone(value)
+                        setShowPhoneOtpEntry(false)
+                        setPhoneVerified(false)
+                      }}
+                      className="mt-1"
+                    />
                   </div>
                 </div>
 
@@ -1817,7 +1827,7 @@ export default function BookingFlowPage() {
                           </Button>
                         )}
                       </div>
-                      {!phoneVerified && (
+                      {!phoneVerified && showPhoneOtpEntry && (
                         <div className="mt-2 flex gap-2">
                           <Input
                             value={phoneOtpCode}
