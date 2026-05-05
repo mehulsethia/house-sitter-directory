@@ -123,13 +123,15 @@ export const bookingService = {
         status: 'draft',
       })
     } catch (error) {
-      const message = String((error as any)?.message ?? '')
+      const message = String((error as any)?.message ?? '').toLowerCase()
       const likelyLegacyStatusConstraint =
         message.includes('status') &&
-        (message.includes('check') || message.includes('constraint'))
+        (message.includes('check') || message.includes('constraint') || message.includes('invalid input value for enum'))
 
       if (likelyLegacyStatusConstraint) {
-        throw new ServiceError('Booking is temporarily unavailable. Please try again in a few minutes.', 500)
+        // Compatibility fallback for environments where booking status constraints
+        // were not migrated to include `draft` yet.
+        return bookingRepo.create(baseCreatePayload)
       }
 
       throw error

@@ -333,7 +333,7 @@ export default function ClientDashboardPage() {
                           <div className="min-w-0">
                             <p className="truncate text-sm font-semibold text-slate-900">{favorite.user?.name ?? 'Cleaner'}</p>
                             <p className="truncate text-xs text-slate-500">
-                              {favorite.average_rating ? `${Number(favorite.average_rating).toFixed(1)}★` : 'No rating yet'} · {favorite.total_jobs} jobs
+                              {favorite.average_rating ? `${Number(favorite.average_rating).toFixed(1)}★` : 'No rating yet'} · {favorite.review_count ?? 0} reviews · {favorite.total_jobs} jobs
                             </p>
                           </div>
                         </div>

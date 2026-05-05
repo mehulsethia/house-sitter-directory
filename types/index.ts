@@ -290,6 +290,7 @@ export interface FavoriteCleaner {
   hourly_rate: number
   total_jobs: number
   average_rating?: number | null
+  review_count?: number
   years_experience?: number
   transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
   cleaning_supplies?: 'own_supplies' | 'client_supplies'

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { requireClient } from '@/server/auth'
+import { db } from '@/server/db'
 import { clientRepo } from '@/server/repositories/client.repo'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { clientFavoriteRepo } from '@/server/repositories/client-favorite.repo'
@@ -15,19 +16,58 @@ export const GET = requireClient(async (_req: NextRequest, _ctx, user) => {
   if (!client) client = await clientRepo.create(user.id)
 
   const favorites = await clientFavoriteRepo.listByClientId(client.id)
-  const mapped = favorites
+  const visibleFavorites = favorites
     .filter((favorite) => {
       const cleaner = favorite.cleaner
       return cleaner.status === 'approved' && cleaner.profileComplete && cleaner.stripeOnboardingComplete
     })
-    .map((favorite) => {
+  const cleanerIds = visibleFavorites.map((favorite) => favorite.cleaner.id)
+
+  const [completedJobsAgg, reviewsAgg] = cleanerIds.length
+    ? await Promise.all([
+        db.booking.groupBy({
+          by: ['cleanerId'],
+          where: {
+            cleanerId: { in: cleanerIds },
+            status: 'completed',
+          },
+          _count: { _all: true },
+        }),
+        db.review.groupBy({
+          by: ['cleanerId'],
+          where: {
+            cleanerId: { in: cleanerIds },
+          },
+          _count: { _all: true },
+          _avg: { rating: true },
+        }),
+      ])
+    : [[], []]
+
+  const completedJobsByCleanerId = new Map<string, number>(
+    completedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+  )
+  const reviewsByCleanerId = new Map<string, { count: number; avg: number | null }>(
+    reviewsAgg.map((entry) => [
+      entry.cleanerId,
+      {
+        count: entry._count._all,
+        avg: entry._avg.rating ?? null,
+      },
+    ]),
+  )
+
+  const mapped = visibleFavorites.map((favorite) => {
       const cleaner = favorite.cleaner
+      const jobsCount = completedJobsByCleanerId.get(cleaner.id) ?? 0
+      const reviewMetrics = reviewsByCleanerId.get(cleaner.id)
       return {
         cleaner_id: cleaner.id,
         user_id: cleaner.userId,
         hourly_rate: Number(cleaner.hourlyRate),
-        total_jobs: cleaner.totalJobs,
-        average_rating: cleaner.averageRating ? Number(cleaner.averageRating) : null,
+        total_jobs: jobsCount,
+        average_rating: reviewMetrics?.avg ?? null,
+        review_count: reviewMetrics?.count ?? 0,
         years_experience: cleaner.yearsExperience,
         transport_mode: cleaner.transportMode,
         cleaning_supplies: cleaner.cleaningSupplies,
@@ -68,4 +108,3 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
   await clientFavoriteRepo.add(client.id, cleaner.id)
   return ok({ favorite: true }, 201)
 })
-
