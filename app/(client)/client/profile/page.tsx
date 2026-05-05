@@ -236,10 +236,6 @@ export default function ClientProfilePage() {
       toast.error("You've reached the maximum number of saved addresses. Please remove an existing address to add a new one.")
       return
     }
-    if (!newAccessNotes.trim() || newAccessNotes.trim().length < 5) {
-      toast.error('Access notes must be at least 5 characters.')
-      return
-    }
 
     setAddingAddress(true)
     try {
@@ -250,7 +246,7 @@ export default function ClientProfilePage() {
         postcode: normalizeCyprusPostcode(newAddressPostcode),
         country: MVP_COUNTRY_CODE,
         apartment_details: newApartmentDetails.trim() || undefined,
-        access_notes: newAccessNotes.trim(),
+        access_notes: newAccessNotes.trim() || undefined,
         is_default: newAddressDefault || savedAddresses.length === 0,
       })
       const created = createdRes.data

@@ -16,6 +16,7 @@ import type {
   CleanerRead,
   CleanerOnboardingProgress,
   CleanerSummary,
+  FavoriteCleaner,
   ClientAddressCreate,
   ClientAddressUpdate,
   ClientAddressRead,
@@ -221,6 +222,20 @@ export const clientsApi = {
     }),
   deleteAddress: (id: string) =>
     request<APIResponse<{ removed: true }>>(`/clients/addresses/${id}`, {
+      method: 'DELETE',
+    }),
+}
+
+export const favoritesApi = {
+  list: () =>
+    request<APIResponse<FavoriteCleaner[]>>('/clients/favorites'),
+  add: (cleanerId: string) =>
+    request<APIResponse<{ favorite: true }>>('/clients/favorites', {
+      method: 'POST',
+      body: JSON.stringify({ cleaner_id: cleanerId }),
+    }),
+  remove: (cleanerId: string) =>
+    request<APIResponse<{ favorite: false }>>(`/clients/favorites/${cleanerId}`, {
       method: 'DELETE',
     }),
 }

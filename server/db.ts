@@ -79,6 +79,21 @@ export function ensureDbSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS id_file_url TEXT,
         ADD COLUMN IF NOT EXISTS id_submitted_at TIMESTAMPTZ
       `)
+      await db.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS public.client_favorites (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+          cleaner_id UUID NOT NULL REFERENCES public.cleaners(id) ON DELETE CASCADE,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          UNIQUE (client_id, cleaner_id)
+        )
+      `)
+      await db.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS idx_client_favorites_client_id ON public.client_favorites(client_id)
+      `)
+      await db.$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS idx_client_favorites_cleaner_id ON public.client_favorites(cleaner_id)
+      `)
     })().catch((error) => {
       schemaReadyPromise = null
       throw error

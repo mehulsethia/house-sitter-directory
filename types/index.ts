@@ -161,7 +161,7 @@ export interface BookingCreate {
   postcode: string
   country?: string
   apartment_details?: string
-  access_notes: string
+  access_notes?: string
   scheduled_start: string  // ISO8601
   duration_hours: number
   special_instructions?: string
@@ -250,7 +250,7 @@ export interface ClientAddressRead {
   postcode: string
   country: string
   apartment_details?: string | null
-  access_notes: string
+  access_notes?: string
   latitude?: number | null
   longitude?: number | null
   is_default: boolean
@@ -265,7 +265,7 @@ export interface ClientAddressCreate {
   postcode: string
   country?: string
   apartment_details?: string
-  access_notes: string
+  access_notes?: string
   latitude?: number
   longitude?: number
   is_default?: boolean
@@ -282,6 +282,30 @@ export interface ClientAddressUpdate {
   latitude?: number
   longitude?: number
   is_default?: boolean
+}
+
+export interface FavoriteCleaner {
+  cleaner_id: string
+  user_id: string
+  hourly_rate: number
+  total_jobs: number
+  average_rating?: number | null
+  years_experience?: number
+  transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
+  cleaning_supplies?: 'own_supplies' | 'client_supplies'
+  created_at?: string
+  bio?: string
+  profile_image_url?: string
+  user?: {
+    id: string
+    name: string
+    avatar_url?: string
+  }
+  service_areas?: Array<{
+    city: string
+    postcode_prefix?: string
+    radius_km?: number
+  }>
 }
 
 // ---------------------------------------------------------------------------

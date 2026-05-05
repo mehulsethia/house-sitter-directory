@@ -12,8 +12,9 @@ import {
   MapPin,
   Star,
   TrendingUp,
+  Heart,
 } from 'lucide-react'
-import { availabilityApi, bookingsApi, cleanersApi, reviewsApi } from '@/lib/api'
+import { availabilityApi, bookingsApi, cleanersApi, favoritesApi, reviewsApi } from '@/lib/api'
 import { StarRating } from '@/components/star-rating'
 import { DetailPageSkeleton } from '@/components/page-skeletons'
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,8 @@ export default function CleanerProfilePage() {
   const [closestSlots, setClosestSlots] = useState<string[]>([])
   const [canMessageCleaner, setCanMessageCleaner] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteBusy, setFavoriteBusy] = useState(false)
   const [tab, setTab] = useState<'overview' | 'reviews' | 'availability'>('overview')
 
   useEffect(() => {
@@ -71,6 +74,34 @@ export default function CleanerProfilePage() {
         setLoading(false)
       })
   }, [id])
+
+  useEffect(() => {
+    favoritesApi
+      .list()
+      .then((res) => {
+        const ids = new Set((res.data ?? []).map((item) => item.cleaner_id))
+        setIsFavorite(ids.has(id))
+      })
+      .catch(() => {
+        setIsFavorite(false)
+      })
+  }, [id])
+
+  async function toggleFavorite() {
+    if (favoriteBusy) return
+    const next = !isFavorite
+    setIsFavorite(next)
+    setFavoriteBusy(true)
+    try {
+      if (next) await favoritesApi.add(id)
+      else await favoritesApi.remove(id)
+    } catch {
+      setIsFavorite(!next)
+      toast.error('Could not update favourites. Please try again.')
+    } finally {
+      setFavoriteBusy(false)
+    }
+  }
 
   const deferredReviews = useDeferredValue(reviews)
 
@@ -170,6 +201,18 @@ export default function CleanerProfilePage() {
                 <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                   {cleanerName}
                 </h1>
+                <button
+                  type="button"
+                  onClick={toggleFavorite}
+                  aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                    isFavorite
+                      ? 'border-rose-300 bg-rose-50 text-rose-600'
+                      : 'border-white/35 bg-white/10 text-white hover:bg-white/20'
+                  }`}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                </button>
               </div>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 View expertise, service quality, and recent client feedback before booking.

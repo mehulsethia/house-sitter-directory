@@ -29,7 +29,7 @@ export const PATCH = requireClient(async (req: NextRequest, ctx, user) => {
     postcode: parsed.data.postcode ? normalizeCyprusPostcode(parsed.data.postcode) : undefined,
     country: parsed.data.country ? MVP_COUNTRY_CODE : undefined,
     apartmentDetails: parsed.data.apartment_details ?? null,
-    accessNotes: parsed.data.access_notes,
+    accessNotes: parsed.data.access_notes === undefined ? undefined : (parsed.data.access_notes.trim() || ''),
     latitude: parsed.data.latitude ?? null,
     longitude: parsed.data.longitude ?? null,
     isDefault: parsed.data.is_default,

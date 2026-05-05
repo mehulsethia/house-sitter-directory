@@ -42,7 +42,7 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     postcode: normalizeCyprusPostcode(parsed.data.postcode),
     country: MVP_COUNTRY_CODE,
     apartmentDetails: parsed.data.apartment_details,
-    accessNotes: parsed.data.access_notes,
+    accessNotes: parsed.data.access_notes?.trim() || '',
     latitude: parsed.data.latitude,
     longitude: parsed.data.longitude,
     isDefault: Boolean(parsed.data.is_default),

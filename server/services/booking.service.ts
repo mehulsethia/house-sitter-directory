@@ -56,7 +56,7 @@ export const bookingService = {
     postcode: string
     country: string
     apartment_details?: string
-    access_notes: string
+    access_notes?: string
     scheduled_start: string
     duration_hours: number
   }) {
@@ -103,7 +103,7 @@ export const bookingService = {
       postcode: data.postcode,
       country: data.country,
       apartmentDetails: data.apartment_details,
-      accessNotes: data.access_notes,
+      accessNotes: data.access_notes?.trim() ?? '',
       scheduledStart,
       scheduledEnd,
       durationHours: data.duration_hours,

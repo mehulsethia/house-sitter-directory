@@ -87,6 +87,7 @@ model Cleaner {
   bookingsAsClean       Booking[]              @relation("BookingCleaner")
   reviews               Review[]
   strikes               CleanerStrike[]
+  favoritedByClients    ClientFavorite[]
 
   @@map("cleaners")
   @@schema("public")
@@ -110,6 +111,7 @@ model Client {
   bookings Booking[] @relation("BookingClient")
   reviews  Review[]
   addresses ClientAddress[]
+  favorites ClientFavorite[]
 
   @@map("clients")
   @@schema("public")
@@ -134,6 +136,22 @@ model ClientAddress {
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("client_addresses")
+  @@schema("public")
+}
+
+model ClientFavorite {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId  String   @map("client_id") @db.Uuid
+  cleanerId String   @map("cleaner_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, cleanerId])
+  @@index([clientId])
+  @@index([cleanerId])
+  @@map("client_favorites")
   @@schema("public")
 }
 

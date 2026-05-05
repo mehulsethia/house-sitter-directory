@@ -11,11 +11,12 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react'
-import { authApi, bookingsApi } from '@/lib/api'
+import { authApi, bookingsApi, favoritesApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
 import { DashboardPageSkeleton } from '@/components/page-skeletons'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { BookingRead, BookingStatus } from '@/types'
+import type { BookingRead, BookingStatus, FavoriteCleaner } from '@/types'
 import { toast } from 'sonner'
 
 const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
@@ -50,6 +51,7 @@ function isValidUpcomingBooking(booking: BookingRead, nowMs: number) {
 export default function ClientDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [bookings, setBookings] = useState<BookingRead[]>([])
+  const [favorites, setFavorites] = useState<FavoriteCleaner[]>([])
   const [name, setName] = useState('')
 
   useEffect(() => {
@@ -57,12 +59,13 @@ export default function ClientDashboardPage() {
 
     ;(async () => {
       try {
-        const [meRes, bookingRes] = await Promise.all([authApi.me(), bookingsApi.my()])
+        const [meRes, bookingRes, favoritesRes] = await Promise.all([authApi.me(), bookingsApi.my(), favoritesApi.list()])
         if (!active) return
 
         startTransition(() => {
           setName((meRes.data?.name ?? '').trim())
           setBookings(bookingRes.data?.items ?? [])
+          setFavorites(favoritesRes.data ?? [])
           setLoading(false)
         })
       } catch {
@@ -301,6 +304,53 @@ export default function ClientDashboardPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="rounded-[1.25rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_16px_36px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:p-5">
+              <p className={`${monoFont.className} text-[0.68rem] uppercase tracking-[0.22em] text-slate-500`}>
+                Saved
+              </p>
+              <h2 className={`${displayFont.className} mt-1 text-xl font-bold tracking-[-0.02em] text-slate-900`}>
+                Your favourite cleaners
+              </h2>
+              {favorites.length === 0 ? (
+                <p className="mt-3 text-sm text-slate-600">
+                  You haven&apos;t saved any cleaners yet. Tap the heart on a cleaner profile to add them here.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {favorites.slice(0, 4).map((favorite) => (
+                    <div key={favorite.cleaner_id} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <UserAvatar
+                            name={favorite.user?.name ?? 'Cleaner'}
+                            imageUrl={favorite.profile_image_url}
+                            className="h-9 w-9 border border-slate-200"
+                            textClassName="text-sm font-semibold"
+                            fallback="C"
+                          />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-900">{favorite.user?.name ?? 'Cleaner'}</p>
+                            <p className="truncate text-xs text-slate-500">
+                              {favorite.average_rating ? `${Number(favorite.average_rating).toFixed(1)}★` : 'No rating yet'} · {favorite.total_jobs} jobs
+                            </p>
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-semibold text-slate-700">{formatCurrency(favorite.hourly_rate)}/hr</p>
+                          <Link
+                            href={`/client/book/${favorite.cleaner_id}`}
+                            className="mt-1 inline-flex h-7 items-center rounded-full bg-[#0d4bc9] px-2.5 text-[11px] font-semibold text-white hover:bg-[#0a3ea8]"
+                          >
+                            Book
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>

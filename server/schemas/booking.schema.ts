@@ -48,7 +48,7 @@ export const createBookingSchema = z.object({
   postcode: z.string().trim().refine((value) => isCyprusPostcode(value), 'Postcode must be 4 digits'),
   country: z.string().trim().default(MVP_COUNTRY_CODE).refine((value) => value.toUpperCase() === MVP_COUNTRY_CODE, `${MVP_COUNTRY_CODE} only for MVP`),
   apartment_details: z.string().max(255).optional(),
-  access_notes: z.string().trim().min(5, 'Access notes are required').max(1000),
+  access_notes: z.string().trim().max(1000).optional(),
   scheduled_start: datetimeInputSchema,
   duration_hours: z.number().min(1).max(8),
 })

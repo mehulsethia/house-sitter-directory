@@ -1081,7 +1081,6 @@ export default function BookingFlowPage() {
       if (!address.trim()) { toast.error('Service address is required.'); return }
       if (!postcode.trim()) { toast.error('Postcode is required.'); return }
       if (!/^\d{4}$/.test(normalizePostcodeInput(postcode))) { toast.error('Postcode must be 4 digits.'); return }
-      if (!accessNotes.trim()) { toast.error('Access notes are required.'); return }
       if (!jobType) { toast.error('Please select what type of clean this is.'); return }
       if (!bedrooms) { toast.error('Please select bedrooms.'); return }
       if (!bathrooms) { toast.error('Please select bathrooms.'); return }
@@ -1145,7 +1144,7 @@ export default function BookingFlowPage() {
           postcode: normalizePostcodeInput(postcode),
           country: 'CY',
           apartment_details: apartmentDetails.trim() || undefined,
-          access_notes: accessNotes.trim(),
+          access_notes: accessNotes.trim() || undefined,
           scheduled_start: normalizedScheduledStart,
           duration_hours: duration,
           special_instructions: buildSpecialInstructions(uploadedPhotoUrls),
@@ -1171,7 +1170,7 @@ export default function BookingFlowPage() {
             postcode: normalizePostcodeInput(postcode),
             country: 'CY',
             apartment_details: apartmentDetails.trim() || undefined,
-            access_notes: accessNotes.trim(),
+            access_notes: accessNotes.trim() || undefined,
             is_default: savedAddresses.length === 0,
           })
           }
@@ -1505,7 +1504,7 @@ export default function BookingFlowPage() {
                   </div>
 
                   <div>
-                    <Label className="text-sm font-semibold">Access notes <span className="text-red-500">*</span></Label>
+                    <Label className="text-sm font-semibold">Access notes</Label>
                     <Textarea
                       required
                       value={accessNotes}

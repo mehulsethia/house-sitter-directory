@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { useDeferredValue, useEffect, useMemo, useState, startTransition } from 'react'
 import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
-import { Grid3x3, List, MapPin, Briefcase, Car, Package, Clock3 } from 'lucide-react'
-import { cleanersApi } from '@/lib/api'
+import { Grid3x3, List, MapPin, Briefcase, Car, Package, Clock3, Heart } from 'lucide-react'
+import { cleanersApi, favoritesApi } from '@/lib/api'
 import { EmptyState } from '@/components/empty-state'
 import { ListPageSkeleton } from '@/components/page-skeletons'
 import { StarRating } from '@/components/star-rating'
@@ -71,6 +71,7 @@ export default function ClientCleanersPage() {
   const [service, setService] = useState('')
   const [view, setView] = useState<ViewMode>('card')
   const [cleaners, setCleaners] = useState<CleanerVM[]>([])
+  const [favoriteCleanerIds, setFavoriteCleanerIds] = useState<Set<string>>(new Set())
 
   async function load() {
     setLoading(true)
@@ -80,7 +81,8 @@ export default function ClientCleanersPage() {
       const minRatingValue = Number(minRating || 0)
       const cityFromSearch = searchQuery.trim()
 
-      const res = await cleanersApi.search({
+      const [res, favoritesRes] = await Promise.all([
+        cleanersApi.search({
         city: cityFromSearch || undefined,
         availability,
         transport_mode: transport ? (transport as any) : undefined,
@@ -89,9 +91,12 @@ export default function ClientCleanersPage() {
         min_rating: minRatingValue > 0 ? minRatingValue : undefined,
         min_price: minRateValue,
         max_price: maxRateValue,
-      })
+        }),
+        favoritesApi.list().catch(() => ({ data: [] as any[] })),
+      ])
 
       const items = (res.data?.items ?? []) as any[]
+      const favoriteIds = new Set<string>(((favoritesRes as any)?.data ?? []).map((item: any) => item.cleaner_id))
       startTransition(() => {
         setCleaners(
           items.map((cleaner) => ({
@@ -108,6 +113,7 @@ export default function ClientCleanersPage() {
             cleaning_supplies: cleaner?.cleaning_supplies ?? cleaner?.cleaningSupplies,
           })),
         )
+        setFavoriteCleanerIds(favoriteIds)
         setLoading(false)
       })
     } catch {
@@ -133,8 +139,33 @@ export default function ClientCleanersPage() {
         (cleaner.city ?? '').toLowerCase().includes(q) ||
         cleaner.skills.join(' ').toLowerCase().includes(q)
       )
+    }).sort((a, b) => Number(favoriteCleanerIds.has(b.id)) - Number(favoriteCleanerIds.has(a.id)))
+  }, [deferredCleaners, searchQuery, favoriteCleanerIds])
+
+  async function toggleFavorite(cleanerId: string) {
+    const currentlyFavorite = favoriteCleanerIds.has(cleanerId)
+    setFavoriteCleanerIds((prev) => {
+      const next = new Set(prev)
+      if (currentlyFavorite) next.delete(cleanerId)
+      else next.add(cleanerId)
+      return next
     })
-  }, [deferredCleaners, searchQuery])
+    try {
+      if (currentlyFavorite) {
+        await favoritesApi.remove(cleanerId)
+      } else {
+        await favoritesApi.add(cleanerId)
+      }
+    } catch {
+      setFavoriteCleanerIds((prev) => {
+        const next = new Set(prev)
+        if (currentlyFavorite) next.add(cleanerId)
+        else next.delete(cleanerId)
+        return next
+      })
+      toast.error('Could not update favourites. Please try again.')
+    }
+  }
 
   return (
     <>
@@ -294,6 +325,20 @@ export default function ClientCleanersPage() {
                         <span className="text-xs font-medium text-slate-500">/hr</span>
                       </p>
                     </div>
+                    <div className="mt-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => toggleFavorite(cleaner.id)}
+                        aria-label={favoriteCleanerIds.has(cleaner.id) ? 'Remove from favourites' : 'Add to favourites'}
+                        className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition ${
+                          favoriteCleanerIds.has(cleaner.id)
+                            ? 'border-rose-300 bg-rose-50 text-rose-600'
+                            : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${favoriteCleanerIds.has(cleaner.id) ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
 
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-500">
                       {cleaner.city && (
@@ -388,6 +433,18 @@ export default function ClientCleanersPage() {
                       {formatCurrency(Number(cleaner.hourly_rate ?? 0))}
                       <span className="text-xs font-medium text-slate-500">/hr</span>
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite(cleaner.id)}
+                      aria-label={favoriteCleanerIds.has(cleaner.id) ? 'Remove from favourites' : 'Add to favourites'}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition ${
+                        favoriteCleanerIds.has(cleaner.id)
+                          ? 'border-rose-300 bg-rose-50 text-rose-600'
+                          : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Heart className={`h-4 w-4 ${favoriteCleanerIds.has(cleaner.id) ? 'fill-current' : ''}`} />
+                    </button>
                     <div className="flex items-center gap-1.5">
                       <Link
                         href={`/client/cleaners/${cleaner.id}`}
