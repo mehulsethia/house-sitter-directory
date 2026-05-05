@@ -649,10 +649,13 @@ export default function BookingFlowPage() {
 
   async function refreshVerificationStatus() {
     try {
-      const authUserRes = await createClient().auth.getUser()
+      const [authUserRes, clientRes] = await Promise.all([
+        createClient().auth.getUser(),
+        clientsApi.me().catch(() => null),
+      ])
       const authUser = authUserRes.data.user
       const nextEmailVerified = Boolean(authUser?.email_confirmed_at)
-      const nextPhoneVerified = Boolean(authUser?.phone_confirmed_at)
+      const nextPhoneVerified = Boolean((clientRes as any)?.data?.user?.phone_verified_at)
       setEmailVerified(nextEmailVerified)
       setPhoneVerified(nextPhoneVerified)
       return { emailVerified: nextEmailVerified, phoneVerified: nextPhoneVerified }
@@ -710,7 +713,7 @@ export default function BookingFlowPage() {
         }
         const authUser = (authUserRes as any)?.data?.user
         setEmailVerified(Boolean(authUser?.email_confirmed_at))
-        setPhoneVerified(Boolean(authUser?.phone_confirmed_at))
+        setPhoneVerified(Boolean(user?.phone_verified_at))
       })
       .catch(() => toast.error('Failed to load data'))
       .finally(() => { setLoading(false) })

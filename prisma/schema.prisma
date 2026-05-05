@@ -15,6 +15,7 @@ model User {
   email     String    @unique
   name      String
   phone     String?
+  phoneVerifiedAt DateTime? @map("phone_verified_at") @db.Timestamptz(6)
   role      String    // 'client' | 'cleaner' | 'admin'
   avatarUrl String?   @map("avatar_url")
   isActive  Boolean   @default(true) @map("is_active")
@@ -32,8 +33,25 @@ model User {
   resolvedDisputes    Dispute[]          @relation("DisputeResolvedBy")
   approvedCleaners    Cleaner[]          @relation("CleanerApprovedBy")
   issuedStrikes       CleanerStrike[]    @relation("StrikeIssuedBy")
+  phoneVerificationEvents PhoneVerificationEvent[]
 
   @@map("users")
+  @@schema("public")
+}
+
+model PhoneVerificationEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  phone     String
+  eventType String   @map("event_type")
+  success   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([phone, eventType, createdAt])
+  @@index([userId, createdAt])
+  @@map("phone_verification_events")
   @@schema("public")
 }
 

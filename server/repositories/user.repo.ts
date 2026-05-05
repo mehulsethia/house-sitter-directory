@@ -14,7 +14,7 @@ export const userRepo = {
       create: { id, email, name, role },
     }),
 
-  update: (id: string, data: { name?: string; phone?: string | null; avatarUrl?: string | null }) =>
+  update: (id: string, data: { name?: string; phone?: string | null; avatarUrl?: string | null; phoneVerifiedAt?: Date | null }) =>
     db.user.update({ where: { id }, data }),
 
   softDelete: (id: string) =>

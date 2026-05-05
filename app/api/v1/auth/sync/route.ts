@@ -7,6 +7,7 @@ import { loopsEmailService } from '@/server/services/loops-email.service'
 import { pushInAppNotification } from '@/server/services/in-app-notification.service'
 import { ok } from '@/server/response'
 import { syncUserSchema } from '@/server/schemas/user.schema'
+import { isLikelyE164, normalizePhoneE164 } from '@/server/lib/phone'
 
 export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   const body = await req.json().catch(() => ({}))
@@ -14,10 +15,12 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   const data = parsed.success ? parsed.data : {}
 
   // Keep user profile fields in sync for newly-created sessions.
-  if (data.name || data.phone) {
+  const normalizedPhone = data.phone ? normalizePhoneE164(data.phone) : undefined
+  if (data.name || normalizedPhone) {
     await userRepo.update(user.id, {
       ...(data.name ? { name: data.name } : {}),
-      ...(data.phone ? { phone: data.phone } : {}),
+      ...(normalizedPhone && isLikelyE164(normalizedPhone) ? { phone: normalizedPhone } : {}),
+      ...(normalizedPhone && isLikelyE164(normalizedPhone) && normalizedPhone !== (user.phone ?? null) ? { phoneVerifiedAt: null } : {}),
     })
   }
 

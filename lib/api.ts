@@ -192,6 +192,19 @@ export const usersApi = {
     request<APIResponse<UserRead>>('/users/me', { method: 'PATCH', body: JSON.stringify(body) }),
 }
 
+export const phoneVerificationApi = {
+  sendCode: (phone: string) =>
+    request<APIResponse<{ sent: boolean }>>('/phone-verification/send', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    }),
+  verifyCode: (phone: string, code: string) =>
+    request<APIResponse<{ verified: boolean }>>('/phone-verification/check', {
+      method: 'POST',
+      body: JSON.stringify({ phone, code }),
+    }),
+}
+
 // ---------------------------------------------------------------------------
 // Client Profile
 // ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { CreditCard, ShieldCheck } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
-import { bookingsApi, clientsApi, paymentsApi } from '@/lib/api'
+import { bookingsApi, clientsApi, paymentsApi, phoneVerificationApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -68,7 +68,6 @@ export default function ClientProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [emailVerified, setEmailVerified] = useState(false)
   const [phoneVerified, setPhoneVerified] = useState(false)
-  const [verifiedPhoneFromAuth, setVerifiedPhoneFromAuth] = useState('')
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
   const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
   const [phoneOtpCode, setPhoneOtpCode] = useState('')
@@ -109,8 +108,7 @@ export default function ClientProfilePage() {
           setAvatarUrl(user?.avatar_url ?? null)
           setSavedAddresses(loadedAddresses.sort((a, b) => Number(b.is_default) - Number(a.is_default)))
           setEmailVerified(Boolean(authUserRes.data.user?.email_confirmed_at))
-          setPhoneVerified(Boolean(authUserRes.data.user?.phone_confirmed_at))
-          setVerifiedPhoneFromAuth(Boolean(authUserRes.data.user?.phone_confirmed_at) ? (authUserRes.data.user?.phone ?? '') : '')
+          setPhoneVerified(Boolean(user?.phone_verified_at))
           setBookings(bookingRes.data?.items ?? [])
           setLoading(false)
         })
@@ -154,16 +152,9 @@ export default function ClientProfilePage() {
       const supabase = createClient()
       const currentAuth = await supabase.auth.getUser()
       const currentEmail = currentAuth.data.user?.email ?? ''
-      const currentPhone = currentAuth.data.user?.phone ?? ''
-      const currentPhoneVerified = Boolean(currentAuth.data.user?.phone_confirmed_at)
-      const currentVerifiedPhone = currentPhoneVerified ? currentPhone : ''
       if (email.trim() && email.trim() !== currentEmail) {
         await supabase.auth.updateUser({ email: email.trim() })
         toast.success('Verification email sent. Please verify your new email.')
-      }
-      if (phone.trim() && phone.trim() !== currentPhone) {
-        await supabase.auth.updateUser({ phone: phone.trim() })
-        toast.success('Verification SMS sent. Please verify your new phone number.')
       }
       const profilePayload: {
         name: string
@@ -177,8 +168,11 @@ export default function ClientProfilePage() {
         default_city: MVP_CITY,
         default_postcode: defaultPostcode ? normalizeCyprusPostcode(defaultPostcode) : null,
       }
-      if (currentVerifiedPhone) profilePayload.phone = currentVerifiedPhone
+      if (phone.trim()) profilePayload.phone = phone.trim()
       await clientsApi.updateMe(profilePayload)
+      if (!phoneVerified) {
+        toast.message('Phone is saved but not verified yet. Verify to complete account credentials.')
+      }
       toast.success('Profile updated.')
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to save profile.')
@@ -186,13 +180,6 @@ export default function ClientProfilePage() {
       setSaving(false)
     }
   }
-
-  useEffect(() => {
-    if (!phoneVerified || !verifiedPhoneFromAuth) return
-    if (verifiedPhoneFromAuth === phone) return
-    setPhone(verifiedPhoneFromAuth)
-    clientsApi.updateMe({ phone: verifiedPhoneFromAuth }).catch(() => null)
-  }, [phoneVerified, verifiedPhoneFromAuth])
 
   async function removeCard(paymentMethodId: string) {
     setRemovingCardId(paymentMethodId)
@@ -400,12 +387,7 @@ export default function ClientProfilePage() {
     }
     setSendingPhoneOtp(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone.trim(),
-        options: { shouldCreateUser: false },
-      })
-      if (error) throw error
+      await phoneVerificationApi.sendCode(phone.trim())
       toast.success('Verification code sent by SMS.')
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to send phone verification code.')
@@ -419,16 +401,8 @@ export default function ClientProfilePage() {
     if (!phoneOtpCode.trim()) return toast.error('Enter the verification code.')
     setVerifyingPhoneOtp(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.verifyOtp({
-        phone: phone.trim(),
-        token: phoneOtpCode.trim(),
-        type: 'sms',
-      })
-      if (error) throw error
-      const authUserRes = await supabase.auth.getUser()
-      setPhoneVerified(Boolean(authUserRes.data.user?.phone_confirmed_at))
-      setVerifiedPhoneFromAuth(authUserRes.data.user?.phone ?? '')
+      await phoneVerificationApi.verifyCode(phone.trim(), phoneOtpCode.trim())
+      setPhoneVerified(true)
       setPhoneOtpCode('')
       toast.success('Phone verified.')
     } catch (err: any) {

@@ -23,6 +23,7 @@ export interface UserRead {
   email: string
   name: string
   phone?: string
+  phone_verified_at?: string | null
   avatar_url?: string
   role: 'client' | 'cleaner' | 'admin'
   is_active: boolean

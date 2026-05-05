@@ -5,6 +5,7 @@ import { clientRepo } from '@/server/repositories/client.repo'
 import { userRepo } from '@/server/repositories/user.repo'
 import { ok, err } from '@/server/response'
 import { isCyprusPostcode, isMvpCity, MVP_CITY, MVP_COUNTRY_CODE } from '@/lib/location-policy'
+import { isLikelyE164, normalizePhoneE164 } from '@/server/lib/phone'
 
 const updateClientMeSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
@@ -34,11 +35,16 @@ export const PATCH = requireClient(async (req: NextRequest, _ctx, user) => {
   if (!parsed.success) return err(parsed.error.message, 422)
 
   const data = parsed.data
+  const normalizedPhone = data.phone !== undefined ? normalizePhoneE164(data.phone) : undefined
+  if (normalizedPhone !== undefined && !isLikelyE164(normalizedPhone)) {
+    return err('Phone must be in international format, e.g. +447911123456.', 422)
+  }
 
   if (data.name !== undefined || data.phone !== undefined) {
     await userRepo.update(user.id, {
       ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+      ...(data.phone !== undefined ? { phone: normalizedPhone } : {}),
+      ...(data.phone !== undefined && normalizedPhone !== (user.phone ?? null) ? { phoneVerifiedAt: null } : {}),
     })
   }
 
