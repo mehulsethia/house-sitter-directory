@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Check, ChevronRight } from 'lucide-react'
-import { cleanersApi, availabilityApi, paymentsApi } from '@/lib/api'
+import { cleanersApi, availabilityApi, paymentsApi, usersApi, phoneVerificationApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/phone-input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
@@ -277,6 +278,11 @@ function CleanerOnboardingPageContent() {
 
   const [transportMode, setTransportMode] = useState('')
   const [pickupLocation, setPickupLocation] = useState('')
+  const [phone, setPhone] = useState('')
+  const [phoneVerified, setPhoneVerified] = useState(false)
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
+  const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
+  const [phoneOtpCode, setPhoneOtpCode] = useState('')
   const [idType, setIdType] = useState('')
   const [idFileName, setIdFileName] = useState('')
   const [idFileUrl, setIdFileUrl] = useState('')
@@ -311,6 +317,7 @@ function CleanerOnboardingPageContent() {
       const onboarding = meRes.data?.onboarding
       if (!cleanerData || !onboarding) throw new Error('Failed to load onboarding data.')
       const c = cleanerData as any
+      const user = c.user ?? {}
 
       setCleaner(cleanerData)
       setProgress(onboarding)
@@ -326,6 +333,8 @@ function CleanerOnboardingPageContent() {
 
       setTransportMode(c.transport_mode ?? c.transportMode ?? '')
       setPickupLocation(c.transport_pickup_location ?? c.transportPickupLocation ?? '')
+      setPhone(user.phone ?? '')
+      setPhoneVerified(Boolean(user.phone_verified_at))
       setIdType(c.id_type ?? c.idType ?? '')
       setIdFileName(c.id_file_name ?? c.idFileName ?? '')
       setIdFileUrl(c.id_file_url ?? c.idFileUrl ?? '')
@@ -468,6 +477,8 @@ function CleanerOnboardingPageContent() {
     if (workEligibilityAnswer !== true) return toast.error('You must be legally allowed to work independently in Cyprus.')
     if (!workEligibilityConfirmed) return toast.error('Please confirm legal work eligibility.')
     if (!termsAccepted) return toast.error('Please accept terms and platform rules.')
+    if (!phone.trim()) return toast.error('Phone number is required.')
+    if (!phoneVerified) return toast.error('Please verify your phone number to continue.')
 
     setSaving(true)
     try {
@@ -490,6 +501,40 @@ function CleanerOnboardingPageContent() {
       toast.error(err.message ?? 'Failed to save step 2.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function sendCleanerPhoneOtp() {
+    if (!phone.trim()) {
+      toast.error('Enter your phone number first.')
+      return
+    }
+    setSendingPhoneOtp(true)
+    try {
+      await usersApi.updateMe({ phone: phone.trim() })
+      await phoneVerificationApi.sendCode(phone.trim())
+      setPhoneVerified(false)
+      toast.success('Verification code sent by SMS.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to send verification code.')
+    } finally {
+      setSendingPhoneOtp(false)
+    }
+  }
+
+  async function verifyCleanerPhoneOtp() {
+    if (!phone.trim()) return toast.error('Phone number is required.')
+    if (!phoneOtpCode.trim()) return toast.error('Enter the verification code.')
+    setVerifyingPhoneOtp(true)
+    try {
+      await phoneVerificationApi.verifyCode(phone.trim(), phoneOtpCode.trim())
+      setPhoneVerified(true)
+      setPhoneOtpCode('')
+      toast.success('Phone verified.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Invalid verification code.')
+    } finally {
+      setVerifyingPhoneOtp(false)
     }
   }
 
@@ -785,6 +830,36 @@ function CleanerOnboardingPageContent() {
                   />
                 </div>
               )}
+
+              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                <Label className="text-sm font-medium">Phone Number <span className="text-red-500">*</span></Label>
+                <p className="mt-1 text-xs text-gray-500">
+                  This must be verified during onboarding before your profile can be reviewed.
+                </p>
+                <PhoneInput value={phone} onChange={setPhone} className="mt-2" />
+                <p className={`mt-2 text-xs font-medium ${phoneVerified ? 'text-emerald-700' : 'text-amber-700'}`}>
+                  {phoneVerified ? 'Verified' : 'Not verified'}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={sendCleanerPhoneOtp} loading={sendingPhoneOtp} className="h-8 px-3 text-xs">
+                    Verify now
+                  </Button>
+                </div>
+                {!phoneVerified && (
+                  <div className="mt-2 flex gap-2">
+                    <Input
+                      value={phoneOtpCode}
+                      onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                      placeholder="Enter OTP code"
+                      inputMode="numeric"
+                      className="max-w-[180px]"
+                    />
+                    <Button type="button" variant="outline" onClick={verifyCleanerPhoneOtp} loading={verifyingPhoneOtp} className="h-10 px-3 text-xs">
+                      Confirm Code
+                    </Button>
+                  </div>
+                )}
+              </div>
 
               <div>
                 <Label className="text-sm font-medium">ID Type <span className="text-red-500">*</span></Label>

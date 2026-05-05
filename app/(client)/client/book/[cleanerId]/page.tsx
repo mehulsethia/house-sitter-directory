@@ -6,7 +6,7 @@ import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Clock, ExternalLink, Lock, Shield, Star, X } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { cleanersApi, bookingsApi, availabilityApi, clientsApi, paymentsApi } from '@/lib/api'
+import { cleanersApi, bookingsApi, availabilityApi, clientsApi, paymentsApi, phoneVerificationApi } from '@/lib/api'
 import { FormPageSkeleton } from '@/components/page-skeletons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -608,6 +608,9 @@ export default function BookingFlowPage() {
   const [submitting, setSubmitting] = useState(false)
   const [emailVerified, setEmailVerified] = useState(false)
   const [phoneVerified, setPhoneVerified] = useState(false)
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
+  const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
+  const [phoneOtpCode, setPhoneOtpCode] = useState('')
   const [transportAgreementConfirmed, setTransportAgreementConfirmed] = useState(false)
   const [suppliesAgreementConfirmed, setSuppliesAgreementConfirmed] = useState(false)
   const hasHydratedDraftRef = useRef(false)
@@ -662,6 +665,45 @@ export default function BookingFlowPage() {
     } catch {
       // keep current values if auth refresh fails
       return { emailVerified, phoneVerified }
+    }
+  }
+
+  async function sendPhoneVerificationOtpInline() {
+    if (!phone.trim()) {
+      toast.error('Enter your phone number first.')
+      return
+    }
+    setSendingPhoneOtp(true)
+    try {
+      await clientsApi.updateMe({ phone: phone.trim() })
+      await phoneVerificationApi.sendCode(phone.trim())
+      toast.success('Verification code sent by SMS.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to send verification code.')
+    } finally {
+      setSendingPhoneOtp(false)
+    }
+  }
+
+  async function verifyPhoneOtpInline() {
+    if (!phone.trim()) {
+      toast.error('Phone number is required.')
+      return
+    }
+    if (!phoneOtpCode.trim()) {
+      toast.error('Enter the verification code.')
+      return
+    }
+    setVerifyingPhoneOtp(true)
+    try {
+      await phoneVerificationApi.verifyCode(phone.trim(), phoneOtpCode.trim())
+      await refreshVerificationStatus()
+      setPhoneOtpCode('')
+      toast.success('Phone verified.')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Invalid verification code.')
+    } finally {
+      setVerifyingPhoneOtp(false)
     }
   }
 
@@ -1765,8 +1807,8 @@ export default function BookingFlowPage() {
                       </ul>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {!phoneVerified && (
-                          <Button type="button" variant="outline" onClick={() => router.push('/client/profile')} className="h-8 px-3 text-xs">
-                            Verify phone to continue
+                          <Button type="button" variant="outline" onClick={sendPhoneVerificationOtpInline} loading={sendingPhoneOtp} className="h-8 px-3 text-xs">
+                            Verify now
                           </Button>
                         )}
                         {!emailVerified && (
@@ -1775,7 +1817,21 @@ export default function BookingFlowPage() {
                           </Button>
                         )}
                       </div>
-                    </div>
+                      {!phoneVerified && (
+                        <div className="mt-2 flex gap-2">
+                          <Input
+                            value={phoneOtpCode}
+                            onChange={(event) => setPhoneOtpCode(event.target.value.replace(/\D/g, '').slice(0, 8))}
+                            placeholder="Enter OTP code"
+                            inputMode="numeric"
+                            className="max-w-[180px]"
+                          />
+                          <Button type="button" variant="outline" onClick={verifyPhoneOtpInline} loading={verifyingPhoneOtp} className="h-10 px-3 text-xs">
+                            Confirm Code
+                          </Button>
+                        </div>
+                      )}
+                  </div>
                   )}
                   <StripePaymentForm
                     booking={booking}

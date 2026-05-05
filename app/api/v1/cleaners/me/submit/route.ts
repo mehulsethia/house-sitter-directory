@@ -11,6 +11,10 @@ import { db } from '@/server/db'
 import { ok, err } from '@/server/response'
 
 export const POST = requireCleaner(async (_req, _ctx, user) => {
+  if (!user.phone || !user.phoneVerifiedAt) {
+    return err('Phone verification is required before submitting for approval.', 400)
+  }
+
   const cleaner = await cleanerRepo.findByUserId(user.id)
   if (!cleaner) return err('Cleaner profile not found.', 404)
   const shouldNotifyAdmin = cleaner.status !== 'pending' || !cleaner.profileComplete
