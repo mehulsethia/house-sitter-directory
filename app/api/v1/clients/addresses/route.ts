@@ -82,9 +82,11 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     return ok(created, 201)
   } catch (e: any) {
     const message = String(e?.message ?? '')
+    const debugMessage = message ? message.slice(0, 260) : 'unknown_error'
     console.error('[clients/addresses][POST] save failed', {
       userId: user.id,
-      message,
+      message: debugMessage,
+      stack: e?.stack ? String(e.stack).slice(0, 800) : undefined,
     })
     if (message.includes('duplicate key')) {
       return err('This address is already saved.', 409)
@@ -101,6 +103,6 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     if (message.includes('relation') && message.includes('client_addresses') && message.includes('does not exist')) {
       return err('Address setup is incomplete. Please try again in 1 minute.', 503)
     }
-    return err('Unable to save this address right now. Please try again.', 500)
+    return err(`Unable to save this address right now. Please try again. [${debugMessage}]`, 500)
   }
 })
