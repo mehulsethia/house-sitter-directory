@@ -595,7 +595,7 @@ function CleanerProfilePageContent() {
 
         <Card className="border-slate-200">
           <CardContent className="px-4 pb-4 pt-6 md:px-6 md:pb-6 md:pt-6">
-            <div className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="mb-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
               {([
                 ['overview', 'Overview'],
                 ['availability', 'Availability'],
@@ -773,7 +773,7 @@ function CleanerProfilePageContent() {
                     <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2">
                       <p className="text-xs font-medium text-slate-700">Current file</p>
                       {idFileUrl ? (
-                        <div className="mt-2 flex items-center gap-3">
+                      <div className="mt-2 flex flex-wrap items-center gap-3">
                           {isImageDocumentRef(idFileUrl, idFileName) ? (
                             <a href={idFileUrl} target="_blank" rel="noreferrer" className="block">
                               <img
@@ -942,7 +942,7 @@ function CleanerProfilePageContent() {
                               })}
                             </p>
                           </div>
-                          <div className="text-right">
+                        <div className="w-full text-left sm:w-auto sm:text-right">
                             <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
                             <p className="text-xs text-slate-500">
                               Payment: {String(b.payment?.status ?? 'pending').replace(/_/g, ' ')}

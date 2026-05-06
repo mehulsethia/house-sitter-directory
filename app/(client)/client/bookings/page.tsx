@@ -222,6 +222,7 @@ export default function ClientBookingsPage() {
                     && (booking.status !== 'pending' || isPaymentAuthorized(booking.payment?.status))
                   const canComplete = booking.status === 'in_progress'
                   const canChat = isChatActiveForBooking(booking)
+                  const canContinuePayment = booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)
 
                   return (
                     <article
@@ -256,6 +257,14 @@ export default function ClientBookingsPage() {
                         >
                           View details
                         </Link>
+                        {canContinuePayment && (
+                          <Link
+                            href={`/client/book/${booking.cleaner_id}?continue=1`}
+                            className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
+                          >
+                            Continue payment
+                          </Link>
+                        )}
 
                         {canChat && (
                           <Link
@@ -298,7 +307,7 @@ export default function ClientBookingsPage() {
                         {booking.status === 'expired' && (
                           <>
                             <Link
-                              href={`/client/book/${booking.cleaner_id}`}
+                              href={`/client/book/${booking.cleaner_id}?fresh=1`}
                               className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
                             >
                               Book again

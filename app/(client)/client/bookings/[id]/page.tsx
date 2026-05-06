@@ -34,6 +34,10 @@ const SERVICE_LABELS: Record<string, string> = {
   move_in: 'Move-in Clean',
 }
 
+function isPaymentAuthorized(paymentStatus?: string | null) {
+  return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
+}
+
 export default function ClientBookingDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -349,6 +353,11 @@ export default function ClientBookingDetailPage() {
                       Authorise card
                     </Button>
                   )}
+                  {booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status) && (
+                    <Button variant="outline" onClick={() => router.push(`/client/book/${booking.cleaner_id}?continue=1`)}>
+                      Continue payment in booking flow
+                    </Button>
+                  )}
                   {booking.status === 'pending' && (
                     <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
                       Cancel request
@@ -356,7 +365,7 @@ export default function ClientBookingDetailPage() {
                   )}
                   {booking.status === 'expired' && (
                     <>
-                      <Button onClick={() => router.push(`/client/book/${booking.cleaner_id}`)}>
+                      <Button onClick={() => router.push(`/client/book/${booking.cleaner_id}?fresh=1`)}>
                         Book again
                       </Button>
                       <Button variant="outline" onClick={() => router.push('/client/cleaners')}>

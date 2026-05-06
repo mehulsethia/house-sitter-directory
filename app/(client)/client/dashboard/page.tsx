@@ -346,7 +346,7 @@ export default function ClientDashboardPage() {
                         <div className="shrink-0 text-left sm:text-right">
                           <p className="text-xs font-semibold text-slate-700">{formatCurrency(favorite.hourly_rate)}/hr</p>
                           <Link
-                            href={`/client/book/${favorite.cleaner_id}`}
+                            href={`/client/book/${favorite.cleaner_id}?fresh=1`}
                             className="mt-1 inline-flex h-7 items-center rounded-full bg-[#0d4bc9] px-2.5 text-[11px] font-semibold text-white hover:bg-[#0a3ea8]"
                           >
                             Book

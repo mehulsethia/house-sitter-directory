@@ -597,6 +597,7 @@ export default function BookingFlowPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const continueDraft = searchParams.get('continue') === '1'
+  const forceFresh = searchParams.get('fresh') === '1'
 
   const [cleaner, setCleaner] = useState<CleanerRead | null>(null)
   const [clientProfile, setClientProfile] = useState<ClientProfileRead | null>(null)
@@ -651,6 +652,17 @@ export default function BookingFlowPage() {
   const [suppliesAgreementConfirmed, setSuppliesAgreementConfirmed] = useState(false)
   const hasHydratedDraftRef = useRef(false)
   const draftStorageKey = `maidhive:booking-flow-draft:${cleanerId}`
+
+  function getDateKeyInAppTimezone(value: string): string {
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return ''
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: APP_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(parsed)
+  }
 
   function clearSessionDraft() {
     if (typeof window === 'undefined') return
@@ -801,6 +813,11 @@ export default function BookingFlowPage() {
   useEffect(() => {
     if (loading || hasHydratedDraftRef.current || typeof window === 'undefined') return
     hasHydratedDraftRef.current = true
+    if (forceFresh) {
+      clearSessionDraft()
+      return
+    }
+
     const raw = window.sessionStorage.getItem(draftStorageKey)
     if (!raw) return
 
@@ -808,9 +825,12 @@ export default function BookingFlowPage() {
       const parsed = JSON.parse(raw) as BookingFlowDraft
       if (parsed.version !== BOOKING_FLOW_DRAFT_VERSION) return
 
+      const restoredSlot = normalizeToIsoDatetime(parsed.selectedSlot || '') ?? ''
+      const restoredDate = parsed.date || (restoredSlot ? getDateKeyInAppTimezone(restoredSlot) : '')
+
       setDuration(parsed.duration || 1)
-      setDate(parsed.date || '')
-      setSelectedSlot(normalizeToIsoDatetime(parsed.selectedSlot || '') ?? '')
+      setDate(restoredDate)
+      setSelectedSlot(restoredSlot)
       setAddressMode(parsed.addressMode === 'saved' ? 'saved' : 'new')
       setSelectedAddressId(parsed.selectedAddressId || '')
       setAddress(parsed.address || '')
@@ -834,8 +854,6 @@ export default function BookingFlowPage() {
           .then(async (res) => {
             const restoredBooking = res.data
             if (!restoredBooking) return
-            const restoredDate = parsed.date
-            const restoredSlot = normalizeToIsoDatetime(parsed.selectedSlot || '')
             if (restoredDate && restoredSlot) {
               const slotList = await availabilityApi.getSlots(cleanerId, restoredDate, parsed.duration || 1)
               const restoredSlotMs = new Date(restoredSlot).getTime()
@@ -891,7 +909,7 @@ export default function BookingFlowPage() {
     } catch {
       clearSessionDraft()
     }
-  }, [loading, draftStorageKey, continueDraft])
+  }, [loading, draftStorageKey, continueDraft, forceFresh])
 
   useEffect(() => {
     function onFocus() {
@@ -917,6 +935,7 @@ export default function BookingFlowPage() {
         })
         if (!stillAvailable) {
           setSelectedSlot('')
+          toast.error('This time is no longer available. Please choose another time.')
         }
       })
       .catch(() => setSlots([]))
@@ -2010,7 +2029,7 @@ export default function BookingFlowPage() {
 
         {/* Sidebar — show on steps 1-3 */}
         {step < 4 && (
-          <div className="hidden lg:block">
+          <div className="order-last lg:order-none">
             <BookingSummary
               cleaner={cleaner}
               duration={duration}

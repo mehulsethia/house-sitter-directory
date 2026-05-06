@@ -755,9 +755,9 @@ export default function ClientProfilePage() {
                     <div className="mt-3 space-y-2">
                       {savedAddresses.map((entry) => (
                         <div key={entry.id} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
                             <p className="font-medium">{entry.label?.trim() || 'Saved address'} {entry.is_default ? '(Default)' : ''}</p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               {!entry.is_default && (
                                 <Button
                                   type="button"
@@ -816,7 +816,7 @@ export default function ClientProfilePage() {
                                 />
                                 Set as default address
                               </label>
-                              <div className="md:col-span-2 flex justify-end gap-2">
+                              <div className="md:col-span-2 flex flex-col gap-2 sm:flex-row sm:justify-end">
                                 <Button type="button" variant="outline" onClick={cancelEditAddress} disabled={updatingAddress}>
                                   Cancel
                                 </Button>
@@ -888,7 +888,7 @@ export default function ClientProfilePage() {
 
             {tab === 'payments' && (
               <div className="mt-1 rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Payment Method</p>
                     <p className="mt-1 text-xs text-slate-600">Add a card before booking, or add one during checkout.</p>
