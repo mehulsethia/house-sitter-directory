@@ -39,6 +39,10 @@ export function parsePhone(full: string): { dialCode: string; number: string } {
       return { dialCode: c.code, number: trimmed.slice(c.code.length) }
     }
   }
+  const genericMatch = trimmed.match(/^(\+\d{1,4})(.*)$/)
+  if (genericMatch) {
+    return { dialCode: genericMatch[1], number: genericMatch[2] ?? '' }
+  }
   return { dialCode: '+357', number: trimmed.replace(/^\+/, '') }
 }
 
@@ -84,7 +88,8 @@ export function PhoneInput({ value, onChange, className, placeholder }: PhoneInp
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const selected = COUNTRY_CODES.find(c => c.code === dialCode) ?? COUNTRY_CODES[0]
+  const selected = COUNTRY_CODES.find(c => c.code === dialCode) ?? { code: dialCode, country: 'ZZ', flag: '🌐', label: 'Custom' }
+  const selectedLabel = COUNTRY_CODES.find(c => c.code === dialCode)?.label ?? 'Custom'
 
   const filtered = search.trim()
     ? COUNTRY_CODES.filter(c =>
@@ -106,18 +111,34 @@ export function PhoneInput({ value, onChange, className, placeholder }: PhoneInp
     onChange(formatFullPhone(dialCode, val))
   }
 
+  function handleDialCodeInput(val: string) {
+    const sanitized = `+${val.replace(/[^\d]/g, '').slice(0, 4)}`
+    setDialCode(sanitized === '+' ? '+357' : sanitized)
+    onChange(formatFullPhone(sanitized === '+' ? '+357' : sanitized, number))
+  }
+
   return (
     <div ref={ref} className={cn('relative flex', className)}>
-      {/* Country code button */}
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex h-10 items-center gap-1 rounded-l-xl border border-r-0 border-input bg-slate-50 px-2.5 text-sm transition-colors hover:bg-slate-100 shrink-0"
-      >
-        <span className="text-base leading-none">{selected.flag}</span>
-        <span className="text-slate-700 font-medium">{selected.code}</span>
-        <ChevronDown className={cn('h-3.5 w-3.5 text-slate-400 transition-transform', open && 'rotate-180')} />
-      </button>
+      {/* Country code selector + manual code */}
+      <div className="flex h-10 items-center gap-1 rounded-l-xl border border-r-0 border-input bg-slate-50 px-2 text-sm shrink-0">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="inline-flex items-center gap-1 rounded-md px-1 py-1 transition-colors hover:bg-slate-100"
+          title={selectedLabel}
+        >
+          <span className="text-base leading-none">{selected.flag}</span>
+          <ChevronDown className={cn('h-3.5 w-3.5 text-slate-400 transition-transform', open && 'rotate-180')} />
+        </button>
+        <input
+          type="text"
+          value={dialCode}
+          onChange={(e) => handleDialCodeInput(e.target.value)}
+          className="w-[64px] bg-transparent text-sm font-medium text-slate-700 outline-none"
+          aria-label="Dial code"
+          placeholder="+357"
+        />
+      </div>
 
       {/* Phone number input */}
       <input

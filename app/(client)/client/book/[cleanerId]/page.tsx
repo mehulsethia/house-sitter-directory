@@ -597,6 +597,7 @@ export default function BookingFlowPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const continueDraft = searchParams.get('continue') === '1'
+  const continueBookingId = searchParams.get('bookingId')?.trim() || ''
   const forceFresh = searchParams.get('fresh') === '1'
 
   const [cleaner, setCleaner] = useState<CleanerRead | null>(null)
@@ -667,6 +668,58 @@ export default function BookingFlowPage() {
   function clearSessionDraft() {
     if (typeof window === 'undefined') return
     window.sessionStorage.removeItem(draftStorageKey)
+  }
+
+  async function resumeExistingBooking(bookingId: string, restoredDate: string, restoredSlot: string, restoredDuration: number) {
+    const restoredBooking = (await bookingsApi.getById(bookingId)).data
+    if (!restoredBooking) return
+
+    if (restoredDate && restoredSlot) {
+      const slotList = await availabilityApi.getSlots(cleanerId, restoredDate, restoredDuration || 1)
+      const restoredSlotMs = new Date(restoredSlot).getTime()
+      const stillAvailable = (slotList.data ?? []).some((slot) => {
+        const slotIso = normalizeToIsoDatetime(slot.start)
+        return slotIso && new Date(slotIso).getTime() === restoredSlotMs && !slot.disabled
+      })
+      if (!stillAvailable) {
+        toast.error('This time is no longer available. Please choose another time.')
+        setBooking(null)
+        setClientSecret(null)
+        setStep(1)
+        setSelectedSlot('')
+        return
+      }
+    }
+
+    setBooking(restoredBooking)
+    if (isPaymentAuthorizedStatus(restoredBooking.payment?.status)) {
+      clearSessionDraft()
+      setStep(4)
+      return
+    }
+
+    try {
+      const intentRes = await paymentsApi.createIntent(restoredBooking.id)
+      const secret = intentRes.data?.client_secret ?? null
+      if (secret) {
+        setClientSecret(secret)
+        setStep(3)
+        return
+      }
+    } catch {
+      // fall through to a final status refresh below
+    }
+
+    const latest = await bookingsApi.getById(restoredBooking.id)
+    const latestBooking = latest.data
+    if (!latestBooking) return
+    setBooking(latestBooking)
+    if (isPaymentAuthorizedStatus(latestBooking.payment?.status)) {
+      clearSessionDraft()
+      setStep(4)
+      return
+    }
+    setStep(2)
   }
 
   function buildSessionDraft(): BookingFlowDraft {
@@ -819,7 +872,25 @@ export default function BookingFlowPage() {
     }
 
     const raw = window.sessionStorage.getItem(draftStorageKey)
-    if (!raw) return
+    if (!raw) {
+      if (continueDraft && continueBookingId) {
+        bookingsApi.getById(continueBookingId)
+          .then(async (res) => {
+            const b = res.data
+            if (!b) return
+            const restoredSlot = normalizeToIsoDatetime(b.scheduled_start) ?? ''
+            const restoredDate = restoredSlot ? getDateKeyInAppTimezone(restoredSlot) : ''
+            setDuration(Number(b.duration_hours) || 1)
+            setDate(restoredDate)
+            setSelectedSlot(restoredSlot)
+            await resumeExistingBooking(continueBookingId, restoredDate, restoredSlot, Number(b.duration_hours) || 1)
+          })
+          .catch(() => {
+            toast.error('Could not resume this booking. Please start a new booking.')
+          })
+      }
+      return
+    }
 
     try {
       const parsed = JSON.parse(raw) as BookingFlowDraft
@@ -846,61 +917,14 @@ export default function BookingFlowPage() {
       setNotes(parsed.notes || '')
       setSaveAddressForLater(Boolean(parsed.saveAddressForLater))
       const requestedStep = Math.min(Math.max(Number(parsed.step || 1), 1), 3)
-      const canResumeExistingBooking = Boolean(parsed.bookingId && continueDraft)
+      const targetBookingId = continueBookingId || parsed.bookingId || ''
+      const canResumeExistingBooking = Boolean(targetBookingId && continueDraft)
       setStep(requestedStep === 3 && !canResumeExistingBooking ? 2 : requestedStep)
 
-      if (canResumeExistingBooking && parsed.bookingId) {
-        bookingsApi.getById(parsed.bookingId)
-          .then(async (res) => {
-            const restoredBooking = res.data
-            if (!restoredBooking) return
-            if (restoredDate && restoredSlot) {
-              const slotList = await availabilityApi.getSlots(cleanerId, restoredDate, parsed.duration || 1)
-              const restoredSlotMs = new Date(restoredSlot).getTime()
-              const stillAvailable = (slotList.data ?? []).some((slot) => {
-                const slotIso = normalizeToIsoDatetime(slot.start)
-                return slotIso && new Date(slotIso).getTime() === restoredSlotMs && !slot.disabled
-              })
-              if (!stillAvailable) {
-                toast.error('This time is no longer available. Please choose another time.')
-                setBooking(null)
-                setClientSecret(null)
-                setStep(1)
-                return
-              }
-            }
-            setBooking(restoredBooking)
-            if (isPaymentAuthorizedStatus(restoredBooking.payment?.status)) {
-              clearSessionDraft()
-              setStep(4)
-              return
-            }
-
-            try {
-              const intentRes = await paymentsApi.createIntent(restoredBooking.id)
-              const secret = intentRes.data?.client_secret ?? null
-              if (secret) {
-                setClientSecret(secret)
-                setStep(3)
-                return
-              }
-            } catch {
-              // fall through to a final status refresh below
-            }
-
-            const latest = await bookingsApi.getById(restoredBooking.id)
-            const latestBooking = latest.data
-            if (!latestBooking) return
-            setBooking(latestBooking)
-            if (isPaymentAuthorizedStatus(latestBooking.payment?.status)) {
-              clearSessionDraft()
-              setStep(4)
-              return
-            }
-            setStep(2)
-          })
+      if (canResumeExistingBooking && targetBookingId) {
+        resumeExistingBooking(targetBookingId, restoredDate, restoredSlot, parsed.duration || 1)
           .catch(() => {
-            // stale draft booking id; keep local form draft only
+            toast.error('Could not resume this booking. Please start a new booking.')
           })
       } else if (parsed.bookingId && !continueDraft) {
         setBooking(null)
@@ -909,7 +933,7 @@ export default function BookingFlowPage() {
     } catch {
       clearSessionDraft()
     }
-  }, [loading, draftStorageKey, continueDraft, forceFresh])
+  }, [loading, draftStorageKey, continueDraft, continueBookingId, forceFresh])
 
   useEffect(() => {
     function onFocus() {
