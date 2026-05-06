@@ -481,7 +481,15 @@ export default function ClientProfilePage() {
       setChangeEmailModalOpen(false)
       setNewEmail('')
     } catch (err: any) {
-      toast.error(err.message ?? 'Failed to request email change.')
+      const rawMessage = String(err?.message ?? '')
+      const normalized = rawMessage.toLowerCase()
+      if (normalized.includes('error sending email change email')) {
+        toast.error('Email change verification is not configured in SMTP templates yet. Please contact support.')
+      } else if (normalized.includes('rate limit')) {
+        toast.error('Too many email requests sent. Please wait a few minutes and try again.')
+      } else {
+        toast.error(rawMessage || 'Failed to request email change.')
+      }
     } finally {
       setChangingEmail(false)
     }
