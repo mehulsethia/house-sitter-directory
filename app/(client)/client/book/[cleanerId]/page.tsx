@@ -1052,16 +1052,14 @@ export default function BookingFlowPage() {
     return issues
   }, [emailVerified, phoneVerified, address, city, postcode])
 
-  const missingProfileIdentityItems = useMemo(() => {
+  const missingProfileRequiredItems = useMemo(() => {
     const issues: string[] = []
     if (!firstName.trim()) issues.push('First name')
     if (!lastName.trim()) issues.push('Last name')
     if (!email.trim()) issues.push('Email')
     if (!phone.trim()) issues.push('Phone number')
-    if (!emailVerified) issues.push('Verified email')
-    if (!phoneVerified) issues.push('Verified phone number')
     return issues
-  }, [firstName, lastName, email, phone, emailVerified, phoneVerified])
+  }, [firstName, lastName, email, phone])
 
   function applySavedAddress(addressId: string) {
     const selected = savedAddresses.find((entry) => entry.id === addressId)
@@ -1235,8 +1233,8 @@ export default function BookingFlowPage() {
       if (!selectedSlot) { toast.error('Please select a time slot.'); return }
       setStep(2)
     } else if (step === 2) {
-      if (missingProfileIdentityItems.length > 0) {
-        toast.error('Please complete your profile details to continue.')
+      if (missingProfileRequiredItems.length > 0) {
+        toast.error('Please complete your name, email, and phone number to continue.')
         return
       }
       if (addressMode === 'saved' && !selectedAddressId) { toast.error('Select a saved address or add a new one.'); return }
@@ -1610,8 +1608,8 @@ export default function BookingFlowPage() {
                     <Button type="button" variant="outline" className="h-8 px-3 text-xs" onClick={() => router.push('/client/profile')}>
                       Edit in profile
                     </Button>
-                    {missingProfileIdentityItems.length > 0 && (
-                      <p className="text-xs text-amber-700">Please complete and verify your profile details to continue.</p>
+                    {missingProfileRequiredItems.length > 0 && (
+                      <p className="text-xs text-amber-700">Please complete your name, email, and phone number to continue. Verification happens in the payment step.</p>
                     )}
                   </div>
                 </div>
