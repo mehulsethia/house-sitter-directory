@@ -48,6 +48,17 @@ export const DELETE = requireClient(async (_req: NextRequest, ctx, user) => {
   const existing = await clientAddressRepo.findById(id)
   if (!existing || existing.client_id !== client.id) return err('Address not found', 404)
 
+  const addresses = await clientAddressRepo.listByClientId(client.id)
+  if (addresses.length <= 1) {
+    return err('You must have at least one address saved', 422)
+  }
+
+  const fallbackDefault = addresses.find((entry) => entry.id !== id) ?? null
+
   await clientAddressRepo.deleteById(id)
-  return ok({ removed: true })
+  if (existing.is_default && fallbackDefault) {
+    await clientAddressRepo.clearDefaultForClient(client.id)
+    await clientAddressRepo.updateById(fallbackDefault.id, { isDefault: true })
+  }
+  return ok({ removed: true, default_address_id: existing.is_default ? fallbackDefault?.id ?? null : null })
 })

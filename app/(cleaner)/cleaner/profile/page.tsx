@@ -17,6 +17,7 @@ import { PhoneInput } from '@/components/phone-input'
 import { ScheduleEditor } from '@/components/schedule-editor'
 import { getAccessToken } from '@/lib/auth-cache'
 import { toApiV1Url } from '@/lib/api-base'
+import { createClient } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import type { BookingRead, ReviewRead, CleanerOnboardingProgress } from '@/types'
 import { deriveCleanerLifecycleStatus } from '@/lib/cleaner-status'
@@ -69,6 +70,7 @@ function CleanerProfilePageContent() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [persistedPhone, setPersistedPhone] = useState('')
+  const [emailVerified, setEmailVerified] = useState(false)
   const [phoneVerified, setPhoneVerified] = useState(false)
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
   const [verifyingPhoneOtp, setVerifyingPhoneOtp] = useState(false)
@@ -76,6 +78,11 @@ function CleanerProfilePageContent() {
   const [phoneVerificationModalOpen, setPhoneVerificationModalOpen] = useState(false)
   const [showInlinePhoneOtpEntry, setShowInlinePhoneOtpEntry] = useState(false)
   const [showModalPhoneOtpEntry, setShowModalPhoneOtpEntry] = useState(false)
+  const [changeEmailModalOpen, setChangeEmailModalOpen] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [changingEmail, setChangingEmail] = useState(false)
+  const [changePhoneModalOpen, setChangePhoneModalOpen] = useState(false)
+  const [newPhoneDraft, setNewPhoneDraft] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [yearsExperience, setYearsExperience] = useState('0')
@@ -119,10 +126,11 @@ function CleanerProfilePageContent() {
   async function loadAll() {
     setLoading(true)
     try {
-      const [meRes, bookingRes, stripeRes] = await Promise.all([
+      const [meRes, bookingRes, stripeRes, authUserRes] = await Promise.all([
         cleanersApi.me(),
         bookingsApi.my(),
         paymentsApi.getConnectStatus(),
+        createClient().auth.getUser().catch(() => null),
       ])
 
       const c = (meRes.data?.cleaner ?? {}) as any
@@ -144,6 +152,7 @@ function CleanerProfilePageContent() {
       setCleanerId(c.id ?? '')
       setFullName(user.name ?? '')
       setEmail(user.email ?? '')
+      setEmailVerified(Boolean((authUserRes as any)?.data?.user?.email_confirmed_at))
       setPhone(user.phone ?? '')
       setPersistedPhone(user.phone ?? '')
       setPhoneVerified(Boolean(user.phone_verified_at))
@@ -283,7 +292,10 @@ function CleanerProfilePageContent() {
     if (skills.length === 0) return toast.error('Select at least one service.')
     if (!transportMode) return toast.error('Mode of transport is required.')
     if (transportMode === 'requires_pickup' && !homeAddress.trim()) {
-      return toast.error('Pick-up/drop-off location is required for transport support.')
+      return toast.error('Pick-up/drop-off location is required when transport support is enabled.')
+    }
+    if (transportMode === 'requires_pickup' && !homeAddress.toLowerCase().includes('larnaca')) {
+      return toast.error('For MVP launch, pick-up/drop-off location must be within Larnaca.')
     }
 
     setSaving(true)
@@ -355,10 +367,36 @@ function CleanerProfilePageContent() {
     }
   }
 
+  async function requestEmailChange() {
+    if (!newEmail.trim()) return toast.error('Email is required.')
+    setChangingEmail(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ email: newEmail.trim() })
+      if (error) throw error
+      toast.success('Verification email sent to the new address.')
+      setChangeEmailModalOpen(false)
+      setNewEmail('')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to request email change.')
+    } finally {
+      setChangingEmail(false)
+    }
+  }
+
 
   async function submitForApproval() {
     setSubmitting(true)
     try {
+      const authUserRes = await createClient().auth.getUser()
+      if (!authUserRes.data.user?.email_confirmed_at) {
+        toast.error('Please verify your email before submitting for approval.')
+        return
+      }
+      if (phoneNeedsVerification) {
+        toast.error('Please verify your phone number before submitting for approval.')
+        return
+      }
       await cleanersApi.submitForApproval()
       toast.success('Profile submitted for approval!')
       await loadAll()
@@ -576,20 +614,92 @@ function CleanerProfilePageContent() {
 
             {tab === 'overview' && (
               <div className="space-y-4">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div><Label>First Name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="mt-1" /></div>
-                  <div><Label>Last Name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} className="mt-1" /></div>
-                  <div><Label>Phone Number</Label><PhoneInput value={phone} onChange={handlePhoneChange} className="mt-1" /></div>
-                  <div><Label>Home Address</Label><Input value={homeAddress} onChange={(e) => setHomeAddress(e.target.value)} className="mt-1" /></div>
-                  <div><Label>Years of Experience</Label><Input type="number" min={0} value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} className="mt-1" /></div>
-                  <div><Label>Hourly Rate (€{MIN_HOURLY_RATE}–€{MAX_HOURLY_RATE})</Label><Input type="number" min={MIN_HOURLY_RATE} max={MAX_HOURLY_RATE} value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} className="mt-1" /></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-semibold text-slate-900">Identity</p>
+                  <p className="mt-1 text-xs text-slate-600">Name: {firstName} {lastName}</p>
+                  <p className="mt-1 text-xs text-slate-600">Email: {email || 'Not set'} (read-only here)</p>
+                  <p className="mt-1 text-xs text-slate-600">Phone is managed in Account Credentials.</p>
                 </div>
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-sm font-semibold text-slate-900">Phone Verification</p>
+                  <p className="text-sm font-semibold text-slate-900">Professional Information</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div><Label>First Name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="mt-1" /></div>
+                    <div><Label>Last Name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} className="mt-1" /></div>
+                    <div><Label>Years of Experience</Label><Input type="number" min={0} value={yearsExperience} onChange={(e) => setYearsExperience(e.target.value)} className="mt-1" /></div>
+                  </div>
+                  <div className="mt-3">
+                    <Label>Professional Bio</Label>
+                    <p className="mt-1 text-xs text-slate-500">Describe your experience, the types of cleaning you specialise in, and how you like to work.</p>
+                    <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={6} maxLength={BIO_MAX_CHARS} className="mt-1" />
+                    <p className="text-xs text-slate-500 mt-1">Maximum {BIO_MAX_CHARS} characters.</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-semibold text-slate-900">Service Configuration</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <div><Label>Hourly Rate (€{MIN_HOURLY_RATE}–€{MAX_HOURLY_RATE})</Label><Input type="number" min={MIN_HOURLY_RATE} max={MAX_HOURLY_RATE} value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} className="mt-1" /></div>
+                    <div>
+                      <Label>Mode of Transport</Label>
+                      <Select value={transportMode} onChange={(e) => setTransportMode(e.target.value)} className="mt-1">
+                        <option value="">Choose an option...</option>
+                        <option value="own_car">Own car</option>
+                        <option value="bus_walk">Public transport / no lift needed</option>
+                        <option value="requires_pickup">Requires pick-up and drop-off</option>
+                      </Select>
+                    </div>
+                  </div>
+                  {transportMode === 'requires_pickup' && (
+                    <div className="mt-3">
+                      <Label>Pick-up/drop-off location</Label>
+                      <p className="mt-1 text-xs text-slate-500">Choose a safe nearby public location where clients can pick you up and drop you off for bookings.</p>
+                      <Input
+                        value={homeAddress}
+                        onChange={(e) => setHomeAddress(e.target.value)}
+                        className="mt-1"
+                        placeholder="Example: Larnaca Marina entrance, Finikoudes bus stop, or nearby landmark"
+                      />
+                      <p className="mt-1 text-xs text-slate-500">For MVP launch, location must be within Larnaca.</p>
+                    </div>
+                  )}
+                  <div className="mt-3">
+                    <Label>Services you offer</Label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {SERVICE_OPTIONS.map((skill) => (
+                        <button
+                          key={skill}
+                          type="button"
+                          onClick={() => toggleSkill(skill)}
+                          className={`rounded-md border px-3 py-1.5 text-sm ${
+                            skills.includes(skill)
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-slate-300 bg-white text-slate-700'
+                          }`}
+                        >
+                          {skill}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-semibold text-slate-900">Account Credentials</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    Status: {phoneNeedsVerification ? 'Not verified' : 'Verified'}
+                    Email: {email || 'Not set'} ({emailVerified ? 'Verified' : 'Not verified'})
                   </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Phone: {phone || 'Not set'} ({phoneNeedsVerification ? 'Not verified' : 'Verified'})
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" onClick={() => setChangeEmailModalOpen(true)} className="h-8 px-3 text-xs">
+                      Change Email
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => { setNewPhoneDraft(phone); setChangePhoneModalOpen(true) }} className="h-8 px-3 text-xs">
+                      Change Phone
+                    </Button>
+                  </div>
                   {phoneNeedsVerification && (
                     <>
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -624,24 +734,14 @@ function CleanerProfilePageContent() {
                   )}
                 </div>
 
-                <div>
-                  <Label>Mode of Transport</Label>
-                  <Select value={transportMode} onChange={(e) => setTransportMode(e.target.value)} className="mt-1">
-                    <option value="">Choose an option...</option>
-                    <option value="own_car">Own Car</option>
-                    <option value="bus_walk">Bus / Walk</option>
-                    <option value="requires_pickup">Requires Pick-up</option>
-                  </Select>
-                </div>
-
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-sm font-semibold text-slate-900">KYC Verification Document</p>
+                  <p className="text-sm font-semibold text-slate-900">ID Document</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Upload your latest KYC file. If your application was rejected for document issues, upload the corrected document here and resubmit.
+                    Your ID document is used to review your cleaner application.
                   </p>
                   {!canEditKyc && (
                     <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                      KYC is locked while your application is under review or approved. You can update your document if your application is rejected.
+                      Your ID document is locked while your application is under review or approved. If your application is rejected because of document issues, you can upload a corrected document and resubmit.
                     </p>
                   )}
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -698,32 +798,6 @@ function CleanerProfilePageContent() {
                   )}
                 </div>
 
-                <div>
-                  <Label>Professional Bio</Label>
-                  <p className="mt-1 text-xs text-slate-500">Describe your experience, the types of cleaning you specialise in, and how you like to work.</p>
-                  <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={5} maxLength={BIO_MAX_CHARS} className="mt-1" />
-                  <p className="text-xs text-slate-500 mt-1">Maximum {BIO_MAX_CHARS} characters.</p>
-                </div>
-
-                <div>
-                  <Label>Services you offer</Label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {SERVICE_OPTIONS.map((skill) => (
-                      <button
-                        key={skill}
-                        type="button"
-                        onClick={() => toggleSkill(skill)}
-                        className={`rounded-md border px-3 py-1.5 text-sm ${
-                          skills.includes(skill)
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-slate-300 bg-white text-slate-700'
-                        }`}
-                      >
-                        {skill}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 <div className="flex justify-end">
                   <Button onClick={saveOverview} loading={saving}>Save & Publish</Button>
@@ -923,6 +997,49 @@ function CleanerProfilePageContent() {
             </Button>
           </div>
         )}
+      </Dialog>
+      <Dialog
+        open={changeEmailModalOpen}
+        onClose={() => setChangeEmailModalOpen(false)}
+      >
+        <DialogTitle>Change email</DialogTitle>
+        <p className="text-sm text-slate-600">A verification email will be sent to the new address. Your current email stays active until verified.</p>
+        <Input
+          className="mt-3"
+          type="email"
+          placeholder="Enter new email"
+          value={newEmail}
+          onChange={(event) => setNewEmail(event.target.value)}
+        />
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="outline" onClick={() => setChangeEmailModalOpen(false)}>Cancel</Button>
+          <Button type="button" onClick={requestEmailChange} loading={changingEmail}>Send verification</Button>
+        </div>
+      </Dialog>
+      <Dialog
+        open={changePhoneModalOpen}
+        onClose={() => setChangePhoneModalOpen(false)}
+      >
+        <DialogTitle>Change phone</DialogTitle>
+        <p className="text-sm text-slate-600">Your current phone stays active until the new number is verified.</p>
+        <PhoneInput value={newPhoneDraft} onChange={setNewPhoneDraft} className="mt-3" />
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="outline" onClick={() => setChangePhoneModalOpen(false)}>Cancel</Button>
+          <Button
+            type="button"
+            onClick={() => {
+              if (!newPhoneDraft.trim()) {
+                toast.error('Phone number is required.')
+                return
+              }
+              handlePhoneChange(newPhoneDraft)
+              setChangePhoneModalOpen(false)
+              setPhoneVerificationModalOpen(true)
+            }}
+          >
+            Continue
+          </Button>
+        </div>
       </Dialog>
     </div>
   )

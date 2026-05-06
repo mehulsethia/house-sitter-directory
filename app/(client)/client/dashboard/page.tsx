@@ -36,6 +36,12 @@ function isPaymentAuthorized(paymentStatus?: string | null) {
   return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
 }
 
+function isRealActiveBooking(booking: BookingRead) {
+  if (!ACTIVE_STATUSES.includes(booking.status)) return false
+  if (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)) return false
+  return true
+}
+
 function isValidUpcomingBooking(booking: BookingRead, nowMs: number) {
   if (!UPCOMING_STATUSES.includes(booking.status)) return false
   if (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)) return false
@@ -84,7 +90,7 @@ export default function ClientDashboardPage() {
   const firstName = name ? name.split(' ')[0] : ''
 
   const total = deferredBookings.length
-  const activeCount = deferredBookings.filter((b) => ACTIVE_STATUSES.includes(b.status)).length
+  const activeCount = deferredBookings.filter((b) => isRealActiveBooking(b)).length
   const completedBookings = deferredBookings.filter((b) => b.status === 'completed')
   const totalSpent = completedBookings.reduce((sum, b) => sum + Number(b.total_amount ?? 0), 0)
 

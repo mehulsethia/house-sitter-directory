@@ -53,6 +53,8 @@ export default function ClientProfilePage() {
   const [newAddressDefault, setNewAddressDefault] = useState(false)
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null)
   const [updatingAddress, setUpdatingAddress] = useState(false)
+  const [deletingAddressId, setDeletingAddressId] = useState<string | null>(null)
+  const [confirmDeleteAddressId, setConfirmDeleteAddressId] = useState<string | null>(null)
   const [editAddressLabel, setEditAddressLabel] = useState('')
   const [editAddressLine1, setEditAddressLine1] = useState('')
   const [editAddressPostcode, setEditAddressPostcode] = useState('')
@@ -77,6 +79,11 @@ export default function ClientProfilePage() {
   const [phoneVerificationModalOpen, setPhoneVerificationModalOpen] = useState(false)
   const [showInlinePhoneOtpEntry, setShowInlinePhoneOtpEntry] = useState(false)
   const [showModalPhoneOtpEntry, setShowModalPhoneOtpEntry] = useState(false)
+  const [changeEmailModalOpen, setChangeEmailModalOpen] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [changingEmail, setChangingEmail] = useState(false)
+  const [changePhoneModalOpen, setChangePhoneModalOpen] = useState(false)
+  const [newPhoneDraft, setNewPhoneDraft] = useState('')
   const phoneNeedsVerification = phone.trim() !== (persistedPhone ?? '') || !phoneVerified
 
   useEffect(() => {
@@ -463,6 +470,23 @@ export default function ClientProfilePage() {
     }
   }
 
+  async function requestEmailChange() {
+    if (!newEmail.trim()) return toast.error('Email is required.')
+    setChangingEmail(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ email: newEmail.trim() })
+      if (error) throw error
+      toast.success('Verification email sent to the new address.')
+      setChangeEmailModalOpen(false)
+      setNewEmail('')
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to request email change.')
+    } finally {
+      setChangingEmail(false)
+    }
+  }
+
   async function uploadClientIdDocument(file: File) {
     if (!file) return
     if (idFileUrl) {
@@ -573,9 +597,6 @@ export default function ClientProfilePage() {
               </div>
             </div>
 
-            <Button variant="outline" onClick={saveProfile} loading={saving} className="mt-4 w-full rounded-full">
-              Update Credentials
-            </Button>
           </div>
 
           <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
@@ -614,7 +635,6 @@ export default function ClientProfilePage() {
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
                   <Field label="First Name"><Input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="mt-1" /></Field>
                   <Field label="Last Name"><Input value={lastName} onChange={(event) => setLastName(event.target.value)} className="mt-1" /></Field>
-                  <Field label="Phone Number"><PhoneInput value={phone} onChange={handlePhoneChange} className="mt-1" /></Field>
                 </div>
 
                 <div className="mt-4">
@@ -636,6 +656,12 @@ export default function ClientProfilePage() {
                     <li>- Phone: {phone || 'Not set'} ({phoneNeedsVerification ? 'Not verified' : 'Verified'})</li>
                   </ul>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    <Button type="button" variant="outline" onClick={() => setChangeEmailModalOpen(true)} className="h-8 px-3 text-xs">
+                      Change Email
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => { setNewPhoneDraft(phone); setChangePhoneModalOpen(true) }} className="h-8 px-3 text-xs">
+                      Change Phone
+                    </Button>
                     {!emailVerified && (
                       <Button type="button" variant="outline" onClick={resendEmailVerification} loading={resendingEmail} className="h-8 px-3 text-xs">
                         Verify Email
@@ -751,6 +777,15 @@ export default function ClientProfilePage() {
                                 disabled={updatingAddress}
                               >
                                 Edit
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => setConfirmDeleteAddressId(entry.id)}
+                                disabled={updatingAddress || deletingAddressId === entry.id}
+                              >
+                                Delete
                               </Button>
                             </div>
                           </div>
@@ -952,6 +987,105 @@ export default function ClientProfilePage() {
             </Button>
           </div>
         )}
+      </Dialog>
+
+      <Dialog
+        open={Boolean(confirmDeleteAddressId)}
+        onClose={() => setConfirmDeleteAddressId(null)}
+      >
+        <DialogTitle>Remove saved address</DialogTitle>
+        <p className="text-sm text-slate-600">Are you sure you want to remove this address?</p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="outline" onClick={() => setConfirmDeleteAddressId(null)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={async () => {
+              if (!confirmDeleteAddressId) return
+              setDeletingAddressId(confirmDeleteAddressId)
+              try {
+                await clientsApi.deleteAddress(confirmDeleteAddressId)
+                const next = savedAddresses.filter((entry) => entry.id !== confirmDeleteAddressId)
+                if (next.length === 0) {
+                  toast.error('You must have at least one address saved')
+                  return
+                }
+                let normalized = next
+                if (!next.some((entry) => entry.is_default)) {
+                  normalized = next.map((entry, idx) => ({ ...entry, is_default: idx === 0 }))
+                }
+                setSavedAddresses(normalized.sort((a, b) => Number(b.is_default) - Number(a.is_default)))
+                const defaultEntry = normalized.find((entry) => entry.is_default) ?? normalized[0]
+                if (defaultEntry) {
+                  setDefaultAddress(defaultEntry.address_line1)
+                  setDefaultCity(MVP_CITY)
+                  setDefaultPostcode(defaultEntry.postcode)
+                  await clientsApi.updateMe({
+                    default_address: defaultEntry.address_line1,
+                    default_city: MVP_CITY,
+                    default_postcode: defaultEntry.postcode,
+                    default_country: MVP_COUNTRY_CODE,
+                  })
+                }
+                toast.success('Saved address removed.')
+                setConfirmDeleteAddressId(null)
+              } catch (err: any) {
+                toast.error(err.message ?? 'Failed to remove saved address.')
+              } finally {
+                setDeletingAddressId(null)
+              }
+            }}
+            loading={deletingAddressId === confirmDeleteAddressId}
+          >
+            Delete Address
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={changeEmailModalOpen}
+        onClose={() => setChangeEmailModalOpen(false)}
+      >
+        <DialogTitle>Change email</DialogTitle>
+        <p className="text-sm text-slate-600">A verification email will be sent to the new address. Your current email stays active until verified.</p>
+        <Input
+          className="mt-3"
+          type="email"
+          placeholder="Enter new email"
+          value={newEmail}
+          onChange={(event) => setNewEmail(event.target.value)}
+        />
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="outline" onClick={() => setChangeEmailModalOpen(false)}>Cancel</Button>
+          <Button type="button" onClick={requestEmailChange} loading={changingEmail}>Send verification</Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={changePhoneModalOpen}
+        onClose={() => setChangePhoneModalOpen(false)}
+      >
+        <DialogTitle>Change phone</DialogTitle>
+        <p className="text-sm text-slate-600">Your current phone stays active until the new number is verified.</p>
+        <PhoneInput value={newPhoneDraft} onChange={setNewPhoneDraft} className="mt-3" />
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="outline" onClick={() => setChangePhoneModalOpen(false)}>Cancel</Button>
+          <Button
+            type="button"
+            onClick={() => {
+              if (!newPhoneDraft.trim()) {
+                toast.error('Phone number is required.')
+                return
+              }
+              handlePhoneChange(newPhoneDraft)
+              setChangePhoneModalOpen(false)
+              setPhoneVerificationModalOpen(true)
+            }}
+          >
+            Continue
+          </Button>
+        </div>
       </Dialog>
 
       <style jsx>{`

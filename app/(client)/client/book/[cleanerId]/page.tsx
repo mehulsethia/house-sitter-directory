@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Clock, ExternalLink, Lock, Shield, Star, X } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
@@ -20,7 +20,6 @@ import { UserAvatar } from '@/components/ui/user-avatar'
 import { formatCurrency, cn, APP_TIMEZONE } from '@/lib/utils'
 import { MAX_SAVED_ADDRESSES, MVP_CITY, normalizeCyprusPostcode } from '@/lib/location-policy'
 import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead, ClientAddressRead } from '@/types'
-import { PhoneInput } from '@/components/phone-input'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase'
 
@@ -239,10 +238,18 @@ function BookingSummary({
   cleaner,
   duration,
   breakdown,
+  jobType,
+  date,
+  selectedSlot,
+  postcode,
 }: {
   cleaner: CleanerRead
   duration: number
   breakdown: PriceBreakdown | null
+  jobType: string
+  date: string
+  selectedSlot: string
+  postcode: string
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false)
   const cleanerName = cleaner.user?.name ?? 'Professional Cleaner'
@@ -262,7 +269,21 @@ function BookingSummary({
       ? 'Brings own supplies'
       : cleaner.cleaning_supplies === 'client_supplies'
         ? 'Client must provide supplies'
-        : 'Not set'
+      : 'Not set'
+  const selectedJobType = JOB_TYPE_OPTIONS.find((option) => option.value === jobType)
+  const serviceTypeLabel = selectedJobType?.label ?? 'Cleaning Service'
+  const selectedDateLabel = date
+    ? new Date(`${date}T00:00:00Z`).toLocaleDateString('en-IE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: APP_TIMEZONE,
+    })
+    : 'Not selected'
+  const selectedTimeLabel = selectedSlot
+    ? new Date(selectedSlot).toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: APP_TIMEZONE })
+    : 'Not selected'
   return (
     <Card className="rounded-2xl border-slate-200 sticky top-6">
       <CardHeader className="pb-2">
@@ -299,11 +320,23 @@ function BookingSummary({
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <div className="h-2.5 w-2.5 rounded-sm bg-primary" />
-            <span className="text-slate-700">Cleaning Service</span>
+            <span className="text-slate-700">{serviceTypeLabel}</span>
           </div>
           <div className="flex items-center gap-2 text-slate-500">
             <Clock className="h-3.5 w-3.5" />
             <span>{duration} hour{duration !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-600">
+            <span>Date</span>
+            <span className="text-right">{selectedDateLabel}</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-600">
+            <span>Start time</span>
+            <span>{selectedTimeLabel}</span>
+          </div>
+          <div className="flex items-center justify-between text-slate-600">
+            <span>Postcode</span>
+            <span>{postcode || 'Not set'}</span>
           </div>
         </div>
 
@@ -562,6 +595,8 @@ function StripePaymentForm({
 export default function BookingFlowPage() {
   const { cleanerId } = useParams<{ cleanerId: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const continueDraft = searchParams.get('continue') === '1'
 
   const [cleaner, setCleaner] = useState<CleanerRead | null>(null)
   const [clientProfile, setClientProfile] = useState<ClientProfileRead | null>(null)
@@ -776,10 +811,6 @@ export default function BookingFlowPage() {
       setDuration(parsed.duration || 1)
       setDate(parsed.date || '')
       setSelectedSlot(normalizeToIsoDatetime(parsed.selectedSlot || '') ?? '')
-      setFirstName(parsed.firstName || '')
-      setLastName(parsed.lastName || '')
-      setEmail(parsed.email || '')
-      setPhone(parsed.phone || '')
       setAddressMode(parsed.addressMode === 'saved' ? 'saved' : 'new')
       setSelectedAddressId(parsed.selectedAddressId || '')
       setAddress(parsed.address || '')
@@ -795,9 +826,10 @@ export default function BookingFlowPage() {
       setNotes(parsed.notes || '')
       setSaveAddressForLater(Boolean(parsed.saveAddressForLater))
       const requestedStep = Math.min(Math.max(Number(parsed.step || 1), 1), 3)
-      setStep(requestedStep === 3 && !parsed.bookingId ? 2 : requestedStep)
+      const canResumeExistingBooking = Boolean(parsed.bookingId && continueDraft)
+      setStep(requestedStep === 3 && !canResumeExistingBooking ? 2 : requestedStep)
 
-      if (parsed.bookingId) {
+      if (canResumeExistingBooking && parsed.bookingId) {
         bookingsApi.getById(parsed.bookingId)
           .then(async (res) => {
             const restoredBooking = res.data
@@ -852,11 +884,14 @@ export default function BookingFlowPage() {
           .catch(() => {
             // stale draft booking id; keep local form draft only
           })
+      } else if (parsed.bookingId && !continueDraft) {
+        setBooking(null)
+        setClientSecret(null)
       }
     } catch {
       clearSessionDraft()
     }
-  }, [loading, draftStorageKey])
+  }, [loading, draftStorageKey, continueDraft])
 
   useEffect(() => {
     function onFocus() {
@@ -870,23 +905,41 @@ export default function BookingFlowPage() {
   useEffect(() => {
     if (!date || !cleanerId) return
     setSlotsLoading(true)
-    setSelectedSlot('')
     availabilityApi.getSlots(cleanerId, date, duration)
-      .then(r => setSlots(r.data ?? []))
+      .then((r) => {
+        const nextSlots = r.data ?? []
+        setSlots(nextSlots)
+        if (!selectedSlot) return
+        const normalizedSelected = normalizeToIsoDatetime(selectedSlot)
+        const stillAvailable = nextSlots.some((slot) => {
+          const normalizedSlot = normalizeToIsoDatetime(slot.start)
+          return normalizedSlot && normalizedSelected && normalizedSlot === normalizedSelected && !slot.disabled
+        })
+        if (!stillAvailable) {
+          setSelectedSlot('')
+        }
+      })
       .catch(() => setSlots([]))
       .finally(() => setSlotsLoading(false))
-  }, [date, duration, cleanerId])
+  }, [date, duration, cleanerId, selectedSlot])
 
   useEffect(() => {
     if (!cleanerId) return
     setBookableDatesLoading(true)
-    setDate('')
     setBookableDates([])
     availabilityApi.getBookableDates(cleanerId, duration, 28)
-      .then((r) => setBookableDates(r.data ?? []))
+      .then((r) => {
+        const nextDates = r.data ?? []
+        setBookableDates(nextDates)
+        if (date && !nextDates.includes(date)) {
+          setDate('')
+          setSelectedSlot('')
+          toast.error('This time is no longer available. Please choose another time.')
+        }
+      })
       .catch(() => setBookableDates([]))
       .finally(() => setBookableDatesLoading(false))
-  }, [cleanerId, duration])
+  }, [cleanerId, duration, date])
 
   // Fetch price breakdown when duration changes
   useEffect(() => {
@@ -947,6 +1000,17 @@ export default function BookingFlowPage() {
     if (!address.trim() || !city.trim() || !postcode.trim()) issues.push('Add service address')
     return issues
   }, [emailVerified, phoneVerified, address, city, postcode])
+
+  const missingProfileIdentityItems = useMemo(() => {
+    const issues: string[] = []
+    if (!firstName.trim()) issues.push('First name')
+    if (!lastName.trim()) issues.push('Last name')
+    if (!email.trim()) issues.push('Email')
+    if (!phone.trim()) issues.push('Phone number')
+    if (!emailVerified) issues.push('Verified email')
+    if (!phoneVerified) issues.push('Verified phone number')
+    return issues
+  }, [firstName, lastName, email, phone, emailVerified, phoneVerified])
 
   function applySavedAddress(addressId: string) {
     const selected = savedAddresses.find((entry) => entry.id === addressId)
@@ -1120,10 +1184,10 @@ export default function BookingFlowPage() {
       if (!selectedSlot) { toast.error('Please select a time slot.'); return }
       setStep(2)
     } else if (step === 2) {
-      if (!firstName.trim()) { toast.error('First name is required.'); return }
-      if (!lastName.trim()) { toast.error('Last name is required.'); return }
-      if (!email.trim()) { toast.error('Email is required.'); return }
-      if (!phone.trim()) { toast.error('Phone number is required.'); return }
+      if (missingProfileIdentityItems.length > 0) {
+        toast.error('Please complete your profile details to continue.')
+        return
+      }
       if (addressMode === 'saved' && !selectedAddressId) { toast.error('Select a saved address or add a new one.'); return }
       if (!address.trim()) { toast.error('Service address is required.'); return }
       if (!postcode.trim()) { toast.error('Postcode is required.'); return }
@@ -1206,25 +1270,6 @@ export default function BookingFlowPage() {
         throw new Error('Unable to initialize card authorization for this booking')
       }
       setClientSecret(nextClientSecret)
-      if (addressMode === 'new' && saveAddressForLater) {
-        try {
-          if (savedAddresses.length >= MAX_SAVED_ADDRESSES) {
-            toast.error("You've reached the maximum number of saved addresses. Please remove an existing address to add a new one.")
-          } else {
-          await clientsApi.addAddress({
-            address_line1: address.trim(),
-            city: MVP_CITY,
-            postcode: normalizePostcodeInput(postcode),
-            country: 'CY',
-            apartment_details: apartmentDetails.trim() || undefined,
-            access_notes: accessNotes.trim() || undefined,
-            is_default: savedAddresses.length === 0,
-          })
-          }
-        } catch {
-          // Booking should still proceed even if address save fails.
-        }
-      }
       setStep(3)
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to create draft booking')
@@ -1242,6 +1287,32 @@ export default function BookingFlowPage() {
     if (!booking) throw new Error('Missing booking context for authorization sync')
 
     await paymentsApi.syncAuthorization(booking.id)
+    if (addressMode === 'new' && saveAddressForLater) {
+      try {
+        const normalizedPostcode = normalizePostcodeInput(postcode)
+        const exists = savedAddresses.some((entry) =>
+          entry.address_line1.trim().toLowerCase() === address.trim().toLowerCase()
+          && normalizePostcodeInput(entry.postcode) === normalizedPostcode
+        )
+        if (!exists) {
+          if (savedAddresses.length >= MAX_SAVED_ADDRESSES) {
+            toast.error("You've reached the maximum number of saved addresses. Please remove an existing address to add a new one.")
+          } else {
+            await clientsApi.addAddress({
+              address_line1: address.trim(),
+              city: MVP_CITY,
+              postcode: normalizedPostcode,
+              country: 'CY',
+              apartment_details: apartmentDetails.trim() || undefined,
+              access_notes: accessNotes.trim() || undefined,
+              is_default: savedAddresses.length === 0,
+            })
+          }
+        }
+      } catch {
+        // Authorization success should not fail because address save fails.
+      }
+    }
     const bookingRes = await bookingsApi.getById(booking.id)
     if (bookingRes.data) {
       setBooking(bookingRes.data)
@@ -1467,27 +1538,30 @@ export default function BookingFlowPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label className="text-sm font-semibold">First Name <span className="text-red-500">*</span></Label>
-                    <Input required value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1" placeholder="John" />
+                    <Input required value={firstName} readOnly className="mt-1 bg-slate-50" />
                   </div>
                   <div>
                     <Label className="text-sm font-semibold">Last Name <span className="text-red-500">*</span></Label>
-                    <Input required value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1" placeholder="Doe" />
+                    <Input required value={lastName} readOnly className="mt-1 bg-slate-50" />
                   </div>
                   <div>
                     <Label className="text-sm font-semibold">Email <span className="text-red-500">*</span></Label>
-                    <Input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1" placeholder="john@example.com" />
+                    <Input required type="email" value={email} readOnly className="mt-1 bg-slate-50" />
                   </div>
                   <div>
                     <Label className="text-sm font-semibold">Phone Number <span className="text-red-500">*</span></Label>
-                    <PhoneInput
-                      value={phone}
-                      onChange={(value) => {
-                        setPhone(value)
-                        setShowPhoneOtpEntry(false)
-                        setPhoneVerified(false)
-                      }}
-                      className="mt-1"
-                    />
+                    <Input required value={phone} readOnly className="mt-1 bg-slate-50" />
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm text-slate-700">Contact details are synced from your profile and cannot be changed here.</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button type="button" variant="outline" className="h-8 px-3 text-xs" onClick={() => router.push('/client/profile')}>
+                      Edit in profile
+                    </Button>
+                    {missingProfileIdentityItems.length > 0 && (
+                      <p className="text-xs text-amber-700">Please complete and verify your profile details to continue.</p>
+                    )}
                   </div>
                 </div>
 
@@ -1941,6 +2015,10 @@ export default function BookingFlowPage() {
               cleaner={cleaner}
               duration={duration}
               breakdown={breakdown}
+              jobType={jobType}
+              date={date}
+              selectedSlot={selectedSlot}
+              postcode={postcode}
             />
           </div>
         )}

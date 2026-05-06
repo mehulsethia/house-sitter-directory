@@ -40,6 +40,10 @@ const SERVICE_LABELS: Record<string, string> = {
 
 const DISPUTE_WINDOW_MS = getDisputeWindowMs()
 
+function isPaymentAuthorized(paymentStatus?: string | null) {
+  return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
+}
+
 export default function ClientBookingsPage() {
   const [loading, setLoading] = useState(true)
   const [bookings, setBookings] = useState<BookingRead[]>([])
@@ -87,7 +91,11 @@ export default function ClientBookingsPage() {
   const deferredBookings = useDeferredValue(bookings)
 
   const filtered = deferredBookings.filter((booking) => {
-    if (dashboardFilter === 'active' && !['pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status)) return false
+    if (dashboardFilter === 'active') {
+      const isActiveStatus = ['pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status)
+      if (!isActiveStatus) return false
+      if (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)) return false
+    }
     if (dashboardFilter === 'completed' && booking.status !== 'completed') return false
     if (dashboardFilter === 'closed' && !['cancelled', 'expired'].includes(booking.status)) return false
     if (filter !== 'all' && booking.status !== filter) return false
@@ -104,9 +112,12 @@ export default function ClientBookingsPage() {
     )
   })
 
-  const activeCount = deferredBookings.filter((booking) =>
-    ['pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status),
-  ).length
+  const activeCount = deferredBookings.filter((booking) => {
+    const isActiveStatus = ['pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status)
+    if (!isActiveStatus) return false
+    if (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)) return false
+    return true
+  }).length
   const completedCount = deferredBookings.filter((booking) => booking.status === 'completed').length
   const cancelledCount = deferredBookings.filter((booking) =>
     ['cancelled', 'expired'].includes(booking.status),
@@ -206,7 +217,9 @@ export default function ClientBookingsPage() {
                   const completedAtMs = booking.completed_at ? new Date(booking.completed_at).getTime() : 0
                   const isWithinDisputeWindow = completedAtMs > 0 && Date.now() <= completedAtMs + DISPUTE_WINDOW_MS
                   const canDispute = booking.status === 'completed' && isWithinDisputeWindow && !disputeStatusForBooking
-                  const isActiveBooking = ['pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status)
+                  const isActiveBooking =
+                    ['pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status)
+                    && (booking.status !== 'pending' || isPaymentAuthorized(booking.payment?.status))
                   const canComplete = booking.status === 'in_progress'
                   const canChat = isChatActiveForBooking(booking)
 

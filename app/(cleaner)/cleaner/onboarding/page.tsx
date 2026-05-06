@@ -472,6 +472,9 @@ function CleanerOnboardingPageContent() {
     if (transportMode === 'requires_pickup' && !pickupLocation.trim()) {
       return toast.error('Pick-up/drop-off location is required.')
     }
+    if (transportMode === 'requires_pickup' && !pickupLocation.toLowerCase().includes('larnaca')) {
+      return toast.error('For MVP launch, pick-up/drop-off location must be within Larnaca.')
+    }
     if (!idType) return toast.error('Select ID type.')
     if (!idFileName.trim()) return toast.error('Valid ID file is required.')
     if (petComfortable === null) return toast.error('Please answer the pets question.')
@@ -815,21 +818,23 @@ function CleanerOnboardingPageContent() {
                 <p className="mt-1 text-xs text-gray-500">This helps clients understand how you travel to jobs.</p>
                 <Select value={transportMode} onChange={(e) => setTransportMode(e.target.value)} className="mt-2">
                   <option value="">Choose an option...</option>
-                  <option value="own_car">Own Car</option>
-                  <option value="bus_walk">Bus / Walk</option>
-                  <option value="requires_pickup">Requires Pick-up</option>
+                  <option value="own_car">Own car</option>
+                  <option value="bus_walk">Public transport / no lift needed</option>
+                  <option value="requires_pickup">Requires pick-up and drop-off</option>
                 </Select>
               </div>
 
               {transportMode === 'requires_pickup' && (
                 <div>
                   <Label className="text-sm font-medium">Pick-up/Drop-off Location <span className="text-red-500">*</span></Label>
+                  <p className="mt-1 text-xs text-gray-500">Choose a safe nearby public location where clients can pick you up and drop you off for bookings.</p>
                   <Input
                     value={pickupLocation}
                     onChange={(e) => setPickupLocation(e.target.value)}
-                    placeholder="Enter pick-up/drop-off location"
+                    placeholder="Example: Larnaca Marina entrance, Finikoudes bus stop, or nearby landmark"
                     className="mt-2"
                   />
+                  <p className="mt-1 text-xs text-gray-500">For MVP launch, location must be within Larnaca.</p>
                 </div>
               )}
 
