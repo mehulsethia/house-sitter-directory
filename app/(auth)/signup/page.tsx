@@ -43,7 +43,13 @@ function SignupForm() {
     })
 
     if (error) {
-      toast.error(error.message)
+      const rawMessage = String(error.message ?? '')
+      const normalized = rawMessage.toLowerCase()
+      if (normalized.includes('email rate limit exceeded') || normalized.includes('rate limit')) {
+        toast.error('Too many verification emails sent. Please wait a few minutes and try again.')
+      } else {
+        toast.error(rawMessage)
+      }
       setLoading(false)
       return
     }
