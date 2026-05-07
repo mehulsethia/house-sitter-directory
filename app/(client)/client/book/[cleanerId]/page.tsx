@@ -123,6 +123,56 @@ function normalizePostcodeInput(value: string): string {
   return normalizeCyprusPostcode(value)
 }
 
+function camelToSnakeKey(value: string): string {
+  return value.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
+}
+
+function readKey(source: Record<string, any> | null | undefined, camelKey: string) {
+  if (!source) return undefined
+  const snakeKey = camelToSnakeKey(camelKey)
+  if (source[camelKey] !== undefined) return source[camelKey]
+  if (source[snakeKey] !== undefined) return source[snakeKey]
+  return undefined
+}
+
+function normalizeFlowDraftPayload(
+  payload: unknown,
+  serverDraft?: Record<string, any> | null,
+): BookingFlowDraft | undefined {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return undefined
+  const raw = payload as Record<string, any>
+  const rawDuration = readKey(raw, 'duration')
+  const rawDate = readKey(raw, 'date')
+  const rawSlot = readKey(raw, 'selectedSlot')
+
+  return {
+    version: Number(readKey(raw, 'version') || BOOKING_FLOW_DRAFT_VERSION),
+    step: Number(readKey(raw, 'step') || readKey(serverDraft ?? undefined, 'lastStep') || 1),
+    duration: Number(rawDuration || readKey(serverDraft ?? undefined, 'durationHours') || 1),
+    date: String(rawDate || readKey(serverDraft ?? undefined, 'selectedDate') || ''),
+    selectedSlot: String(rawSlot || readKey(serverDraft ?? undefined, 'selectedSlot') || ''),
+    firstName: String(readKey(raw, 'firstName') || ''),
+    lastName: String(readKey(raw, 'lastName') || ''),
+    email: String(readKey(raw, 'email') || ''),
+    phone: String(readKey(raw, 'phone') || ''),
+    addressMode: readKey(raw, 'addressMode') === 'saved' ? 'saved' : 'new',
+    selectedAddressId: String(readKey(raw, 'selectedAddressId') || ''),
+    address: String(readKey(raw, 'address') || ''),
+    city: String(readKey(raw, 'city') || MVP_CITY),
+    postcode: String(readKey(raw, 'postcode') || ''),
+    apartmentDetails: String(readKey(raw, 'apartmentDetails') || ''),
+    accessNotes: String(readKey(raw, 'accessNotes') || ''),
+    jobType: String(readKey(raw, 'jobType') || ''),
+    bedrooms: String(readKey(raw, 'bedrooms') || ''),
+    bathrooms: String(readKey(raw, 'bathrooms') || ''),
+    propertyCondition: String(readKey(raw, 'propertyCondition') || ''),
+    suppliesProvider: String(readKey(raw, 'suppliesProvider') || ''),
+    notes: String(readKey(raw, 'notes') || ''),
+    saveAddressForLater: Boolean(readKey(raw, 'saveAddressForLater')),
+    bookingId: String(readKey(raw, 'bookingId') || readKey(serverDraft ?? undefined, 'bookingId') || ''),
+  }
+}
+
 function parseBookingSnapshotDetails(specialInstructions?: string | null): BookingSnapshotDetails {
   const value = String(specialInstructions ?? '')
   const lines = value.split('\n')
@@ -1035,15 +1085,8 @@ export default function BookingFlowPage() {
     ;(async () => {
       try {
         const serverDraft = (await bookingsApi.getFlowDraft(cleanerId)).data
-        const payload = serverDraft?.payload as BookingFlowDraft | undefined
-        const normalizedPayload: BookingFlowDraft | undefined = payload
-          ? {
-              ...payload,
-              duration: Number(payload.duration || serverDraft?.durationHours || 1),
-              date: String(payload.date || serverDraft?.selectedDate || ''),
-              selectedSlot: String(payload.selectedSlot || serverDraft?.selectedSlot || ''),
-            }
-          : undefined
+        const serverDraftRecord = (serverDraft ?? null) as Record<string, any> | null
+        const normalizedPayload = normalizeFlowDraftPayload(serverDraftRecord?.payload, serverDraftRecord)
 
         if (continueDraft && continueBookingId) {
           if (normalizedPayload && normalizedPayload.version === BOOKING_FLOW_DRAFT_VERSION) {
@@ -1065,8 +1108,14 @@ export default function BookingFlowPage() {
         }
 
         hydrateFromDraftPayload(normalizedPayload)
-        const restoredStep = Math.min(Math.max(Number((serverDraft as any).lastStep || normalizedPayload.step || 1), 1), 3)
-        const restoredBookingId = String((serverDraft as any).bookingId ?? normalizedPayload.bookingId ?? '').trim()
+        const restoredStep = Math.min(
+          Math.max(
+            Number(readKey(serverDraftRecord, 'lastStep') || normalizedPayload.step || 1),
+            1,
+          ),
+          3,
+        )
+        const restoredBookingId = String(readKey(serverDraftRecord, 'bookingId') ?? normalizedPayload.bookingId ?? '').trim()
         if (restoredStep >= 3 && restoredBookingId) {
           await resumeExistingBooking(
             restoredBookingId,
@@ -1458,13 +1507,20 @@ export default function BookingFlowPage() {
       try {
         const saved = await persistFlowDraft(1)
         const savedDraft = saved.data as any
-        const savedSlot = String(savedDraft?.selectedSlot ?? savedDraft?.payload?.selectedSlot ?? '').trim()
+        const savedSlot = String(
+          savedDraft?.selectedSlot
+          ?? savedDraft?.selected_slot
+          ?? savedDraft?.payload?.selectedSlot
+          ?? savedDraft?.payload?.selected_slot
+          ?? '',
+        ).trim()
         if (!savedSlot) {
           throw new Error('Draft did not persist selected time. Please try again.')
         }
-      } catch {
+      } catch (err: any) {
+        console.error('Step 1 draft save failed', err)
         setNextStepLoading(false)
-        toast.error('Unable to save draft right now. Please try again.')
+        toast.error(err?.message ?? 'Unable to save draft right now. Please try again.')
         return
       }
       navigateToStep(2)
@@ -1510,9 +1566,10 @@ export default function BookingFlowPage() {
       setNextStepLoading(true)
       try {
         await persistFlowDraft(2, booking?.id ?? undefined)
-      } catch {
+      } catch (err: any) {
+        console.error('Step 2 draft save failed', err)
         setNextStepLoading(false)
-        toast.error('Unable to save draft right now. Please try again.')
+        toast.error(err?.message ?? 'Unable to save draft right now. Please try again.')
         return
       }
       await createDraftBookingAndProceed()
