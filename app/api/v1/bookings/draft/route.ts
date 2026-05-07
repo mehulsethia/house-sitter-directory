@@ -56,13 +56,16 @@ export const PUT = requireClient(async (req: NextRequest, _ctx, user) => {
       : {}
   const incomingPayload = parsed.data.payload ?? {}
   const mergedPayload = { ...existingPayload, ...incomingPayload } as Record<string, any>
-  if (!('selectedSlot' in incomingPayload) && existing?.selectedSlot) {
+  const incomingSelectedSlot = (incomingPayload as any).selectedSlot
+  const incomingDate = (incomingPayload as any).date
+  const incomingDuration = (incomingPayload as any).duration
+  if ((!('selectedSlot' in incomingPayload) || !String(incomingSelectedSlot ?? '').trim()) && existing?.selectedSlot) {
     mergedPayload.selectedSlot = existing.selectedSlot.toISOString()
   }
-  if (!('date' in incomingPayload) && existing?.selectedDate) {
+  if ((!('date' in incomingPayload) || !String(incomingDate ?? '').trim()) && existing?.selectedDate) {
     mergedPayload.date = existing.selectedDate
   }
-  if (!('duration' in incomingPayload) && existing?.durationHours != null) {
+  if ((!('duration' in incomingPayload) || !Number(incomingDuration)) && existing?.durationHours != null) {
     mergedPayload.duration = Number(existing.durationHours)
   }
 
@@ -71,9 +74,13 @@ export const PUT = requireClient(async (req: NextRequest, _ctx, user) => {
     cleanerId: cleaner.id,
     bookingId: parsed.data.booking_id ?? null,
     lastStep: parsed.data.last_step,
-    durationHours: parsed.data.duration_hours ?? (existing?.durationHours != null ? Number(existing.durationHours) : null),
-    selectedDate: parsed.data.selected_date ?? existing?.selectedDate ?? null,
-    selectedSlot: parsed.data.selected_slot ? new Date(parsed.data.selected_slot) : existing?.selectedSlot ?? null,
+    durationHours: parsed.data.duration_hours ?? (Number(mergedPayload.duration || existing?.durationHours || 0) || null),
+    selectedDate: parsed.data.selected_date ?? (String(mergedPayload.date ?? '').trim() || existing?.selectedDate || null),
+    selectedSlot: parsed.data.selected_slot
+      ? new Date(parsed.data.selected_slot)
+      : (String(mergedPayload.selectedSlot ?? '').trim()
+          ? new Date(String(mergedPayload.selectedSlot))
+          : existing?.selectedSlot ?? null),
     payload: mergedPayload,
   })
 

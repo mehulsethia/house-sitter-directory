@@ -694,6 +694,7 @@ export default function BookingFlowPage() {
   const [booking, setBooking] = useState<BookingRead | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [nextStepLoading, setNextStepLoading] = useState(false)
   const [emailVerified, setEmailVerified] = useState(false)
   const [phoneVerified, setPhoneVerified] = useState(false)
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false)
@@ -854,7 +855,7 @@ export default function BookingFlowPage() {
   async function persistFlowDraft(lastStep: number, bookingId?: string) {
     const snapshot = buildSessionDraft()
     const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
-    await bookingsApi.saveFlowDraft({
+    return bookingsApi.saveFlowDraft({
       cleaner_id: cleanerId,
       booking_id: (bookingId ?? snapshot.bookingId) || undefined,
       last_step: lastStep,
@@ -1181,7 +1182,19 @@ export default function BookingFlowPage() {
 
     const persistedStep = booking?.id && step >= 3 ? 3 : Math.min(step, 2)
     draftAutosaveTimerRef.current = setTimeout(() => {
-      persistFlowDraft(persistedStep, booking?.id ?? undefined).catch(() => null)
+      persistFlowDraft(persistedStep, booking?.id ?? undefined).catch((error) => {
+        const message = error instanceof Error ? error.message : 'Draft save failed'
+        console.error('[booking-flow][autosave] failed', {
+          cleanerId,
+          step,
+          persistedStep,
+          date,
+          selectedSlot,
+          duration,
+          bookingId: booking?.id ?? null,
+          message,
+        })
+      })
     }, 200)
 
     return () => {
@@ -1441,13 +1454,21 @@ export default function BookingFlowPage() {
       }
       if (!date) { toast.error('Please select a date.'); return }
       if (!selectedSlot) { toast.error('Please select a time slot.'); return }
+      setNextStepLoading(true)
       try {
-        await persistFlowDraft(1)
+        const saved = await persistFlowDraft(1)
+        const savedDraft = saved.data as any
+        const savedSlot = String(savedDraft?.selectedSlot ?? savedDraft?.payload?.selectedSlot ?? '').trim()
+        if (!savedSlot) {
+          throw new Error('Draft did not persist selected time. Please try again.')
+        }
       } catch {
+        setNextStepLoading(false)
         toast.error('Unable to save draft right now. Please try again.')
         return
       }
       navigateToStep(2)
+      setNextStepLoading(false)
     } else if (step === 2) {
       const normalizedSelectedSlot = normalizeToIsoDatetime(selectedSlot)
       if (!normalizedSelectedSlot) {
@@ -1486,13 +1507,16 @@ export default function BookingFlowPage() {
         toast.error(`You can upload up to ${MAX_JOB_PHOTOS} photos.`)
         return
       }
+      setNextStepLoading(true)
       try {
         await persistFlowDraft(2, booking?.id ?? undefined)
       } catch {
+        setNextStepLoading(false)
         toast.error('Unable to save draft right now. Please try again.')
         return
       }
-      createDraftBookingAndProceed()
+      await createDraftBookingAndProceed()
+      setNextStepLoading(false)
     }
   }
 
@@ -1831,7 +1855,7 @@ export default function BookingFlowPage() {
 
                 {/* Navigation */}
                 <div className="flex justify-end pt-4">
-                  <Button onClick={goNext} className="gap-2">
+                  <Button onClick={goNext} loading={nextStepLoading && step === 1} className="gap-2">
                     Save and Next <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
@@ -2197,7 +2221,7 @@ export default function BookingFlowPage() {
                   >
                     <ArrowLeft className="h-4 w-4" /> Previous
                   </button>
-                  <Button onClick={goNext} loading={submitting} className="gap-1.5">
+                  <Button onClick={goNext} loading={submitting || (nextStepLoading && step === 2)} className="gap-1.5">
                     Save and Next <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
