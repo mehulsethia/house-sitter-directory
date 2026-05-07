@@ -88,6 +88,19 @@ export default function ClientBookingsPage() {
     }
   }
 
+  async function handleCancel(bookingId: string) {
+    setActionLoadingId(bookingId)
+    try {
+      await bookingsApi.cancel(bookingId, 'Cancelled by client while pending payment authorization')
+      toast.success('Booking request cancelled.')
+      await loadBookings()
+    } catch (err: any) {
+      toast.error(err.message ?? 'Failed to cancel booking request.')
+    } finally {
+      setActionLoadingId(null)
+    }
+  }
+
   const deferredBookings = useDeferredValue(bookings)
 
   const filtered = deferredBookings.filter((booking) => {
@@ -223,10 +236,11 @@ export default function ClientBookingsPage() {
                   const isWithinDisputeWindow = completedAtMs > 0 && Date.now() <= completedAtMs + DISPUTE_WINDOW_MS
                   const canDispute = booking.status === 'completed' && isWithinDisputeWindow && !disputeStatusForBooking
                   const isActiveBooking =
-                    ['draft', 'pending', 'accepted', 'confirmed', 'in_progress'].includes(booking.status)
+                    ['accepted', 'confirmed', 'in_progress'].includes(booking.status)
                   const canComplete = booking.status === 'in_progress'
                   const canChat = isChatActiveForBooking(booking)
                   const canContinuePayment = booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))
+                  const canCancelPaymentRequired = booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))
 
                   return (
                     <article
@@ -268,6 +282,17 @@ export default function ClientBookingsPage() {
                           >
                             Continue payment
                           </Link>
+                        )}
+                        {canCancelPaymentRequired && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 border-red-300 px-3 text-xs font-semibold text-red-700 hover:bg-red-50"
+                            onClick={() => handleCancel(booking.id)}
+                            loading={actionLoadingId === booking.id}
+                          >
+                            Cancel request
+                          </Button>
                         )}
 
                         {canChat && (

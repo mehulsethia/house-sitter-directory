@@ -660,7 +660,7 @@ export const bookingService = {
     const booking = await bookingRepo.findById(bookingId)
     if (!booking) throw new ServiceError('Booking not found', 404)
 
-    const cancellableStatuses = ['pending', 'accepted', 'confirmed']
+    const cancellableStatuses = ['draft', 'pending', 'accepted', 'confirmed']
     if (!cancellableStatuses.includes(booking.status)) {
       throw new ServiceError(`Cannot cancel a booking in status '${booking.status}'`, 400)
     }
