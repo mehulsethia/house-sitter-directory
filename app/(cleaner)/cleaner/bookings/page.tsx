@@ -21,8 +21,17 @@ import {
   toTimeInputValue,
 } from '@/lib/booking-proposal'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { BookingRead } from '@/types'
+import type { BookingRead, BookingStatus } from '@/types'
 import { toast } from 'sonner'
+
+const STATUS_FILTERS: Array<{ key: 'all' | BookingStatus; label: string }> = [
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'New' },
+  { key: 'accepted', label: 'Accepted' },
+  { key: 'confirmed', label: 'Confirmed' },
+  { key: 'in_progress', label: 'In Progress' },
+  { key: 'completed', label: 'Completed' },
+]
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',
@@ -36,6 +45,7 @@ export default function CleanerBookingsPage() {
   const [stripeConnected, setStripeConnected] = useState(false)
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [filter, setFilter] = useState<'all' | BookingStatus>('all')
   const [query, setQuery] = useState('')
   const [proposalBooking, setProposalBooking] = useState<BookingRead | null>(null)
   const [proposalDate, setProposalDate] = useState('')
@@ -169,8 +179,11 @@ export default function CleanerBookingsPage() {
   }
 
   const filtered = useMemo(() => {
-    return bookings.filter((b) => {
-      if (b.status !== 'completed') return false
+    const cleanerVisible = bookings.filter((b) => b.status !== 'draft')
+    return cleanerVisible.filter((b) => {
+      if (filter === 'pending' && b.status !== 'pending') return false
+      if (filter === 'accepted' && !['accepted', 'confirmed'].includes(b.status)) return false
+      if (filter !== 'all' && filter !== 'pending' && filter !== 'accepted' && b.status !== filter) return false
       if (!query.trim()) return true
       const q = query.toLowerCase()
       return (
@@ -179,7 +192,7 @@ export default function CleanerBookingsPage() {
         b.postcode.toLowerCase().includes(q)
       )
     })
-  }, [bookings, query])
+  }, [bookings, filter, query])
 
   const summary = useMemo(() => {
     const pending = 0
@@ -251,9 +264,17 @@ export default function CleanerBookingsPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-[0_8px_16px_rgba(39,70,250,0.3)]">
-              Completed
-            </span>
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                  filter === f.key ? 'bg-primary text-white shadow-[0_8px_16px_rgba(39,70,250,0.3)]' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
 
           {filtered.length === 0 ? (
