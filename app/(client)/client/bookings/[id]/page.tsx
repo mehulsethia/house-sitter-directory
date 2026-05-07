@@ -358,7 +358,7 @@ export default function ClientBookingDetailPage() {
                   )}
                   {(booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))) && (
                     <>
-                      <Button variant="outline" onClick={() => router.push(`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}`)}>
+                      <Button variant="outline" onClick={() => router.push(`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`)}>
                         Continue payment in booking flow
                       </Button>
                       <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
@@ -373,7 +373,7 @@ export default function ClientBookingDetailPage() {
                   )}
                   {booking.status === 'expired' && (
                     <>
-                      <Button onClick={() => router.push(`/client/book/${booking.cleaner_id}?fresh=1`)}>
+                      <Button onClick={() => router.push(`/client/book/${booking.cleaner_id}?reset=1&step=1`)}>
                         Book again
                       </Button>
                       <Button variant="outline" onClick={() => router.push('/client/cleaners')}>

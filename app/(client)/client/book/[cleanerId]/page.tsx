@@ -645,14 +645,15 @@ export default function BookingFlowPage() {
   const searchParams = useSearchParams()
   const continueDraft = searchParams.get('continue') === '1'
   const continueBookingId = searchParams.get('bookingId')?.trim() || ''
-  const forceFresh = searchParams.get('fresh') === '1'
-  const paymentResumeMode = continueDraft && Boolean(continueBookingId) && !forceFresh
+  const resetDraft = searchParams.get('reset') === '1' || searchParams.get('fresh') === '1'
+  const paymentResumeMode = continueDraft && Boolean(continueBookingId) && !resetDraft
+  const stepFromUrl = Math.min(Math.max(Number(searchParams.get('step') ?? (paymentResumeMode ? '3' : '1')), 1), 4)
 
   const [cleaner, setCleaner] = useState<CleanerRead | null>(null)
   const [clientProfile, setClientProfile] = useState<ClientProfileRead | null>(null)
   const [savedAddresses, setSavedAddresses] = useState<ClientAddressRead[]>([])
   const [loading, setLoading] = useState(true)
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(stepFromUrl)
   const [restoringDraft, setRestoringDraft] = useState(paymentResumeMode)
   const [draftHydrated, setDraftHydrated] = useState(false)
 
@@ -706,6 +707,25 @@ export default function BookingFlowPage() {
   const slotsRequestSeqRef = useRef(0)
   const datesRequestSeqRef = useRef(0)
 
+  function navigateToStep(nextStep: number, options?: { dropResumeParams?: boolean; push?: boolean }) {
+    const safeStep = Math.min(Math.max(nextStep, 1), 4)
+    const qs = new URLSearchParams(searchParams.toString())
+    qs.set('step', String(safeStep))
+    qs.delete('reset')
+    qs.delete('fresh')
+    if (options?.dropResumeParams) {
+      qs.delete('continue')
+      qs.delete('bookingId')
+    }
+    const nextUrl = `/client/book/${cleanerId}${qs.toString() ? `?${qs.toString()}` : ''}`
+    if (options?.push) {
+      router.push(nextUrl)
+    } else {
+      router.replace(nextUrl)
+    }
+    setStep(safeStep)
+  }
+
   function getDateKeyInAppTimezone(value: string): string {
     const parsed = new Date(value)
     if (Number.isNaN(parsed.getTime())) return ''
@@ -720,6 +740,10 @@ export default function BookingFlowPage() {
   function clearSessionDraft() {
     bookingsApi.clearFlowDraft(cleanerId).catch(() => null)
   }
+
+  useEffect(() => {
+    setStep((prev) => (prev === stepFromUrl ? prev : stepFromUrl))
+  }, [stepFromUrl])
 
   async function initializePaymentIntentForBooking(bookingId: string) {
     const intentRes = await paymentsApi.createIntent(bookingId)
@@ -745,7 +769,7 @@ export default function BookingFlowPage() {
         toast.error('This time is no longer available. Please choose another time.')
         setBooking(null)
         setClientSecret(null)
-        setStep(1)
+        navigateToStep(1, { dropResumeParams: true })
         setSelectedSlot('')
         return
       }
@@ -754,7 +778,7 @@ export default function BookingFlowPage() {
     setBooking(restoredBooking)
     if (isPaymentAuthorizedStatus(restoredBooking.payment?.status)) {
       clearSessionDraft()
-      setStep(4)
+      navigateToStep(4, { dropResumeParams: true })
       return
     }
 
@@ -764,11 +788,11 @@ export default function BookingFlowPage() {
       if (latest.data) {
         setBooking(latest.data)
       }
-      setStep(3)
+      navigateToStep(3)
       return
     } catch (err: any) {
       setClientSecret(null)
-      setStep(3)
+      navigateToStep(3)
       toast.error(err?.message ?? 'Unable to resume payment right now. Please try again.')
       return
     }
@@ -956,8 +980,9 @@ export default function BookingFlowPage() {
     if (loading || hasHydratedDraftRef.current) return
     hasHydratedDraftRef.current = true
 
-    if (forceFresh) {
+    if (resetDraft) {
       clearSessionDraft()
+      navigateToStep(1, { dropResumeParams: true })
       setRestoringDraft(false)
       setDraftHydrated(true)
       return
@@ -988,8 +1013,8 @@ export default function BookingFlowPage() {
         }
 
         hydrateFromDraftPayload(payload)
-        const restoredStep = Math.min(Math.max(Number(serverDraft.last_step || payload.step || 1), 1), 3)
-        const restoredBookingId = String(serverDraft.booking_id ?? payload.bookingId ?? '').trim()
+        const restoredStep = Math.min(Math.max(Number((serverDraft as any).lastStep || payload.step || 1), 1), 3)
+        const restoredBookingId = String((serverDraft as any).bookingId ?? payload.bookingId ?? '').trim()
         if (restoredStep >= 3 && restoredBookingId) {
           await resumeExistingBooking(
             restoredBookingId,
@@ -998,16 +1023,16 @@ export default function BookingFlowPage() {
             Number(payload.duration || 1),
           )
         } else {
-          setStep(restoredStep === 3 ? 2 : restoredStep)
+          navigateToStep(restoredStep === 3 ? 2 : restoredStep)
         }
       } catch {
-        setStep(1)
+        navigateToStep(1, { dropResumeParams: true })
       } finally {
         setRestoringDraft(false)
         setDraftHydrated(true)
       }
     })()
-  }, [loading, continueDraft, continueBookingId, forceFresh, cleanerId])
+  }, [loading, continueDraft, continueBookingId, resetDraft, cleanerId])
 
   useEffect(() => {
     function onFocus() {
@@ -1354,7 +1379,7 @@ export default function BookingFlowPage() {
         toast.error('Unable to save draft right now. Please try again.')
         return
       }
-      setStep(2)
+      navigateToStep(2)
     } else if (step === 2) {
       if (missingProfileRequiredItems.length > 0) {
         toast.error('Please complete your name, email, and phone number to continue.')
@@ -1454,7 +1479,7 @@ export default function BookingFlowPage() {
       }
       setClientSecret(nextClientSecret)
       await persistFlowDraft(3, b.id)
-      setStep(3)
+      navigateToStep(3)
     } catch (err: any) {
       const rawMessage = String(err?.message ?? '').trim()
       const fallbackByStage: Record<typeof failureStage, string> = {
@@ -1478,7 +1503,7 @@ export default function BookingFlowPage() {
         message: rawMessage || null,
       })
       if (String(err?.message ?? '').includes('no longer available')) {
-        setStep(1)
+        navigateToStep(1, { dropResumeParams: true })
         setBooking(null)
         setClientSecret(null)
       }
@@ -1522,7 +1547,7 @@ export default function BookingFlowPage() {
       setBooking(bookingRes.data)
     }
     await bookingsApi.clearFlowDraft(cleanerId).catch(() => null)
-    setStep(4)
+    navigateToStep(4, { dropResumeParams: true })
   }
 
   const isPaymentRequiredLocked =
@@ -1580,7 +1605,7 @@ export default function BookingFlowPage() {
           <div className="mb-5">
             {!isPaymentRequiredLocked && (
               <button
-                onClick={() => (step > 1 ? setStep(step - 1) : router.back())}
+                onClick={() => (step > 1 ? navigateToStep(step - 1) : router.back())}
                 className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-900"
               >
                 <ArrowLeft className="h-4 w-4" /> {step > 1 ? 'Previous' : 'Back to All Cleaners'}
@@ -1925,7 +1950,7 @@ export default function BookingFlowPage() {
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                       Deep and move-out cleans often take significantly longer than regular cleaning. Underestimating time may result in incomplete tasks or cleaners declining the request.
                       <div className="mt-2">
-                        <button type="button" onClick={() => setStep(1)} className="text-xs font-semibold text-amber-900 underline">
+                        <button type="button" onClick={() => navigateToStep(1)} className="text-xs font-semibold text-amber-900 underline">
                           Adjust duration
                         </button>
                       </div>
@@ -2093,7 +2118,7 @@ export default function BookingFlowPage() {
                 {/* Navigation */}
                 <div className="flex items-center justify-between pt-2">
                   <button
-                    onClick={() => setStep(1)}
+                    onClick={() => navigateToStep(1)}
                     className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors"
                   >
                     <ArrowLeft className="h-4 w-4" /> Previous

@@ -230,7 +230,7 @@ export default function CleanerProfilePage() {
                 </p>
                 <p className="mt-1 text-sm text-white/80">{deferredReviews.length} reviews · {cleaner.total_jobs} jobs completed</p>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <Button onClick={() => router.push(`/client/book/${id}?fresh=1`)} className="h-9 rounded-full bg-[#f4b400] px-4 text-slate-950 hover:bg-[#ffca3a]">
+                  <Button onClick={() => router.push(`/client/book/${id}?reset=1&step=1`)} className="h-9 rounded-full bg-[#f4b400] px-4 text-slate-950 hover:bg-[#ffca3a]">
                     Book Service
                   </Button>
                   <Button

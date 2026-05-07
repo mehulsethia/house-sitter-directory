@@ -392,7 +392,7 @@ export default function ClientCleanersPage() {
                       View Profile
                     </Link>
                     <Link
-                      href={`/client/book/${cleaner.id}?fresh=1`}
+                      href={`/client/book/${cleaner.id}?reset=1&step=1`}
                       className="inline-flex h-[44px] items-center justify-center rounded-xl bg-[#1f3bd6] px-4 text-[14px] font-semibold text-white hover:bg-[#182fb3]"
                     >
                       Book Now

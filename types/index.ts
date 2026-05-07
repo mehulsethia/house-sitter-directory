@@ -235,16 +235,16 @@ export interface BookingRead {
 
 export interface BookingFlowDraftRead {
   id: string
-  client_id: string
-  cleaner_id: string
-  booking_id?: string | null
-  last_step: number
-  duration_hours?: number | null
-  selected_date?: string | null
-  selected_slot?: string | null
+  clientId: string
+  cleanerId: string
+  bookingId?: string | null
+  lastStep: number
+  durationHours?: number | null
+  selectedDate?: string | null
+  selectedSlot?: string | null
   payload?: Record<string, any> | null
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
   booking?: BookingRead | null
 }
 

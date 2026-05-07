@@ -288,7 +288,7 @@ export default function ClientBookingsPage() {
                         </Link>
                         {canContinuePayment && (
                           <Link
-                            href={`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}`}
+                            href={`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`}
                             className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
                           >
                             Continue payment
@@ -347,7 +347,7 @@ export default function ClientBookingsPage() {
                         {booking.status === 'expired' && (
                           <>
                             <Link
-                              href={`/client/book/${booking.cleaner_id}?fresh=1`}
+                              href={`/client/book/${booking.cleaner_id}?reset=1&step=1`}
                               className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
                             >
                               Book again
