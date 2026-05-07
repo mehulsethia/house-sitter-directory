@@ -56,6 +56,36 @@ export function ensureDbSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS access_notes TEXT NOT NULL DEFAULT ''
       `)
       await db.$executeRawUnsafe(`
+        DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE conname = 'bookings_status_check'
+              AND conrelid = 'public.bookings'::regclass
+          ) THEN
+            ALTER TABLE public.bookings DROP CONSTRAINT bookings_status_check;
+          END IF;
+        END $$;
+      `)
+      await db.$executeRawUnsafe(`
+        ALTER TABLE public.bookings
+        ADD CONSTRAINT bookings_status_check
+        CHECK (
+          status IN (
+            'draft',
+            'pending',
+            'accepted',
+            'confirmed',
+            'in_progress',
+            'completed',
+            'cancelled',
+            'expired',
+            'disputed'
+          )
+        )
+      `)
+      await db.$executeRawUnsafe(`
         CREATE TABLE IF NOT EXISTS public.client_addresses (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
