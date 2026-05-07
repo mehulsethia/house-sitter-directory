@@ -853,27 +853,35 @@ export default function BookingFlowPage() {
 
   async function persistFlowDraft(lastStep: number, bookingId?: string) {
     const snapshot = buildSessionDraft()
+    const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
     await bookingsApi.saveFlowDraft({
       cleaner_id: cleanerId,
       booking_id: (bookingId ?? snapshot.bookingId) || undefined,
       last_step: lastStep,
       duration_hours: snapshot.duration,
       selected_date: snapshot.date || undefined,
-      selected_slot: snapshot.selectedSlot || undefined,
-      payload: snapshot,
+      selected_slot: normalizedSlot || undefined,
+      payload: {
+        ...snapshot,
+        selectedSlot: normalizedSlot || '',
+      },
     })
   }
 
   function buildFlowDraftBody(lastStep: number, bookingId?: string) {
     const snapshot = buildSessionDraft()
+    const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
     return {
       cleaner_id: cleanerId,
       booking_id: (bookingId ?? snapshot.bookingId) || undefined,
       last_step: lastStep,
       duration_hours: snapshot.duration,
       selected_date: snapshot.date || undefined,
-      selected_slot: snapshot.selectedSlot || undefined,
-      payload: snapshot,
+      selected_slot: normalizedSlot || undefined,
+      payload: {
+        ...snapshot,
+        selectedSlot: normalizedSlot || '',
+      },
     }
   }
 
@@ -1027,35 +1035,43 @@ export default function BookingFlowPage() {
       try {
         const serverDraft = (await bookingsApi.getFlowDraft(cleanerId)).data
         const payload = serverDraft?.payload as BookingFlowDraft | undefined
+        const normalizedPayload: BookingFlowDraft | undefined = payload
+          ? {
+              ...payload,
+              duration: Number(payload.duration || serverDraft?.durationHours || 1),
+              date: String(payload.date || serverDraft?.selectedDate || ''),
+              selectedSlot: String(payload.selectedSlot || serverDraft?.selectedSlot || ''),
+            }
+          : undefined
 
         if (continueDraft && continueBookingId) {
-          if (payload && payload.version === BOOKING_FLOW_DRAFT_VERSION) {
-            hydrateFromDraftPayload(payload)
+          if (normalizedPayload && normalizedPayload.version === BOOKING_FLOW_DRAFT_VERSION) {
+            hydrateFromDraftPayload(normalizedPayload)
           }
-          const fallbackSlot = normalizeToIsoDatetime(payload?.selectedSlot || '') ?? ''
-          const fallbackDate = payload?.date || (fallbackSlot ? getDateKeyInAppTimezone(fallbackSlot) : '')
-          const fallbackDuration = Number(payload?.duration || 1)
+          const fallbackSlot = normalizeToIsoDatetime(normalizedPayload?.selectedSlot || '') ?? ''
+          const fallbackDate = normalizedPayload?.date || (fallbackSlot ? getDateKeyInAppTimezone(fallbackSlot) : '')
+          const fallbackDuration = Number(normalizedPayload?.duration || 1)
           await resumeExistingBooking(continueBookingId, fallbackDate, fallbackSlot, fallbackDuration)
           setRestoringDraft(false)
           setDraftHydrated(true)
           return
         }
 
-        if (!serverDraft || !payload || payload.version !== BOOKING_FLOW_DRAFT_VERSION) {
+        if (!serverDraft || !normalizedPayload || normalizedPayload.version !== BOOKING_FLOW_DRAFT_VERSION) {
           setRestoringDraft(false)
           setDraftHydrated(true)
           return
         }
 
-        hydrateFromDraftPayload(payload)
-        const restoredStep = Math.min(Math.max(Number((serverDraft as any).lastStep || payload.step || 1), 1), 3)
-        const restoredBookingId = String((serverDraft as any).bookingId ?? payload.bookingId ?? '').trim()
+        hydrateFromDraftPayload(normalizedPayload)
+        const restoredStep = Math.min(Math.max(Number((serverDraft as any).lastStep || normalizedPayload.step || 1), 1), 3)
+        const restoredBookingId = String((serverDraft as any).bookingId ?? normalizedPayload.bookingId ?? '').trim()
         if (restoredStep >= 3 && restoredBookingId) {
           await resumeExistingBooking(
             restoredBookingId,
-            payload.date || '',
-            normalizeToIsoDatetime(payload.selectedSlot || '') ?? '',
-            Number(payload.duration || 1),
+            normalizedPayload.date || '',
+            normalizeToIsoDatetime(normalizedPayload.selectedSlot || '') ?? '',
+            Number(normalizedPayload.duration || 1),
           )
         } else {
           navigateToStep(restoredStep === 3 ? 2 : restoredStep)
@@ -1093,7 +1109,7 @@ export default function BookingFlowPage() {
           const normalizedSlot = normalizeToIsoDatetime(slot.start)
           return normalizedSlot && normalizedSelected && normalizedSlot === normalizedSelected && !slot.disabled
         })
-        if (!stillAvailable) {
+        if (!stillAvailable && step <= 1) {
           setSelectedSlot('')
           if (normalizedSelected) {
             toast.error('This time is no longer available. Please choose another time.')
@@ -1108,7 +1124,7 @@ export default function BookingFlowPage() {
         if (requestSeq !== slotsRequestSeqRef.current) return
         setSlotsLoading(false)
       })
-  }, [date, duration, cleanerId, selectedSlot])
+  }, [date, duration, cleanerId, selectedSlot, step])
 
   useEffect(() => {
     if (!cleanerId) return
@@ -1120,7 +1136,7 @@ export default function BookingFlowPage() {
         if (requestSeq !== datesRequestSeqRef.current) return
         const nextDates = r.data ?? []
         setBookableDates(nextDates)
-        if (date && !nextDates.includes(date)) {
+        if (date && !nextDates.includes(date) && step <= 1) {
           setDate('')
           setSelectedSlot('')
           if (selectedSlot) {
@@ -1136,7 +1152,7 @@ export default function BookingFlowPage() {
         if (requestSeq !== datesRequestSeqRef.current) return
         setBookableDatesLoading(false)
       })
-  }, [cleanerId, duration, date])
+  }, [cleanerId, duration, date, step, selectedSlot])
 
   // Fetch price breakdown when duration changes
   useEffect(() => {
@@ -1352,7 +1368,7 @@ export default function BookingFlowPage() {
     if (!date || !selectedSlot) return
     const normalizedSelectedSlot = normalizeToIsoDatetime(selectedSlot)
     if (!normalizedSelectedSlot) {
-      throw new Error('Please select a valid time slot.')
+      throw new Error('Selected time is missing or invalid. Please go back to Step 1 and choose a time again.')
     }
     const selectedSlotMs = new Date(normalizedSelectedSlot).getTime()
     const slotList = await availabilityApi.getSlots(cleanerId, date, duration)
@@ -1433,6 +1449,12 @@ export default function BookingFlowPage() {
       }
       navigateToStep(2)
     } else if (step === 2) {
+      const normalizedSelectedSlot = normalizeToIsoDatetime(selectedSlot)
+      if (!normalizedSelectedSlot) {
+        toast.error('Selected time is missing. Please go back to Step 1 and choose a time again.')
+        navigateToStep(1)
+        return
+      }
       if (missingProfileRequiredItems.length > 0) {
         toast.error('Please complete your name, email, and phone number to continue.')
         return

@@ -34,6 +34,8 @@ export const PUT = requireClient(async (req: NextRequest, _ctx, user) => {
   const cleaner = await cleanerRepo.findById(parsed.data.cleaner_id)
   if (!cleaner) return err('Cleaner not found', 404)
 
+  const existing = await bookingFlowDraftRepo.findByClientAndCleaner(client.id, cleaner.id)
+
   if (parsed.data.booking_id) {
     const booking = await bookingRepo.findById(parsed.data.booking_id)
     if (!booking) return err('Booking not found', 404)
@@ -48,15 +50,31 @@ export const PUT = requireClient(async (req: NextRequest, _ctx, user) => {
     }
   }
 
+  const existingPayload =
+    existing?.payload && typeof existing.payload === 'object' && !Array.isArray(existing.payload)
+      ? (existing.payload as Record<string, any>)
+      : {}
+  const incomingPayload = parsed.data.payload ?? {}
+  const mergedPayload = { ...existingPayload, ...incomingPayload } as Record<string, any>
+  if (!('selectedSlot' in incomingPayload) && existing?.selectedSlot) {
+    mergedPayload.selectedSlot = existing.selectedSlot.toISOString()
+  }
+  if (!('date' in incomingPayload) && existing?.selectedDate) {
+    mergedPayload.date = existing.selectedDate
+  }
+  if (!('duration' in incomingPayload) && existing?.durationHours != null) {
+    mergedPayload.duration = Number(existing.durationHours)
+  }
+
   const draft = await bookingFlowDraftRepo.upsertByClientAndCleaner({
     clientId: client.id,
     cleanerId: cleaner.id,
     bookingId: parsed.data.booking_id ?? null,
     lastStep: parsed.data.last_step,
-    durationHours: parsed.data.duration_hours ?? null,
-    selectedDate: parsed.data.selected_date ?? null,
-    selectedSlot: parsed.data.selected_slot ? new Date(parsed.data.selected_slot) : null,
-    payload: parsed.data.payload,
+    durationHours: parsed.data.duration_hours ?? (existing?.durationHours != null ? Number(existing.durationHours) : null),
+    selectedDate: parsed.data.selected_date ?? existing?.selectedDate ?? null,
+    selectedSlot: parsed.data.selected_slot ? new Date(parsed.data.selected_slot) : existing?.selectedSlot ?? null,
+    payload: mergedPayload,
   })
 
   return ok(draft)
