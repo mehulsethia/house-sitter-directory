@@ -1325,7 +1325,9 @@ export default function BookingFlowPage() {
 
   async function createDraftBookingAndProceed() {
     setSubmitting(true)
+    let failureStage: 'slot_recheck' | 'photo_upload' | 'booking_create' | 'payment_intent' = 'slot_recheck'
     try {
+      failureStage = 'slot_recheck'
       await assertSelectedSlotStillAvailable()
       const selectedJobType = JOB_TYPE_OPTIONS.find((option) => option.value === jobType)
       if (!selectedJobType) {
@@ -1347,9 +1349,11 @@ export default function BookingFlowPage() {
 
       let uploadedPhotoUrls: string[] = []
       if (!reusableBooking && jobPhotos.length > 0) {
+        failureStage = 'photo_upload'
         uploadedPhotoUrls = await uploadJobPhotos(jobPhotos)
       }
 
+      failureStage = 'booking_create'
       const b = reusableBooking ?? (
         await bookingsApi.create({
           cleaner_id: cleanerId,
@@ -1368,6 +1372,7 @@ export default function BookingFlowPage() {
       if (!b) throw new Error('Failed to create draft booking')
       setBooking(b)
 
+      failureStage = 'payment_intent'
       const intentRes = await paymentsApi.createIntent(b.id)
       const nextClientSecret = intentRes.data?.client_secret ?? null
       if (!nextClientSecret) {
@@ -1376,7 +1381,27 @@ export default function BookingFlowPage() {
       setClientSecret(nextClientSecret)
       setStep(3)
     } catch (err: any) {
-      toast.error(err.message ?? 'Failed to create draft booking')
+      const rawMessage = String(err?.message ?? '').trim()
+      const fallbackByStage: Record<typeof failureStage, string> = {
+        slot_recheck: 'Could not re-check slot availability. Please refresh and try again.',
+        photo_upload: 'Photo upload failed. Please try again without photos or re-upload them.',
+        booking_create: 'Booking draft could not be created. Please try again.',
+        payment_intent: 'Booking draft saved, but card authorization setup failed. Please try again.',
+      }
+      const message =
+        rawMessage && rawMessage !== 'Something went wrong. Please try again.'
+          ? rawMessage
+          : fallbackByStage[failureStage]
+      toast.error(message)
+      console.error('createDraftBookingAndProceed failed', {
+        stage: failureStage,
+        cleanerId,
+        selectedSlot,
+        date,
+        duration,
+        bookingId: booking?.id ?? null,
+        message: rawMessage || null,
+      })
       if (String(err?.message ?? '').includes('no longer available')) {
         setStep(1)
         setBooking(null)
