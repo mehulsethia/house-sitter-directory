@@ -702,6 +702,7 @@ export default function BookingFlowPage() {
   const [transportAgreementConfirmed, setTransportAgreementConfirmed] = useState(false)
   const [suppliesAgreementConfirmed, setSuppliesAgreementConfirmed] = useState(false)
   const hasHydratedDraftRef = useRef(false)
+  const latestDraftRef = useRef<BookingFlowDraft | null>(null)
   const slotsRequestSeqRef = useRef(0)
   const datesRequestSeqRef = useRef(0)
   const draftStorageKey = continueDraft && continueBookingId
@@ -722,6 +723,19 @@ export default function BookingFlowPage() {
   function clearSessionDraft() {
     if (typeof window === 'undefined') return
     window.sessionStorage.removeItem(draftStorageKey)
+    window.localStorage.removeItem(draftStorageKey)
+  }
+
+  function readStoredDraft() {
+    if (typeof window === 'undefined') return null
+    return window.sessionStorage.getItem(draftStorageKey) ?? window.localStorage.getItem(draftStorageKey)
+  }
+
+  function writeStoredDraft(nextDraft: BookingFlowDraft) {
+    if (typeof window === 'undefined') return
+    const payload = JSON.stringify(nextDraft)
+    window.sessionStorage.setItem(draftStorageKey, payload)
+    window.localStorage.setItem(draftStorageKey, payload)
   }
 
   async function initializePaymentIntentForBooking(bookingId: string) {
@@ -956,7 +970,7 @@ export default function BookingFlowPage() {
           })
       }
 
-      const rawContinueDraft = window.sessionStorage.getItem(draftStorageKey)
+      const rawContinueDraft = readStoredDraft()
       if (!rawContinueDraft) {
         hydrateFromBooking()
         return
@@ -1012,7 +1026,7 @@ export default function BookingFlowPage() {
       return
     }
 
-    const raw = window.sessionStorage.getItem(draftStorageKey)
+    const raw = readStoredDraft()
     if (!raw) {
       setRestoringDraft(false)
       setDraftHydrated(true)
@@ -1164,7 +1178,53 @@ export default function BookingFlowPage() {
 
   useEffect(() => {
     if (loading || !draftHydrated || typeof window === 'undefined') return
-    window.sessionStorage.setItem(draftStorageKey, JSON.stringify(buildSessionDraft()))
+    const nextDraft = buildSessionDraft()
+    latestDraftRef.current = nextDraft
+    writeStoredDraft(nextDraft)
+  }, [
+    loading,
+    draftHydrated,
+    draftStorageKey,
+    step,
+    duration,
+    date,
+    selectedSlot,
+    firstName,
+    lastName,
+    email,
+    phone,
+    addressMode,
+    selectedAddressId,
+    address,
+    city,
+    postcode,
+    apartmentDetails,
+    accessNotes,
+    jobType,
+    bedrooms,
+    bathrooms,
+    propertyCondition,
+    suppliesProvider,
+    notes,
+    saveAddressForLater,
+    booking?.id,
+  ])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    function flushDraftOnLifecycle() {
+      if (loading || !draftHydrated) return
+      const nextDraft = buildSessionDraft()
+      latestDraftRef.current = nextDraft
+      writeStoredDraft(nextDraft)
+    }
+    window.addEventListener('pagehide', flushDraftOnLifecycle)
+    window.addEventListener('beforeunload', flushDraftOnLifecycle)
+    return () => {
+      flushDraftOnLifecycle()
+      window.removeEventListener('pagehide', flushDraftOnLifecycle)
+      window.removeEventListener('beforeunload', flushDraftOnLifecycle)
+    }
   }, [
     loading,
     draftHydrated,
