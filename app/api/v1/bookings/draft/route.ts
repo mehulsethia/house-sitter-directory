@@ -62,6 +62,8 @@ export const PUT = requireClient(async (req: NextRequest, _ctx, user) => {
   return ok(draft)
 })
 
+export const POST = PUT
+
 export const DELETE = requireClient(async (req: NextRequest, _ctx, user) => {
   const params = Object.fromEntries(req.nextUrl.searchParams)
   const parsed = bookingFlowDraftQuerySchema.safeParse(params)

@@ -864,6 +864,41 @@ export default function BookingFlowPage() {
     })
   }
 
+  function buildFlowDraftBody(lastStep: number, bookingId?: string) {
+    const snapshot = buildSessionDraft()
+    return {
+      cleaner_id: cleanerId,
+      booking_id: (bookingId ?? snapshot.bookingId) || undefined,
+      last_step: lastStep,
+      duration_hours: snapshot.duration,
+      selected_date: snapshot.date || undefined,
+      selected_slot: snapshot.selectedSlot || undefined,
+      payload: snapshot,
+    }
+  }
+
+  function persistFlowDraftOnHide(lastStep: number, bookingId?: string) {
+    if (typeof window === 'undefined') return
+    if (step > 3) return
+    const body = buildFlowDraftBody(lastStep, bookingId)
+    try {
+      if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+        const blob = new Blob([JSON.stringify(body)], { type: 'application/json' })
+        navigator.sendBeacon('/api/v1/bookings/draft', blob)
+        return
+      }
+    } catch {
+      // fallback below
+    }
+    fetch('/api/v1/bookings/draft', {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).catch(() => null)
+  }
+
   async function refreshVerificationStatus() {
     try {
       const [authUserRes, clientRes] = await Promise.all([
@@ -1131,7 +1166,7 @@ export default function BookingFlowPage() {
     const persistedStep = booking?.id && step >= 3 ? 3 : Math.min(step, 2)
     draftAutosaveTimerRef.current = setTimeout(() => {
       persistFlowDraft(persistedStep, booking?.id ?? undefined).catch(() => null)
-    }, 700)
+    }, 200)
 
     return () => {
       if (draftAutosaveTimerRef.current) {
@@ -1164,6 +1199,23 @@ export default function BookingFlowPage() {
     saveAddressForLater,
     booking?.id,
   ])
+
+  useEffect(() => {
+    if (loading || !draftHydrated) return
+    const persistedStep = booking?.id && step >= 3 ? 3 : Math.min(step, 2)
+    function flush() {
+      persistFlowDraftOnHide(persistedStep, booking?.id ?? undefined)
+    }
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') flush()
+    }
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [loading, draftHydrated, step, booking?.id])
 
   const estimatedCost = useMemo(() => {
     if (!cleaner) return 0
