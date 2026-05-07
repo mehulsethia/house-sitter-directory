@@ -10,7 +10,7 @@ export const updateCleanerSchema = z.object({
   years_experience: z.number().int().min(0).optional(),
   hourly_rate: z.number().min(6).max(25).optional(),
   transport_mode: z.enum(['own_car', 'bus_walk', 'requires_pickup']).optional().nullable(),
-  transport_pickup_location: z.string().max(200).optional().nullable(),
+  transport_pickup_location: z.string().max(1000).optional().nullable(),
   id_type: z.enum(['passport', 'national_id', 'drivers_licence', 'drivers_license']).optional().nullable(),
   id_file_name: z.string().max(255).optional().nullable(),
   id_file_url: z.string().url().optional().nullable(),
@@ -36,6 +36,40 @@ export const updateCleanerSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ['transport_pickup_location'],
       message: 'Pick-up/drop-off location is required when transport mode is Requires Pick-up.',
+    })
+    return
+  }
+  const trimmed = pickup.trim()
+  if (trimmed.startsWith('pickup_v2:')) {
+    try {
+      const parsed = JSON.parse(trimmed.slice('pickup_v2:'.length))
+      const label = String(parsed?.label ?? '').trim()
+      const address = String(parsed?.address ?? '').trim()
+      const city = String(parsed?.city ?? '').trim()
+      const country = String(parsed?.country ?? '').trim()
+      const meetNotes = String(parsed?.meetNotes ?? '').trim()
+      if (!label) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['transport_pickup_location'], message: 'Location label is required.' })
+      }
+      if (!address) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['transport_pickup_location'], message: 'Address / landmark is required.' })
+      }
+      if (city !== 'Larnaca' || country !== 'Cyprus') {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['transport_pickup_location'], message: 'Pick-up/drop-off locations must be within Larnaca.' })
+      }
+      if (meetNotes.length > 120) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['transport_pickup_location'], message: 'Where to meet notes can be up to 120 characters.' })
+      }
+    } catch {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['transport_pickup_location'], message: 'Invalid pick-up/drop-off location format.' })
+    }
+    return
+  }
+  if (!trimmed.toLowerCase().includes('larnaca')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['transport_pickup_location'],
+      message: 'Pick-up/drop-off locations must be within Larnaca.',
     })
   }
 })

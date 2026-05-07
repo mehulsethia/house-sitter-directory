@@ -232,6 +232,8 @@ export const loopsEmailService = {
     email: string
     fullName: string
     date: Date
+    cleanerName?: string
+    durationHours?: number
   }) {
     return sendTransactionalEmail({
       transactionalId: CLIENT_CANCELLATION_CONFIRMATION_TRANSACTIONAL_ID,
@@ -239,6 +241,11 @@ export const loopsEmailService = {
       dataVariables: {
         first_name: firstName(args.fullName),
         date: formatBookingDate(args.date),
+        time: formatBookingTime(args.date),
+        cleaner_name: args.cleanerName ?? 'Cleaner',
+        booking_duration: args.durationHours
+          ? `${args.durationHours} hour${args.durationHours === 1 ? '' : 's'}`
+          : '',
         cta_link: `${appUrl()}/client/bookings`,
       },
     })

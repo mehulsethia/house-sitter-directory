@@ -714,6 +714,8 @@ export const bookingService = {
         email: booking.client.user.email,
         fullName: booking.client.user.name ?? 'Client',
         date: booking.scheduledStart,
+        cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+        durationHours: Number(booking.durationHours),
       })
     } catch (emailError) {
       console.error('Failed to send client cancellation confirmation email via Loops:', emailError)

@@ -21,6 +21,7 @@ import { createClient } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import type { BookingRead, ReviewRead, CleanerOnboardingProgress } from '@/types'
 import { deriveCleanerLifecycleStatus } from '@/lib/cleaner-status'
+import { parsePickupLocation, serializePickupLocation } from '@/lib/transport-pickup'
 import { toast } from 'sonner'
 
 type TabKey = 'overview' | 'availability' | 'reviews' | 'payments'
@@ -88,7 +89,11 @@ function CleanerProfilePageContent() {
   const [yearsExperience, setYearsExperience] = useState('0')
   const [hourlyRate, setHourlyRate] = useState('15')
   const [transportMode, setTransportMode] = useState('')
-  const [homeAddress, setHomeAddress] = useState('')
+  const [pickupLabel, setPickupLabel] = useState('')
+  const [pickupAddress, setPickupAddress] = useState('')
+  const [pickupPostcode, setPickupPostcode] = useState('')
+  const [pickupMeetNotes, setPickupMeetNotes] = useState('')
+  const [cleaningSupplies, setCleaningSupplies] = useState('')
   const [idType, setIdType] = useState('')
   const [idFileName, setIdFileName] = useState('')
   const [idFileUrl, setIdFileUrl] = useState('')
@@ -159,7 +164,20 @@ function CleanerProfilePageContent() {
       setYearsExperience(String(c.years_experience ?? c.yearsExperience ?? 0))
       setHourlyRate(String(c.hourly_rate ?? c.hourlyRate ?? 15))
       setTransportMode(c.transport_mode ?? c.transportMode ?? '')
-      setHomeAddress(c.transport_pickup_location ?? c.transportPickupLocation ?? '')
+      const pickupRaw = c.transport_pickup_location ?? c.transportPickupLocation ?? ''
+      const pickupStructured = parsePickupLocation(pickupRaw)
+      if (pickupStructured) {
+        setPickupLabel(pickupStructured.label)
+        setPickupAddress(pickupStructured.address)
+        setPickupPostcode(pickupStructured.postcode ?? '')
+        setPickupMeetNotes(pickupStructured.meetNotes ?? '')
+      } else {
+        setPickupLabel(String(pickupRaw ?? ''))
+        setPickupAddress('')
+        setPickupPostcode('')
+        setPickupMeetNotes('')
+      }
+      setCleaningSupplies(c.cleaning_supplies ?? c.cleaningSupplies ?? '')
       setIdType(c.id_type ?? c.idType ?? '')
       setIdFileName(c.id_file_name ?? c.idFileName ?? '')
       setIdFileUrl(c.id_file_url ?? c.idFileUrl ?? '')
@@ -291,11 +309,15 @@ function CleanerProfilePageContent() {
     if (bio.trim().length > BIO_MAX_CHARS) return toast.error(`Professional bio can be up to ${BIO_MAX_CHARS} characters.`)
     if (skills.length === 0) return toast.error('Select at least one service.')
     if (!transportMode) return toast.error('Mode of transport is required.')
-    if (transportMode === 'requires_pickup' && !homeAddress.trim()) {
-      return toast.error('Pick-up/drop-off location is required when transport support is enabled.')
+    if (!cleaningSupplies) return toast.error('Cleaning supplies setting is required.')
+    if (transportMode === 'requires_pickup' && !pickupLabel.trim()) {
+      return toast.error('Location label is required.')
     }
-    if (transportMode === 'requires_pickup' && !homeAddress.toLowerCase().includes('larnaca')) {
-      return toast.error('For MVP launch, pick-up/drop-off location must be within Larnaca.')
+    if (transportMode === 'requires_pickup' && !pickupAddress.trim()) {
+      return toast.error('Address / landmark is required.')
+    }
+    if (pickupMeetNotes.trim().length > 120) {
+      return toast.error('Where to meet notes can be up to 120 characters.')
     }
 
     setSaving(true)
@@ -316,8 +338,19 @@ function CleanerProfilePageContent() {
       await cleanersApi.updateMyOnboarding({
         years_experience: Number(yearsExperience),
         hourly_rate: Number(hourlyRate),
+        cleaning_supplies: cleaningSupplies,
         transport_mode: transportMode,
-        transport_pickup_location: homeAddress || null,
+        transport_pickup_location:
+          transportMode === 'requires_pickup'
+            ? serializePickupLocation({
+                label: pickupLabel.trim(),
+                address: pickupAddress.trim(),
+                city: 'Larnaca',
+                country: 'Cyprus',
+                ...(pickupPostcode.trim() ? { postcode: pickupPostcode.trim() } : {}),
+                ...(pickupMeetNotes.trim() ? { meetNotes: pickupMeetNotes.trim() } : {}),
+              })
+            : null,
         id_type: idType || null,
         id_file_name: idFileName || null,
         id_file_url: idFileUrl || null,
@@ -649,6 +682,14 @@ function CleanerProfilePageContent() {
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
                     <div><Label>Hourly Rate (€{MIN_HOURLY_RATE}–€{MAX_HOURLY_RATE})</Label><Input type="number" min={MIN_HOURLY_RATE} max={MAX_HOURLY_RATE} value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} className="mt-1" /></div>
                     <div>
+                      <Label>Cleaning supplies</Label>
+                      <Select value={cleaningSupplies} onChange={(e) => setCleaningSupplies(e.target.value)} className="mt-1">
+                        <option value="">Choose an option...</option>
+                        <option value="own_supplies">I bring cleaning supplies</option>
+                        <option value="client_supplies">Client must provide cleaning supplies</option>
+                      </Select>
+                    </div>
+                    <div>
                       <Label>Mode of Transport</Label>
                       <Select value={transportMode} onChange={(e) => setTransportMode(e.target.value)} className="mt-1">
                         <option value="">Choose an option...</option>
@@ -659,16 +700,21 @@ function CleanerProfilePageContent() {
                     </div>
                   </div>
                   {transportMode === 'requires_pickup' && (
-                    <div className="mt-3">
-                      <Label>Pick-up/drop-off location</Label>
-                      <p className="mt-1 text-xs text-slate-500">Choose a safe nearby public location where clients can pick you up and drop you off for bookings.</p>
-                      <Input
-                        value={homeAddress}
-                        onChange={(e) => setHomeAddress(e.target.value)}
-                        className="mt-1"
-                        placeholder="Example: Larnaca Marina entrance, Finikoudes bus stop, or nearby landmark"
-                      />
-                      <p className="mt-1 text-xs text-slate-500">For MVP launch, location must be within Larnaca.</p>
+                    <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <div><Label>Location label</Label><Input value={pickupLabel} onChange={(e) => setPickupLabel(e.target.value)} className="mt-1" placeholder="Finikoudes bus stop" /></div>
+                      <div><Label>Address / landmark</Label><Input value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)} className="mt-1" placeholder="Finikoudes promenade, near main bus stop" /></div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div><Label>City</Label><Input value="Larnaca" disabled className="mt-1" /></div>
+                        <div><Label>Country</Label><Input value="Cyprus" disabled className="mt-1" /></div>
+                      </div>
+                      <div><Label>Postcode (optional)</Label><Input value={pickupPostcode} onChange={(e) => setPickupPostcode(e.target.value)} className="mt-1" placeholder="6015" /></div>
+                      <div>
+                        <Label>Where to meet notes (optional)</Label>
+                        <Textarea value={pickupMeetNotes} onChange={(e) => setPickupMeetNotes(e.target.value.slice(0, 120))} rows={2} className="mt-1" placeholder="Example: Wait near the main bus stop sign." />
+                        <p className="mt-1 text-xs text-slate-500">{pickupMeetNotes.length}/120</p>
+                      </div>
+                      <p className="text-xs text-slate-500">Pick-up/drop-off locations must be within Larnaca.</p>
+                      <p className="text-xs text-slate-500">Choose a safe nearby public location where clients can pick you up and drop you off for bookings. You can confirm exact details in chat after the booking is confirmed.</p>
                     </div>
                   )}
                   <div className="mt-3">

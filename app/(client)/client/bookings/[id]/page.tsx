@@ -353,14 +353,14 @@ export default function ClientBookingDetailPage() {
                       Authorise card
                     </Button>
                   )}
-                  {booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status) && (
+                  {(booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))) && (
                     <Button variant="outline" onClick={() => router.push(`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}`)}>
                       Continue payment in booking flow
                     </Button>
                   )}
-                  {booking.status === 'pending' && (
+                  {(booking.status === 'draft' || booking.status === 'pending') && (
                     <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
-                      Cancel request
+                      {booking.status === 'draft' ? 'Cancel draft' : 'Cancel request'}
                     </Button>
                   )}
                   {booking.status === 'expired' && (

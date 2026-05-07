@@ -19,6 +19,7 @@ import { BookableCalendar } from '@/components/ui/bookable-calendar'
 import { UserAvatar } from '@/components/ui/user-avatar'
 import { formatCurrency, cn, APP_TIMEZONE } from '@/lib/utils'
 import { MAX_SAVED_ADDRESSES, MVP_CITY, normalizeCyprusPostcode } from '@/lib/location-policy'
+import { pickupShortLabel } from '@/lib/transport-pickup'
 import type { CleanerRead, PriceBreakdown, BookingRead, ClientProfileRead, ClientAddressRead } from '@/types'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase'
@@ -1240,7 +1241,7 @@ export default function BookingFlowPage() {
             : 'Not set'
     const pickupLocationSnapshot =
       cleaner?.transport_mode === 'requires_pickup'
-        ? ((cleaner as any)?.transport_pickup_location ?? '')
+        ? pickupShortLabel((cleaner as any)?.transport_pickup_location ?? '')
         : ''
     const lines = [
       `Job type: ${jobTypeMeta?.label ?? 'Not provided'}`,
@@ -1542,7 +1543,7 @@ export default function BookingFlowPage() {
                     <p>This cleaner requires pickup and drop-off. You will need to arrange transport to and from their pickup location.</p>
                     {(cleaner as any).transport_pickup_location && (
                       <p className="mt-1 text-xs font-medium text-amber-900">
-                        Pickup location: {(cleaner as any).transport_pickup_location}
+                        Requires pick-up/drop-off: {pickupShortLabel((cleaner as any).transport_pickup_location)}
                       </p>
                     )}
                     <label className="mt-2 inline-flex items-start gap-2 text-xs font-medium text-amber-900">
