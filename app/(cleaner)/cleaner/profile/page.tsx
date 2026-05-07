@@ -261,8 +261,24 @@ function CleanerProfilePageContent() {
   }, [fullName])
 
   const paymentHistory = useMemo(() => {
+    const activeBookingStatuses = new Set<BookingRead['status']>([
+      'pending',
+      'accepted',
+      'confirmed',
+      'in_progress',
+      'disputed',
+    ])
+    const activePaymentStatuses = new Set(['authorized', 'captured', 'transferred'])
+    const completedPaymentStatuses = new Set(['captured', 'transferred', 'partially_refunded', 'refunded'])
+
     return bookings
-      .filter((b) => b.payment || ['completed', 'disputed', 'confirmed', 'in_progress'].includes(b.status))
+      .filter((b) => {
+        const paymentStatus = String(b.payment?.status ?? '')
+        if (!paymentStatus) return false
+        if (b.status === 'completed') return completedPaymentStatuses.has(paymentStatus)
+        if (activeBookingStatuses.has(b.status)) return activePaymentStatuses.has(paymentStatus)
+        return false
+      })
       .sort((a, b) => new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime())
   }, [bookings])
   const stripeFullyReady =

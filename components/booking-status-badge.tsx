@@ -17,8 +17,16 @@ function isPaymentAuthorized(paymentStatus?: string | null) {
   return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
 }
 
-export function BookingStatusBadge({ status, paymentStatus }: { status: BookingStatus; paymentStatus?: string | null }) {
-  const config = (status === 'draft' || (status === 'pending' && !isPaymentAuthorized(paymentStatus)))
+export function BookingStatusBadge({
+  status,
+  paymentStatus,
+  showPaymentRequiredForUnpaid = true,
+}: {
+  status: BookingStatus
+  paymentStatus?: string | null
+  showPaymentRequiredForUnpaid?: boolean
+}) {
+  const config = (showPaymentRequiredForUnpaid && (status === 'draft' || (status === 'pending' && !isPaymentAuthorized(paymentStatus))))
     ? { label: 'Payment Required', variant: 'warning' as const }
     : STATUS_CONFIG[status] ?? { label: status, variant: 'outline' as const }
   return <Badge variant={config.variant}>{config.label}</Badge>

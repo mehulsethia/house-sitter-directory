@@ -28,7 +28,10 @@ export function BookingCard({ booking, viewAs = 'client' }: BookingCardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <span className="font-semibold">{SERVICE_LABELS[booking.service_type] ?? booking.service_type}</span>
-              <BookingStatusBadge status={booking.status} />
+              <BookingStatusBadge
+                status={booking.status}
+                showPaymentRequiredForUnpaid={viewAs !== 'cleaner'}
+              />
             </div>
 
             <div className="space-y-1 text-sm text-muted-foreground">

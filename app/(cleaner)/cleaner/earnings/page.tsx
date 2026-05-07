@@ -76,7 +76,7 @@ export default function EarningsPage() {
                   <span className="text-muted-foreground ml-2">{formatDate(b.scheduled_start)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <BookingStatusBadge status={b.status} />
+                  <BookingStatusBadge status={b.status} showPaymentRequiredForUnpaid={false} />
                   <span className="text-xs text-muted-foreground">{settlementLabel(b)}</span>
                 </div>
               </div>
