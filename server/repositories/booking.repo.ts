@@ -27,7 +27,6 @@ export const bookingRepo = {
     const where: Prisma.BookingWhereInput = {
       clientId,
       ...(params.status ? { status: params.status } : {}),
-      ...(params.status ? {} : { status: { not: 'draft' } }),
     }
     return Promise.all([
       db.booking.findMany({

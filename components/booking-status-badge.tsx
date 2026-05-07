@@ -18,7 +18,7 @@ function isPaymentAuthorized(paymentStatus?: string | null) {
 }
 
 export function BookingStatusBadge({ status, paymentStatus }: { status: BookingStatus; paymentStatus?: string | null }) {
-  const config = status === 'pending' && !isPaymentAuthorized(paymentStatus)
+  const config = (status === 'draft' || (status === 'pending' && !isPaymentAuthorized(paymentStatus)))
     ? { label: 'Payment Required', variant: 'warning' as const }
     : STATUS_CONFIG[status] ?? { label: status, variant: 'outline' as const }
   return <Badge variant={config.variant}>{config.label}</Badge>
