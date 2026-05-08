@@ -222,7 +222,7 @@ export default function CleanerBookingsPage() {
     const cleanerVisible = bookings.filter((b) => b.status !== 'draft')
     const pending = cleanerVisible.filter((b) => b.status === 'pending').length
     const inProgress = cleanerVisible.filter((b) => b.status === 'in_progress').length
-    const completed = cleanerVisible.filter((b) => b.status === 'completed').length
+    const completed = cleanerVisible.filter((b) => b.status === 'completed' || b.status === 'disputed').length
     return { pending, inProgress, completed }
   }, [bookings])
 

@@ -29,7 +29,7 @@ export const GET = requireClient(async (_req: NextRequest, _ctx, user) => {
           by: ['cleanerId'],
           where: {
             cleanerId: { in: cleanerIds },
-            status: 'completed',
+            status: { in: ['completed', 'disputed'] },
           },
           _count: { _all: true },
         }),

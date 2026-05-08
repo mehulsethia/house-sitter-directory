@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/server/auth'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { db } from '@/server/db'
 import { ok } from '@/server/response'
 import { deriveCleanerLifecycleStatus } from '@/lib/cleaner-status'
 
@@ -10,6 +11,31 @@ export const GET = requireAdmin(async (req: NextRequest) => {
   const pageSize = Number(req.nextUrl.searchParams.get('page_size') ?? 20)
 
   const [cleaners, total] = await cleanerRepo.listAll({ status, page, pageSize })
+  const cleanerIds = cleaners.map((cleaner) => cleaner.id)
+  const completedJobsAgg = cleanerIds.length
+    ? await db.booking.groupBy({
+        by: ['cleanerId'],
+        where: {
+          cleanerId: { in: cleanerIds },
+          status: { in: ['completed', 'disputed'] },
+        },
+        _count: { _all: true },
+      })
+    : []
+  const reviewsAgg = cleanerIds.length
+    ? await db.review.groupBy({
+        by: ['cleanerId'],
+        where: { cleanerId: { in: cleanerIds } },
+        _avg: { rating: true },
+      })
+    : []
+  const completedJobsByCleanerId = new Map<string, number>(
+    completedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+  )
+  const avgRatingByCleanerId = new Map<string, number | null>(
+    reviewsAgg.map((entry) => [entry.cleanerId, entry._avg.rating ?? null]),
+  )
+
   const formatted = cleaners.map((cleaner) => {
     const fullName = cleaner.user?.name?.trim()
     const fallbackName =
@@ -20,6 +46,7 @@ export const GET = requireAdmin(async (req: NextRequest) => {
       status: cleaner.status,
       stripeOnboardingComplete: cleaner.stripeOnboardingComplete,
     })
+    const completedJobs = completedJobsByCleanerId.get(cleaner.id) ?? 0
     return {
       id: cleaner.id,
       user_id: cleaner.userId,
@@ -46,9 +73,9 @@ export const GET = requireAdmin(async (req: NextRequest) => {
       quiz_passed: cleaner.quizPassed,
       quiz_score: cleaner.quizScore,
       stripe_onboarding_complete: cleaner.stripeOnboardingComplete,
-      trial_period_flag: cleaner.totalJobs < 10,
-      total_jobs: cleaner.totalJobs,
-      average_rating: cleaner.averageRating,
+      trial_period_flag: completedJobs < 10,
+      total_jobs: completedJobs,
+      average_rating: avgRatingByCleanerId.get(cleaner.id) ?? null,
       created_at: cleaner.createdAt,
     }
   })

@@ -235,10 +235,10 @@ function CleanerProfilePageContent() {
 
   const stats = useMemo(() => {
     const totalJobs = bookings.length
-    const completed = bookings.filter((b) => b.status === 'completed').length
+    const completed = bookings.filter((b) => b.status === 'completed' || b.status === 'disputed').length
     const completionRate = totalJobs > 0 ? Math.round((completed / totalJobs) * 100) : 0
     const totalEarnings = bookings
-      .filter((b) => b.status === 'completed')
+      .filter((b) => b.status === 'completed' || b.status === 'disputed')
       .reduce((sum, b) => sum + b.cleaner_payout, 0)
     return {
       totalJobs,

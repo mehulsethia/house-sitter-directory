@@ -136,6 +136,21 @@ export const GET = requireAdmin(async () => {
     .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime())
     .slice(0, 12)
 
+  const pendingCleanerIds = pendingCleaners.map((cleaner) => cleaner.id)
+  const pendingCleanerCompletedJobsAgg = pendingCleanerIds.length
+    ? await db.booking.groupBy({
+        by: ['cleanerId'],
+        where: {
+          cleanerId: { in: pendingCleanerIds },
+          status: { in: ['completed', 'disputed'] },
+        },
+        _count: { _all: true },
+      })
+    : []
+  const pendingCleanerCompletedJobsById = new Map<string, number>(
+    pendingCleanerCompletedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+  )
+
   return ok({
     pending_cleaner_approvals: {
       count: pendingCleaners.length,
@@ -148,7 +163,7 @@ export const GET = requireAdmin(async () => {
         supplies_status: cleaner.cleaningSupplies,
         cleaning_standards_completed: cleaner.standardsCompleted,
         quiz_passed: cleaner.quizPassed,
-        trial_period_flag: cleaner.totalJobs < 10,
+        trial_period_flag: (pendingCleanerCompletedJobsById.get(cleaner.id) ?? 0) < 10,
         submitted_at: cleaner.createdAt.toISOString(),
       })),
     },

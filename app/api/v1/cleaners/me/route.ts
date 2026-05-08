@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireCleaner } from '@/server/auth'
+import { db } from '@/server/db'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
 import { availabilityRepo } from '@/server/repositories/availability.repo'
 import { computeCleanerOnboardingProgress, validateCleanerSubmissionRequirements } from '@/server/services/cleaner-onboarding.service'
@@ -70,10 +71,24 @@ export const GET = requireCleaner(async (_req, _ctx, user) => {
   const schedules = await availabilityRepo.getSchedule(cleaner.id)
   const hasAvailabilitySlots = schedules.some((s) => s.isActive)
   const onboarding = computeCleanerOnboardingProgress({ cleaner, hasAvailabilitySlots })
+  const [completedJobsCount, reviewAgg] = await Promise.all([
+    db.booking.count({
+      where: {
+        cleanerId: cleaner.id,
+        status: { in: ['completed', 'disputed'] },
+      },
+    }),
+    db.review.aggregate({
+      where: { cleanerId: cleaner.id },
+      _avg: { rating: true },
+    }),
+  ])
 
   return ok({
     cleaner: {
       ...withCleanerAliases(cleaner),
+      totalJobs: completedJobsCount,
+      averageRating: reviewAgg._avg.rating ?? null,
       lifecycle_status: deriveCleanerLifecycleStatus({
         status: cleaner.status,
         stripeOnboardingComplete: cleaner.stripeOnboardingComplete,

@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 const REQUEST_STATUSES: BookingStatus[] = ['pending']
 const UPCOMING_STATUSES: BookingStatus[] = ['accepted', 'confirmed']
 const ACTIVE_STATUSES: BookingStatus[] = ['in_progress']
-const COMPLETED_STATUSES: BookingStatus[] = ['completed']
+const COMPLETED_STATUSES: BookingStatus[] = ['completed', 'disputed']
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',

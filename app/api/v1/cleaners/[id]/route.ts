@@ -36,6 +36,10 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       },
     }),
   ])
+  const reviewAgg = await db.review.aggregate({
+    where: { cleanerId: cleaner.id },
+    _avg: { rating: true },
+  })
 
   const onTimeThresholdMs = 15 * 60 * 1000
   const onTimeCount = completedBookings.filter((booking) => {
@@ -65,6 +69,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   return ok({
     ...cleaner,
+    totalJobs: completedBookings.length,
+    averageRating: reviewAgg._avg.rating ?? null,
     user: sanitizedUser,
     on_time_percentage: onTimePercentage,
     avg_response_minutes: avgResponseMinutes,

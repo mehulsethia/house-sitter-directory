@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { db } from '@/server/db'
 import { ok, err } from '@/server/response'
 import { cleanerSearchSchema } from '@/server/schemas/cleaner.schema'
 
@@ -39,13 +40,37 @@ export async function GET(req: NextRequest) {
     page,
     pageSize: page_size,
   })
+  const cleanerIds = cleaners.map((cleaner) => cleaner.id)
+  const completedJobsAgg = cleanerIds.length
+    ? await db.booking.groupBy({
+      by: ['cleanerId'],
+      where: {
+        cleanerId: { in: cleanerIds },
+        status: { in: ['completed', 'disputed'] },
+      },
+      _count: { _all: true },
+    })
+    : []
+  const reviewsAgg = cleanerIds.length
+    ? await db.review.groupBy({
+      by: ['cleanerId'],
+      where: { cleanerId: { in: cleanerIds } },
+      _avg: { rating: true },
+    })
+    : []
+  const completedJobsByCleanerId = new Map<string, number>(
+    completedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+  )
+  const avgRatingByCleanerId = new Map<string, number | null>(
+    reviewsAgg.map((entry) => [entry.cleanerId, entry._avg.rating ?? null]),
+  )
 
   const mapped = cleaners.map((cleaner) => ({
     id: cleaner.id,
     user_id: cleaner.userId,
     hourly_rate: Number(cleaner.hourlyRate),
-    total_jobs: cleaner.totalJobs,
-    average_rating: cleaner.averageRating ? Number(cleaner.averageRating) : null,
+    total_jobs: completedJobsByCleanerId.get(cleaner.id) ?? 0,
+    average_rating: avgRatingByCleanerId.get(cleaner.id) ?? null,
     years_experience: cleaner.yearsExperience,
     transport_mode: cleaner.transportMode,
     cleaning_supplies: cleaner.cleaningSupplies,
