@@ -1840,19 +1840,19 @@ export default function BookingFlowPage() {
               </CardHeader>
               <CardContent className="space-y-6">
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-                  <div>
+                <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 p-4 md:grid-cols-3 md:gap-0 md:divide-x md:divide-slate-200 md:p-0">
+                  <div className="md:px-5 md:py-4">
                     <Label className="text-sm font-semibold text-slate-700">Duration</Label>
                     <Select value={String(duration)} onChange={e => setDuration(Number(e.target.value))} className="mt-1">
                       {DURATION_OPTIONS.map(d => <option key={d} value={d}>{d} hour{d !== 1 ? 's' : ''}</option>)}
                     </Select>
                     <p className="mt-1 text-xs text-slate-500">Most standard cleans require 2-3 hours.</p>
                   </div>
-                  <div>
+                  <div className="md:px-5 md:py-4">
                     <Label className="text-sm font-semibold text-slate-700">Hourly Rate</Label>
                     <p className="mt-1 text-lg font-bold text-slate-900">{formatCurrency(cleaner.hourly_rate)}<span className="text-sm font-normal text-slate-500">/hr</span></p>
                   </div>
-                  <div>
+                  <div className="md:px-5 md:py-4">
                     <Label className="text-sm font-semibold text-slate-700">Total Price</Label>
                     <p className="mt-1 text-lg font-bold text-primary">
                       {formatCurrency(breakdown?.total_amount ?? Number((estimatedCost * 1.1).toFixed(2)))}

@@ -34,6 +34,7 @@ const SERVICE_LABELS: Record<string, string> = {
   end_of_tenancy: 'End of Tenancy',
   move_in: 'Move-in Clean',
 }
+const START_JOB_EARLY_WINDOW_MS = 15 * 60 * 1000
 
 function resolveJobTypeTitle(booking: BookingRead) {
   const snapshotMatch = booking.special_instructions?.match(/(?:^|\n)Job type:\s*([^\n]+)/i)
@@ -268,6 +269,8 @@ export default function CleanerBookingDetailPage() {
   const canCompleteJob = ['in_progress', 'disputed'].includes(booking.status) &&
     Boolean(booking.started_at) &&
     Date.now() >= completeOpensAt
+  const bookingStartsAtMs = new Date(booking.scheduled_start).getTime()
+  const canStartJobNow = Number.isFinite(bookingStartsAtMs) && Date.now() >= bookingStartsAtMs - START_JOB_EARLY_WINDOW_MS
   const cleanerReportWindowEndsAtMs = booking.scheduled_end
     ? new Date(booking.scheduled_end).getTime() + 24 * 60 * 60 * 1000
     : 0
@@ -434,9 +437,14 @@ export default function CleanerBookingDetailPage() {
           </>
         )}
         {(booking.status === 'accepted' || booking.status === 'confirmed') && (
-          <Button size="lg" onClick={() => handleAction('start')} loading={actionLoading}>
+          <Button size="lg" onClick={() => handleAction('start')} loading={actionLoading} disabled={!canStartJobNow}>
             Start job
           </Button>
+        )}
+        {(booking.status === 'accepted' || booking.status === 'confirmed') && !canStartJobNow && (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            Start job unlocks 15 minutes before the scheduled time.
+          </p>
         )}
         {booking.status === 'in_progress' && !canCompleteJob && (
           <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">

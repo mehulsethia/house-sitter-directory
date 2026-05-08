@@ -27,10 +27,10 @@ import { toast } from 'sonner'
 const STATUS_FILTERS: Array<{ key: 'all' | BookingStatus; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'pending', label: 'New' },
-  { key: 'accepted', label: 'Accepted' },
   { key: 'confirmed', label: 'Confirmed' },
   { key: 'in_progress', label: 'In Progress' },
   { key: 'completed', label: 'Completed' },
+  { key: 'cancelled', label: 'Cancelled' },
 ]
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -52,6 +52,17 @@ export default function CleanerBookingsPage() {
   const [proposalTime, setProposalTime] = useState('')
   const [proposalTimeOptions, setProposalTimeOptions] = useState<Array<{ value: string; label: string }>>([])
   const [, setNowTick] = useState(() => Date.now())
+  const START_JOB_EARLY_WINDOW_MS = 15 * 60 * 1000
+
+  function getStartJobAvailability(scheduledStart: string) {
+    const startsAt = new Date(scheduledStart).getTime()
+    if (!Number.isFinite(startsAt)) {
+      return { canStart: false, reason: 'Start job is unavailable for this booking time.' }
+    }
+    const unlocksAt = startsAt - START_JOB_EARLY_WINDOW_MS
+    if (Date.now() >= unlocksAt) return { canStart: true, reason: '' }
+    return { canStart: false, reason: 'Start job unlocks 15 minutes before the scheduled time.' }
+  }
 
   async function refresh() {
     try {
@@ -196,8 +207,7 @@ export default function CleanerBookingsPage() {
     const cleanerVisible = bookings.filter((b) => b.status !== 'draft')
     return cleanerVisible.filter((b) => {
       if (filter === 'pending' && b.status !== 'pending') return false
-      if (filter === 'accepted' && !['accepted', 'confirmed'].includes(b.status)) return false
-      if (filter !== 'all' && filter !== 'pending' && filter !== 'accepted' && b.status !== filter) return false
+      if (filter !== 'all' && filter !== 'pending' && b.status !== filter) return false
       if (!query.trim()) return true
       const q = query.toLowerCase()
       return (
@@ -307,6 +317,7 @@ export default function CleanerBookingsPage() {
                   ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
                   : null
                 const completedBookingsCount = Number(trust?.completedBookingsCount ?? 0)
+                const startJobState = getStartJobAvailability(b.scheduled_start)
                 return (
                   <div key={b.id} className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)] sm:p-5">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -394,9 +405,13 @@ export default function CleanerBookingsPage() {
                         size="sm"
                         onClick={() => action(b.id, 'start')}
                         loading={actionLoading === `${b.id}-start`}
+                        disabled={!startJobState.canStart}
                       >
                         Start job
                       </Button>
+                    )}
+                    {(b.status === 'accepted' || b.status === 'confirmed') && !startJobState.canStart && (
+                      <p className="text-xs text-slate-500">{startJobState.reason}</p>
                     )}
 
                     {b.status === 'in_progress' && (

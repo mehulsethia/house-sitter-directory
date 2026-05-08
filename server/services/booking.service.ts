@@ -29,6 +29,7 @@ const BOOKING_PRE_BUFFER_MS = 15 * 60 * 1000
 const BOOKING_POST_BUFFER_MS = 15 * 60 * 1000
 const NO_SHOW_REPORT_DELAY_MINUTES = 30
 const COMPLETE_JOB_EARLY_MINUTES = 5
+const START_JOB_EARLY_MINUTES = 15
 
 export const bookingService = {
   previewPrice(hourlyRate: number, durationHours: number, platformFeePct = PLATFORM_FEE_PCT) {
@@ -191,6 +192,10 @@ export const bookingService = {
         throw new ServiceError(`Cannot start a booking in status '${booking.status}'`, 400)
       }
       assertPaymentAuthorized(booking.payment?.status, 'start')
+      const startUnlockAtMs = new Date(booking.scheduledStart).getTime() - START_JOB_EARLY_MINUTES * 60 * 1000
+      if (!Number.isFinite(startUnlockAtMs) || Date.now() < startUnlockAtMs) {
+        throw new ServiceError('You can only start this job 15 minutes before the scheduled time.', 400)
+      }
       return bookingRepo.update(bookingId, {
         status: 'in_progress',
         startedAt: new Date(),
