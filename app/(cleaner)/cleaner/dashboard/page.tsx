@@ -89,6 +89,20 @@ export default function CleanerDashboardPage() {
     refresh()
   }, [])
 
+  useEffect(() => {
+    const poll = setInterval(() => {
+      refresh().catch(() => null)
+    }, 20000)
+    function onFocus() {
+      refresh().catch(() => null)
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      clearInterval(poll)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [])
+
   async function handleAction(bookingId: string, action: 'accept' | 'start') {
     setActionLoading(`${bookingId}-${action}`)
     try {
@@ -350,6 +364,12 @@ export default function CleanerDashboardPage() {
                         <p className="text-xs font-medium text-amber-700">Connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.</p>
                       )}
                       <div className="flex gap-2">
+                      <Link
+                        href={`/cleaner/bookings/${b.id}`}
+                        className="inline-flex h-8 items-center rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"
+                      >
+                        View details
+                      </Link>
                       <Button
                         size="sm"
                         variant="outline"

@@ -44,8 +44,8 @@ export const paymentAuthorizationService = {
         await pushInAppNotification({
           userId: booking.cleaner.userId,
           type: 'booking_request',
-          title: 'New Booking Request',
-          body: `You have a new booking request from ${booking.client.user?.name ?? 'a client'}`,
+          title: 'New Request',
+          body: `You have a new request from ${booking.client.user?.name ?? 'a client'}. Status: Pending Cleaner Acceptance.`,
           data: { booking_id: booking.id },
         })
 

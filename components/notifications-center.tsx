@@ -122,6 +122,16 @@ export function NotificationsCenter({ role }: { role: NotificationRole }) {
     }
   }
 
+  function normalizeNotificationCopy(notification: NotificationRead): NotificationRead {
+    if (role !== 'cleaner') return notification
+    const nextTitle = String(notification.title ?? '')
+      .replace(/Payment Required/gi, 'Pending Cleaner Acceptance')
+      .replace(/New Booking Request/gi, 'New Request')
+    const nextBody = String(notification.body ?? '')
+      .replace(/Payment Required/gi, 'Pending Cleaner Acceptance')
+    return { ...notification, title: nextTitle, body: nextBody }
+  }
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -180,7 +190,8 @@ export function NotificationsCenter({ role }: { role: NotificationRole }) {
         </div>
       ) : (
         <div className="mt-5 space-y-3">
-          {visibleNotifications.map((notification) => {
+          {visibleNotifications.map((rawNotification) => {
+            const notification = normalizeNotificationCopy(rawNotification)
             const working = workingId === notification.id
             const href = getNotificationHref(role, notification)
             return (

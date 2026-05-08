@@ -23,6 +23,15 @@ function getLink(n: NotificationRead): string {
   return fn ? fn(n.data) : '#'
 }
 
+function normalizeCleanerNotificationCopy(notification: NotificationRead): NotificationRead {
+  const nextTitle = String(notification.title ?? '')
+    .replace(/Payment Required/gi, 'Pending Cleaner Acceptance')
+    .replace(/New Booking Request/gi, 'New Request')
+  const nextBody = String(notification.body ?? '')
+    .replace(/Payment Required/gi, 'Pending Cleaner Acceptance')
+  return { ...notification, title: nextTitle, body: nextBody }
+}
+
 interface NotificationBellProps {
   userId: string
 }
@@ -138,7 +147,9 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                 No notifications yet
               </div>
             ) : (
-              notifications.map(n => (
+              notifications.map(raw => {
+                const n = normalizeCleanerNotificationCopy(raw)
+                return (
                 <div
                   key={n.id}
                   className={cn(
@@ -177,7 +188,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                     </button>
                   )}
                 </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>

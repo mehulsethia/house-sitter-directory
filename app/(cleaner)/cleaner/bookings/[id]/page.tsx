@@ -321,7 +321,7 @@ export default function CleanerBookingDetailPage() {
               </span>
             </div>
             {booking.status === 'pending' && (
-              <p className="text-xs text-slate-500">Approximate map location shown with 50-100m privacy offset until acceptance.</p>
+              <p className="text-xs text-slate-500">Only approximate location details are shown before acceptance to protect client privacy.</p>
             )}
             {booking.apartment_details && (
               <p className="text-xs text-slate-500">Apartment details: {booking.apartment_details}</p>

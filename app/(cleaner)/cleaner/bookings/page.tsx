@@ -76,6 +76,20 @@ export default function CleanerBookingsPage() {
   }, [])
 
   useEffect(() => {
+    const poll = setInterval(() => {
+      refresh().catch(() => null)
+    }, 20000)
+    function onFocus() {
+      refresh().catch(() => null)
+    }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      clearInterval(poll)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [])
+
+  useEffect(() => {
     const timer = setInterval(() => setNowTick(Date.now()), 60_000)
     return () => clearInterval(timer)
   }, [])
@@ -195,9 +209,10 @@ export default function CleanerBookingsPage() {
   }, [bookings, filter, query])
 
   const summary = useMemo(() => {
-    const pending = 0
-    const inProgress = 0
-    const completed = bookings.filter((b) => b.status === 'completed').length
+    const cleanerVisible = bookings.filter((b) => b.status !== 'draft')
+    const pending = cleanerVisible.filter((b) => b.status === 'pending').length
+    const inProgress = cleanerVisible.filter((b) => b.status === 'in_progress').length
+    const completed = cleanerVisible.filter((b) => b.status === 'completed').length
     return { pending, inProgress, completed }
   }, [bookings])
 
@@ -314,7 +329,7 @@ export default function CleanerBookingsPage() {
                       <p className="text-sm text-slate-500">{formatDate(b.scheduled_start)}</p>
                       <p className="text-sm text-slate-500">{b.address}, {b.city}, {b.postcode}</p>
                       {b.status === 'pending' && (
-                        <p className="mt-1 text-xs text-slate-500">Approximate map location shown with 50-100m privacy offset until acceptance.</p>
+                        <p className="mt-1 text-xs text-slate-500">Only approximate location details are shown before acceptance to protect client privacy.</p>
                       )}
                     </div>
                     <div className="text-left sm:text-right">
