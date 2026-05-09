@@ -16,9 +16,11 @@ import { Label } from '@/components/ui/label'
 import {
   getCleanerProposalEligibility,
   RESCHEDULE_CUTOFF_HOURS,
-  toDateInputValue,
-  toIsoFromDateAndTimeLocal,
-  toTimeInputValue,
+  toDateInputValueCyprus,
+  toIsoFromDateAndTimeInCyprus,
+  toTimeInputValueCyprus,
+  toTimeLabelInCyprus,
+  toTimeValueInCyprus,
 } from '@/lib/booking-proposal'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { BookingRead, BookingStatus } from '@/types'
@@ -119,12 +121,8 @@ export default function CleanerBookingsPage() {
           .filter((slot) => !slot.disabled)
           .map((slot) => {
             const start = new Date(slot.start)
-            const value = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
-            const label = start.toLocaleTimeString('en-IE', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            })
+            const value = toTimeValueInCyprus(start)
+            const label = toTimeLabelInCyprus(start)
             return { value, label }
           })
         setProposalTimeOptions(options)
@@ -161,7 +159,7 @@ export default function CleanerBookingsPage() {
   async function submitAlternativeProposal() {
     if (!proposalBooking) return
 
-    const proposedStartIso = toIsoFromDateAndTimeLocal(proposalDate, proposalTime)
+    const proposedStartIso = toIsoFromDateAndTimeInCyprus(proposalDate, proposalTime)
     if (!proposedStartIso) {
       toast.error('Select a valid date and time.')
       return
@@ -383,7 +381,7 @@ export default function CleanerBookingsPage() {
                         <Button
                           size="sm"
                           onClick={() => action(b.id, 'accept')}
-                          disabled={!stripeConnected}
+                          disabled={!stripeConnected || eligibility.isCleanerProposal}
                           loading={actionLoading === `${b.id}-accept`}
                         >
                           Accept
@@ -399,8 +397,8 @@ export default function CleanerBookingsPage() {
                             variant="outline"
                             onClick={() => {
                               setProposalBooking(b)
-                              setProposalDate(toDateInputValue(b.scheduled_start))
-                              setProposalTime(toTimeInputValue(b.scheduled_start))
+                              setProposalDate(toDateInputValueCyprus(b.scheduled_start))
+                              setProposalTime(toTimeInputValueCyprus(b.scheduled_start))
                             }}
                           >
                             Propose alternative time

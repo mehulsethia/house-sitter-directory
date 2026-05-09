@@ -18,9 +18,11 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
   getCleanerProposalEligibility,
-  toDateInputValue,
-  toIsoFromDateAndTimeLocal,
-  toTimeInputValue,
+  toDateInputValueCyprus,
+  toIsoFromDateAndTimeInCyprus,
+  toTimeInputValueCyprus,
+  toTimeLabelInCyprus,
+  toTimeValueInCyprus,
 } from '@/lib/booking-proposal'
 import { isChatActiveForBooking, isChatReadOnly } from '@/lib/chat-window'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -104,12 +106,8 @@ export default function CleanerBookingDetailPage() {
           .filter((slot) => !slot.disabled)
           .map((slot) => {
             const start = new Date(slot.start)
-            const value = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
-            const label = start.toLocaleTimeString('en-IE', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            })
+            const value = toTimeValueInCyprus(start)
+            const label = toTimeLabelInCyprus(start)
             return { value, label }
           })
         setProposalTimeOptions(options)
@@ -406,7 +404,7 @@ export default function CleanerBookingDetailPage() {
         {booking.status === 'pending' && hasProposal && (
           <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
             {isCleanerProposal
-              ? 'You proposed a new time. Waiting for client response.'
+              ? `You proposed a new time (${formatDate(booking.proposed_start!)}). Waiting for client response.`
               : `Client countered with ${formatDate(booking.proposed_start!)}. Accept or decline before request expiry.`}
           </p>
         )}
@@ -417,15 +415,15 @@ export default function CleanerBookingDetailPage() {
         )}
         {canAcceptPending && (
           <>
-            <Button size="lg" onClick={() => handleBookingAction('accept')} loading={actionLoading} disabled={!stripeConnected}>
+            <Button size="lg" onClick={() => handleBookingAction('accept')} loading={actionLoading} disabled={!stripeConnected || isCleanerProposal}>
               Accept booking
             </Button>
             {canProposeAlternative && (
               <Button
                 variant="outline"
                 onClick={() => {
-                  setProposalDate(toDateInputValue(booking.scheduled_start))
-                  setProposalTime(toTimeInputValue(booking.scheduled_start))
+                  setProposalDate(toDateInputValueCyprus(booking.scheduled_start))
+                  setProposalTime(toTimeInputValueCyprus(booking.scheduled_start))
                   setProposalOpen(true)
                 }}
                 disabled={actionLoading}
@@ -553,7 +551,7 @@ export default function CleanerBookingDetailPage() {
           <Button
             className="w-full"
             onClick={() => {
-              const proposedStartIso = toIsoFromDateAndTimeLocal(proposalDate, proposalTime)
+              const proposedStartIso = toIsoFromDateAndTimeInCyprus(proposalDate, proposalTime)
               if (!proposedStartIso) {
                 toast.error('Select a valid date and time.')
                 return

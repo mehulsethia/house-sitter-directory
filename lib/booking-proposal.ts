@@ -2,6 +2,7 @@ import type { BookingRead } from '@/types'
 
 export const RESCHEDULE_CUTOFF_HOURS = 24
 const MS_PER_HOUR = 60 * 60 * 1000
+const APP_TIMEZONE = 'Europe/Nicosia'
 
 export type CleanerProposalEligibility = {
   isPending: boolean
@@ -89,6 +90,20 @@ export function toIsoFromDateAndTimeLocal(dateValue: string, timeValue: string):
   return parsed.toISOString()
 }
 
+function tzOffsetMs(date: Date, timeZone: string): number {
+  const utcStr = date.toLocaleString('en-US', { timeZone: 'UTC' })
+  const tzStr = date.toLocaleString('en-US', { timeZone })
+  return new Date(tzStr).getTime() - new Date(utcStr).getTime()
+}
+
+export function toIsoFromDateAndTimeInCyprus(dateValue: string, timeValue: string): string | null {
+  if (!dateValue || !timeValue) return null
+  const asUTC = new Date(`${dateValue}T${timeValue}:00Z`)
+  if (Number.isNaN(asUTC.getTime())) return null
+  const offset = tzOffsetMs(asUTC, APP_TIMEZONE)
+  return new Date(asUTC.getTime() - offset).toISOString()
+}
+
 export function toDateInputValue(dateLike: string | Date): string {
   const parsed = new Date(dateLike)
   if (Number.isNaN(parsed.getTime())) return ''
@@ -96,6 +111,12 @@ export function toDateInputValue(dateLike: string | Date): string {
   const m = String(parsed.getMonth() + 1).padStart(2, '0')
   const d = String(parsed.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+export function toDateInputValueCyprus(dateLike: string | Date): string {
+  const parsed = new Date(dateLike)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return new Intl.DateTimeFormat('en-CA', { timeZone: APP_TIMEZONE }).format(parsed)
 }
 
 export function toTimeInputValue(dateLike: string | Date): string {
@@ -113,4 +134,46 @@ export function toTimeInputValue(dateLike: string | Date): string {
   const hh = String(base.getHours()).padStart(2, '0')
   const mm = String(base.getMinutes()).padStart(2, '0')
   return `${hh}:${mm}`
+}
+
+export function toTimeInputValueCyprus(dateLike: string | Date): string {
+  const parsed = new Date(dateLike)
+  if (Number.isNaN(parsed.getTime())) return ''
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(parsed)
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? '0')
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? '0')
+  const roundedMins = minute < 15 ? 0 : minute < 45 ? 30 : 0
+  const nextHour = minute >= 45
+  const normalizedHour = nextHour ? (hour + 1) % 24 : hour
+  return `${String(normalizedHour).padStart(2, '0')}:${String(roundedMins).padStart(2, '0')}`
+}
+
+export function toTimeValueInCyprus(dateLike: string | Date): string {
+  const parsed = new Date(dateLike)
+  if (Number.isNaN(parsed.getTime())) return ''
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(parsed)
+  const hour = parts.find((part) => part.type === 'hour')?.value ?? '00'
+  const minute = parts.find((part) => part.type === 'minute')?.value ?? '00'
+  return `${hour}:${minute}`
+}
+
+export function toTimeLabelInCyprus(dateLike: string | Date): string {
+  const parsed = new Date(dateLike)
+  if (Number.isNaN(parsed.getTime())) return ''
+  return parsed.toLocaleTimeString('en-IE', {
+    timeZone: APP_TIMEZONE,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
 }
