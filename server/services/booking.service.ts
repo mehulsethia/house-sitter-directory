@@ -537,19 +537,17 @@ export const bookingService = {
           body: 'The proposed booking time has been accepted and confirmed.',
           data: { booking_id: bookingId },
         })
-        if (isCleaner) {
-          try {
-            await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
-              email: booking.cleaner.user.email,
-              fullName: booking.cleaner.user.name ?? 'Cleaner',
-              bookingId: booking.id,
-            })
-          } catch (emailError) {
-            console.error('Failed to send cleaner accepted confirmation email via Loops:', emailError)
-          }
+        try {
+          await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
+            email: booking.cleaner.user.email,
+            fullName: booking.cleaner.user.name ?? 'Cleaner',
+            bookingId: booking.id,
+          })
+        } catch (emailError) {
+          console.error('Failed to send cleaner accepted confirmation email via Loops:', emailError)
         }
-        if (isPaymentAuthorized) {
-          try {
+        try {
+          if (isPaymentAuthorized) {
             await loopsEmailService.sendClientBookingConfirmed({
               email: booking.client.user.email,
               fullName: booking.client.user.name ?? 'Client',
@@ -558,9 +556,15 @@ export const bookingService = {
               durationHours: Number(booking.durationHours),
               bookingId: booking.id,
             })
-          } catch (emailError) {
-            console.error('Failed to send client booking confirmed email via Loops:', emailError)
+          } else {
+            await loopsEmailService.sendClientBookingCreatedPending({
+              email: booking.client.user.email,
+              fullName: booking.client.user.name ?? 'Client',
+              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+            })
           }
+        } catch (emailError) {
+          console.error('Failed to send client proposal-accepted email via Loops:', emailError)
         }
         void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
           console.error('Failed to sync cleaner Google Calendar event:', e)
@@ -582,6 +586,24 @@ export const bookingService = {
           body: 'The amended start time was accepted.',
           data: { booking_id: bookingId },
         })
+        try {
+          await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
+            email: booking.cleaner.user.email,
+            fullName: booking.cleaner.user.name ?? 'Cleaner',
+            bookingId: booking.id,
+          })
+        } catch (emailError) {
+          console.error('Failed to send cleaner amended-time acceptance email via Loops:', emailError)
+        }
+        try {
+          await loopsEmailService.sendClientBookingCreatedPending({
+            email: booking.client.user.email,
+            fullName: booking.client.user.name ?? 'Client',
+            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          })
+        } catch (emailError) {
+          console.error('Failed to send client amended-time acceptance email via Loops:', emailError)
+        }
         void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
           console.error('Failed to sync cleaner Google Calendar event:', e)
         })
@@ -603,6 +625,24 @@ export const bookingService = {
         body: 'Booking time updated. Client re-authorization is now required.',
         data: { booking_id: bookingId },
       })
+      try {
+        await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
+          email: booking.cleaner.user.email,
+          fullName: booking.cleaner.user.name ?? 'Cleaner',
+          bookingId: booking.id,
+        })
+      } catch (emailError) {
+        console.error('Failed to send cleaner reschedule accepted email via Loops:', emailError)
+      }
+      try {
+        await loopsEmailService.sendClientBookingCreatedPending({
+          email: booking.client.user.email,
+          fullName: booking.client.user.name ?? 'Client',
+          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+        })
+      } catch (emailError) {
+        console.error('Failed to send client reschedule accepted email via Loops:', emailError)
+      }
       const refreshed = await bookingRepo.findById(updated.id)
       if (!refreshed) throw new ServiceError('Booking not found after reschedule update', 404)
       return refreshed
@@ -634,6 +674,15 @@ export const bookingService = {
           body: 'No final agreement was reached for this booking request.',
           data: { booking_id: bookingId },
         })
+        try {
+          await loopsEmailService.sendClientBookingRejectedOrExpired({
+            email: booking.client.user.email,
+            fullName: booking.client.user.name ?? 'Client',
+            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          })
+        } catch (emailError) {
+          console.error('Failed to send client proposal-declined email via Loops:', emailError)
+        }
         void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
           console.error('Failed to remove cleaner Google Calendar event:', e)
         })
@@ -652,6 +701,15 @@ export const bookingService = {
           : 'Reschedule request was declined. Original booking remains active.',
         data: { booking_id: bookingId },
       })
+      try {
+        await loopsEmailService.sendClientBookingRejectedOrExpired({
+          email: booking.client.user.email,
+          fullName: booking.client.user.name ?? 'Client',
+          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+        })
+      } catch (emailError) {
+        console.error('Failed to send client reschedule-declined email via Loops:', emailError)
+      }
       return updated
     }
 

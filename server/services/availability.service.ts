@@ -119,7 +119,12 @@ export const availabilityService = {
             existingBookings.some((b) => {
               const existingBufferedStart = new Date(b.scheduledStart.getTime() - BOOKING_PRE_BUFFER_MS)
               const existingBufferedEnd = new Date(b.scheduledEnd.getTime() + BOOKING_POST_BUFFER_MS)
-              return existingBufferedStart < slotBufferedEnd && existingBufferedEnd > slotBufferedStart
+              const overlapsScheduled = existingBufferedStart < slotBufferedEnd && existingBufferedEnd > slotBufferedStart
+              if (overlapsScheduled) return true
+              if (!b.proposedStart || !b.proposedEnd) return false
+              const proposedBufferedStart = new Date(b.proposedStart.getTime() - BOOKING_PRE_BUFFER_MS)
+              const proposedBufferedEnd = new Date(b.proposedEnd.getTime() + BOOKING_POST_BUFFER_MS)
+              return proposedBufferedStart < slotBufferedEnd && proposedBufferedEnd > slotBufferedStart
             }))
 
         allSlots.push({
@@ -218,7 +223,12 @@ export const availabilityService = {
             existingBookings.some((b) => {
               const existingBufferedStart = new Date(b.scheduledStart.getTime() - BOOKING_PRE_BUFFER_MS)
               const existingBufferedEnd = new Date(b.scheduledEnd.getTime() + BOOKING_POST_BUFFER_MS)
-              return existingBufferedStart < slotBufferedEnd && existingBufferedEnd > slotBufferedStart
+              const overlapsScheduled = existingBufferedStart < slotBufferedEnd && existingBufferedEnd > slotBufferedStart
+              if (overlapsScheduled) return true
+              if (!b.proposedStart || !b.proposedEnd) return false
+              const proposedBufferedStart = new Date(b.proposedStart.getTime() - BOOKING_PRE_BUFFER_MS)
+              const proposedBufferedEnd = new Date(b.proposedEnd.getTime() + BOOKING_POST_BUFFER_MS)
+              return proposedBufferedStart < slotBufferedEnd && proposedBufferedEnd > slotBufferedStart
             })
 
           if (!hasConflict) {

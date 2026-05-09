@@ -17,7 +17,13 @@ import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { toDateInputValue, toIsoFromDateAndTimeLocal, toTimeInputValue } from '@/lib/booking-proposal'
+import {
+  toDateInputValueCyprus,
+  toIsoFromDateAndTimeInCyprus,
+  toTimeInputValueCyprus,
+  toTimeLabelInCyprus,
+  toTimeValueInCyprus,
+} from '@/lib/booking-proposal'
 import { formatDate } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { isChatActiveForBooking, isChatReadOnly } from '@/lib/chat-window'
@@ -126,12 +132,8 @@ export default function ClientBookingDetailPage() {
           .filter((slot) => !slot.disabled)
           .map((slot) => {
             const start = new Date(slot.start)
-            const value = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
-            const label = start.toLocaleTimeString('en-IE', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            })
+            const value = toTimeValueInCyprus(start)
+            const label = toTimeLabelInCyprus(start)
             return { value, label }
           })
         setCounterTimeOptions(options)
@@ -396,8 +398,8 @@ export default function ClientBookingDetailPage() {
                           variant="outline"
                           onClick={() => {
                             const seed = booking.proposed_start ?? booking.scheduled_start
-                            setCounterDate(toDateInputValue(seed))
-                            setCounterTime(toTimeInputValue(seed))
+                            setCounterDate(toDateInputValueCyprus(seed))
+                            setCounterTime(toTimeInputValueCyprus(seed))
                             setCounterOpen(true)
                           }}
                         >
@@ -530,7 +532,7 @@ export default function ClientBookingDetailPage() {
           <Button
             className="w-full"
             onClick={() => {
-              const iso = toIsoFromDateAndTimeLocal(counterDate, counterTime)
+              const iso = toIsoFromDateAndTimeInCyprus(counterDate, counterTime)
               if (!iso) {
                 toast.error('Select a valid date and time.')
                 return
