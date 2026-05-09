@@ -73,6 +73,8 @@ const STEP_INFO = [
 
 type BookingFlowDraft = {
   version: number
+  revision: number
+  updatedAt: string
   step: number
   duration: number
   date: string
@@ -166,6 +168,8 @@ function normalizeFlowDraftPayload(
 
   return {
     version: Number(readKey(raw, 'version') || BOOKING_FLOW_DRAFT_VERSION),
+    revision: Number(readKey(raw, 'revision') || 0),
+    updatedAt: String(readKey(raw, 'updatedAt') || readKey(raw, 'updated_at') || ''),
     step: Number(readKey(raw, 'step') || readKey(serverDraft ?? undefined, 'lastStep') || 1),
     duration: Number(rawDuration || readKey(serverDraft ?? undefined, 'durationHours') || 1),
     date: String(rawDate || readKey(serverDraft ?? undefined, 'selectedDate') || ''),
@@ -190,6 +194,11 @@ function normalizeFlowDraftPayload(
     saveAddressForLater: Boolean(readKey(raw, 'saveAddressForLater')),
     bookingId: String(readKey(raw, 'bookingId') || readKey(serverDraft ?? undefined, 'bookingId') || ''),
   }
+}
+
+function parseDraftTimestamp(value?: string): number {
+  const parsed = Date.parse(String(value ?? ''))
+  return Number.isFinite(parsed) ? parsed : 0
 }
 
 function parseBookingSnapshotDetails(specialInstructions?: string | null): BookingSnapshotDetails {
@@ -793,10 +802,49 @@ export default function BookingFlowPage() {
   const [showPhoneOtpEntry, setShowPhoneOtpEntry] = useState(false)
   const [transportAgreementConfirmed, setTransportAgreementConfirmed] = useState(false)
   const [suppliesAgreementConfirmed, setSuppliesAgreementConfirmed] = useState(false)
+  const [draftSaveState, setDraftSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const hasHydratedDraftRef = useRef(false)
   const draftAutosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const slotsRequestSeqRef = useRef(0)
   const datesRequestSeqRef = useRef(0)
+  const draftRevisionRef = useRef(0)
+  const latestDraftUpdatedAtRef = useRef('')
+
+  function draftStorageKey() {
+    return `booking_flow_draft_v${BOOKING_FLOW_DRAFT_VERSION}:${cleanerId}`
+  }
+
+  function readLocalDraft(): BookingFlowDraft | null {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = window.localStorage.getItem(draftStorageKey())
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as unknown
+      const normalized = normalizeFlowDraftPayload(parsed)
+      if (!normalized || normalized.version !== BOOKING_FLOW_DRAFT_VERSION) return null
+      return normalized
+    } catch {
+      return null
+    }
+  }
+
+  function writeLocalDraft(draft: BookingFlowDraft) {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem(draftStorageKey(), JSON.stringify(draft))
+    } catch {
+      // ignore quota or private mode errors
+    }
+  }
+
+  function clearLocalDraft() {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.removeItem(draftStorageKey())
+    } catch {
+      // ignore
+    }
+  }
 
   function navigateToStep(nextStep: number, options?: { dropResumeParams?: boolean; push?: boolean }) {
     const safeStep = Math.min(Math.max(nextStep, 1), 4)
@@ -829,6 +877,7 @@ export default function BookingFlowPage() {
   }
 
   function clearSessionDraft() {
+    clearLocalDraft()
     bookingsApi.clearFlowDraft(cleanerId).catch(() => null)
   }
 
@@ -897,8 +946,14 @@ export default function BookingFlowPage() {
   }
 
   function buildSessionDraft(photoFiles: File[] = jobPhotos): BookingFlowDraft {
+    const nextRevision = draftRevisionRef.current + 1
+    draftRevisionRef.current = nextRevision
+    const updatedAt = new Date().toISOString()
+    latestDraftUpdatedAtRef.current = updatedAt
     return {
       version: BOOKING_FLOW_DRAFT_VERSION,
+      revision: nextRevision,
+      updatedAt,
       step,
       duration,
       date,
@@ -928,6 +983,8 @@ export default function BookingFlowPage() {
   }
 
   function hydrateFromDraftPayload(parsed: BookingFlowDraft) {
+    draftRevisionRef.current = Math.max(draftRevisionRef.current, Number(parsed.revision || 0))
+    latestDraftUpdatedAtRef.current = parsed.updatedAt || latestDraftUpdatedAtRef.current
     const restoredSlot = normalizeToIsoDatetime(parsed.selectedSlot || '') ?? ''
     const restoredDate = parsed.date || (restoredSlot ? getDateKeyInAppTimezone(restoredSlot) : '')
 
@@ -952,8 +1009,11 @@ export default function BookingFlowPage() {
 
   async function persistFlowDraft(lastStep: number, bookingId?: string, photoFiles: File[] = jobPhotos) {
     const snapshot = buildSessionDraft(photoFiles)
+    setDraftSaveState('saving')
+    writeLocalDraft(snapshot)
     const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
-    return bookingsApi.saveFlowDraft({
+    try {
+      const response = await bookingsApi.saveFlowDraft({
       cleaner_id: cleanerId,
       booking_id: (bookingId ?? snapshot.bookingId) || undefined,
       last_step: lastStep,
@@ -965,10 +1025,17 @@ export default function BookingFlowPage() {
         selectedSlot: normalizedSlot || '',
       },
     })
+      setDraftSaveState('saved')
+      return response
+    } catch (error) {
+      setDraftSaveState('error')
+      throw error
+    }
   }
 
   function buildFlowDraftBody(lastStep: number, bookingId?: string, photoFiles: File[] = jobPhotos) {
     const snapshot = buildSessionDraft(photoFiles)
+    writeLocalDraft(snapshot)
     const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
     return {
       cleaner_id: cleanerId,
@@ -1078,11 +1145,12 @@ export default function BookingFlowPage() {
         const cpAny = (cp ?? {}) as any
         const user = cpAny.user ?? {}
         const addresses = (addressRes as any)?.data ?? []
+        const canApplyDefaults = !hasHydratedDraftRef.current
         setClientProfile(cp)
         setSavedAddresses(addresses)
 
         // Autofill from client profile
-        if (cp) {
+        if (cp && canApplyDefaults) {
           if (user?.name) {
             const parts = user.name.trim().split(' ')
             setFirstName(parts[0] ?? '')
@@ -1100,7 +1168,7 @@ export default function BookingFlowPage() {
             setAddressMode('saved')
           }
         }
-        if (addresses.length > 0) {
+        if (addresses.length > 0 && canApplyDefaults) {
           const defaultAddress = addresses.find((entry: ClientAddressRead) => entry.is_default) ?? addresses[0]
           setAddressMode('saved')
           setSelectedAddressId(defaultAddress.id)
@@ -1132,13 +1200,27 @@ export default function BookingFlowPage() {
 
     ;(async () => {
       try {
+        const localDraft = readLocalDraft()
         const serverDraft = (await bookingsApi.getFlowDraft(cleanerId)).data
         const serverDraftRecord = (serverDraft ?? null) as Record<string, any> | null
-        const normalizedPayload = normalizeFlowDraftPayload(serverDraftRecord?.payload, serverDraftRecord)
+        const normalizedServerPayload = normalizeFlowDraftPayload(serverDraftRecord?.payload, serverDraftRecord)
+        const normalizedPayload = (() => {
+          if (!normalizedServerPayload) return localDraft
+          if (!localDraft) return normalizedServerPayload
+          const serverTs = parseDraftTimestamp(normalizedServerPayload.updatedAt)
+          const localTs = parseDraftTimestamp(localDraft.updatedAt)
+          if (serverTs === localTs) {
+            return Number(normalizedServerPayload.revision || 0) >= Number(localDraft.revision || 0)
+              ? normalizedServerPayload
+              : localDraft
+          }
+          return serverTs >= localTs ? normalizedServerPayload : localDraft
+        })()
 
         if (continueDraft && continueBookingId) {
           if (normalizedPayload && normalizedPayload.version === BOOKING_FLOW_DRAFT_VERSION) {
             hydrateFromDraftPayload(normalizedPayload)
+            writeLocalDraft(normalizedPayload)
           }
           const fallbackSlot = normalizeToIsoDatetime(normalizedPayload?.selectedSlot || '') ?? ''
           const fallbackDate = normalizedPayload?.date || (fallbackSlot ? getDateKeyInAppTimezone(fallbackSlot) : '')
@@ -1149,13 +1231,14 @@ export default function BookingFlowPage() {
           return
         }
 
-        if (!serverDraft || !normalizedPayload || normalizedPayload.version !== BOOKING_FLOW_DRAFT_VERSION) {
+        if (!normalizedPayload || normalizedPayload.version !== BOOKING_FLOW_DRAFT_VERSION) {
           setRestoringDraft(false)
           setDraftHydrated(true)
           return
         }
 
         hydrateFromDraftPayload(normalizedPayload)
+        writeLocalDraft(normalizedPayload)
         const restoredStep = Math.min(
           Math.max(
             Number(readKey(serverDraftRecord, 'lastStep') || normalizedPayload.step || 1),
@@ -1271,7 +1354,6 @@ export default function BookingFlowPage() {
   useEffect(() => {
     if (loading || !draftHydrated) return
     if (step > 3) return
-    if (!date || !selectedSlot) return
 
     if (draftAutosaveTimerRef.current) {
       clearTimeout(draftAutosaveTimerRef.current)
@@ -1332,12 +1414,17 @@ export default function BookingFlowPage() {
     function flush() {
       persistFlowDraftOnHide(persistedStep, booking?.id ?? undefined)
     }
+    function onBeforeUnload() {
+      flush()
+    }
     function onVisibilityChange() {
       if (document.visibilityState === 'hidden') flush()
     }
+    window.addEventListener('beforeunload', onBeforeUnload)
     window.addEventListener('pagehide', flush)
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
       window.removeEventListener('pagehide', flush)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
@@ -1767,7 +1854,7 @@ export default function BookingFlowPage() {
     if (bookingRes.data) {
       setBooking(bookingRes.data)
     }
-    await bookingsApi.clearFlowDraft(cleanerId).catch(() => null)
+    clearSessionDraft()
     navigateToStep(4, { dropResumeParams: true })
   }
 
@@ -1777,7 +1864,6 @@ export default function BookingFlowPage() {
     setCancelRequestLoading(true)
     try {
       await bookingsApi.cancel(booking.id, 'Client cancelled draft before payment authorisation')
-      await bookingsApi.clearFlowDraft(cleanerId).catch(() => null)
       clearSessionDraft()
       toast.success('Draft cancelled. You can start a new booking now.')
       setCancelRequestConfirmOpen(false)
@@ -1853,6 +1939,11 @@ export default function BookingFlowPage() {
             )}
           </div>
           <StepIndicator current={step} />
+          {step <= 3 && (
+            <p className="mb-3 text-right text-xs text-slate-500">
+              {draftSaveState === 'saving' ? 'Saving draft...' : draftSaveState === 'saved' ? 'Draft saved' : draftSaveState === 'error' ? 'Draft save pending retry' : 'Draft autosave active'}
+            </p>
+          )}
 
           <div className={cn('grid gap-6', step < 4 ? 'lg:grid-cols-[1fr_320px]' : 'max-w-2xl mx-auto w-full')}>
         {/* Main content */}
