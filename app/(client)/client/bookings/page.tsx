@@ -21,7 +21,7 @@ const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600
 
 const STATUS_FILTERS: Array<{ key: 'all' | BookingStatus; label: string }> = [
   { key: 'all', label: 'All' },
-  { key: 'pending', label: 'Pending / Payment Required' },
+  { key: 'pending', label: 'Pending Cleaner Acceptance / Payment Required' },
   { key: 'accepted', label: 'Accepted' },
   { key: 'confirmed', label: 'Confirmed' },
   { key: 'in_progress', label: 'In Progress' },
@@ -50,6 +50,12 @@ const DISPUTE_WINDOW_MS = getDisputeWindowMs()
 
 function isPaymentAuthorized(paymentStatus?: string | null) {
   return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
+}
+
+function isOverdueUnpaid(booking: BookingRead) {
+  const isUnpaid = booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))
+  if (!isUnpaid) return false
+  return new Date(booking.scheduled_start).getTime() <= Date.now()
 }
 
 export default function ClientBookingsPage() {
@@ -89,11 +95,17 @@ export default function ClientBookingsPage() {
     setActionLoadingId(bookingId)
     try {
       const booking = bookings.find((item) => item.id === bookingId)
-      await bookingsApi.cancel(bookingId, 'Cancelled by client while pending payment authorization')
+      const isDraftLike = booking ? (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))) : false
+      await bookingsApi.cancel(
+        bookingId,
+        isDraftLike
+          ? 'Cancelled by client while in draft payment-required state'
+          : 'Cancelled by client while pending cleaner acceptance',
+      )
       if (booking?.cleaner_id) {
         await bookingsApi.clearFlowDraft(booking.cleaner_id).catch(() => null)
       }
-      toast.success('Booking request cancelled.')
+      toast.success(isDraftLike ? 'Draft booking cancelled.' : 'Booking request cancelled.')
       await loadBookings()
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to cancel booking request.')
@@ -115,6 +127,12 @@ export default function ClientBookingsPage() {
   }
 
   const deferredBookings = useDeferredValue(bookings)
+  const cancelTargetBooking = cancelTargetBookingId
+    ? bookings.find((item) => item.id === cancelTargetBookingId) ?? null
+    : null
+  const cancelTargetIsDraftLike = cancelTargetBooking
+    ? (cancelTargetBooking.status === 'draft' || (cancelTargetBooking.status === 'pending' && !isPaymentAuthorized(cancelTargetBooking.payment?.status)))
+    : true
 
   const filtered = deferredBookings.filter((booking) => {
     if (dashboardFilter === 'active') {
@@ -249,8 +267,9 @@ export default function ClientBookingsPage() {
                   const isWithinDisputeWindow = completedAtMs > 0 && Date.now() <= completedAtMs + DISPUTE_WINDOW_MS
                   const canDispute = booking.status === 'completed' && isWithinDisputeWindow && !disputeStatusForBooking
                   const canChat = isChatActiveForBooking(booking)
-                  const canContinuePayment = booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))
-                  const canCancelPaymentRequired = booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))
+                  const isOverdueDraftState = isOverdueUnpaid(booking)
+                  const canContinuePayment = !isOverdueDraftState && (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)))
+                  const canCancelDraft = !isOverdueDraftState && (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)))
 
                   return (
                     <article
@@ -293,7 +312,7 @@ export default function ClientBookingsPage() {
                             Continue payment
                           </Link>
                         )}
-                        {canCancelPaymentRequired && (
+                        {canCancelDraft && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -301,7 +320,18 @@ export default function ClientBookingsPage() {
                             onClick={() => openCancelConfirm(booking.id)}
                             loading={actionLoadingId === booking.id}
                           >
-                            Cancel request
+                            Cancel draft
+                          </Button>
+                        )}
+                        {booking.status === 'pending' && isPaymentAuthorized(booking.payment?.status) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 border-red-300 px-3 text-xs font-semibold text-red-700 hover:bg-red-50"
+                            onClick={() => openCancelConfirm(booking.id)}
+                            loading={actionLoadingId === booking.id}
+                          >
+                            Cancel booking request
                           </Button>
                         )}
 
@@ -328,7 +358,7 @@ export default function ClientBookingsPage() {
                           </span>
                         )}
 
-                        {booking.status === 'expired' && (
+                        {(booking.status === 'expired' || booking.status === 'cancelled' || isOverdueDraftState) && (
                           <>
                             <Link
                               href={`/client/book/${booking.cleaner_id}?reset=1&step=1`}
@@ -362,10 +392,12 @@ export default function ClientBookingsPage() {
           setCancelTargetBookingId(null)
         }}
       >
-        <DialogTitle>Cancel booking request</DialogTitle>
+        <DialogTitle>{cancelTargetIsDraftLike ? 'Cancel draft booking' : 'Cancel booking request'}</DialogTitle>
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Need to change something? Cancel this draft and start a new booking.
+            {cancelTargetIsDraftLike
+              ? 'Need to change something? Cancel this draft and start a new booking.'
+              : 'Are you sure you want to cancel this booking request?'}
           </p>
           <div className="flex gap-2">
             <Button
@@ -377,7 +409,7 @@ export default function ClientBookingsPage() {
               }}
               disabled={Boolean(actionLoadingId)}
             >
-              Keep request
+              {cancelTargetIsDraftLike ? 'Keep draft' : 'Keep request'}
             </Button>
             <Button
               variant="destructive"
@@ -385,7 +417,7 @@ export default function ClientBookingsPage() {
               onClick={confirmCancelRequest}
               loading={Boolean(cancelTargetBookingId && actionLoadingId === cancelTargetBookingId)}
             >
-              Cancel request
+              {cancelTargetIsDraftLike ? 'Cancel draft' : 'Cancel booking request'}
             </Button>
           </div>
         </div>

@@ -25,10 +25,10 @@ function getLink(n: NotificationRead): string {
 
 function normalizeCleanerNotificationCopy(notification: NotificationRead): NotificationRead {
   const nextTitle = String(notification.title ?? '')
-    .replace(/Payment Required/gi, 'Pending Cleaner Acceptance')
+    .replace(/Payment Required/gi, 'Awaiting payment authorisation')
     .replace(/New Booking Request/gi, 'New Request')
   const nextBody = String(notification.body ?? '')
-    .replace(/Payment Required/gi, 'Pending Cleaner Acceptance')
+    .replace(/Payment Required/gi, 'Awaiting payment authorisation')
   return { ...notification, title: nextTitle, body: nextBody }
 }
 

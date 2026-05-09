@@ -40,6 +40,12 @@ function isPaymentAuthorized(paymentStatus?: string | null) {
   return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
 }
 
+function isOverdueUnpaidDraftLike(booking: BookingRead) {
+  const isUnpaidDraftLike = booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))
+  if (!isUnpaidDraftLike) return false
+  return new Date(booking.scheduled_start).getTime() <= Date.now()
+}
+
 export default function ClientBookingDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -163,11 +169,14 @@ export default function ClientBookingDetailPage() {
   async function handleCancelRequest() {
     setActionLoading(true)
     try {
-      await bookingsApi.cancel(id, 'Cancelled by client while pending cleaner acceptance')
+      const reason = canCancelDraft
+        ? 'Cancelled by client while in draft payment-required state'
+        : 'Cancelled by client while pending cleaner acceptance'
+      await bookingsApi.cancel(id, reason)
       if (booking?.cleaner_id) {
         await bookingsApi.clearFlowDraft(booking.cleaner_id).catch(() => null)
       }
-      toast.success('Booking request cancelled')
+      toast.success(canCancelDraft ? 'Draft booking cancelled' : 'Booking request cancelled')
       setCancelConfirmOpen(false)
       await refresh()
       router.push('/client/bookings')
@@ -183,7 +192,11 @@ export default function ClientBookingDetailPage() {
 
   const paymentStatus = booking.payment?.status ?? null
   const isAuthorized = ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
-  const canAuthorize = ['draft', 'pending', 'accepted'].includes(booking.status) && !isAuthorized
+  const overdueUnpaidDraftLike = isOverdueUnpaidDraftLike(booking)
+  const canAuthorize = booking.status === 'accepted' && !isAuthorized
+  const canContinuePayment = !overdueUnpaidDraftLike && (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)))
+  const canCancelDraft = !overdueUnpaidDraftLike && (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)))
+  const canCancelBookingRequest = booking.status === 'pending' && isPaymentAuthorized(booking.payment?.status)
   const canReview = Boolean(booking.completed_at) && ['completed', 'disputed'].includes(booking.status)
   const isPending = booking.status === 'pending'
   const hasProposal = Boolean(booking.proposed_start && booking.proposal_by)
@@ -378,22 +391,27 @@ export default function ClientBookingDetailPage() {
                       Authorise card
                     </Button>
                   )}
-                  {(booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status))) && (
+                  {canContinuePayment && (
                     <>
                       <Button variant="outline" onClick={() => router.push(`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`)}>
-                        Continue payment in booking flow
+                        Continue payment
                       </Button>
                       <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                         Need to change something? Cancel this draft and start a new booking.
                       </p>
                     </>
                   )}
-                  {(booking.status === 'draft' || booking.status === 'pending') && (
+                  {canCancelDraft && (
                     <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
-                      {booking.status === 'draft' ? 'Cancel draft' : 'Cancel request'}
+                      Cancel draft
                     </Button>
                   )}
-                  {booking.status === 'expired' && (
+                  {canCancelBookingRequest && (
+                    <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
+                      Cancel booking request
+                    </Button>
+                  )}
+                  {(booking.status === 'expired' || booking.status === 'cancelled' || overdueUnpaidDraftLike) && (
                     <>
                       <Button onClick={() => router.push(`/client/book/${booking.cleaner_id}?reset=1&step=1`)}>
                         Book again
@@ -505,15 +523,19 @@ export default function ClientBookingDetailPage() {
       </Dialog>
 
       <Dialog open={cancelConfirmOpen} onClose={() => setCancelConfirmOpen(false)}>
-        <DialogTitle>Cancel booking request</DialogTitle>
+        <DialogTitle>{canCancelDraft ? 'Cancel draft booking' : 'Cancel booking request'}</DialogTitle>
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">Are you sure you want to cancel this request?</p>
+          <p className="text-sm text-muted-foreground">
+            {canCancelDraft
+              ? 'Are you sure you want to cancel this draft booking?'
+              : 'Are you sure you want to cancel this booking request?'}
+          </p>
           <div className="flex gap-2">
             <Button variant="outline" className="w-full" onClick={() => setCancelConfirmOpen(false)} disabled={actionLoading}>
-              Keep request
+              {canCancelDraft ? 'Keep draft' : 'Keep request'}
             </Button>
             <Button variant="destructive" className="w-full" onClick={handleCancelRequest} loading={actionLoading}>
-              Cancel request
+              {canCancelDraft ? 'Cancel draft' : 'Cancel booking request'}
             </Button>
           </div>
         </div>

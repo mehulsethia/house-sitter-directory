@@ -123,6 +123,64 @@ export const paymentLifecycleService = {
 
   async expireBookingDeadlines() {
     const now = new Date()
+    const expiredUnpaidDrafts = await db.booking.findMany({
+      where: {
+        status: { in: ['draft', 'pending'] },
+        scheduledStart: { lt: now },
+        OR: [
+          { payment: null },
+          {
+            payment: {
+              is: {
+                status: { in: ['pending', 'failed'] },
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        payment: true,
+      },
+    })
+
+    let expiredUnpaidDraftCount = 0
+    let cancelledDraftIntents = 0
+
+    for (const booking of expiredUnpaidDrafts) {
+      await db.booking.update({
+        where: { id: booking.id },
+        data: {
+          status: 'expired',
+          proposedStart: null,
+          proposedEnd: null,
+          proposalBy: null,
+          proposalContext: null,
+          proposalExpiresAt: null,
+          cleanerProposals: 0,
+          clientProposals: 0,
+          postCleanerProposals: 0,
+          postClientProposals: 0,
+        },
+      })
+      expiredUnpaidDraftCount += 1
+
+      if (booking.payment && booking.payment.status === 'pending') {
+        try {
+          await stripe.paymentIntents.cancel(booking.payment.stripePaymentIntentId)
+          await db.payment.update({
+            where: { id: booking.payment.id },
+            data: {
+              status: 'failed',
+              failedAt: new Date(),
+            },
+          })
+          cancelledDraftIntents += 1
+        } catch {
+          // Keep booking expiry deterministic even if Stripe cancellation fails.
+        }
+      }
+    }
+
     const expiredPendingBookings = await db.booking.findMany({
       where: {
         status: 'pending',
@@ -319,10 +377,11 @@ export const paymentLifecycleService = {
     }
 
     return {
+      expired_unpaid_drafts: expiredUnpaidDraftCount,
       expired_pending: expiredPendingCount,
       expired_accepted: accepted,
       expired_reschedule_negotiations: expiredRescheduleNegotiations.length,
-      cancelled_pending_intents: cancelledIntents + cancelledPendingIntents,
+      cancelled_pending_intents: cancelledIntents + cancelledPendingIntents + cancelledDraftIntents,
     }
   },
 }

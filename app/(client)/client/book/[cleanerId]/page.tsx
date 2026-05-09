@@ -2564,7 +2564,7 @@ export default function BookingFlowPage() {
           setCancelRequestConfirmOpen(false)
         }}
       >
-        <DialogTitle>Cancel booking request</DialogTitle>
+        <DialogTitle>Cancel draft booking</DialogTitle>
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             Need to change something? Cancel this draft and start a new booking.
@@ -2576,7 +2576,7 @@ export default function BookingFlowPage() {
               onClick={() => setCancelRequestConfirmOpen(false)}
               disabled={cancelRequestLoading}
             >
-              Keep request
+              Keep draft
             </Button>
             <Button
               variant="destructive"
@@ -2584,7 +2584,7 @@ export default function BookingFlowPage() {
               onClick={cancelDraftAndRestart}
               loading={cancelRequestLoading}
             >
-              Cancel request
+              Cancel draft
             </Button>
           </div>
         </div>
