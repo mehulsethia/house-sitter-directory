@@ -268,10 +268,11 @@ export default function CleanerProfilePage() {
         </section>
 
         <section className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:p-6">
-          <div className="flex justify-center border-b border-slate-200">
+          <div className="overflow-x-auto border-b border-slate-200">
+            <div className="flex min-w-max justify-start sm:min-w-0 sm:justify-center">
             <button
               onClick={() => setTab('overview')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors sm:px-6 ${
                 tab === 'overview'
                   ? 'border-[#0d4bc9] text-[#0d4bc9]'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -281,7 +282,7 @@ export default function CleanerProfilePage() {
             </button>
             <button
               onClick={() => setTab('reviews')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors sm:px-6 ${
                 tab === 'reviews'
                   ? 'border-[#0d4bc9] text-[#0d4bc9]'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -291,7 +292,7 @@ export default function CleanerProfilePage() {
             </button>
             <button
               onClick={() => setTab('availability')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors sm:px-6 ${
                 tab === 'availability'
                   ? 'border-[#0d4bc9] text-[#0d4bc9]'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -299,6 +300,7 @@ export default function CleanerProfilePage() {
             >
               Availability
             </button>
+            </div>
           </div>
 
           {tab === 'overview' && (

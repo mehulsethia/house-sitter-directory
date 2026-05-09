@@ -381,15 +381,16 @@ export default function ClientBookingDetailPage() {
                       : `Report window closed on ${new Date(reportDeadlineMs).toLocaleString('en-IE')}.`}
                   </p>
                 )}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   {isPending && cleanerProposed && (
                     <>
-                      <Button size="lg" onClick={() => handleBookingAction('accept_proposal')} loading={actionLoading}>
+                      <Button size="lg" className="w-full sm:w-auto" onClick={() => handleBookingAction('accept_proposal')} loading={actionLoading}>
                         Accept proposed time
                       </Button>
                       {canCounterProposal && (
                         <Button
                           variant="outline"
+                          className="w-full sm:w-auto"
                           onClick={() => {
                             const seed = booking.proposed_start ?? booking.scheduled_start
                             setCounterDate(toDateInputValueCyprus(seed))
@@ -400,19 +401,19 @@ export default function ClientBookingDetailPage() {
                           Counter once with another time
                         </Button>
                       )}
-                      <Button variant="destructive" onClick={() => handleBookingAction('decline_proposal')} loading={actionLoading}>
+                      <Button variant="destructive" className="w-full sm:w-auto" onClick={() => handleBookingAction('decline_proposal')} loading={actionLoading}>
                         Decline proposal
                       </Button>
                     </>
                   )}
                   {canAuthorize && (
-                    <Button size="lg" onClick={() => router.push(`/client/checkout/${id}`)}>
+                    <Button size="lg" className="w-full sm:w-auto" onClick={() => router.push(`/client/checkout/${id}`)}>
                       Authorise card
                     </Button>
                   )}
                   {canContinuePayment && (
                     <>
-                      <Button variant="outline" onClick={() => router.push(`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`)}>
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={() => router.push(`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`)}>
                         Continue payment
                       </Button>
                       <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
@@ -421,21 +422,21 @@ export default function ClientBookingDetailPage() {
                     </>
                   )}
                   {canCancelDraft && (
-                    <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
+                    <Button variant="outline" className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
                       Cancel draft
                     </Button>
                   )}
                   {canCancelBookingRequest && (
-                    <Button variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
+                    <Button variant="outline" className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
                       Cancel booking request
                     </Button>
                   )}
                   {(booking.status === 'expired' || booking.status === 'cancelled' || booking.status === 'declined' || overdueUnpaidDraftLike) && (
                     <>
-                      <Button onClick={() => router.push(`/client/book/${booking.cleaner_id}?reset=1&step=1`)}>
+                      <Button className="w-full sm:w-auto" onClick={() => router.push(`/client/book/${booking.cleaner_id}?reset=1&step=1`)}>
                         Book again
                       </Button>
-                      <Button variant="outline" onClick={() => router.push('/client/cleaners')}>
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={() => router.push('/client/cleaners')}>
                         Choose another cleaner
                       </Button>
                     </>
@@ -446,12 +447,12 @@ export default function ClientBookingDetailPage() {
                     </p>
                   )}
                   {canReview && (
-                    <Button variant="outline" onClick={() => setReviewOpen(true)}>
+                    <Button variant="outline" className="w-full sm:w-auto" onClick={() => setReviewOpen(true)}>
                       Leave a review
                     </Button>
                   )}
                   {reportWindowActive && (
-                    <Button variant="destructive" onClick={() => router.push(`/client/report?booking=${id}`)}>
+                    <Button variant="destructive" className="w-full sm:w-auto" onClick={() => router.push(`/client/report?booking=${id}`)}>
                       Report a Problem
                     </Button>
                   )}

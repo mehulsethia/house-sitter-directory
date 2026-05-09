@@ -61,7 +61,7 @@ export function CleanerCard({ cleaner, isFavorite, onToggleFavorite }: CleanerCa
                   <h3 className="truncate text-[18px] leading-[1.15] font-bold tracking-[-0.01em] text-[#0f1733]">
                     {name}
                   </h3>
-                  <div className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     <span className="inline-flex items-center gap-0.5 text-[#f5b400]">
                       {Array.from({ length: 5 }).map((_, index) => {
                         const filled = hasRating && averageRating >= index + 1

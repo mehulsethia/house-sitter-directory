@@ -364,7 +364,7 @@ export default function AdminCleanersPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="space-y-0">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 sm:grid-cols-5">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 lg:grid-cols-5">
           {TAB_STATUS.map((s) => (
             <TabsTrigger key={s} value={s} className="h-9 rounded-lg gap-1.5 text-[12px] sm:text-sm">
               {cleanerLifecycleLabel(s)}

@@ -108,7 +108,7 @@ export default function AdminUsersPage() {
         <EmptyState title="No users found" description="Try adjusting your search or filter." />
       ) : (
         <div className="-mx-4 overflow-x-auto rounded-lg border sm:mx-0">
-          <table className="w-full min-w-[980px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-muted/40">
               <tr className="text-left text-muted-foreground text-xs uppercase tracking-wide">
                 <th className="px-4 py-3 font-medium">User</th>
@@ -124,9 +124,9 @@ export default function AdminUsersPage() {
                 const rb = ROLE_BADGE[u.role]
                 return (
                   <tr key={u.id} className={cn('hover:bg-muted/20 transition-colors', !u.is_active && 'opacity-50')}>
-                    <td className="px-4 py-3">
-                      <p className="font-medium">{u.name}</p>
-                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                    <td className="px-4 py-3 min-w-[180px]">
+                      <p className="font-medium break-words">{u.name}</p>
+                      <p className="text-xs text-muted-foreground break-all">{u.email}</p>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={rb.variant}>{rb.label}</Badge>

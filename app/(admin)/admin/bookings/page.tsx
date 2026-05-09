@@ -62,7 +62,7 @@ function BookingTable({ bookings }: { bookings: BookingRead[] }) {
 
   return (
     <div className="-mx-4 overflow-x-auto rounded-lg border sm:mx-0">
-      <table className="w-full min-w-[860px] text-sm">
+      <table className="w-full min-w-[760px] text-sm">
         <thead className="bg-muted/40">
           <tr className="text-left text-muted-foreground text-xs uppercase tracking-wide">
             <th className="px-4 py-3 font-medium">Booking</th>
@@ -77,12 +77,12 @@ function BookingTable({ bookings }: { bookings: BookingRead[] }) {
         <tbody className="divide-y">
           {bookings.map(b => (
             <tr key={b.id} className="hover:bg-muted/20 transition-colors">
-              <td className="px-4 py-3">
+              <td className="px-4 py-3 min-w-[140px]">
                 <span className="font-mono text-xs text-muted-foreground">#{b.id.slice(0, 8)}</span>
                 <p className="text-[10px] text-muted-foreground">{formatDate(b.created_at)}</p>
               </td>
-              <td className="px-4 py-3 capitalize">{b.service_type.replace(/_/g, ' ')}</td>
-              <td className="px-4 py-3 text-muted-foreground">
+              <td className="px-4 py-3 min-w-[120px] capitalize">{b.service_type.replace(/_/g, ' ')}</td>
+              <td className="px-4 py-3 min-w-[110px] text-muted-foreground">
                 {b.city}, {b.postcode}
               </td>
               <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
@@ -155,7 +155,7 @@ export default function AdminBookingsPage() {
   return (
     <div className="space-y-6">
       <Tabs value={activeGroup} onValueChange={v => { setActiveGroup(v) }}>
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-1">
+      <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap">
           {GROUPS.map(g => (
             <TabsTrigger key={g.key} value={g.key}>
               {g.label}
