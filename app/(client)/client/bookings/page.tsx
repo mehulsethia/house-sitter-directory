@@ -287,6 +287,13 @@ export default function ClientBookingsPage() {
                             {formatDate(booking.scheduled_start)}
                           </p>
                           <p className="text-xs text-slate-500">{booking.address}, {booking.city}, {booking.postcode}</p>
+                          {booking.status === 'pending' && booking.proposed_start && booking.proposal_by && (
+                            <p className="mt-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                              {booking.proposal_by === 'cleaner'
+                                ? `Cleaner proposed ${formatDate(booking.proposed_start)}.`
+                                : `You proposed ${formatDate(booking.proposed_start)}. Waiting for cleaner response.`}
+                            </p>
+                          )}
                         </div>
 
                         <div className="text-left sm:text-right">

@@ -353,7 +353,9 @@ export default function ClientBookingDetailPage() {
 
             {isPending && hasProposal && (
               <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-                Cleaner proposed {formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.
+                {cleanerProposed
+                  ? `Cleaner proposed ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
+                  : `You proposed ${formatDate(booking.proposed_start!)}. Waiting for cleaner response.`}
               </p>
             )}
             {booking.status === 'pending' && booking.accept_by && (
