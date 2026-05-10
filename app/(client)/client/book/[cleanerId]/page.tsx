@@ -2511,7 +2511,13 @@ export default function BookingFlowPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Status:</span>
                     <span className="font-medium text-slate-900 capitalize">
-                      {booking.status === 'pending' ? 'Pending Cleaner Acceptance' : booking.status.replace('_', ' ')}
+                      {booking.status === 'pending'
+                        ? booking.proposal_by === 'cleaner'
+                          ? 'Awaiting Client Response'
+                          : booking.proposal_by === 'client'
+                            ? 'Awaiting Cleaner Response'
+                            : 'Pending Cleaner Acceptance'
+                        : booking.status.replace('_', ' ')}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">

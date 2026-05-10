@@ -77,13 +77,16 @@ export default function ClientBookingDetailPage() {
   const [reviewOpen, setReviewOpen] = useState(false)
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
-  const [actionLoading, setActionLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState<
+    'accept_proposal' | 'decline_proposal' | 'counter_proposal' | 'cancel_request' | 'review' | null
+  >(null)
   const [counterOpen, setCounterOpen] = useState(false)
   const [counterDate, setCounterDate] = useState('')
   const [counterTime, setCounterTime] = useState('')
   const [counterTimeOptions, setCounterTimeOptions] = useState<Array<{ value: string; label: string }>>([])
   const [phoneRevealed, setPhoneRevealed] = useState(false)
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
+  const [declineProposalConfirmOpen, setDeclineProposalConfirmOpen] = useState(false)
 
   const refresh = () =>
     bookingsApi
@@ -144,7 +147,7 @@ export default function ClientBookingDetailPage() {
   }, [booking?.id, booking?.status, booking?.cleaner?.user?.phone])
 
   async function handleReview() {
-    setActionLoading(true)
+    setActionLoading('review')
     try {
       await reviewsApi.create(id, { rating: reviewRating, comment: reviewComment || undefined })
       toast.success('Review submitted!')
@@ -152,7 +155,7 @@ export default function ClientBookingDetailPage() {
     } catch (err: any) {
       toast.error(err.message)
     } finally {
-      setActionLoading(false)
+      setActionLoading(null)
     }
   }
 
@@ -160,7 +163,7 @@ export default function ClientBookingDetailPage() {
     action: 'accept_proposal' | 'decline_proposal' | 'counter_proposal',
     proposedStart?: string,
   ) {
-    setActionLoading(true)
+    setActionLoading(action)
     try {
       await bookingsApi.action(id, action, proposedStart)
       const labels: Record<string, string> = {
@@ -175,16 +178,19 @@ export default function ClientBookingDetailPage() {
         setCounterTime('')
         setCounterTimeOptions([])
       }
+      if (action === 'decline_proposal') {
+        setDeclineProposalConfirmOpen(false)
+      }
       await refresh()
     } catch (err: any) {
       toast.error(err.message ?? 'Action failed')
     } finally {
-      setActionLoading(false)
+      setActionLoading(null)
     }
   }
 
   async function handleCancelRequest() {
-    setActionLoading(true)
+    setActionLoading('cancel_request')
     try {
       const reason = canCancelDraft
         ? 'Cancelled by client while in draft payment-required state'
@@ -200,7 +206,7 @@ export default function ClientBookingDetailPage() {
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to cancel booking request')
     } finally {
-      setActionLoading(false)
+      setActionLoading(null)
     }
   }
 
@@ -258,7 +264,7 @@ export default function ClientBookingDetailPage() {
                   Current Status
                 </p>
                 <div className="mt-2 flex items-center justify-between gap-3">
-                  <BookingStatusBadge status={booking.status} paymentStatus={booking.payment?.status} />
+                  <BookingStatusBadge status={booking.status} paymentStatus={booking.payment?.status} proposalBy={booking.proposal_by} />
                   <p className={`${displayFont.className} text-xl font-bold tracking-[-0.02em] text-white`}>
                     {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
                   </p>
@@ -384,7 +390,13 @@ export default function ClientBookingDetailPage() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   {isPending && cleanerProposed && (
                     <>
-                      <Button size="lg" className="w-full sm:w-auto" onClick={() => handleBookingAction('accept_proposal')} loading={actionLoading}>
+                      <Button
+                        size="lg"
+                        className="w-full sm:w-auto"
+                        onClick={() => handleBookingAction('accept_proposal')}
+                        loading={actionLoading === 'accept_proposal'}
+                        disabled={Boolean(actionLoading)}
+                      >
                         Accept proposed time
                       </Button>
                       {canCounterProposal && (
@@ -397,11 +409,17 @@ export default function ClientBookingDetailPage() {
                             setCounterTime(toTimeInputValueCyprus(seed))
                             setCounterOpen(true)
                           }}
+                          disabled={Boolean(actionLoading)}
                         >
                           Counter once with another time
                         </Button>
                       )}
-                      <Button variant="destructive" className="w-full sm:w-auto" onClick={() => handleBookingAction('decline_proposal')} loading={actionLoading}>
+                      <Button
+                        variant="destructive"
+                        className="w-full sm:w-auto"
+                        onClick={() => setDeclineProposalConfirmOpen(true)}
+                        disabled={Boolean(actionLoading)}
+                      >
                         Decline proposal
                       </Button>
                     </>
@@ -535,10 +553,47 @@ export default function ClientBookingDetailPage() {
               handleBookingAction('counter_proposal', iso)
             }}
             disabled={!counterDate || !counterTime}
-            loading={actionLoading}
+            loading={actionLoading === 'counter_proposal'}
           >
             Send counter-offer
           </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={declineProposalConfirmOpen}
+        onClose={() => {
+          if (actionLoading === 'decline_proposal') return
+          setDeclineProposalConfirmOpen(false)
+        }}
+      >
+        <DialogTitle>Decline proposed time?</DialogTitle>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Declining this proposed time will close the booking request. Your card authorisation will be released if no booking is confirmed.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            If you still want this booking, you can accept the proposed time or counter once with another available time.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setDeclineProposalConfirmOpen(false)}
+              disabled={Boolean(actionLoading)}
+            >
+              Keep booking request
+            </Button>
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={() => handleBookingAction('decline_proposal')}
+              loading={actionLoading === 'decline_proposal'}
+              disabled={Boolean(actionLoading) && actionLoading !== 'decline_proposal'}
+            >
+              Decline & close request
+            </Button>
+          </div>
         </div>
       </Dialog>
 
@@ -551,10 +606,10 @@ export default function ClientBookingDetailPage() {
               : 'Are you sure you want to cancel this booking request?'}
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" className="w-full" onClick={() => setCancelConfirmOpen(false)} disabled={actionLoading}>
+            <Button variant="outline" className="w-full" onClick={() => setCancelConfirmOpen(false)} disabled={Boolean(actionLoading)}>
               {canCancelDraft ? 'Keep draft' : 'Keep request'}
             </Button>
-            <Button variant="destructive" className="w-full" onClick={handleCancelRequest} loading={actionLoading}>
+            <Button variant="destructive" className="w-full" onClick={handleCancelRequest} loading={actionLoading === 'cancel_request'}>
               {canCancelDraft ? 'Cancel draft' : 'Cancel booking request'}
             </Button>
           </div>
@@ -593,7 +648,7 @@ export default function ClientBookingDetailPage() {
               rows={3}
             />
           </div>
-          <Button onClick={handleReview} className="w-full" loading={actionLoading}>
+          <Button onClick={handleReview} className="w-full" loading={actionLoading === 'review'} disabled={Boolean(actionLoading)}>
             Submit review
           </Button>
         </div>

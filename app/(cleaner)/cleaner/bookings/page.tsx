@@ -374,7 +374,7 @@ export default function CleanerBookingsPage() {
                       )}
                     </div>
                     <div className="text-left sm:text-right">
-                      <BookingStatusBadge status={b.status} showPaymentRequiredForUnpaid={false} />
+                      <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} showPaymentRequiredForUnpaid={false} />
                       <p className="mt-2 text-sm font-semibold text-emerald-700">You will earn {formatCurrency(b.cleaner_payout)}</p>
                     </div>
                   </div>

@@ -107,8 +107,8 @@ export default function AdminUsersPage() {
       ) : users.length === 0 ? (
         <EmptyState title="No users found" description="Try adjusting your search or filter." />
       ) : (
-        <div className="-mx-4 overflow-x-auto rounded-lg border sm:mx-0">
-          <table className="w-full min-w-[760px] text-sm">
+        <div className="-mx-4 w-[calc(100%+2rem)] max-w-none overflow-x-auto overscroll-x-contain rounded-lg border sm:mx-0 sm:w-full">
+          <table className="w-full min-w-[680px] text-sm sm:min-w-[760px]">
             <thead className="bg-muted/40">
               <tr className="text-left text-muted-foreground text-xs uppercase tracking-wide">
                 <th className="px-4 py-3 font-medium">User</th>

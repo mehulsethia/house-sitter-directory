@@ -61,8 +61,8 @@ function BookingTable({ bookings }: { bookings: BookingRead[] }) {
   if (bookings.length === 0) return <EmptyState title="No bookings" />
 
   return (
-    <div className="-mx-4 overflow-x-auto rounded-lg border sm:mx-0">
-      <table className="w-full min-w-[760px] text-sm">
+    <div className="-mx-4 w-[calc(100%+2rem)] max-w-none overflow-x-auto overscroll-x-contain rounded-lg border sm:mx-0 sm:w-full">
+      <table className="w-full min-w-[680px] text-sm sm:min-w-[760px]">
         <thead className="bg-muted/40">
           <tr className="text-left text-muted-foreground text-xs uppercase tracking-wide">
             <th className="px-4 py-3 font-medium">Booking</th>
@@ -89,7 +89,7 @@ function BookingTable({ bookings }: { bookings: BookingRead[] }) {
                 {formatDate(b.scheduled_start)}
               </td>
               <td className="px-4 py-3">
-                <BookingStatusBadge status={b.status} />
+                <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} />
               </td>
               <td className="px-4 py-3 text-right font-medium">
                 {formatCurrency(b.total_amount)}
@@ -155,7 +155,7 @@ export default function AdminBookingsPage() {
   return (
     <div className="space-y-6">
       <Tabs value={activeGroup} onValueChange={v => { setActiveGroup(v) }}>
-      <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap">
+      <TabsList className="scrollbar-hide h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap pb-1 [-webkit-overflow-scrolling:touch]">
           {GROUPS.map(g => (
             <TabsTrigger key={g.key} value={g.key}>
               {g.label}

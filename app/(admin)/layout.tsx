@@ -264,7 +264,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Authenticated admin — full layout
   return (
-    <div className="min-h-screen lg:pl-60">
+    <div className="min-h-screen overflow-x-hidden lg:pl-60">
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-60 lg:flex-col lg:border-r lg:bg-muted/20">
         <div className="px-6 py-5">
           <Link href="/admin/dashboard" className="text-base font-bold text-primary">
@@ -328,7 +328,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Sign out
           </button>
         </div>
-        <nav className="flex gap-1.5 overflow-x-auto pb-0.5">
+        <nav className="scrollbar-hide flex gap-1.5 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch]">
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(href + '/')
             return (
@@ -358,8 +358,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
       </header>
 
-      <main className="px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <div className="space-y-6">
+      <main className="app-shell-main px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+        <div className="min-w-0 space-y-6">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
             <div className="admin-stage__media" aria-hidden="true" />
             <div className="admin-stage__grain" aria-hidden="true" />

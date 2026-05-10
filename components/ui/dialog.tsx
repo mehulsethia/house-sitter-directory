@@ -40,10 +40,15 @@ function Dialog({ open, onClose, children, className }: DialogProps) {
   return createPortal(
     <div className="fixed inset-0 z-[120]">
       <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px]" onClick={onClose} />
-      <div className="absolute inset-0 overflow-y-auto p-4">
-        <div className="flex min-h-full items-center justify-center py-8">
-          <div className={cn('relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-background p-6 shadow-2xl', className)}>
-            <button onClick={onClose} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
+      <div className="absolute inset-0 overflow-y-auto p-3 sm:p-4">
+        <div className="flex min-h-full items-end justify-center py-1 sm:items-center sm:py-8">
+          <div
+            className={cn(
+              'relative z-10 w-full max-w-md max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-background p-5 shadow-2xl sm:max-h-[calc(100dvh-4rem)] sm:p-6',
+              className,
+            )}
+          >
+            <button onClick={onClose} className="absolute right-4 top-4 rounded-md p-1 text-muted-foreground hover:bg-slate-100 hover:text-foreground">
               <X className="h-5 w-5" />
             </button>
             {children}

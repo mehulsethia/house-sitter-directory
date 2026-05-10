@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="grid lg:grid-cols-2 min-h-[620px]">
+    <div className="grid min-h-[560px] lg:min-h-[620px] lg:grid-cols-2">
       {/* Left — Branding panel */}
       <div className="hidden lg:flex flex-col bg-gray-50 p-5 lg:p-6">
         <div className="relative overflow-hidden rounded-xl shadow-lg flex-1 min-h-[360px]">
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       {/* Right — Form */}
-      <div className="p-8 lg:p-14 flex flex-col justify-center">
+      <div className="flex flex-col justify-center p-5 sm:p-8 lg:p-14">
         {sent ? (
           <div className="text-center space-y-4">
             <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center">

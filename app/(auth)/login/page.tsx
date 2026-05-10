@@ -76,7 +76,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="grid lg:grid-cols-2 min-h-[620px]">
+    <div className="grid min-h-[560px] lg:min-h-[620px] lg:grid-cols-2">
       {/* Left — Branding panel */}
       <div className="hidden lg:flex flex-col bg-gray-50 p-5 lg:p-6">
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1 min-h-[360px]">
@@ -91,7 +91,7 @@ function LoginForm() {
       </div>
 
       {/* Right — Form */}
-      <div className="p-8 lg:p-14 flex flex-col justify-center">
+      <div className="flex flex-col justify-center p-5 sm:p-8 lg:p-14">
         <h2 className="text-2xl font-semibold text-gray-900 mb-8">
           Log in to your account
         </h2>

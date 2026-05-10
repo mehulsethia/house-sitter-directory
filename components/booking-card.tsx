@@ -30,6 +30,7 @@ export function BookingCard({ booking, viewAs = 'client' }: BookingCardProps) {
               <span className="font-semibold">{SERVICE_LABELS[booking.service_type] ?? booking.service_type}</span>
               <BookingStatusBadge
                 status={booking.status}
+                proposalBy={booking.proposal_by}
                 showPaymentRequiredForUnpaid={viewAs !== 'cleaner'}
               />
             </div>

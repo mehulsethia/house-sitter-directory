@@ -652,7 +652,7 @@ function CleanerProfilePageContent() {
 
         <Card className="border-slate-200">
           <CardContent className="px-4 pb-4 pt-6 md:px-6 md:pb-6 md:pt-6">
-            <div className="mb-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
+            <div className="mb-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {([
                 ['overview', 'Overview'],
                 ['availability', 'Availability'],

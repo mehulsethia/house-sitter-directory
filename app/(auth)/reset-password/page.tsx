@@ -32,7 +32,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="grid lg:grid-cols-2 min-h-[620px]">
+    <div className="grid min-h-[560px] lg:min-h-[620px] lg:grid-cols-2">
       {/* Left — Branding panel */}
       <div className="hidden lg:flex flex-col bg-slate-50 p-5 lg:p-6">
         <div className="flex flex-1 min-h-[360px] flex-col justify-end rounded-xl border border-slate-200/70 bg-[linear-gradient(130deg,#04162f_5%,#0f3b76_55%,#0e5698_100%)] p-7 shadow-lg">
@@ -42,7 +42,7 @@ function ResetPasswordForm() {
       </div>
 
       {/* Right — Form */}
-      <div className="p-8 lg:p-14 flex flex-col justify-center">
+      <div className="flex flex-col justify-center p-5 sm:p-8 lg:p-14">
         <div className="mx-auto mb-6 h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
           <Lock className="h-6 w-6 text-primary" />
         </div>

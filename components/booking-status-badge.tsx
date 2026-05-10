@@ -18,17 +18,27 @@ function isPaymentAuthorized(paymentStatus?: string | null) {
   return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
 }
 
+function pendingLabel(proposalBy?: 'client' | 'cleaner' | null) {
+  if (proposalBy === 'cleaner') return 'Awaiting Client Response'
+  if (proposalBy === 'client') return 'Awaiting Cleaner Response'
+  return STATUS_CONFIG.pending.label
+}
+
 export function BookingStatusBadge({
   status,
   paymentStatus,
+  proposalBy,
   showPaymentRequiredForUnpaid = true,
 }: {
   status: BookingStatus
   paymentStatus?: string | null
+  proposalBy?: 'client' | 'cleaner' | null
   showPaymentRequiredForUnpaid?: boolean
 }) {
   const config = (showPaymentRequiredForUnpaid && (status === 'draft' || (status === 'pending' && !isPaymentAuthorized(paymentStatus))))
     ? { label: 'Payment Required', variant: 'warning' as const }
-    : STATUS_CONFIG[status] ?? { label: status, variant: 'outline' as const }
+    : status === 'pending'
+      ? { label: pendingLabel(proposalBy), variant: STATUS_CONFIG.pending.variant }
+      : STATUS_CONFIG[status] ?? { label: status, variant: 'outline' as const }
   return <Badge variant={config.variant}>{config.label}</Badge>
 }

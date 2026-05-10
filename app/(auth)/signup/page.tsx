@@ -88,7 +88,7 @@ function SignupForm() {
   }
 
   return (
-    <div className="grid lg:grid-cols-2 min-h-[calc(100vh-8rem)]">
+    <div className="grid min-h-[560px] lg:min-h-[calc(100vh-8rem)] lg:grid-cols-2">
       {/* Left — Branding panel */}
       <div className="hidden lg:flex flex-col bg-gray-50 p-8 lg:p-10">
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1">
@@ -103,7 +103,7 @@ function SignupForm() {
       </div>
 
       {/* Right — Form */}
-      <div className="p-6 lg:p-10 flex flex-col justify-center">
+      <div className="flex flex-col justify-center p-5 sm:p-6 lg:p-10">
         {/* Role toggle */}
         <div className="grid grid-cols-2 gap-1 bg-gray-100 rounded-xl p-1 mb-5">
           {(['client', 'cleaner'] as const).map((r) => (
@@ -124,7 +124,7 @@ function SignupForm() {
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {/* Name row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                 First Name <span className="text-red-500">*</span>

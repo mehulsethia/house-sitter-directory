@@ -217,7 +217,7 @@ export default function CleanerDashboardPage() {
               <p className="text-[0.7rem] uppercase tracking-[0.24em] text-cyan-200/90">
                 Live Snapshot
               </p>
-              <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <SnapshotStat label="Revenue" value={stats.totalRevenue > 0 ? formatCurrency(stats.totalRevenue) : '€0.00'} />
                 <SnapshotStat label="Completed" value={String(stats.completed.length)} />
                 <SnapshotStat label="Active" value={String(stats.activeJobs.length)} />
@@ -360,7 +360,7 @@ export default function CleanerDashboardPage() {
                         </span>
                       </div>
                     </div>
-                    <BookingStatusBadge status={b.status} showPaymentRequiredForUnpaid={false} />
+                    <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} showPaymentRequiredForUnpaid={false} />
                   </div>
                   <p className="mt-2 text-sm text-slate-600">{b.city}, {b.postcode} · {b.duration_hours}h</p>
                   {b.special_instructions && (
@@ -446,7 +446,7 @@ export default function CleanerDashboardPage() {
                   <Link key={b.id} href={`/cleaner/bookings/${b.id}`} className="block rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100">
                     <div className="mb-1 flex items-center justify-between">
                       <p className="text-sm font-semibold text-slate-900">{resolveJobTypeTitle(b)}</p>
-                      <BookingStatusBadge status={b.status} showPaymentRequiredForUnpaid={false} />
+                      <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} showPaymentRequiredForUnpaid={false} />
                     </div>
                     <p className="text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
                     <p className="mt-1 text-sm text-emerald-700 font-semibold">{formatCurrency(b.cleaner_payout)}</p>
@@ -478,7 +478,7 @@ export default function CleanerDashboardPage() {
                   <p className="mt-1 text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
                   <p className="mt-2 text-xs text-slate-500">{b.city}, {b.postcode}</p>
                   <div className="mt-2 flex items-center justify-between">
-                    <BookingStatusBadge status={b.status} showPaymentRequiredForUnpaid={false} />
+                    <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} showPaymentRequiredForUnpaid={false} />
                     <p className="text-sm font-semibold text-slate-900">{formatCurrency(b.cleaner_payout)}</p>
                   </div>
                 </Link>

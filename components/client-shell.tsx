@@ -108,7 +108,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
                 Log out
               </button>
             </div>
-            <nav className="flex gap-1.5 overflow-x-auto pb-0.5">
+            <nav className="scrollbar-hide flex gap-1.5 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch]">
               {NAV_ITEMS.map((item) => {
                 const active = pathname.startsWith(item.href)
                 const Icon = item.icon
