@@ -41,8 +41,6 @@ const NOTES_MIN_CHARS = 12
 const MAX_JOB_PHOTOS = 5
 const MAX_SPECIAL_INSTRUCTIONS_CHARS = 5000
 const BOOKING_FLOW_DRAFT_VERSION = 1
-const BOOKING_FLOW_PHOTO_DB_NAME = 'maidhive-booking-flow-drafts'
-const BOOKING_FLOW_PHOTO_STORE_NAME = 'photo-files'
 
 const JOB_TYPE_OPTIONS = [
   { value: 'regular_clean', label: 'Regular clean', serviceType: 'standard' as const },
@@ -81,27 +79,7 @@ type BookingFlowDraft = {
   duration: number
   date: string
   selectedSlot: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  addressMode: 'saved' | 'new'
-  selectedAddressId: string
-  address: string
-  city: string
-  postcode: string
-  apartmentDetails: string
-  accessNotes: string
-  jobType: string
-  bedrooms: string
-  bathrooms: string
-  propertyCondition: string
-  suppliesProvider: string
-  notes: string
-  saveAddressForLater: boolean
   bookingId: string
-  jobPhotoCount?: number
-  jobPhotoNames?: string[]
 }
 
 type BookingSnapshotDetails = {
@@ -176,24 +154,6 @@ function normalizeFlowDraftPayload(
     duration: Number(rawDuration || readKey(serverDraft ?? undefined, 'durationHours') || 1),
     date: String(rawDate || readKey(serverDraft ?? undefined, 'selectedDate') || ''),
     selectedSlot: String(rawSlot || readKey(serverDraft ?? undefined, 'selectedSlot') || ''),
-    firstName: String(readKey(raw, 'firstName') || ''),
-    lastName: String(readKey(raw, 'lastName') || ''),
-    email: String(readKey(raw, 'email') || ''),
-    phone: String(readKey(raw, 'phone') || ''),
-    addressMode: readKey(raw, 'addressMode') === 'saved' ? 'saved' : 'new',
-    selectedAddressId: String(readKey(raw, 'selectedAddressId') || ''),
-    address: String(readKey(raw, 'address') || ''),
-    city: String(readKey(raw, 'city') || MVP_CITY),
-    postcode: String(readKey(raw, 'postcode') || ''),
-    apartmentDetails: String(readKey(raw, 'apartmentDetails') || ''),
-    accessNotes: String(readKey(raw, 'accessNotes') || ''),
-    jobType: String(readKey(raw, 'jobType') || ''),
-    bedrooms: String(readKey(raw, 'bedrooms') || ''),
-    bathrooms: String(readKey(raw, 'bathrooms') || ''),
-    propertyCondition: String(readKey(raw, 'propertyCondition') || ''),
-    suppliesProvider: String(readKey(raw, 'suppliesProvider') || ''),
-    notes: String(readKey(raw, 'notes') || ''),
-    saveAddressForLater: Boolean(readKey(raw, 'saveAddressForLater')),
     bookingId: String(readKey(raw, 'bookingId') || readKey(serverDraft ?? undefined, 'bookingId') || ''),
   }
 }
@@ -201,54 +161,6 @@ function normalizeFlowDraftPayload(
 function parseDraftTimestamp(value?: string): number {
   const parsed = Date.parse(String(value ?? ''))
   return Number.isFinite(parsed) ? parsed : 0
-}
-
-function openFlowPhotoStore(): Promise<IDBDatabase | null> {
-  if (typeof window === 'undefined' || !window.indexedDB) return Promise.resolve(null)
-  return new Promise((resolve) => {
-    try {
-      const request = window.indexedDB.open(BOOKING_FLOW_PHOTO_DB_NAME, 1)
-      request.onupgradeneeded = () => {
-        const db = request.result
-        if (!db.objectStoreNames.contains(BOOKING_FLOW_PHOTO_STORE_NAME)) {
-          db.createObjectStore(BOOKING_FLOW_PHOTO_STORE_NAME)
-        }
-      }
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => resolve(null)
-    } catch {
-      resolve(null)
-    }
-  })
-}
-
-async function withFlowPhotoStore<T>(
-  mode: IDBTransactionMode,
-  run: (store: IDBObjectStore) => Promise<T>,
-): Promise<T | null> {
-  const db = await openFlowPhotoStore()
-  if (!db) return null
-  try {
-    const tx = db.transaction(BOOKING_FLOW_PHOTO_STORE_NAME, mode)
-    const store = tx.objectStore(BOOKING_FLOW_PHOTO_STORE_NAME)
-    const result = await run(store)
-    return await new Promise<T | null>((resolve) => {
-      tx.oncomplete = () => resolve(result)
-      tx.onerror = () => resolve(null)
-      tx.onabort = () => resolve(null)
-    })
-  } catch {
-    return null
-  } finally {
-    db.close()
-  }
-}
-
-function storeRequest<T = unknown>(request: IDBRequest<T>): Promise<T | undefined> {
-  return new Promise((resolve) => {
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => resolve(undefined)
-  })
 }
 
 function parseBookingSnapshotDetails(specialInstructions?: string | null): BookingSnapshotDetails {
@@ -864,10 +776,6 @@ export default function BookingFlowPage() {
     return `booking_flow_draft_v${BOOKING_FLOW_DRAFT_VERSION}:${cleanerId}`
   }
 
-  function draftPhotoStorageKey() {
-    return `${draftStorageKey()}:photos`
-  }
-
   function readLocalDraft(): BookingFlowDraft | null {
     if (typeof window === 'undefined') return null
     try {
@@ -898,33 +806,6 @@ export default function BookingFlowPage() {
     } catch {
       // ignore
     }
-  }
-
-  async function writeDraftPhotos(photoFiles: File[]) {
-    const key = draftPhotoStorageKey()
-    const payload = photoFiles.slice(0, MAX_JOB_PHOTOS)
-    await withFlowPhotoStore('readwrite', async (store) => {
-      await storeRequest(store.put(payload, key))
-      return true
-    })
-  }
-
-  async function readDraftPhotos(): Promise<File[]> {
-    const key = draftPhotoStorageKey()
-    const result = await withFlowPhotoStore('readonly', async (store) => {
-      const raw = await storeRequest(store.get(key))
-      if (!Array.isArray(raw)) return [] as File[]
-      return raw.filter((item): item is File => item instanceof File)
-    })
-    return result ?? []
-  }
-
-  async function clearDraftPhotos() {
-    const key = draftPhotoStorageKey()
-    await withFlowPhotoStore('readwrite', async (store) => {
-      await storeRequest(store.delete(key))
-      return true
-    })
   }
 
   function navigateToStep(nextStep: number, options?: { dropResumeParams?: boolean; push?: boolean }) {
@@ -959,7 +840,6 @@ export default function BookingFlowPage() {
 
   function clearSessionDraft() {
     clearLocalDraft()
-    void clearDraftPhotos()
     bookingsApi.clearFlowDraft(cleanerId).catch(() => null)
   }
 
@@ -1027,7 +907,7 @@ export default function BookingFlowPage() {
 
   }
 
-  function buildSessionDraft(photoFiles: File[] = jobPhotos): BookingFlowDraft {
+  function buildSessionDraft(): BookingFlowDraft {
     const nextRevision = draftRevisionRef.current + 1
     draftRevisionRef.current = nextRevision
     const updatedAt = new Date().toISOString()
@@ -1040,27 +920,7 @@ export default function BookingFlowPage() {
       duration,
       date,
       selectedSlot,
-      firstName,
-      lastName,
-      email,
-      phone,
-      addressMode,
-      selectedAddressId,
-      address,
-      city: MVP_CITY,
-      postcode,
-      apartmentDetails,
-      accessNotes,
-      jobType,
-      bedrooms,
-      bathrooms,
-      propertyCondition,
-      suppliesProvider,
-      notes,
-      saveAddressForLater,
       bookingId: booking?.id ?? '',
-      jobPhotoCount: photoFiles.length,
-      jobPhotoNames: photoFiles.map((file) => file.name),
     }
   }
 
@@ -1073,38 +933,12 @@ export default function BookingFlowPage() {
     setDuration(parsed.duration || 1)
     setDate(restoredDate)
     setSelectedSlot(restoredSlot)
-    setFirstName(parsed.firstName || '')
-    setLastName(parsed.lastName || '')
-    setEmail(parsed.email || '')
-    setPhone(parsed.phone || '')
-    setAddressMode(parsed.addressMode === 'saved' ? 'saved' : 'new')
-    setSelectedAddressId(parsed.selectedAddressId || '')
-    setAddress(parsed.address || '')
-    setCity(MVP_CITY)
-    setPostcode(normalizePostcodeInput(parsed.postcode || ''))
-    setApartmentDetails(parsed.apartmentDetails || '')
-    setAccessNotes(parsed.accessNotes || '')
-    setJobType((parsed.jobType as (typeof JOB_TYPE_OPTIONS)[number]['value']) || '')
-    setBedrooms(parsed.bedrooms || '')
-    setBathrooms(parsed.bathrooms || '')
-    setPropertyCondition((parsed.propertyCondition as (typeof PROPERTY_CONDITION_OPTIONS)[number]['value']) || '')
-    setSuppliesProvider((parsed.suppliesProvider as (typeof SUPPLIES_OPTIONS)[number]['value']) || '')
-    setNotes(parsed.notes || '')
-    setSaveAddressForLater(Boolean(parsed.saveAddressForLater))
   }
 
-  async function hydrateDraftPhotos() {
-    const savedPhotos = await readDraftPhotos()
-    if (savedPhotos.length > 0) {
-      setJobPhotos(savedPhotos.slice(0, MAX_JOB_PHOTOS))
-    }
-  }
-
-  async function persistFlowDraft(lastStep: number, bookingId?: string, photoFiles: File[] = jobPhotos) {
-    const snapshot = buildSessionDraft(photoFiles)
+  async function persistFlowDraft(lastStep: number, bookingId?: string) {
+    const snapshot = buildSessionDraft()
     setDraftSaveState('saving')
     writeLocalDraft(snapshot)
-    await writeDraftPhotos(photoFiles)
     const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
     try {
       const response = await bookingsApi.saveFlowDraft({
@@ -1127,10 +961,9 @@ export default function BookingFlowPage() {
     }
   }
 
-  function buildFlowDraftBody(lastStep: number, bookingId?: string, photoFiles: File[] = jobPhotos) {
-    const snapshot = buildSessionDraft(photoFiles)
+  function buildFlowDraftBody(lastStep: number, bookingId?: string) {
+    const snapshot = buildSessionDraft()
     writeLocalDraft(snapshot)
-    void writeDraftPhotos(photoFiles)
     const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
     return {
       cleaner_id: cleanerId,
@@ -1316,7 +1149,6 @@ export default function BookingFlowPage() {
           if (normalizedPayload && normalizedPayload.version === BOOKING_FLOW_DRAFT_VERSION) {
             hydrateFromDraftPayload(normalizedPayload)
             writeLocalDraft(normalizedPayload)
-            await hydrateDraftPhotos()
           }
           const fallbackSlot = normalizeToIsoDatetime(normalizedPayload?.selectedSlot || '') ?? ''
           const fallbackDate = normalizedPayload?.date || (fallbackSlot ? getDateKeyInAppTimezone(fallbackSlot) : '')
@@ -1335,7 +1167,6 @@ export default function BookingFlowPage() {
 
         hydrateFromDraftPayload(normalizedPayload)
         writeLocalDraft(normalizedPayload)
-        await hydrateDraftPhotos()
         const restoredStep = Math.min(
           Math.max(
             Number(readKey(serverDraftRecord, 'lastStep') || normalizedPayload.step || 1),
@@ -1456,7 +1287,7 @@ export default function BookingFlowPage() {
       clearTimeout(draftAutosaveTimerRef.current)
     }
 
-    const persistedStep = booking?.id && step >= 3 ? 3 : Math.min(step, 2)
+    const persistedStep = booking?.id && step >= 3 ? 3 : 1
     draftAutosaveTimerRef.current = setTimeout(() => {
       persistFlowDraft(persistedStep, booking?.id ?? undefined).catch((error) => {
         const message = error instanceof Error ? error.message : 'Draft save failed'
@@ -1485,30 +1316,12 @@ export default function BookingFlowPage() {
     duration,
     date,
     selectedSlot,
-    firstName,
-    lastName,
-    email,
-    phone,
-    addressMode,
-    selectedAddressId,
-    address,
-    postcode,
-    apartmentDetails,
-    accessNotes,
-    jobType,
-    bedrooms,
-    bathrooms,
-    propertyCondition,
-    suppliesProvider,
-    notes,
-    saveAddressForLater,
-    jobPhotos,
     booking?.id,
   ])
 
   useEffect(() => {
     if (loading || !draftHydrated) return
-    const persistedStep = booking?.id && step >= 3 ? 3 : Math.min(step, 2)
+    const persistedStep = booking?.id && step >= 3 ? 3 : 1
     function flush() {
       persistFlowDraftOnHide(persistedStep, booking?.id ?? undefined)
     }
@@ -1632,29 +1445,11 @@ export default function BookingFlowPage() {
       merged.push(file)
     }
     setJobPhotos(merged)
-    void writeDraftPhotos(merged)
   }
 
   function removeJobPhoto(index: number) {
     const nextPhotos = jobPhotos.filter((_, i) => i !== index)
     setJobPhotos(nextPhotos)
-    void writeDraftPhotos(nextPhotos)
-
-    if (step !== 2 || !date || !selectedSlot) return
-
-    void persistFlowDraft(2, booking?.id ?? undefined, nextPhotos).catch((error) => {
-      const message = error instanceof Error ? error.message : 'Draft save failed after photo removal'
-      console.error('[booking-flow][photo-remove][draft-save] failed', {
-        cleanerId,
-        step,
-        date,
-        selectedSlot,
-        duration,
-        bookingId: booking?.id ?? null,
-        nextPhotoCount: nextPhotos.length,
-        message,
-      })
-    })
   }
 
   async function uploadJobPhotos(files: File[]) {
@@ -1815,14 +1610,6 @@ export default function BookingFlowPage() {
         return
       }
       setNextStepLoading(true)
-      try {
-        await persistFlowDraft(2, booking?.id ?? undefined)
-      } catch (err: any) {
-        console.error('Step 2 draft save failed', err)
-        setNextStepLoading(false)
-        toast.error(err?.message ?? 'Unable to save draft right now. Please try again.')
-        return
-      }
       await createDraftBookingAndProceed()
       setNextStepLoading(false)
     }
@@ -1876,6 +1663,7 @@ export default function BookingFlowPage() {
       ).data
       if (!b) throw new Error('Failed to create draft booking')
       setBooking(b)
+      await persistFlowDraft(3, b.id)
 
       failureStage = 'payment_intent'
       const intentRes = await paymentsApi.createIntent(b.id)
@@ -1884,7 +1672,6 @@ export default function BookingFlowPage() {
         throw new Error('Unable to initialize card authorization for this booking')
       }
       setClientSecret(nextClientSecret)
-      await persistFlowDraft(3, b.id)
       navigateToStep(3)
     } catch (err: any) {
       const rawMessage = String(err?.message ?? '').trim()
