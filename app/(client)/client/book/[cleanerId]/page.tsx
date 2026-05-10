@@ -120,7 +120,7 @@ function isPaymentAuthorizedStatus(status?: string | null) {
 
 function bookingExpiryMessage(acceptBy?: string | null) {
   if (!acceptBy) {
-    return 'This request is valid until 24 hours from card authorisation. If the cleaner does not respond, your request will expire automatically and your card authorisation will be released.'
+    return 'This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.'
   }
   const expiryLabel = new Date(acceptBy).toLocaleString('en-IE', {
     hour: 'numeric',
@@ -131,7 +131,7 @@ function bookingExpiryMessage(acceptBy?: string | null) {
     year: 'numeric',
     timeZone: APP_TIMEZONE,
   })
-  return `This request is valid until ${expiryLabel}, and if the cleaner does not respond, your request will expire automatically and your card authorisation will be released.`
+  return `This request expires on ${expiryLabel}. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.`
 }
 
 function normalizeToIsoDatetime(value: string): string | null {

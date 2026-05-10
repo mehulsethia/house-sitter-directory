@@ -17,7 +17,9 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
+  ALTERNATIVE_PROPOSAL_WINDOW_DAYS,
   getCleanerProposalEligibility,
+  maxAlternativeProposalDateInputValue,
   toDateInputValueCyprus,
   toIsoFromDateAndTimeInCyprus,
   toTimeInputValueCyprus,
@@ -64,6 +66,8 @@ export default function CleanerBookingDetailPage() {
   const [reportLoading, setReportLoading] = useState(false)
   const [phoneRevealed, setPhoneRevealed] = useState(false)
   const [, setNowTick] = useState(() => Date.now())
+  const proposalMinDate = toDateInputValueCyprus(new Date())
+  const proposalMaxDate = booking ? maxAlternativeProposalDateInputValue(booking.scheduled_start) : ''
 
   const refresh = () =>
     bookingsApi.getById(id)
@@ -256,7 +260,7 @@ export default function CleanerBookingDetailPage() {
   const chatIsReadOnly = isChatReadOnly(booking.scheduled_end)
   const pendingValidityLabel = (() => {
     if (!booking.accept_by) {
-      return 'This request is valid until 24 hours from card authorisation. If the cleaner does not respond, your request will expire automatically and the card authorisation will be released.'
+      return 'This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.'
     }
     const validUntilText = new Date(booking.accept_by).toLocaleString('en-IE', {
       hour: 'numeric',
@@ -266,7 +270,7 @@ export default function CleanerBookingDetailPage() {
       month: 'short',
       year: 'numeric',
     })
-    return `This request is valid until ${validUntilText}, and if the cleaner does not respond, your request will expire automatically and the card authorisation will be released.`
+    return `This request expires on ${validUntilText}. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.`
   })()
   const completeOpensAt = booking.scheduled_end
     ? new Date(booking.scheduled_end).getTime() - 5 * 60 * 1000
@@ -402,7 +406,7 @@ export default function CleanerBookingDetailPage() {
         )}
         {booking.status === 'pending' && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-            {pendingValidityLabel} If not accepted, it will expire automatically and your card authorisation will be released.
+            {pendingValidityLabel}
           </p>
         )}
         {canAcceptPending && (
@@ -514,7 +518,7 @@ export default function CleanerBookingDetailPage() {
         <DialogTitle>Propose alternative time</DialogTitle>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            You can propose one alternative time for bookings scheduled more than 24 hours away.
+            You can propose one alternative time for bookings scheduled more than 24 hours away, within the booking window, and up to {ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days after the original booking date.
           </p>
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
             <Label className="text-sm font-semibold text-slate-700">Proposed start time</Label>
@@ -523,6 +527,8 @@ export default function CleanerBookingDetailPage() {
                 type="date"
                 value={proposalDate}
                 onChange={(e) => setProposalDate(e.target.value)}
+                min={proposalMinDate}
+                max={proposalMaxDate || undefined}
                 className="h-10 rounded-lg border-slate-200 bg-white"
               />
               <select
@@ -546,6 +552,10 @@ export default function CleanerBookingDetailPage() {
               const proposedStartIso = toIsoFromDateAndTimeInCyprus(proposalDate, proposalTime)
               if (!proposedStartIso) {
                 toast.error('Select a valid date and time.')
+                return
+              }
+              if (proposalMaxDate && proposalDate > proposalMaxDate) {
+                toast.error(`Alternative proposals must be within ${ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days of the original booking date.`)
                 return
               }
               handleBookingAction('propose_alternative', proposedStartIso)

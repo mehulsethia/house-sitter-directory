@@ -54,7 +54,7 @@ function isOverdueUnpaidDraftLike(booking: BookingRead) {
 
 function pendingValidityLabel(booking: BookingRead) {
   if (!booking.accept_by) {
-    return 'This request is valid until 24 hours from card authorisation. If the cleaner does not respond, your request will expire automatically and your card authorisation will be released.'
+    return 'This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.'
   }
   const validUntilText = new Date(booking.accept_by).toLocaleString('en-IE', {
     hour: 'numeric',
@@ -64,7 +64,7 @@ function pendingValidityLabel(booking: BookingRead) {
     month: 'short',
     year: 'numeric',
   })
-  return `This request is valid until ${validUntilText}, and if the cleaner does not respond, your request will expire automatically and your card authorisation will be released.`
+  return `This request expires on ${validUntilText}. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.`
 }
 
 export default function ClientBookingDetailPage() {
@@ -354,7 +354,7 @@ export default function ClientBookingDetailPage() {
               <p className="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
                 {canAuthorize
                   ? 'Authorise your card to send this booking request to the cleaner.'
-                  : `${pendingValidityLabel(booking)} If not accepted, it will expire automatically and your card authorisation will be released.`}
+                  : pendingValidityLabel(booking)}
               </p>
             )}
             {booking.status === 'accepted' && canAuthorize && (

@@ -16,6 +16,7 @@ const BOOKING_ACCEPT_TTL_MINUTES = Number(process.env.BOOKING_ACCEPT_TTL_MINUTES
 const BOOKING_PAY_TTL_MINUTES = Number(process.env.BOOKING_PAY_TTL_MINUTES ?? 15)
 const RESCHEDULE_CUTOFF_HOURS = 24
 const MAX_BOOKING_WINDOW_DAYS = 28
+const PRE_CONFIRM_RESCHEDULE_WINDOW_DAYS = 14
 const POST_CONFIRM_RESCHEDULE_WINDOW_DAYS = 14
 const AMEND_WITHIN_HOURS = 24
 const AMEND_MAX_SHIFT_HOURS = 3
@@ -312,6 +313,8 @@ export const bookingService = {
       if (isPreConfirmation) {
         assertWithinRequestWindow(requestAcceptBy)
         assertRescheduleWindow(booking.scheduledStart)
+        const originalStart = booking.originalScheduledStart ?? booking.scheduledStart
+        assertPreConfirmationDateLimit(originalStart, proposedStart)
         if (booking.proposalBy) {
           throw new ServiceError('A proposal is already active for this booking', 400)
         }
@@ -417,6 +420,8 @@ export const bookingService = {
       if (isPreConfirmation) {
         assertWithinRequestWindow(requestAcceptBy)
         assertRescheduleWindow(booking.scheduledStart)
+        const originalStart = booking.originalScheduledStart ?? booking.scheduledStart
+        assertPreConfirmationDateLimit(originalStart, proposedStart)
         if (actor === 'client' && booking.clientProposals >= 1) {
           throw new ServiceError('Client can only counter once', 400)
         }
@@ -947,12 +952,25 @@ function assertPostConfirmationProposalOpen(proposalExpiresAt: Date | null) {
   }
 }
 
-function assertPostConfirmationDateLimit(originalScheduledStart: Date, proposedStart: Date) {
-  const originalStart = new Date(originalScheduledStart)
-  originalStart.setHours(0, 0, 0, 0)
-  const maxAllowed = new Date(originalStart)
-  maxAllowed.setDate(maxAllowed.getDate() + POST_CONFIRM_RESCHEDULE_WINDOW_DAYS)
+function maxProposalDateFromOriginal(originalScheduledStart: Date, windowDays: number): Date {
+  const originalStartDay = startOfDayCyprus(originalScheduledStart)
+  const maxAllowedDay = new Date(originalStartDay)
+  maxAllowedDay.setUTCDate(maxAllowedDay.getUTCDate() + windowDays)
+  return endOfDayCyprus(maxAllowedDay)
+}
 
+function assertPreConfirmationDateLimit(originalScheduledStart: Date, proposedStart: Date) {
+  const maxAllowed = maxProposalDateFromOriginal(originalScheduledStart, PRE_CONFIRM_RESCHEDULE_WINDOW_DAYS)
+  if (proposedStart.getTime() > maxAllowed.getTime()) {
+    throw new ServiceError(
+      `Alternative proposals must be within ${PRE_CONFIRM_RESCHEDULE_WINDOW_DAYS} days of the original booking date`,
+      400,
+    )
+  }
+}
+
+function assertPostConfirmationDateLimit(originalScheduledStart: Date, proposedStart: Date) {
+  const maxAllowed = maxProposalDateFromOriginal(originalScheduledStart, POST_CONFIRM_RESCHEDULE_WINDOW_DAYS)
   if (proposedStart.getTime() > maxAllowed.getTime()) {
     throw new ServiceError(`Post-confirmation reschedules must be within ${POST_CONFIRM_RESCHEDULE_WINDOW_DAYS} days of the original booking date`, 400)
   }

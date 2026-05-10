@@ -14,8 +14,10 @@ import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  ALTERNATIVE_PROPOSAL_WINDOW_DAYS,
   getCleanerProposalEligibility,
   RESCHEDULE_CUTOFF_HOURS,
+  maxAlternativeProposalDateInputValue,
   toDateInputValueCyprus,
   toIsoFromDateAndTimeInCyprus,
   toTimeInputValueCyprus,
@@ -56,6 +58,8 @@ export default function CleanerBookingsPage() {
   const [proposalTimeOptions, setProposalTimeOptions] = useState<Array<{ value: string; label: string }>>([])
   const [, setNowTick] = useState(() => Date.now())
   const START_JOB_EARLY_WINDOW_MS = 15 * 60 * 1000
+  const proposalMinDate = toDateInputValueCyprus(new Date())
+  const proposalMaxDate = proposalBooking ? maxAlternativeProposalDateInputValue(proposalBooking.scheduled_start) : ''
 
   function getStartJobAvailability(scheduledStart: string) {
     const startsAt = new Date(scheduledStart).getTime()
@@ -185,6 +189,11 @@ export default function CleanerBookingsPage() {
       return
     }
 
+    if (proposalMaxDate && proposalDate > proposalMaxDate) {
+      toast.error(`Alternative proposals must be within ${ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days of the original booking date.`)
+      return
+    }
+
     await action(proposalBooking.id, 'propose_alternative', proposedStartIso)
     setProposalBooking(null)
     setProposalDate('')
@@ -229,7 +238,7 @@ export default function CleanerBookingsPage() {
 
   function pendingValidityLabel(bookingStart?: string, acceptBy?: string) {
     if (!acceptBy) {
-      return 'This request is valid until 24 hours from card authorisation. If the cleaner does not respond, your request will expire automatically and the card authorisation will be released.'
+      return 'This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.'
     }
     const validUntilText = new Date(acceptBy).toLocaleString('en-IE', {
       hour: 'numeric',
@@ -239,7 +248,7 @@ export default function CleanerBookingsPage() {
       month: 'short',
       year: 'numeric',
     })
-    return `This request is valid until ${validUntilText}, and if the cleaner does not respond, your request will expire automatically and the card authorisation will be released.`
+    return `This request expires on ${validUntilText}. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.`
   }
 
   return (
@@ -446,7 +455,7 @@ export default function CleanerBookingsPage() {
                   )}
                   {b.status === 'pending' && (
                     <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700">
-                      {pendingValidityLabel(b.scheduled_start, b.accept_by)} If not accepted, it will expire automatically and your card authorisation will be released.
+                      {pendingValidityLabel(b.scheduled_start, b.accept_by)}
                     </p>
                   )}
                   </div>
@@ -468,7 +477,7 @@ export default function CleanerBookingsPage() {
         <DialogTitle>Propose alternative time</DialogTitle>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            You can propose one alternative time for bookings scheduled more than 24 hours away.
+            You can propose one alternative time for bookings scheduled more than 24 hours away, within the booking window, and up to {ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days after the original booking date.
           </p>
           {proposalBooking && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
@@ -482,6 +491,8 @@ export default function CleanerBookingsPage() {
                 type="date"
                 value={proposalDate}
                 onChange={(e) => setProposalDate(e.target.value)}
+                min={proposalMinDate}
+                max={proposalMaxDate || undefined}
                 className="h-10 rounded-lg border-slate-200 bg-white"
               />
               <select

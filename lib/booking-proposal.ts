@@ -1,7 +1,10 @@
 import type { BookingRead } from '@/types'
 
 export const RESCHEDULE_CUTOFF_HOURS = 24
+export const ALTERNATIVE_PROPOSAL_WINDOW_DAYS = 14
+export const PLATFORM_BOOKING_WINDOW_DAYS = 28
 const MS_PER_HOUR = 60 * 60 * 1000
+const MS_PER_DAY = 24 * 60 * 60 * 1000
 const APP_TIMEZONE = 'Europe/Nicosia'
 
 export type CleanerProposalEligibility = {
@@ -117,6 +120,16 @@ export function toDateInputValueCyprus(dateLike: string | Date): string {
   const parsed = new Date(dateLike)
   if (Number.isNaN(parsed.getTime())) return ''
   return new Intl.DateTimeFormat('en-CA', { timeZone: APP_TIMEZONE }).format(parsed)
+}
+
+export function maxAlternativeProposalDateInputValue(originalStartLike: string | Date): string {
+  const originalStart = new Date(originalStartLike)
+  if (Number.isNaN(originalStart.getTime())) return ''
+
+  const maxFromOriginal = new Date(originalStart.getTime() + ALTERNATIVE_PROPOSAL_WINDOW_DAYS * MS_PER_DAY)
+  const maxFromPlatformWindow = new Date(Date.now() + PLATFORM_BOOKING_WINDOW_DAYS * MS_PER_DAY)
+  const maxAllowed = maxFromOriginal.getTime() < maxFromPlatformWindow.getTime() ? maxFromOriginal : maxFromPlatformWindow
+  return toDateInputValueCyprus(maxAllowed)
 }
 
 export function toTimeInputValue(dateLike: string | Date): string {
