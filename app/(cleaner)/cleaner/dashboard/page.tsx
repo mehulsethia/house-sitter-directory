@@ -204,7 +204,7 @@ export default function CleanerDashboardPage() {
                 Update profile
               </Link>
               <Link
-                href="/cleaner/bookings"
+                href="/cleaner/bookings?status=pending"
                 className="inline-flex h-11 items-center rounded-full bg-[#f4b400] px-5 text-sm font-semibold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-[#ffca3a]"
               >
                 View bookings
@@ -325,7 +325,7 @@ export default function CleanerDashboardPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">New Job Requests</CardTitle>
-              <Link href="/cleaner/bookings" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              <Link href="/cleaner/bookings?status=pending" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
                 View all
                 <ArrowUpRight className="h-4 w-4" />
               </Link>

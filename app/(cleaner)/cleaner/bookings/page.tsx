@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarCheck2, ClipboardList, Clock3, Search } from 'lucide-react'
 import { availabilityApi, bookingsApi, cleanersApi } from '@/lib/api'
@@ -46,6 +47,7 @@ const SERVICE_LABELS: Record<string, string> = {
 }
 
 export default function CleanerBookingsPage() {
+  const searchParams = useSearchParams()
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [stripeConnected, setStripeConnected] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -92,6 +94,14 @@ export default function CleanerBookingsPage() {
   useEffect(() => {
     refresh()
   }, [])
+
+  useEffect(() => {
+    const rawStatus = String(searchParams.get('status') ?? '').trim()
+    if (!rawStatus) return
+    const nextFilter = STATUS_FILTERS.find((item) => item.key === rawStatus)?.key
+    if (!nextFilter) return
+    setFilter(nextFilter)
+  }, [searchParams])
 
   useEffect(() => {
     const poll = setInterval(() => {

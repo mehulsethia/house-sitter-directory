@@ -272,7 +272,7 @@ export const bookingService = {
       )
       await pushInAppNotification({
         userId: booking.client.userId,
-        type: 'booking_request_expired',
+        type: 'booking_request_declined',
         title: 'Booking request declined',
         body: 'Cleaner declined this booking request.',
         data: { booking_id: bookingId },
@@ -668,15 +668,15 @@ export const bookingService = {
       const proposalContext = booking.proposalContext ?? (booking.status === 'pending' ? 'pre_confirmation' : 'post_confirmation')
       if (proposalContext === 'pre_confirmation') {
         const updated = await bookingRepo.update(bookingId, {
-          status: 'expired',
+          status: 'declined',
           ...clearedProposalState(),
         })
         await releasePaymentAuthorization(booking.payment?.id, booking.payment?.stripePaymentIntentId, booking.payment?.status)
         await pushInAppNotification({
           userId: isClient ? booking.cleaner.userId : booking.client.userId,
-          type: 'booking_request_expired',
-          title: 'Booking request closed',
-          body: 'No final agreement was reached for this booking request.',
+          type: 'booking_request_declined',
+          title: 'Booking request declined',
+          body: 'This booking request was declined.',
           data: { booking_id: bookingId },
         })
         try {
@@ -699,7 +699,7 @@ export const bookingService = {
       })
       await pushInAppNotification({
         userId: isClient ? booking.cleaner.userId : booking.client.userId,
-        type: 'booking_request_expired',
+        type: 'booking_request_declined',
         title: proposalContext === 'amend_start' ? 'Amendment declined' : 'Reschedule declined',
         body: proposalContext === 'amend_start'
           ? 'Start-time amendment was declined. Original schedule remains active.'
