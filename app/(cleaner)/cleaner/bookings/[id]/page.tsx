@@ -40,6 +40,7 @@ const SERVICE_LABELS: Record<string, string> = {
   move_in: 'Move-in Clean',
 }
 const START_JOB_EARLY_WINDOW_MS = 15 * 60 * 1000
+const RESCHEDULE_CUTOFF_MS = 24 * 60 * 60 * 1000
 
 function resolveJobTypeTitle(booking: BookingRead) {
   const snapshotMatch = booking.special_instructions?.match(/(?:^|\n)Job type:\s*([^\n]+)/i)
@@ -59,6 +60,7 @@ export default function CleanerBookingDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false)
   const [declineCounterOfferOpen, setDeclineCounterOfferOpen] = useState(false)
   const [proposalOpen, setProposalOpen] = useState(false)
+  const [proposalAction, setProposalAction] = useState<'propose_alternative' | 'counter_proposal'>('propose_alternative')
   const [proposalDate, setProposalDate] = useState('')
   const [proposalTime, setProposalTime] = useState('')
   const [proposalTimeOptions, setProposalTimeOptions] = useState<Array<{ value: string; label: string }>>([])
@@ -195,7 +197,7 @@ export default function CleanerBookingDetailPage() {
   }
 
   async function handleBookingAction(
-    action: 'accept' | 'propose_alternative' | 'accept_proposal' | 'decline_proposal',
+    action: 'accept' | 'propose_alternative' | 'counter_proposal' | 'accept_proposal' | 'decline_proposal',
     customProposedStart?: string,
   ) {
     setActionLoading(action)
@@ -204,14 +206,16 @@ export default function CleanerBookingDetailPage() {
       const labels: Record<string, string> = {
         accept: 'Booking accepted.',
         propose_alternative: 'Alternative time sent to client.',
+        counter_proposal: 'Counter-offer sent to client.',
         accept_proposal: 'Counter-offer accepted. Booking confirmed.',
         decline_proposal: 'Counter-offer declined. Request closed.',
       }
       toast.success(labels[action])
-      if (action === 'propose_alternative') {
+      if (action === 'propose_alternative' || action === 'counter_proposal') {
         setProposalOpen(false)
         setProposalDate('')
         setProposalTime('')
+        setProposalTimeOptions([])
       }
       if (action === 'decline_proposal') {
         setDeclineCounterOfferOpen(false)
@@ -284,6 +288,8 @@ export default function CleanerBookingDetailPage() {
     Boolean(booking.started_at) &&
     Date.now() >= completeOpensAt
   const bookingStartsAtMs = new Date(booking.scheduled_start).getTime()
+  const millisUntilStart = bookingStartsAtMs - Date.now()
+  const moreThan24HoursAway = Number.isFinite(bookingStartsAtMs) && millisUntilStart > RESCHEDULE_CUTOFF_MS
   const canStartJobNow = Number.isFinite(bookingStartsAtMs) && Date.now() >= bookingStartsAtMs - START_JOB_EARLY_WINDOW_MS
   const cleanerReportWindowEndsAtMs = booking.scheduled_end
     ? new Date(booking.scheduled_end).getTime() + 24 * 60 * 60 * 1000
@@ -308,6 +314,25 @@ export default function CleanerBookingDetailPage() {
   const canRevealPhone = ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status) && Boolean(cleanerPrivacy?.phoneVisible)
   const clientPhone = booking.client?.user?.phone ?? ''
   const isCancelledPreConfirmation = booking.status === 'cancelled' && !booking.accepted_at && !booking.confirmed_at
+  const isConfirmed = booking.status === 'confirmed'
+  const proposalContext =
+    booking.proposal_context ??
+    (booking.status === 'pending' ? 'pre_confirmation' : booking.status === 'accepted' || booking.status === 'confirmed' ? 'post_confirmation' : null)
+  const isPostConfirmationProposal = Boolean(hasProposal && proposalContext === 'post_confirmation')
+  const isClientPostConfirmationProposal = isPostConfirmationProposal && booking.proposal_by === 'client'
+  const isCleanerPostConfirmationProposal = isPostConfirmationProposal && booking.proposal_by === 'cleaner'
+  const canPostConfirmProposeAlternative =
+    isConfirmed &&
+    moreThan24HoursAway &&
+    !hasProposal &&
+    (booking.post_cleaner_proposals ?? 0) < 1
+  const canPostConfirmCounterClientProposal =
+    isClientPostConfirmationProposal &&
+    moreThan24HoursAway &&
+    (booking.post_cleaner_proposals ?? 0) < 1
+  const canRespondToClientPostConfirmationProposal =
+    isClientPostConfirmationProposal &&
+    moreThan24HoursAway
 
   return (
     <div className="w-full space-y-5">
@@ -432,6 +457,16 @@ export default function CleanerBookingDetailPage() {
               : `Client countered with ${formatDate(booking.proposed_start!)}. Accept or decline before request expiry.`}
           </p>
         )}
+        {!isCancelledPreConfirmation && isCleanerPostConfirmationProposal && (
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            You proposed a reschedule ({formatDate(booking.proposed_start!)}). Waiting for client response before the 24-hour cutoff.
+          </p>
+        )}
+        {!isCancelledPreConfirmation && isClientPostConfirmationProposal && (
+          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            Client proposed a reschedule ({formatDate(booking.proposed_start!)}). Accept, decline, or counter once before the 24-hour cutoff.
+          </p>
+        )}
         {!isCancelledPreConfirmation && booking.status === 'pending' && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
             {pendingValidityLabel}
@@ -458,9 +493,62 @@ export default function CleanerBookingDetailPage() {
             <Button variant="destructive" onClick={() => setCancelOpen(true)}>Decline</Button>
           </>
         )}
+        {!isCancelledPreConfirmation && canPostConfirmProposeAlternative && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setProposalAction('propose_alternative')
+              setProposalDate(toDateInputValueCyprus(booking.scheduled_start))
+              setProposalTime(toTimeInputValueCyprus(booking.scheduled_start))
+              setProposalOpen(true)
+            }}
+            disabled={Boolean(actionLoading)}
+          >
+            Propose alternative time
+          </Button>
+        )}
+        {!isCancelledPreConfirmation && canRespondToClientPostConfirmationProposal && (
+          <>
+            <Button
+              size="lg"
+              onClick={() => handleBookingAction('accept_proposal')}
+              loading={actionLoading === 'accept_proposal'}
+              disabled={!stripeConnected}
+            >
+              Accept client proposal
+            </Button>
+            {canPostConfirmCounterClientProposal && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const seed = booking.proposed_start ?? booking.scheduled_start
+                  setProposalAction('counter_proposal')
+                  setProposalDate(toDateInputValueCyprus(seed))
+                  setProposalTime(toTimeInputValueCyprus(seed))
+                  setProposalOpen(true)
+                }}
+                disabled={Boolean(actionLoading)}
+              >
+                Counter once with another time
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              onClick={() => setDeclineCounterOfferOpen(true)}
+              loading={actionLoading === 'decline_proposal'}
+            >
+              Decline client proposal
+            </Button>
+          </>
+        )}
         {!isCancelledPreConfirmation && isPending && !canProposeAlternative && !canRespondToCounter && proposeAlternativeDisabledReason && (
           <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
             {proposeAlternativeDisabledReason}
+          </p>
+        )}
+        {!isCancelledPreConfirmation && isConfirmed && !hasProposal && !canPostConfirmProposeAlternative && (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            Reschedule proposals can only be started more than 24 hours before the scheduled start.
           </p>
         )}
         {!isCancelledPreConfirmation && canRespondToCounter && (
@@ -542,14 +630,27 @@ export default function CleanerBookingDetailPage() {
         </div>
       </Dialog>
 
-      <Dialog open={proposalOpen} onClose={() => setProposalOpen(false)}>
-        <DialogTitle>Propose alternative time</DialogTitle>
+      <Dialog
+        open={proposalOpen}
+        onClose={() => {
+          if (actionLoading === 'propose_alternative' || actionLoading === 'counter_proposal') return
+          setProposalOpen(false)
+          setProposalDate('')
+          setProposalTime('')
+          setProposalTimeOptions([])
+        }}
+      >
+        <DialogTitle>{proposalAction === 'propose_alternative' ? 'Propose alternative time' : 'Counter with another time'}</DialogTitle>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            You can propose one alternative time for bookings scheduled more than 24 hours away, within the booking window, and up to {ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days after the original booking date.
+            {proposalAction === 'propose_alternative'
+              ? `You can propose one alternative time for bookings scheduled more than 24 hours away, within the booking window, and up to ${ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days after the original booking date.`
+              : 'You can counter once. After both sides use their counter, only accept or decline is allowed.'}
           </p>
           <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-            <Label className="text-sm font-semibold text-slate-700">Proposed start time</Label>
+            <Label className="text-sm font-semibold text-slate-700">
+              {proposalAction === 'propose_alternative' ? 'Proposed start time' : 'Counter start time'}
+            </Label>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <Input
                 type="date"
@@ -586,12 +687,12 @@ export default function CleanerBookingDetailPage() {
                 toast.error(`Alternative proposals must be within ${ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days of the original booking date.`)
                 return
               }
-              handleBookingAction('propose_alternative', proposedStartIso)
+              handleBookingAction(proposalAction, proposedStartIso)
             }}
             disabled={!proposalDate || !proposalTime}
-            loading={actionLoading === 'propose_alternative'}
+            loading={actionLoading === proposalAction}
           >
-            Send proposal
+            {proposalAction === 'propose_alternative' ? 'Send proposal' : 'Send counter-offer'}
           </Button>
         </div>
       </Dialog>

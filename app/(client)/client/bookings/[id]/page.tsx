@@ -18,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import {
+  ALTERNATIVE_PROPOSAL_WINDOW_DAYS,
+  maxAlternativeProposalDateInputValue,
   toDateInputValueCyprus,
   toIsoFromDateAndTimeInCyprus,
   toTimeInputValueCyprus,
@@ -39,6 +41,8 @@ const SERVICE_LABELS: Record<string, string> = {
   end_of_tenancy: 'End of Tenancy',
   move_in: 'Move-in Clean',
 }
+const RESCHEDULE_CUTOFF_HOURS = 24
+const RESCHEDULE_CUTOFF_MS = RESCHEDULE_CUTOFF_HOURS * 60 * 60 * 1000
 const DISPUTE_WINDOW_HOURS = Number(process.env.NEXT_PUBLIC_DISPUTE_WINDOW_HOURS ?? 24)
 const DISPUTE_WINDOW_MS = DISPUTE_WINDOW_HOURS * 60 * 60 * 1000
 
@@ -78,12 +82,24 @@ export default function ClientBookingDetailPage() {
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
   const [actionLoading, setActionLoading] = useState<
-    'accept_proposal' | 'decline_proposal' | 'counter_proposal' | 'cancel_request' | 'review' | null
+    | 'accept_proposal'
+    | 'decline_proposal'
+    | 'counter_proposal'
+    | 'propose_alternative'
+    | 'amend_start_time'
+    | 'cancel_request'
+    | 'review'
+    | null
   >(null)
   const [counterOpen, setCounterOpen] = useState(false)
   const [counterDate, setCounterDate] = useState('')
   const [counterTime, setCounterTime] = useState('')
   const [counterTimeOptions, setCounterTimeOptions] = useState<Array<{ value: string; label: string }>>([])
+  const [proposalOpen, setProposalOpen] = useState(false)
+  const [proposalAction, setProposalAction] = useState<'propose_alternative' | 'amend_start_time'>('propose_alternative')
+  const [proposalDate, setProposalDate] = useState('')
+  const [proposalTime, setProposalTime] = useState('')
+  const [proposalTimeOptions, setProposalTimeOptions] = useState<Array<{ value: string; label: string }>>([])
   const [phoneRevealed, setPhoneRevealed] = useState(false)
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
   const [declineProposalConfirmOpen, setDeclineProposalConfirmOpen] = useState(false)
@@ -143,6 +159,34 @@ export default function ClientBookingDetailPage() {
   }, [booking, counterOpen, counterDate, counterTime])
 
   useEffect(() => {
+    if (!booking || !proposalOpen || !proposalDate) {
+      setProposalTimeOptions([])
+      return
+    }
+
+    availabilityApi
+      .getSlots(booking.cleaner_id, proposalDate, booking.duration_hours)
+      .then((res) => {
+        const options = (res.data ?? [])
+          .filter((slot) => !slot.disabled)
+          .map((slot) => {
+            const start = new Date(slot.start)
+            const value = toTimeValueInCyprus(start)
+            const label = toTimeLabelInCyprus(start)
+            return { value, label }
+          })
+        setProposalTimeOptions(options)
+        if (!options.some((o) => o.value === proposalTime)) {
+          setProposalTime(options[0]?.value ?? '')
+        }
+      })
+      .catch(() => {
+        setProposalTimeOptions([])
+        setProposalTime('')
+      })
+  }, [booking, proposalOpen, proposalDate, proposalTime])
+
+  useEffect(() => {
     setPhoneRevealed(false)
   }, [booking?.id, booking?.status, booking?.cleaner?.user?.phone])
 
@@ -160,7 +204,7 @@ export default function ClientBookingDetailPage() {
   }
 
   async function handleBookingAction(
-    action: 'accept_proposal' | 'decline_proposal' | 'counter_proposal',
+    action: 'accept_proposal' | 'decline_proposal' | 'counter_proposal' | 'propose_alternative' | 'amend_start_time',
     proposedStart?: string,
   ) {
     setActionLoading(action)
@@ -170,6 +214,8 @@ export default function ClientBookingDetailPage() {
         accept_proposal: 'Proposed time accepted. Booking confirmed.',
         decline_proposal: 'Proposal declined. Request closed.',
         counter_proposal: 'Counter-offer sent to cleaner.',
+        propose_alternative: 'Reschedule proposal sent to cleaner.',
+        amend_start_time: 'Amend start time request sent to cleaner.',
       }
       toast.success(labels[action])
       if (action === 'counter_proposal') {
@@ -177,6 +223,12 @@ export default function ClientBookingDetailPage() {
         setCounterDate('')
         setCounterTime('')
         setCounterTimeOptions([])
+      }
+      if (action === 'propose_alternative' || action === 'amend_start_time') {
+        setProposalOpen(false)
+        setProposalDate('')
+        setProposalTime('')
+        setProposalTimeOptions([])
       }
       if (action === 'decline_proposal') {
         setDeclineProposalConfirmOpen(false)
@@ -194,12 +246,22 @@ export default function ClientBookingDetailPage() {
     try {
       const reason = canCancelDraft
         ? 'Cancelled by client while in draft payment-required state'
-        : 'Cancelled by client while pending cleaner acceptance'
+        : canCancelBookingRequest
+          ? 'Cancelled by client while pending cleaner acceptance'
+          : moreThan24HoursAway
+            ? 'Cancelled by client more than 24 hours before scheduled start'
+            : 'Cancelled by client within 24 hours of scheduled start'
       await bookingsApi.cancel(id, reason)
-      if (booking?.cleaner_id) {
+      if (booking?.cleaner_id && (canCancelDraft || canCancelBookingRequest)) {
         await bookingsApi.clearFlowDraft(booking.cleaner_id).catch(() => null)
       }
-      toast.success(canCancelDraft ? 'Draft booking cancelled' : 'Booking request cancelled')
+      toast.success(
+        canCancelDraft
+          ? 'Draft booking cancelled'
+          : canCancelBookingRequest
+            ? 'Booking request cancelled'
+            : 'Booking cancelled',
+      )
       setCancelConfirmOpen(false)
       await refresh()
       router.push('/client/bookings')
@@ -220,12 +282,43 @@ export default function ClientBookingDetailPage() {
   const canContinuePayment = !overdueUnpaidDraftLike && (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)))
   const canCancelDraft = !overdueUnpaidDraftLike && (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorized(booking.payment?.status)))
   const canCancelBookingRequest = booking.status === 'pending' && isPaymentAuthorized(booking.payment?.status)
-  const canReview = Boolean(booking.completed_at) && ['completed', 'disputed'].includes(booking.status)
+  const canReview = Boolean(booking.completed_at) && ['completed', 'disputed'].includes(booking.status) && !booking.review
   const isPending = booking.status === 'pending'
   const hasProposal = Boolean(booking.proposed_start && booking.proposal_by)
   const cleanerProposed = booking.proposal_by === 'cleaner'
-  const moreThan24HoursAway = new Date(booking.scheduled_start).getTime() - Date.now() > 24 * 60 * 60 * 1000
-  const canCounterProposal = isPending && cleanerProposed && (booking.client_proposals ?? 0) < 1 && moreThan24HoursAway
+  const scheduledStartMs = new Date(booking.scheduled_start).getTime()
+  const millisUntilStart = scheduledStartMs - Date.now()
+  const hasStarted = Number.isFinite(scheduledStartMs) && millisUntilStart <= 0
+  const moreThan24HoursAway = Number.isFinite(scheduledStartMs) && millisUntilStart > RESCHEDULE_CUTOFF_MS
+  const within24HoursBeforeStart = Number.isFinite(scheduledStartMs) && millisUntilStart > 0 && millisUntilStart <= RESCHEDULE_CUTOFF_MS
+  const canRescheduleBooking = booking.status === 'confirmed' && moreThan24HoursAway && !hasStarted && !hasProposal
+  const canAmendStartTime = booking.status === 'confirmed' && within24HoursBeforeStart && !hasProposal
+  const canCancelConfirmedBooking = booking.status === 'confirmed'
+  const proposalContext =
+    booking.proposal_context ??
+    (booking.status === 'pending' ? 'pre_confirmation' : booking.status === 'accepted' || booking.status === 'confirmed' ? 'post_confirmation' : null)
+  const canCounterProposal = cleanerProposed
+    && hasProposal
+    && moreThan24HoursAway
+    && (
+      proposalContext === 'pre_confirmation'
+        ? (booking.client_proposals ?? 0) < 1
+        : proposalContext === 'post_confirmation'
+          ? (booking.post_client_proposals ?? 0) < 1
+          : false
+    )
+  const canRespondToCleanerProposal = hasProposal && cleanerProposed && ['pending', 'accepted', 'confirmed'].includes(booking.status)
+  const canReportInProgress = booking.status === 'in_progress'
+  const isCompletedAwaitingRelease = booking.status === 'completed' && paymentStatus !== 'transferred'
+  const isCompletedReleased = booking.status === 'completed' && paymentStatus === 'transferred'
+  const counterMinDate = toDateInputValueCyprus(new Date())
+  const counterMaxDate = maxAlternativeProposalDateInputValue(booking.original_scheduled_start ?? booking.scheduled_start)
+  const proposalMinDate = proposalAction === 'amend_start_time'
+    ? toDateInputValueCyprus(booking.scheduled_start)
+    : toDateInputValueCyprus(new Date())
+  const proposalMaxDate = proposalAction === 'amend_start_time'
+    ? toDateInputValueCyprus(booking.scheduled_start)
+    : maxAlternativeProposalDateInputValue(booking.original_scheduled_start ?? booking.scheduled_start)
   const showChat = isChatActiveForBooking(booking)
   const chatIsReadOnly = isChatReadOnly(booking.scheduled_end)
   const sixHoursBeforeStart = Date.now() >= new Date(booking.scheduled_start).getTime() - 6 * 60 * 60 * 1000
@@ -349,7 +442,7 @@ export default function ClientBookingDetailPage() {
               </CardContent>
             </Card>
 
-            {isPending && hasProposal && (
+            {canRespondToCleanerProposal && (
               <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
                 {cleanerProposed
                   ? `Cleaner proposed ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
@@ -388,7 +481,7 @@ export default function ClientBookingDetailPage() {
                   </p>
                 )}
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  {isPending && cleanerProposed && (
+                  {canRespondToCleanerProposal && (
                     <>
                       <Button
                         size="lg"
@@ -449,6 +542,48 @@ export default function ClientBookingDetailPage() {
                       Cancel booking request
                     </Button>
                   )}
+                  {canRescheduleBooking && (
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => {
+                        const seed = booking.proposed_start ?? booking.scheduled_start
+                        setProposalAction('propose_alternative')
+                        setProposalDate(toDateInputValueCyprus(seed))
+                        setProposalTime(toTimeInputValueCyprus(seed))
+                        setProposalOpen(true)
+                      }}
+                      disabled={Boolean(actionLoading)}
+                    >
+                      Reschedule booking
+                    </Button>
+                  )}
+                  {canAmendStartTime && (
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => {
+                        const seed = booking.scheduled_start
+                        setProposalAction('amend_start_time')
+                        setProposalDate(toDateInputValueCyprus(seed))
+                        setProposalTime(toTimeInputValueCyprus(seed))
+                        setProposalOpen(true)
+                      }}
+                      disabled={Boolean(actionLoading)}
+                    >
+                      Amend start time
+                    </Button>
+                  )}
+                  {canCancelConfirmedBooking && (
+                    <Button variant="outline" className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50" onClick={() => setCancelConfirmOpen(true)}>
+                      Cancel booking
+                    </Button>
+                  )}
+                  {booking.status === 'confirmed' && within24HoursBeforeStart && (
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      Less than 24 hours remain before start. Cancellation charges may apply under the cancellation policy.
+                    </p>
+                  )}
                   {(booking.status === 'expired' || booking.status === 'cancelled' || booking.status === 'declined' || overdueUnpaidDraftLike) && (
                     <>
                       <Button className="w-full sm:w-auto" onClick={() => router.push(`/client/book/${booking.cleaner_id}?reset=1&step=1`)}>
@@ -464,12 +599,22 @@ export default function ClientBookingDetailPage() {
                       Cleaner can complete this job from 5 minutes before scheduled end time.
                     </p>
                   )}
+                  {canReportInProgress && (
+                    <Button variant="destructive" className="w-full sm:w-auto" onClick={() => router.push(`/client/report?booking=${id}`)}>
+                      Report a problem
+                    </Button>
+                  )}
+                  {isCompletedReleased && (
+                    <Button className="w-full sm:w-auto" onClick={() => router.push(`/client/book/${booking.cleaner_id}?reset=1&step=1`)}>
+                      Book again
+                    </Button>
+                  )}
                   {canReview && (
                     <Button variant="outline" className="w-full sm:w-auto" onClick={() => setReviewOpen(true)}>
                       Leave a review
                     </Button>
                   )}
-                  {reportWindowActive && (
+                  {reportWindowActive && isCompletedAwaitingRelease && (
                     <Button variant="destructive" className="w-full sm:w-auto" onClick={() => router.push(`/client/report?booking=${id}`)}>
                       Report a Problem
                     </Button>
@@ -528,6 +673,8 @@ export default function ClientBookingDetailPage() {
                 type="date"
                 value={counterDate}
                 onChange={(e) => setCounterDate(e.target.value)}
+                min={counterMinDate}
+                max={counterMaxDate || undefined}
               />
               <select
                 value={counterTime}
@@ -556,6 +703,65 @@ export default function ClientBookingDetailPage() {
             loading={actionLoading === 'counter_proposal'}
           >
             Send counter-offer
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={proposalOpen}
+        onClose={() => {
+          if (actionLoading === 'propose_alternative' || actionLoading === 'amend_start_time') return
+          setProposalOpen(false)
+          setProposalDate('')
+          setProposalTime('')
+          setProposalTimeOptions([])
+        }}
+      >
+        <DialogTitle>{proposalAction === 'propose_alternative' ? 'Reschedule booking' : 'Amend start time'}</DialogTitle>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            {proposalAction === 'propose_alternative'
+              ? `Choose an available slot. The new time must stay within ${ALTERNATIVE_PROPOSAL_WINDOW_DAYS} days of the original booking date and be fully agreed before the 24-hour cutoff.`
+              : 'Choose an available slot on the same day. Cleaner can only accept or decline this amendment request.'}
+          </p>
+          <div>
+            <Label>{proposalAction === 'propose_alternative' ? 'Proposed start time' : 'Amended start time'}</Label>
+            <div className="mt-1 grid gap-2 sm:grid-cols-2">
+              <Input
+                type="date"
+                value={proposalDate}
+                onChange={(e) => setProposalDate(e.target.value)}
+                min={proposalMinDate}
+                max={proposalMaxDate || undefined}
+                disabled={proposalAction === 'amend_start_time'}
+              />
+              <select
+                value={proposalTime}
+                onChange={(e) => setProposalTime(e.target.value)}
+                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none transition-colors hover:border-slate-400 focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="" disabled>{proposalDate ? 'Select time' : 'Select date first'}</option>
+                {proposalTimeOptions.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">Only valid availability slots are shown for the selected date and duration.</p>
+          </div>
+          <Button
+            className="w-full"
+            onClick={() => {
+              const iso = toIsoFromDateAndTimeInCyprus(proposalDate, proposalTime)
+              if (!iso) {
+                toast.error('Select a valid date and time.')
+                return
+              }
+              handleBookingAction(proposalAction, iso)
+            }}
+            disabled={!proposalDate || !proposalTime}
+            loading={actionLoading === proposalAction}
+          >
+            {proposalAction === 'propose_alternative' ? 'Send reschedule proposal' : 'Send amendment request'}
           </Button>
         </div>
       </Dialog>
@@ -598,19 +804,37 @@ export default function ClientBookingDetailPage() {
       </Dialog>
 
       <Dialog open={cancelConfirmOpen} onClose={() => setCancelConfirmOpen(false)}>
-        <DialogTitle>{canCancelDraft ? 'Cancel draft booking' : 'Cancel booking request'}</DialogTitle>
+        <DialogTitle>
+          {canCancelDraft
+            ? 'Cancel draft booking'
+            : canCancelBookingRequest
+              ? 'Cancel booking request'
+              : 'Cancel booking'}
+        </DialogTitle>
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
             {canCancelDraft
               ? 'Are you sure you want to cancel this draft booking?'
-              : 'Are you sure you want to cancel this booking request?'}
+              : canCancelBookingRequest
+                ? 'Are you sure you want to cancel this booking request?'
+                : 'Are you sure you want to cancel this confirmed booking?'}
+          </p>
+          {canCancelConfirmedBooking && (
+            <p className="text-sm text-muted-foreground">
+              {moreThan24HoursAway
+                ? 'Free cancellation applies when cancelled more than 24 hours before scheduled start.'
+                : 'You are within 24 hours of the scheduled start time. Cancellation charges may apply.'}
+            </p>
+          )}
+          <p className="text-xs text-slate-500">
+            Reschedule booking is available only while more than 24 hours remain before the scheduled start time.
           </p>
           <div className="flex gap-2">
             <Button variant="outline" className="w-full" onClick={() => setCancelConfirmOpen(false)} disabled={Boolean(actionLoading)}>
-              {canCancelDraft ? 'Keep draft' : 'Keep request'}
+              {canCancelDraft ? 'Keep draft' : canCancelBookingRequest ? 'Keep request' : 'Keep booking'}
             </Button>
             <Button variant="destructive" className="w-full" onClick={handleCancelRequest} loading={actionLoading === 'cancel_request'}>
-              {canCancelDraft ? 'Cancel draft' : 'Cancel booking request'}
+              {canCancelDraft ? 'Cancel draft' : canCancelBookingRequest ? 'Cancel booking request' : 'Cancel booking'}
             </Button>
           </div>
         </div>
