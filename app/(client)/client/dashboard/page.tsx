@@ -213,7 +213,7 @@ export default function ClientDashboardPage() {
 
         <section className="grid gap-6 lg:grid-cols-[1.5fr_0.95fr]">
           <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:p-6">
-            <div className="mb-4 flex items-end justify-between gap-4">
+            <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <div>
                 <p className={`${monoFont.className} text-[0.68rem] uppercase tracking-[0.22em] text-slate-500`}>
                   Booking Feed
@@ -258,10 +258,12 @@ export default function ClientDashboardPage() {
                         {formatDate(booking.scheduled_start)}
                       </p>
                     </div>
-                    <div className="flex min-w-[11rem] flex-col items-end gap-1">
+                    <div className="flex min-w-0 flex-col items-start gap-1 text-left sm:min-w-[11rem] sm:items-end sm:text-right">
                       <BookingStatusBadge status={booking.status} paymentStatus={booking.payment?.status} proposalBy={booking.proposal_by} />
                       {booking.status === 'pending' && booking.proposal_by === 'cleaner' && (
-                        <p className="text-right text-xs font-semibold text-blue-700">Cleaner proposed {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start ?? booking.scheduled_start)}</p>
+                        <p className="text-xs font-semibold text-blue-700">
+                          Cleaner proposed {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start ?? booking.scheduled_start)}
+                        </p>
                       )}
                     </div>
                   </Link>

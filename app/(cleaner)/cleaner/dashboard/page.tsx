@@ -358,8 +358,8 @@ export default function CleanerDashboardPage() {
                   return (
                 <div key={b.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-slate-900">{resolveJobTypeTitle(b)}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-slate-900">{resolveJobTypeTitle(b)}</p>
                       <p className="text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <UserAvatar
@@ -388,13 +388,13 @@ export default function CleanerDashboardPage() {
                   {b.special_instructions && (
                     <p className="mt-2 line-clamp-2 rounded-md bg-white px-2 py-1 text-xs text-slate-500">{b.special_instructions}</p>
                   )}
-                  <div className="mt-3 flex items-center justify-between gap-3">
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
-                    <div className="flex flex-col items-end gap-1">
+                    <div className="w-full sm:w-auto sm:text-right">
                       {!stripeConnected && (
                         <p className="text-xs font-medium text-amber-700">Connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.</p>
                       )}
-                      <div className="flex gap-2">
+                      <div className="mt-1 flex flex-wrap gap-2 sm:justify-end">
                       <Link
                         href={`/cleaner/bookings/${b.id}`}
                         className="inline-flex h-8 items-center rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50"
@@ -626,7 +626,7 @@ export default function CleanerDashboardPage() {
 function SnapshotStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/20 bg-white/10 px-3 py-2">
-      <p className="whitespace-nowrap text-[0.6rem] uppercase tracking-[0.08em] text-white/65 sm:text-[0.62rem]">
+      <p className="text-[0.6rem] uppercase tracking-[0.08em] text-white/65 sm:text-[0.62rem]">
         {label}
       </p>
       <p className="mt-1 text-xl font-bold tracking-[-0.01em] text-white">{value}</p>

@@ -389,7 +389,7 @@ export default function CleanerBookingDetailPage() {
 
   return (
     <div className="w-full space-y-5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <button onClick={() => router.back()} className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-2.5 py-1.5 text-sm font-semibold text-slate-500 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-800">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
@@ -474,7 +474,7 @@ export default function CleanerBookingDetailPage() {
       <Card>
         <CardContent className="px-5 pb-5 pt-6">
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">You will earn</p>
                 <p className="text-2xl font-bold text-green-700">{formatCurrency(booking.cleaner_payout)}</p>

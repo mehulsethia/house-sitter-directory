@@ -378,7 +378,7 @@ export default function ClientBookingDetailPage() {
                 <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
                   Current Status
                 </p>
-                <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                   <BookingStatusBadge status={booking.status} paymentStatus={booking.payment?.status} proposalBy={booking.proposal_by} />
                   <p className={`${displayFont.className} text-xl font-bold tracking-[-0.02em] text-white`}>
                     {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
