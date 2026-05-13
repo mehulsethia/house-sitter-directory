@@ -1,6 +1,6 @@
 import { requireCleaner } from '@/server/auth'
 import { availabilityRepo } from '@/server/repositories/availability.repo'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
 import { ok, err } from '@/server/response'
 
 export const GET = requireCleaner(async (_req, _ctx, user) => {

@@ -45,7 +45,7 @@ export default function Footer() {
             links={[
               ['Create Profile', '/signup?role=cleaner'],
               ['Browse Sits', '/find-house-sits'],
-              ['Sitter Resources', '/for-cleaners'],
+              ['Sitter Resources', '/for-house-sitters'],
               ['Success Stories', '/about-us'],
             ]}
           />

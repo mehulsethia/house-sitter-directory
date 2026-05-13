@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
-import { authApi, cleanersApi } from '@/lib/api'
+import { authApi, houseSittersApi } from '@/lib/api'
 import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
 
@@ -57,15 +57,15 @@ function LoginForm() {
       if (!next) {
         if (role === 'cleaner') {
           try {
-            const cleanerRes = await cleanersApi.me()
-            next = cleanerRes.data?.onboarding?.completion_pct === 100 ? '/cleaner/dashboard' : '/cleaner/onboarding'
+            const cleanerRes = await houseSittersApi.me()
+            next = cleanerRes.data?.onboarding?.completion_pct === 100 ? '/house-sitters/dashboard' : '/house-sitters/onboarding'
           } catch {
-            next = '/cleaner/onboarding'
+            next = '/house-sitters/onboarding'
           }
         } else if (role === 'admin') {
           next = '/admin/dashboard'
         } else {
-          next = '/client/dashboard'
+          next = '/house-sits/dashboard'
         }
       }
 

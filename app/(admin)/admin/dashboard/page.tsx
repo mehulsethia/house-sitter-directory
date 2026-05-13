@@ -170,7 +170,7 @@ export default function AdminDashboard() {
         <WidgetShell
           title="Pending House Sitter Approvals"
           count={queues?.pending_cleaner_approvals.count ?? 0}
-          href="/admin/cleaners"
+          href="/admin/house-sitters"
         >
           {queues?.pending_cleaner_approvals.items.length ? (
             queues.pending_cleaner_approvals.items.map((cleaner) => (
@@ -371,7 +371,7 @@ export default function AdminDashboard() {
               <span className="inline-flex items-center gap-2 text-slate-700"><XCircle className="h-4 w-4 text-rose-700" />Suspended</span>
               <span className="font-semibold">{stats?.suspended_cleaners ?? 0}</span>
             </div>
-            <Link href="/admin/cleaners" className="inline-flex">
+            <Link href="/admin/house-sitters" className="inline-flex">
               <Button className="mt-2 w-full" variant="outline">Open House Sitter Management</Button>
             </Link>
           </CardContent>

@@ -8,7 +8,7 @@ export const GET = requireCleaner(async (req: NextRequest, _ctx, user) => {
   const error = req.nextUrl.searchParams.get('error')
 
   const origin = req.nextUrl.origin
-  const fallbackPath = '/cleaner/profile?tab=availability'
+  const fallbackPath = '/house-sitters/profile?tab=availability'
 
   if (error) {
     return NextResponse.redirect(`${origin}${fallbackPath}&google_calendar=failed`)

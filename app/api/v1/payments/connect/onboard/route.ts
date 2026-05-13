@@ -1,5 +1,5 @@
 import { requireCleaner } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
 import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
 
@@ -21,7 +21,7 @@ export const POST = requireCleaner(async (_req, _ctx, user) => {
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const link = await stripe.accountLinks.create({
     account: accountId,
-    refresh_url: `${origin}/cleaner/onboarding?refresh=true`,
+    refresh_url: `${origin}/house-sitters/onboarding?refresh=true`,
     return_url: `${origin}/api/v1/payments/connect/return`,
     type: 'account_onboarding',
   })

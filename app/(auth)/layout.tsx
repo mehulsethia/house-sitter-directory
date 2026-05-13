@@ -5,9 +5,9 @@ import { redirect } from 'next/navigation'
 
 function getPostLoginPath(user: { user_metadata?: Record<string, unknown> }) {
   const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'client'
-  if (role === 'cleaner') return '/cleaner/dashboard'
+  if (role === 'cleaner') return '/house-sitters/dashboard'
   if (role === 'admin') return '/admin/dashboard'
-  return '/client/dashboard'
+  return '/house-sits/dashboard'
 }
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {

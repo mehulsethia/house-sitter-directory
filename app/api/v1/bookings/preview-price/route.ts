@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireAuth } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
 import { bookingService } from '@/server/services/booking.service'
 import { ok, err } from '@/server/response'
 import { previewPriceSchema } from '@/server/schemas/booking.schema'

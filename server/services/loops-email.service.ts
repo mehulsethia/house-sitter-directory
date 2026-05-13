@@ -114,7 +114,7 @@ export const loopsEmailService = {
       dataVariables: {
         cleaner_name: args.cleanerName,
         cleaner_email: args.cleanerEmail,
-        admin_link: `${appUrl()}/admin/cleaners`,
+        admin_link: `${appUrl()}/admin/house-sitters`,
       },
     })
   },
@@ -144,7 +144,7 @@ export const loopsEmailService = {
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        all_cleaners_link: `${appUrl()}/client/cleaners`,
+        all_cleaners_link: `${appUrl()}/house-sits/house-sitters`,
       },
     })
   },
@@ -166,7 +166,7 @@ export const loopsEmailService = {
         booking_date: formatBookingDate(args.scheduledStart),
         booking_time: formatBookingTime(args.scheduledStart),
         booking_duration: `${args.durationHours} hour${args.durationHours === 1 ? '' : 's'}`,
-        booking_link: `${appUrl()}/client/bookings/${args.bookingId}`,
+        booking_link: `${appUrl()}/house-sits/bookings/${args.bookingId}`,
       },
     })
   },
@@ -197,7 +197,7 @@ export const loopsEmailService = {
       dataVariables: {
         first_name: firstName(args.fullName),
         cleaner_name: args.cleanerName,
-        all_cleaners_link: `${appUrl()}/client/cleaners`,
+        all_cleaners_link: `${appUrl()}/house-sits/house-sitters`,
       },
     })
   },
@@ -233,7 +233,7 @@ export const loopsEmailService = {
       dataVariables: {
         first_name: firstName(args.fullName),
         cleaner_name: args.cleanerName,
-        review_link: `${appUrl()}/client/bookings/${args.bookingId}`,
+        review_link: `${appUrl()}/house-sits/bookings/${args.bookingId}`,
       },
     })
   },
@@ -257,8 +257,8 @@ export const loopsEmailService = {
         first_name: firstName(args.fullName),
         cleaner_name: args.cleanerName,
         message,
-        report_link: `${appUrl()}/client/report?booking=${args.bookingId}`,
-        booking_link: `${appUrl()}/client/bookings/${args.bookingId}`,
+        report_link: `${appUrl()}/house-sits/report?booking=${args.bookingId}`,
+        booking_link: `${appUrl()}/house-sits/bookings/${args.bookingId}`,
       },
     })
   },
@@ -281,7 +281,7 @@ export const loopsEmailService = {
         booking_duration: args.durationHours
           ? `${args.durationHours} hour${args.durationHours === 1 ? '' : 's'}`
           : '',
-        cta_link: `${appUrl()}/client/bookings`,
+        cta_link: `${appUrl()}/house-sits/bookings`,
       },
     })
   },
@@ -296,7 +296,7 @@ export const loopsEmailService = {
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        dispute_link: `${appUrl()}/client/report?booking=${args.bookingId}`,
+        dispute_link: `${appUrl()}/house-sits/report?booking=${args.bookingId}`,
       },
     })
   },
@@ -307,7 +307,7 @@ export const loopsEmailService = {
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        cta_link: `${appUrl()}/cleaner/onboarding`,
+        cta_link: `${appUrl()}/house-sitters/onboarding`,
       },
     })
   },
@@ -339,7 +339,7 @@ export const loopsEmailService = {
         date: formatBookingDate(args.date),
         time: formatBookingTime(args.date),
         duration: `${args.durationHours} hour${args.durationHours === 1 ? '' : 's'}`,
-        booking_link: `${appUrl()}/cleaner/bookings/${args.bookingId}`,
+        booking_link: `${appUrl()}/house-sitters/bookings/${args.bookingId}`,
       },
     })
   },
@@ -354,7 +354,7 @@ export const loopsEmailService = {
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        booking_link: `${appUrl()}/cleaner/bookings/${args.bookingId}`,
+        booking_link: `${appUrl()}/house-sitters/bookings/${args.bookingId}`,
       },
     })
   },

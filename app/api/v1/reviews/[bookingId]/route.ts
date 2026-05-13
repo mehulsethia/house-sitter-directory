@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireClient } from '@/server/auth'
 import { reviewRepo } from '@/server/repositories/review.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/client.repo'
+import { clientRepo } from '@/server/repositories/house-sit.repo'
 import { ok, err } from '@/server/response'
 import { createReviewSchema } from '@/server/schemas/review.schema'
 

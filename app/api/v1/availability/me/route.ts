@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requireCleaner } from '@/server/auth'
 import { availabilityRepo } from '@/server/repositories/availability.repo'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
 import { ok, err } from '@/server/response'
 import { setScheduleSchema } from '@/server/schemas/availability.schema'
 

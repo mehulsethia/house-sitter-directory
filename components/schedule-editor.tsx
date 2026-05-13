@@ -448,7 +448,7 @@ export function ScheduleEditor({ compact, onSave, onSaveExternal, saveRef }: Sch
     if (googleBusy) return
     setGoogleBusy(true)
     try {
-      const res = await googleCalendarApi.getConnectUrl('/cleaner/profile?tab=availability')
+      const res = await googleCalendarApi.getConnectUrl('/house-sitters/profile?tab=availability')
       const url = res.data?.url
       if (!url) throw new Error('Could not start Google Calendar connection.')
       const opened = window.open(url, '_blank', 'noopener,noreferrer')

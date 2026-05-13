@@ -9,8 +9,8 @@ export const GET = requireCleaner(async (req: NextRequest, _ctx, user) => {
     return err('Google Calendar integration is not configured yet.', 500)
   }
 
-  const rawReturnTo = req.nextUrl.searchParams.get('return_to') ?? '/cleaner/profile?tab=availability'
-  const returnTo = rawReturnTo.startsWith('/') ? rawReturnTo : '/cleaner/profile?tab=availability'
+  const rawReturnTo = req.nextUrl.searchParams.get('return_to') ?? '/house-sitters/profile?tab=availability'
+  const returnTo = rawReturnTo.startsWith('/') ? rawReturnTo : '/house-sitters/profile?tab=availability'
   const state = buildGoogleCalendarState({ user_id: user.id, return_to: returnTo })
   const url = buildGoogleAuthUrl(state)
   return ok({ url })

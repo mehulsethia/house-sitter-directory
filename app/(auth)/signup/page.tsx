@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
-import { authApi, cleanersApi } from '@/lib/api'
+import { authApi, houseSittersApi } from '@/lib/api'
 import { PhoneInput } from '@/components/phone-input'
 import { toast } from 'sonner'
 
@@ -69,13 +69,13 @@ function SignupForm() {
 
       if (role === 'cleaner') {
         try {
-          const cleanerRes = await cleanersApi.me()
-          router.push(cleanerRes.data?.onboarding?.completion_pct === 100 ? '/cleaner/dashboard' : '/cleaner/onboarding')
+          const cleanerRes = await houseSittersApi.me()
+          router.push(cleanerRes.data?.onboarding?.completion_pct === 100 ? '/house-sitters/dashboard' : '/house-sitters/onboarding')
         } catch {
-          router.push('/cleaner/onboarding')
+          router.push('/house-sitters/onboarding')
         }
       } else {
-        router.push('/client/dashboard')
+        router.push('/house-sits/dashboard')
       }
       toast.success('Account created successfully.')
     } else {

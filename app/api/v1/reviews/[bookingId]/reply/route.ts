@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requireCleaner } from '@/server/auth'
 import { reviewRepo } from '@/server/repositories/review.repo'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
 import { cleanerReviewResponseSchema } from '@/server/schemas/review.schema'
 import { ok, err } from '@/server/response'
 

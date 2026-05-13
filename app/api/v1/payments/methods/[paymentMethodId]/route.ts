@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireClient } from '@/server/auth'
-import { clientRepo } from '@/server/repositories/client.repo'
+import { clientRepo } from '@/server/repositories/house-sit.repo'
 import { paymentAuthorizationService } from '@/server/services/payment-authorization.service'
 import { stripe } from '@/server/stripe'
 import { db } from '@/server/db'

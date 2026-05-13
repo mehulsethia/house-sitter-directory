@@ -19,7 +19,7 @@ interface BookingCardProps {
 }
 
 export function BookingCard({ booking, viewAs = 'client' }: BookingCardProps) {
-  const basePath = viewAs === 'client' ? '/client' : '/cleaner'
+  const basePath = viewAs === 'client' ? '/house-sits' : '/house-sitters'
 
   return (
     <Card>

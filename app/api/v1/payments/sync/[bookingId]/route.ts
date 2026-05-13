@@ -1,6 +1,6 @@
 import { requireClient } from '@/server/auth'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/client.repo'
+import { clientRepo } from '@/server/repositories/house-sit.repo'
 import { paymentRepo } from '@/server/repositories/payment.repo'
 import { stripe } from '@/server/stripe'
 import { paymentAuthorizationService } from '@/server/services/payment-authorization.service'

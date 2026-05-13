@@ -21,7 +21,7 @@ import { useCounts } from '@/hooks/use-counts'
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Overview',  icon: BarChart3 },
-  { href: '/admin/cleaners',  label: 'House Sitters',  icon: ShieldCheck },
+  { href: '/admin/house-sitters',  label: 'House Sitters',  icon: ShieldCheck },
   { href: '/admin/bookings',  label: 'Bookings',  icon: BookOpen },
   { href: '/admin/disputes',  label: 'Disputes',  icon: MessageSquareWarning },
   { href: '/admin/notifications', label: 'Notifications', icon: Bell },
@@ -38,7 +38,7 @@ function adminStageCopy(pathname: string) {
       image: '/images/stage/admin-dashboard.jpg',
     }
   }
-  if (pathname.startsWith('/admin/cleaners')) {
+  if (pathname.startsWith('/admin/house-sitters')) {
     return {
       tag: 'The House Sitter Directory Admin Console',
       title: 'House Sitter Operations',

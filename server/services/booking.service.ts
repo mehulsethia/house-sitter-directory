@@ -1,6 +1,6 @@
 import { bookingRepo } from '../repositories/booking.repo'
-import { cleanerRepo } from '../repositories/cleaner.repo'
-import { clientRepo } from '../repositories/client.repo'
+import { cleanerRepo } from '../repositories/house-sitter.repo'
+import { clientRepo } from '../repositories/house-sit.repo'
 import { availabilityRepo } from '../repositories/availability.repo'
 import { paymentRepo } from '../repositories/payment.repo'
 import { disputeRepo } from '../repositories/dispute.repo'

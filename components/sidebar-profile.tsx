@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation'
 import { ChevronUp, LogOut, Settings, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { clearAuthCache } from '@/lib/auth-cache'
-import { clearApiCache, clientsApi, cleanersApi } from '@/lib/api'
+import { clearApiCache, houseSitsApi, houseSittersApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from '@/components/ui/user-avatar'
 
 interface SidebarProfileProps {
-  /** e.g. '/cleaner/profile' or '/client/profile' */
+  /** e.g. '/house-sitters/profile' or '/house-sits/profile' */
   profileHref: string
   /** 'cleaner' | 'client' */
   role: 'cleaner' | 'client'
@@ -30,7 +30,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
       try {
         const [{ data: authData }, profileRes] = await Promise.all([
           supabase.auth.getUser(),
-          (role === 'cleaner' ? cleanersApi.me() : clientsApi.me()).catch(() => null),
+          (role === 'cleaner' ? houseSittersApi.me() : houseSitsApi.me()).catch(() => null),
         ])
 
         const authUser = authData.user

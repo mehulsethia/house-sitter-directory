@@ -5,7 +5,7 @@
 import { getAccessToken } from '@/lib/auth-cache'
 import { getApiBaseUrl } from '@/lib/api-base'
 import type {
-  AdminCleaner,
+  AdminHouseSitter,
   AdminDispute,
   AdminOpsQueues,
   AdminStats,
@@ -14,14 +14,14 @@ import type {
   BookingCreate,
   BookingFlowDraftRead,
   BookingRead,
-  CleanerRead,
-  CleanerOnboardingProgress,
-  CleanerSummary,
-  FavoriteCleaner,
-  ClientAddressCreate,
-  ClientAddressUpdate,
-  ClientAddressRead,
-  ClientProfileRead,
+  HouseSitterRead,
+  HouseSitterOnboardingProgress,
+  HouseSitterSummary,
+  FavoriteHouseSitter,
+  HouseSitAddressCreate,
+  HouseSitAddressUpdate,
+  HouseSitAddressRead,
+  HouseSitProfileRead,
   ClientDispute,
   MessageRead,
   NotificationRead,
@@ -173,7 +173,7 @@ export const authApi = {
 }
 
 export const googleCalendarApi = {
-  getConnectUrl: (returnTo = '/cleaner/profile?tab=availability') =>
+  getConnectUrl: (returnTo = '/house-sitters/profile?tab=availability') =>
     request<APIResponse<{ url: string }>>(
       `/auth/google/connect?return_to=${encodeURIComponent(returnTo)}`,
     ),
@@ -207,10 +207,10 @@ export const phoneVerificationApi = {
 }
 
 // ---------------------------------------------------------------------------
-// Client Profile
+// House Sits Profile
 // ---------------------------------------------------------------------------
-export const clientsApi = {
-  me: () => request<APIResponse<ClientProfileRead>>('/clients/me'),
+export const houseSitsApi = {
+  me: () => request<APIResponse<HouseSitProfileRead>>('/house-sits/me'),
   updateMe: (body: {
     name?: string
     phone?: string
@@ -219,46 +219,46 @@ export const clientsApi = {
     default_postcode?: string | null
     default_country?: string | null
   }) =>
-    request<APIResponse<ClientProfileRead>>('/clients/me', {
+    request<APIResponse<HouseSitProfileRead>>('/house-sits/me', {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
   listAddresses: () =>
-    request<APIResponse<ClientAddressRead[]>>('/clients/addresses'),
-  addAddress: (body: ClientAddressCreate) =>
-    request<APIResponse<ClientAddressRead>>('/clients/addresses', {
+    request<APIResponse<HouseSitAddressRead[]>>('/house-sits/addresses'),
+  addAddress: (body: HouseSitAddressCreate) =>
+    request<APIResponse<HouseSitAddressRead>>('/house-sits/addresses', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  updateAddress: (id: string, body: ClientAddressUpdate) =>
-    request<APIResponse<ClientAddressRead>>(`/clients/addresses/${id}`, {
+  updateAddress: (id: string, body: HouseSitAddressUpdate) =>
+    request<APIResponse<HouseSitAddressRead>>(`/house-sits/addresses/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
   deleteAddress: (id: string) =>
-    request<APIResponse<{ removed: true }>>(`/clients/addresses/${id}`, {
+    request<APIResponse<{ removed: true }>>(`/house-sits/addresses/${id}`, {
       method: 'DELETE',
     }),
 }
 
 export const favoritesApi = {
   list: () =>
-    request<APIResponse<FavoriteCleaner[]>>('/clients/favorites'),
-  add: (cleanerId: string) =>
-    request<APIResponse<{ favorite: true }>>('/clients/favorites', {
+    request<APIResponse<FavoriteHouseSitter[]>>('/house-sits/favorites'),
+  add: (houseSitterId: string) =>
+    request<APIResponse<{ favorite: true }>>('/house-sits/favorites', {
       method: 'POST',
-      body: JSON.stringify({ cleaner_id: cleanerId }),
+      body: JSON.stringify({ cleaner_id: houseSitterId }),
     }),
-  remove: (cleanerId: string) =>
-    request<APIResponse<{ favorite: false }>>(`/clients/favorites/${cleanerId}`, {
+  remove: (houseSitterId: string) =>
+    request<APIResponse<{ favorite: false }>>(`/house-sits/favorites/${houseSitterId}`, {
       method: 'DELETE',
     }),
 }
 
 // ---------------------------------------------------------------------------
-// Cleaners
+// House Sitters
 // ---------------------------------------------------------------------------
-export const cleanersApi = {
+export const houseSittersApi = {
   search: async (params: {
     city?: string
     availability?: 'any' | 'next_7_days'
@@ -275,21 +275,21 @@ export const cleanersApi = {
         .filter(([, v]) => v !== undefined)
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    const res = await request<APIResponse<any>>(`/cleaners?${qs}`)
-    return { ...res, data: normalizePaginated<CleanerSummary>(res.data ?? {}, 'cleaners') }
+    const res = await request<APIResponse<any>>(`/house-sitters?${qs}`)
+    return { ...res, data: normalizePaginated<HouseSitterSummary>(res.data ?? {}, 'cleaners') }
   },
-  getById: (id: string) => request<APIResponse<CleanerRead>>(`/cleaners/${id}`),
+  getById: (id: string) => request<APIResponse<HouseSitterRead>>(`/house-sitters/${id}`),
   me: () =>
-    request<APIResponse<{ cleaner: CleanerRead; onboarding: CleanerOnboardingProgress }>>('/cleaners/me'),
+    request<APIResponse<{ cleaner: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me'),
   updateMyProfile: (body: { bio?: string; years_experience?: number; hourly_rate: number }) =>
-    request<APIResponse<CleanerRead>>('/cleaners/me', { method: 'PATCH', body: JSON.stringify(body) }),
+    request<APIResponse<HouseSitterRead>>('/house-sitters/me', { method: 'PATCH', body: JSON.stringify(body) }),
   updateMyOnboarding: (body: Record<string, unknown>) =>
-    request<APIResponse<{ cleaner: CleanerRead; onboarding: CleanerOnboardingProgress }>>('/cleaners/me', {
+    request<APIResponse<{ cleaner: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me', {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
   submitForApproval: () =>
-    request<APIResponse<{ cleaner: CleanerRead; onboarding: CleanerOnboardingProgress }>>('/cleaners/me/submit', {
+    request<APIResponse<{ cleaner: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me/submit', {
       method: 'POST',
     }),
 }
@@ -309,19 +309,19 @@ export const availabilityApi = {
     request<APIResponse<any>>('/availability/me/blocked', { method: 'POST', body: JSON.stringify(body) }),
   deleteBlocked: (id: string) =>
     request<APIResponse<null>>(`/availability/me/blocked/${id}`, { method: 'DELETE' }),
-  getSlots: (cleanerId: string, date: string, durationHours: number) => {
+  getSlots: (houseSitterId: string, date: string, durationHours: number) => {
     const qs = new URLSearchParams({ date, duration_hours: String(durationHours) })
     return request<{ success: boolean; data: { start: string; end: string; disabled?: boolean }[] }>(
-      `/availability/${cleanerId}/slots?${qs}`,
+      `/availability/${houseSitterId}/slots?${qs}`,
     )
   },
-  getBookableDates: (cleanerId: string, durationHours: number, daysAhead = 28) => {
+  getBookableDates: (houseSitterId: string, durationHours: number, daysAhead = 28) => {
     const qs = new URLSearchParams({
       duration_hours: String(durationHours),
       days_ahead: String(daysAhead),
     })
     return request<{ success: boolean; data: string[] }>(
-      `/availability/${cleanerId}/dates?${qs}`,
+      `/availability/${houseSitterId}/dates?${qs}`,
     )
   },
 }
@@ -330,8 +330,8 @@ export const availabilityApi = {
 // Bookings
 // ---------------------------------------------------------------------------
 export const bookingsApi = {
-  previewPrice: (cleanerId: string, durationHours: number) => {
-    const qs = new URLSearchParams({ cleaner_id: cleanerId, duration_hours: String(durationHours) })
+  previewPrice: (houseSitterId: string, durationHours: number) => {
+    const qs = new URLSearchParams({ cleaner_id: houseSitterId, duration_hours: String(durationHours) })
     return request<APIResponse<PriceBreakdown>>(`/bookings/preview-price?${qs}`)
   },
   create: (body: BookingCreate) =>
@@ -378,8 +378,8 @@ export const bookingsApi = {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),
-  getFlowDraft: (cleanerId: string) =>
-    request<APIResponse<BookingFlowDraftRead | null>>(`/bookings/draft?cleaner_id=${encodeURIComponent(cleanerId)}`),
+  getFlowDraft: (houseSitterId: string) =>
+    request<APIResponse<BookingFlowDraftRead | null>>(`/bookings/draft?cleaner_id=${encodeURIComponent(houseSitterId)}`),
   saveFlowDraft: (body: {
     cleaner_id: string
     booking_id?: string
@@ -393,8 +393,8 @@ export const bookingsApi = {
       method: 'PUT',
       body: JSON.stringify(body),
     }),
-  clearFlowDraft: (cleanerId: string) =>
-    request<APIResponse<{ removed: true }>>(`/bookings/draft?cleaner_id=${encodeURIComponent(cleanerId)}`, {
+  clearFlowDraft: (houseSitterId: string) =>
+    request<APIResponse<{ removed: true }>>(`/bookings/draft?cleaner_id=${encodeURIComponent(houseSitterId)}`, {
       method: 'DELETE',
     }),
 }
@@ -476,13 +476,13 @@ export const reviewsApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
-  getForCleaner: async (cleanerId: string) => {
-    const res = await request<APIResponse<any>>(`/reviews/cleaner/${cleanerId}`)
+  getForHouseSitter: async (houseSitterId: string) => {
+    const res = await request<APIResponse<any>>(`/reviews/house-sitters/${houseSitterId}`)
     return { ...res, data: (res.data?.reviews ?? res.data ?? []) as ReviewRead[] }
   },
-  getForCleanerPaged: (cleanerId: string, page = 1, pageSize = 20) =>
+  getForHouseSitterPaged: (houseSitterId: string, page = 1, pageSize = 20) =>
     request<APIResponse<{ reviews: ReviewRead[]; total: number; page: number; page_size: number }>>(
-      `/reviews/cleaner/${cleanerId}?page=${page}&page_size=${pageSize}`,
+      `/reviews/house-sitters/${houseSitterId}?page=${page}&page_size=${pageSize}`,
     ),
   replyToReview: (reviewId: string, response: string) =>
     request<APIResponse<ReviewRead>>(`/reviews/${reviewId}/reply`, {
@@ -569,26 +569,26 @@ export const adminApi = {
       method: 'PATCH',
     }),
 
-  listCleaners: async (params: { page?: number; status?: string } = {}) => {
+  listHouseSitters: async (params: { page?: number; status?: string } = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)]),
     ).toString()
-    const res = await request<APIResponse<any>>(`/admin/cleaners${qs ? `?${qs}` : ''}`)
-    return { ...res, data: normalizePaginated<AdminCleaner>(res.data ?? {}, 'cleaners') }
+    const res = await request<APIResponse<any>>(`/admin/house-sitters${qs ? `?${qs}` : ''}`)
+    return { ...res, data: normalizePaginated<AdminHouseSitter>(res.data ?? {}, 'cleaners') }
   },
-  suspendCleaner: (id: string) =>
-    request<APIResponse<{ id: string; status: string }>>(`/admin/cleaners/${id}/suspend`, {
+  suspendHouseSitter: (id: string) =>
+    request<APIResponse<{ id: string; status: string }>>(`/admin/house-sitters/${id}/suspend`, {
       method: 'POST',
     }),
-  approveCleaner: (
+  approveHouseSitter: (
     id: string,
     action: 'approve' | 'reject',
     rejection_reason?: string,
     extras?: { rejection_reason_code?: string; rejection_custom_message?: string },
   ) =>
-    request<APIResponse<CleanerRead>>(`/cleaners/${id}/approve`, {
+    request<APIResponse<HouseSitterRead>>(`/house-sitters/${id}/approve`, {
       method: 'POST',
       body: JSON.stringify({ action, rejection_reason, ...extras }),
     }),
@@ -626,7 +626,7 @@ export const adminApi = {
 }
 
 // ---------------------------------------------------------------------------
-// Client Disputes
+// House Sits Disputes
 // ---------------------------------------------------------------------------
 export const disputesApi = {
   listMine: async (page = 1, pageSize = 20) => {

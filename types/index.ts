@@ -36,7 +36,7 @@ export interface UserUpdate {
   avatar_url?: string
 }
 
-export interface ClientProfileRead {
+export interface HouseSitProfileRead {
   id: string
   user_id: string
   stripe_customer_id?: string
@@ -54,7 +54,7 @@ export interface ClientProfileRead {
 // ---------------------------------------------------------------------------
 // Cleaners
 // ---------------------------------------------------------------------------
-export interface CleanerRead {
+export interface HouseSitterRead {
   id: string
   user_id: string
   bio?: string
@@ -96,7 +96,7 @@ export interface CleanerRead {
   service_areas?: Array<{ city: string; postcode_prefix?: string; radius_km?: number }>
 }
 
-export interface CleanerSummary {
+export interface HouseSitterSummary {
   id: string
   user_id: string
   hourly_rate: number
@@ -125,7 +125,7 @@ export interface CleanerSummary {
   }>
 }
 
-export interface CleanerOnboardingProgress {
+export interface HouseSitterOnboardingProgress {
   completion_pct: number
   can_be_listed: boolean
   current_step: 1 | 2 | 3 | 4 | 5
@@ -259,7 +259,7 @@ export interface PriceBreakdown {
   total_amount: number
 }
 
-export interface ClientAddressRead {
+export interface HouseSitAddressRead {
   id: string
   label?: string | null
   address_line1: string
@@ -275,7 +275,7 @@ export interface ClientAddressRead {
   updated_at: string
 }
 
-export interface ClientAddressCreate {
+export interface HouseSitAddressCreate {
   label?: string
   address_line1: string
   city: string
@@ -288,7 +288,7 @@ export interface ClientAddressCreate {
   is_default?: boolean
 }
 
-export interface ClientAddressUpdate {
+export interface HouseSitAddressUpdate {
   label?: string
   address_line1?: string
   city?: string
@@ -301,7 +301,7 @@ export interface ClientAddressUpdate {
   is_default?: boolean
 }
 
-export interface FavoriteCleaner {
+export interface FavoriteHouseSitter {
   cleaner_id: string
   user_id: string
   hourly_rate: number
@@ -419,7 +419,7 @@ export interface AdminUser {
   created_at: string
 }
 
-export interface AdminCleaner {
+export interface AdminHouseSitter {
   id: string
   user_id: string
   user_name: string

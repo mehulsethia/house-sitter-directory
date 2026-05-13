@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireCleaner } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { DOCUMENT_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'

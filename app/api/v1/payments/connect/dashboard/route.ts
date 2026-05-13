@@ -1,5 +1,5 @@
 import { requireCleaner } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/cleaner.repo'
+import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
 import { stripe } from '@/server/stripe'
 import { err, ok } from '@/server/response'
 
