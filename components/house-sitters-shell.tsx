@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
@@ -159,7 +160,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
 
   if (isOnboardingRoute) {
     return (
-      <div className="min-h-screen px-3 py-6 sm:px-4 md:px-8 md:py-10">
+      <div className="min-h-screen bg-[#f3f3f3] px-3 py-6 sm:px-4 md:px-8 md:py-10">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
             <div className="cleaner-stage__media" aria-hidden="true" />
@@ -180,16 +181,15 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
           .cleaner-stage {
             position: relative;
             isolation: isolate;
-            background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
+            background: linear-gradient(125deg, #3f3429 12%, #5a4a3b 58%, #6c5947 100%);
           }
 
           .cleaner-stage__media {
             position: absolute;
             inset: 0;
             background-image:
-              linear-gradient(105deg, rgba(2, 11, 27, 0.9) 6%, rgba(2, 11, 27, 0.66) 52%, rgba(8, 22, 44, 0.84) 100%),
-              radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
-              repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
+              linear-gradient(105deg, rgba(33, 24, 17, 0.84) 8%, rgba(46, 34, 24, 0.72) 54%, rgba(64, 46, 33, 0.84) 100%),
+              radial-gradient(circle at 80% 18%, rgba(255, 236, 214, 0.16), transparent 34%);
             background-size: cover;
             background-position: center;
             opacity: 0.96;
@@ -199,9 +199,9 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
             position: absolute;
             inset: 0;
             background-image:
-              linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-              radial-gradient(circle at 20% 28%, rgba(56, 220, 255, 0.22), transparent 28%),
-              radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
+              linear-gradient(90deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 45%),
+              radial-gradient(circle at 20% 28%, rgba(255, 240, 225, 0.14), transparent 28%),
+              radial-gradient(circle at 82% 12%, rgba(255, 216, 168, 0.14), transparent 22%);
             animation: cleaner-sweep 11s ease-in-out infinite;
             pointer-events: none;
           }
@@ -229,14 +229,13 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden text-slate-900 lg:pl-72">
+    <div className="min-h-screen overflow-x-hidden bg-[#f3f3f3] text-slate-900 lg:pl-72">
       <div className="mx-auto max-w-[1500px]">
-        <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-slate-200/80 lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur-md">
+        <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-[#e7dfd6] lg:bg-white lg:px-5 lg:py-6">
           <Link href="/house-sitters/dashboard" className="mb-8 inline-flex items-center gap-2.5">
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-indigo-700 font-extrabold text-white shadow-[0_10px_24px_rgba(39,70,250,0.35)]">M</span>
-            <span className="text-[1.7rem] font-bold tracking-tight text-primary">The House Sitter Directory</span>
+            <Image src="/branding/logo.png" alt="The House Sitter Directory" width={240} height={66} className="h-10 w-auto" />
           </Link>
-          <div className="mb-5 border-t border-slate-200/80" />
+          <div className="mb-5 border-t border-[#ece4db]" />
 
           <nav className="space-y-1.5">
             {NAV_ITEMS.map((item) => {
@@ -249,8 +248,8 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200',
                     active
-                      ? 'bg-gradient-to-r from-primary/15 to-indigo-500/10 text-primary shadow-inner'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                      ? 'bg-[#5a4a3b] text-white shadow-inner'
+                      : 'text-[#5f6368] hover:bg-[#f7f2ed] hover:text-[#3a322a]',
                   )}
                 >
                   <Icon className={cn('h-4 w-4', active && 'scale-105')} />
@@ -272,11 +271,10 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="min-w-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 px-3 py-3 backdrop-blur lg:hidden">
+          <header className="sticky top-0 z-20 border-b border-[#e7dfd6] bg-white px-3 py-3 lg:hidden">
             <div className="mb-3 flex items-center justify-between">
               <Link href="/house-sitters/dashboard" className="inline-flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-primary to-indigo-700 text-sm font-bold text-white">M</span>
-                <span className="text-lg font-bold tracking-tight text-primary">The House Sitter Directory</span>
+                <Image src="/branding/logo.png" alt="The House Sitter Directory" width={160} height={44} className="h-8 w-auto" />
               </Link>
               <button
                 type="button"
@@ -296,7 +294,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     className={cn(
                       'relative inline-flex min-w-[82px] shrink-0 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-semibold',
-                      active ? 'bg-primary text-white' : 'bg-slate-100 text-slate-700',
+                      active ? 'bg-[#5a4a3b] text-white' : 'bg-[#f3ece5] text-[#5f6368]',
                     )}
                   >
                     <Icon className="h-3.5 w-3.5" />
@@ -340,16 +338,15 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
         .cleaner-stage {
           position: relative;
           isolation: isolate;
-          background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
+          background: linear-gradient(125deg, #3f3429 12%, #5a4a3b 58%, #6c5947 100%);
         }
 
         .cleaner-stage__media {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(105deg, rgba(2, 11, 27, 0.9) 6%, rgba(2, 11, 27, 0.66) 52%, rgba(8, 22, 44, 0.84) 100%),
-            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
-            repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
+            linear-gradient(105deg, rgba(33, 24, 17, 0.84) 8%, rgba(46, 34, 24, 0.72) 54%, rgba(64, 46, 33, 0.84) 100%),
+            radial-gradient(circle at 80% 18%, rgba(255, 236, 214, 0.16), transparent 34%);
           background-size: cover;
           background-position: center;
           opacity: 0.96;
@@ -359,9 +356,9 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-            radial-gradient(circle at 20% 28%, rgba(56, 220, 255, 0.22), transparent 28%),
-            radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
+            linear-gradient(90deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 45%),
+            radial-gradient(circle at 20% 28%, rgba(255, 240, 225, 0.14), transparent 28%),
+            radial-gradient(circle at 82% 12%, rgba(255, 216, 168, 0.14), transparent 22%);
           animation: cleaner-sweep 11s ease-in-out infinite;
           pointer-events: none;
         }

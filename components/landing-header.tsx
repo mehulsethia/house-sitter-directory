@@ -23,14 +23,14 @@ export function LandingHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#e9e3de] bg-white">
-      <div className="max-site-width flex h-[86px] items-center justify-between gap-8">
+      <div className="max-site-width flex h-[76px] items-center justify-between gap-8">
         <Link href="/" className="inline-flex items-center">
           <Image
             src="/branding/logo.png"
             alt="The House Sitter Directory"
             width={280}
             height={80}
-            className="h-11 w-auto"
+            className="h-10 w-auto"
             priority
           />
         </Link>
@@ -40,7 +40,7 @@ export function LandingHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className={`inline-flex h-10 items-center rounded-[4px] px-4 text-[15px] transition ${
+              className={`inline-flex h-10 items-center rounded-[4px] px-4 text-[14px] transition ${
                 isActive(item.href) ? 'bg-[#5a4a3b] text-white' : 'text-[#3d3d3d] hover:text-[#5a4a3b]'
               }`}
             >
@@ -50,12 +50,12 @@ export function LandingHeader() {
         </nav>
 
         <div className="hidden items-center gap-4 md:flex">
-          <Link href="/login" className="text-[16px] text-[#3d3d3d] hover:text-[#5a4a3b]">
+          <Link href="/login" className="text-[15px] text-[#3d3d3d] hover:text-[#5a4a3b]">
             Log In
           </Link>
           <Link
             href="/signup"
-            className="inline-flex h-12 items-center rounded-[6px] bg-[#5a4a3b] px-7 text-[16px] text-white hover:opacity-95"
+            className="inline-flex h-11 items-center rounded-[6px] bg-[#5a4a3b] px-6 text-[15px] text-white hover:opacity-95"
           >
             Join Now
           </Link>

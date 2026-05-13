@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -174,7 +175,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Loading spinner
   if (authState === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#f3f3f3]">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )
@@ -183,7 +184,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Admin login screen
   if (authState === 'login') {
     return (
-      <div className="relative min-h-screen px-4 py-8">
+      <div className="relative min-h-screen bg-[#f3f3f3] px-4 py-8">
         <div className="admin-stage-bg" aria-hidden="true" />
         <div className="relative z-10 mx-auto w-full max-w-sm">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
@@ -233,7 +234,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 type="submit"
                 disabled={loginLoading}
-                className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary/90 disabled:opacity-50"
+                className="w-full rounded-lg bg-[#5a4a3b] py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#6b5745] disabled:opacity-50"
               >
                 {loginLoading ? 'Signing in...' : 'Sign in'}
               </button>
@@ -250,9 +251,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             position: absolute;
             inset: 0;
             background-image:
-              radial-gradient(circle at 14% 0%, rgba(61, 88, 247, 0.1), transparent 32%),
-              radial-gradient(circle at 100% 8%, rgba(14, 165, 233, 0.08), transparent 28%),
-              linear-gradient(180deg, #f4f7ff 0%, #f7f8fc 42%, #f8fafc 100%);
+              radial-gradient(circle at 14% 0%, rgba(133, 94, 66, 0.1), transparent 32%),
+              radial-gradient(circle at 100% 8%, rgba(107, 87, 69, 0.08), transparent 28%),
+              linear-gradient(180deg, #f6f1eb 0%, #f7f3ef 42%, #f8f5f1 100%);
           }
         `}</style>
       </div>
@@ -261,17 +262,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Authenticated admin — full layout
   return (
-    <div className="min-h-screen overflow-x-hidden lg:pl-60">
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-60 lg:flex-col lg:border-r lg:bg-muted/20">
+    <div className="min-h-screen overflow-x-hidden bg-[#f3f3f3] lg:pl-60">
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-[#e7dfd6] lg:bg-white">
         <div className="px-6 py-5">
-          <Link href="/admin/dashboard" className="text-base font-bold text-primary">
-            The House Sitter Directory
+          <Link href="/admin/dashboard" className="inline-flex">
+            <Image src="/branding/logo.png" alt="The House Sitter Directory" width={200} height={54} className="h-9 w-auto" />
           </Link>
           <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-widest">
             Admin console
           </p>
         </div>
-        <div className="mx-6 mb-2 border-t border-slate-200/80" />
+        <div className="mx-6 mb-2 border-t border-[#ece4db]" />
 
         <nav className="flex-1 py-4 px-3 flex flex-col gap-0.5">
           {NAV.map(({ href, label, icon: Icon }) => {
@@ -283,8 +284,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                     active
-                      ? 'bg-primary text-primary-foreground font-medium'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                      ? 'bg-[#5a4a3b] text-white font-medium'
+                      : 'text-[#5f6368] hover:text-[#3a322a] hover:bg-[#f7f2ed]',
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -313,10 +314,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-3 py-3 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 border-b border-[#e7dfd6] bg-white px-3 py-3 lg:hidden">
         <div className="mb-2 flex items-center justify-between">
-          <Link href="/admin/dashboard" className="text-base font-bold text-primary">
-            The House Sitter Directory
+          <Link href="/admin/dashboard" className="inline-flex">
+            <Image src="/branding/logo.png" alt="The House Sitter Directory" width={160} height={44} className="h-8 w-auto" />
           </Link>
           <button
             onClick={signOut}
@@ -335,8 +336,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className={cn(
                   'relative inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
                   active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+                    ? 'bg-[#5a4a3b] text-white'
+                    : 'bg-[#f3ece5] text-[#5f6368] hover:bg-[#efe6dd]',
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -378,16 +379,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .admin-stage {
           position: relative;
           isolation: isolate;
-          background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
+            background: linear-gradient(125deg, #3f3429 12%, #5a4a3b 58%, #6c5947 100%);
         }
 
         .admin-stage__media {
           position: absolute;
           inset: 0;
-          background-image:
-            linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
-            repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
+            background-image:
+              linear-gradient(105deg, rgba(33, 24, 17, 0.84) 8%, rgba(46, 34, 24, 0.72) 54%, rgba(64, 46, 33, 0.84) 100%),
+              radial-gradient(circle at 80% 18%, rgba(255, 236, 214, 0.16), transparent 34%);
           background-size: cover;
           background-position: center;
           mix-blend-mode: screen;
@@ -397,10 +397,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .admin-stage__grain {
           position: absolute;
           inset: 0;
-          background-image:
-            linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-            radial-gradient(circle at 20% 28%, rgba(56, 220, 255, 0.22), transparent 28%),
-            radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
+            background-image:
+              linear-gradient(90deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 45%),
+              radial-gradient(circle at 20% 28%, rgba(255, 240, 225, 0.14), transparent 28%),
+              radial-gradient(circle at 82% 12%, rgba(255, 216, 168, 0.14), transparent 22%);
           animation: admin-sweep 11s ease-in-out infinite;
           pointer-events: none;
         }

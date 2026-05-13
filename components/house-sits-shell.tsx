@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -51,14 +52,13 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden text-slate-900 lg:pl-72">
+    <div className="min-h-screen overflow-x-hidden bg-[#f3f3f3] text-slate-900 lg:pl-72">
       <div className="mx-auto max-w-[1500px]">
-        <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-slate-200/80 lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur-md">
+        <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-[#e7dfd6] lg:bg-white lg:px-5 lg:py-6">
           <Link href="/house-sits/dashboard" className="mb-8 inline-flex items-center gap-2.5">
-            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-indigo-700 font-extrabold text-white shadow-[0_10px_24px_rgba(39,70,250,0.35)]">M</span>
-            <span className="text-[1.7rem] font-bold tracking-tight text-primary">The House Sitter Directory</span>
+            <Image src="/branding/logo.png" alt="The House Sitter Directory" width={240} height={66} className="h-10 w-auto" />
           </Link>
-          <div className="mb-5 border-t border-slate-200/80" />
+          <div className="mb-5 border-t border-[#ece4db]" />
 
           <nav className="space-y-1.5">
             {NAV_ITEMS.map((item) => {
@@ -71,8 +71,8 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
                   className={cn(
                     'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200',
                     active
-                      ? 'bg-gradient-to-r from-primary/15 to-indigo-500/10 text-primary shadow-inner'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                      ? 'bg-[#5a4a3b] text-white shadow-inner'
+                      : 'text-[#5f6368] hover:bg-[#f7f2ed] hover:text-[#3a322a]',
                   )}
                 >
                   <Icon className={cn('h-4 w-4', active && 'scale-105')} />
@@ -94,11 +94,10 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="min-w-0">
-          <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 px-3 py-3 backdrop-blur lg:hidden">
+          <header className="sticky top-0 z-20 border-b border-[#e7dfd6] bg-white px-3 py-3 lg:hidden">
             <div className="mb-3 flex items-center justify-between">
               <Link href="/house-sits/dashboard" className="inline-flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-primary to-indigo-700 text-sm font-bold text-white">M</span>
-                <span className="text-lg font-bold tracking-tight text-primary">The House Sitter Directory</span>
+                <Image src="/branding/logo.png" alt="The House Sitter Directory" width={160} height={44} className="h-8 w-auto" />
               </Link>
               <button
                 type="button"
@@ -118,7 +117,7 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     className={cn(
                       'relative inline-flex min-w-[86px] shrink-0 flex-col items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-semibold transition-colors',
-                      active ? 'bg-primary text-white' : 'bg-slate-100 text-slate-700',
+                      active ? 'bg-[#5a4a3b] text-white' : 'bg-[#f3ece5] text-[#5f6368]',
                     )}
                   >
                     <Icon className="h-3.5 w-3.5" />

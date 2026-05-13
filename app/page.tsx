@@ -27,26 +27,26 @@ export default function HomePage() {
           alt="Relaxed home lifestyle"
           className="hero-bg absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-[rgba(48,30,16,0.42)]" />
-        <div className="max-site-width relative z-10 py-24 text-center text-white md:py-36">
-          <p className="mx-auto inline-flex rounded-[6px] bg-[rgba(34,23,15,0.8)] px-6 py-2 text-[14px]">
+        <div className="absolute inset-0 bg-[rgba(48,30,16,0.46)]" />
+        <div className="max-site-width relative z-10 py-14 text-center text-white md:py-20">
+          <p className="mx-auto inline-flex rounded-[6px] bg-[rgba(34,23,15,0.8)] px-4 py-1.5 text-[12px] md:text-[13px]">
             Trusted by 10,000+ Members
           </p>
-          <h1 className="mt-6 text-[52px] leading-tight text-white md:text-[72px]">Your Home, Lovingly Cared For</h1>
-          <p className="mx-auto mt-3 max-w-3xl text-[19px] leading-relaxed text-white/95">
+          <h1 className="mt-5 text-[44px] leading-tight text-white md:text-[62px]">Your Home, Lovingly Cared For</h1>
+          <p className="mx-auto mt-3 max-w-3xl text-[16px] leading-relaxed text-white/95 md:text-[18px]">
             Connect with verified house sitters or find your perfect house sit
           </p>
 
-          <div className="mx-auto mt-8 flex max-w-[520px] rounded-full border border-white bg-[#f8f8f8] p-1">
+          <div className="mx-auto mt-7 flex max-w-[540px] flex-col gap-2 rounded-[18px] border border-white/90 bg-[#f8f8f8] p-2 sm:flex-row sm:gap-0 sm:rounded-full sm:p-1">
             <Link
               href="/find-house-sitters"
-              className="inline-flex h-16 flex-1 items-center justify-center rounded-full bg-[#5a4a3b] text-[38px] text-white"
+              className="inline-flex h-12 flex-1 items-center justify-center rounded-[14px] bg-[#5a4a3b] px-4 text-[18px] text-white sm:rounded-full sm:text-[20px]"
             >
               Find a Sitter
             </Link>
             <Link
               href="/find-house-sits"
-              className="inline-flex h-16 flex-1 items-center justify-center rounded-full text-[38px] text-[#5a5a5a]"
+              className="inline-flex h-12 flex-1 items-center justify-center rounded-[14px] px-4 text-[18px] text-[#5a5a5a] sm:rounded-full sm:text-[20px]"
             >
               Find a House Sit
             </Link>
@@ -55,31 +55,31 @@ export default function HomePage() {
           <form
             action="/find-house-sitters"
             method="get"
-            className="mx-auto mt-10 max-w-[980px] rounded-[20px] bg-white p-4 text-left text-[#1a1a1a] shadow-[0_12px_34px_rgba(0,0,0,0.2)]"
+            className="mx-auto mt-7 max-w-[980px] rounded-[16px] bg-white p-3 text-left text-[#1a1a1a] shadow-[0_12px_34px_rgba(0,0,0,0.2)] md:p-4"
           >
             <div className="grid gap-3 md:grid-cols-3">
               <input
                 name="location"
                 placeholder="Where?"
-                className="h-14 rounded-[8px] border border-[#e0e0e0] px-4 text-[16px]"
+                className="h-12 rounded-[8px] border border-[#e0e0e0] px-4 text-[15px]"
               />
               <DatePickerInput
                 name="from"
                 ariaLabel="From date"
-                className="h-14 rounded-[8px] border border-[#e0e0e0] px-4 text-[16px]"
+                className="h-12 rounded-[8px] border border-[#e0e0e0] px-4 text-[15px]"
               />
               <DatePickerInput
                 name="to"
                 ariaLabel="To date"
-                className="h-14 rounded-[8px] border border-[#e0e0e0] px-4 text-[16px]"
+                className="h-12 rounded-[8px] border border-[#e0e0e0] px-4 text-[15px]"
               />
             </div>
-            <button type="submit" className="mt-3 h-14 w-full rounded-[10px] bg-[#5a4a3b] text-[17px] text-white">
+            <button type="submit" className="mt-3 h-12 w-full rounded-[10px] bg-[#5a4a3b] text-[16px] text-white">
               Search Sitters
             </button>
           </form>
 
-          <p className="mt-7 text-[14px] text-white/95">
+          <p className="mt-6 text-[12px] text-white/95 md:text-[13px]">
             ✅ Background Checked &nbsp; • &nbsp; 🛡️ Fully Insured &nbsp; • &nbsp; 🐾 Pet Care Available
           </p>
         </div>
