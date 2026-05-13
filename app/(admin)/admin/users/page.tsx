@@ -77,9 +77,9 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="internal-page space-y-6">
       {/* Filters */}
-      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="internal-filter-grid">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -107,23 +107,23 @@ export default function AdminUsersPage() {
       ) : users.length === 0 ? (
         <EmptyState title="No users found" description="Try adjusting your search or filter." />
       ) : (
-        <div className="-mx-4 w-[calc(100%+2rem)] max-w-none overflow-x-auto overscroll-x-contain rounded-lg border sm:mx-0 sm:w-full">
-          <table className="w-full min-w-[680px] text-sm sm:min-w-[760px]">
-            <thead className="bg-muted/40">
-              <tr className="text-left text-muted-foreground text-xs uppercase tracking-wide">
-                <th className="px-4 py-3 font-medium">User</th>
-                <th className="px-4 py-3 font-medium">Role</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Joined</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium text-right">Action</th>
+        <div className="internal-table-wrap">
+          <table className="internal-table text-sm">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Phone</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th className="text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody>
               {users.map(u => {
                 const rb = ROLE_BADGE[u.role]
                 return (
-                  <tr key={u.id} className={cn('hover:bg-muted/20 transition-colors', !u.is_active && 'opacity-50')}>
+                  <tr key={u.id} className={cn(!u.is_active && 'opacity-50')}>
                     <td className="px-4 py-3 min-w-[180px]">
                       <p className="font-medium break-words">{u.name}</p>
                       <p className="text-xs text-muted-foreground break-all">{u.email}</p>

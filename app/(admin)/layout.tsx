@@ -356,8 +356,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
       </header>
 
-      <main className="app-shell-main px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <div className="min-w-0 space-y-6">
+      <main className="internal-app-shell app-shell-main px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+        <div className="internal-page min-w-0 space-y-6">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
             <div className="admin-stage__media" aria-hidden="true" />
             <div className="admin-stage__grain" aria-hidden="true" />
@@ -371,7 +371,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>
             </div>
           </section>
-          <div>{children}</div>
+          <div className="internal-page">{children}</div>
         </div>
       </main>
 

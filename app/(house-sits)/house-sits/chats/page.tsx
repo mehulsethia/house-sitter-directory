@@ -95,7 +95,7 @@ function ClientChatsPageContent() {
 
   return (
     <>
-      <div className="client-chats-revamp space-y-7 md:space-y-9">
+      <div className="client-chats-revamp internal-page space-y-7 md:space-y-9">
         <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
           <div className="client-stage__media" aria-hidden="true" />
           <div className="client-stage__grain" aria-hidden="true" />
@@ -115,7 +115,7 @@ function ClientChatsPageContent() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-amber-100/90`}>
                   Active Threads
                 </p>
                 <p className={`mt-1 text-4xl font-bold tracking-[-0.02em] text-white`}>
@@ -132,9 +132,9 @@ function ClientChatsPageContent() {
         </section>
 
         <section className="grid gap-4 md:h-[calc(100vh-15rem)] md:grid-cols-[300px_1fr] lg:h-[calc(100vh-16rem)] lg:grid-cols-[360px_1fr]">
-          <div className="flex min-h-[22rem] flex-col rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:min-h-[26rem] sm:p-5 md:min-h-0">
+          <div className="internal-card flex min-h-[22rem] flex-col rounded-[1.5rem] p-4 backdrop-blur-sm sm:min-h-[26rem] sm:p-5 md:min-h-0">
             <div>
-              <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>Conversations</h2>
+              <h2 className="internal-heading text-2xl font-bold tracking-[-0.02em]">Conversations</h2>
               <p className="mt-1 text-sm text-slate-500">Search and switch between booking threads.</p>
             </div>
 
@@ -144,7 +144,7 @@ function ClientChatsPageContent() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search conversation"
-                className="h-11 rounded-full border-slate-300 pl-9"
+                className="h-11 rounded-full border-[#e2d8cd] pl-9"
               />
             </div>
 
@@ -192,7 +192,7 @@ function ClientChatsPageContent() {
             )}
           </div>
 
-          <div className="min-h-[22rem] rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-0 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:min-h-[26rem] md:min-h-0">
+          <div className="internal-card min-h-[22rem] rounded-[1.5rem] p-0 backdrop-blur-sm sm:min-h-[26rem] md:min-h-0">
             {!selected ? (
               <div className="flex h-full min-h-[22rem] flex-col items-center justify-center gap-3 text-center text-slate-500 sm:min-h-[26rem] md:min-h-0">
                 <MessageCircleMore className="h-9 w-9 text-slate-300" />
@@ -200,7 +200,7 @@ function ClientChatsPageContent() {
               </div>
             ) : (
               <div className="flex h-full min-h-0 flex-col p-3 md:p-4">
-                <div className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="mb-3 rounded-2xl border border-[#e7dfd6] bg-[#fcfaf8] px-3 py-2">
                   <p className={`text-base font-semibold tracking-[-0.01em] text-slate-900`}>
                     {SERVICE_LABELS[selected.service_type] ?? selected.service_type}
                   </p>
@@ -231,7 +231,7 @@ function ClientChatsPageContent() {
         .client-stage {
           position: relative;
           isolation: isolate;
-          background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
+          background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
         .client-stage__media {
@@ -239,7 +239,7 @@ function ClientChatsPageContent() {
           inset: 0;
           background-image:
             linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
+            radial-gradient(circle at 82% 18%, rgba(255, 236, 214, 0.16), transparent 34%),
             repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
           background-size: cover;
           background-position: center;
@@ -252,7 +252,7 @@ function ClientChatsPageContent() {
           inset: 0;
           background-image:
             linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-            radial-gradient(circle at 18% 22%, rgba(56, 220, 255, 0.22), transparent 28%),
+            radial-gradient(circle at 18% 22%, rgba(255, 240, 225, 0.14), transparent 28%),
             radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
           animation: hero-sweep 11s ease-in-out infinite;
           pointer-events: none;

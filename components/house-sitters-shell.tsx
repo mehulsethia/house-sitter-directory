@@ -313,7 +313,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
             </nav>
           </header>
 
-          <main className="app-shell-main mx-auto w-full max-w-[1240px] space-y-6 px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+          <main className="internal-app-shell app-shell-main mx-auto w-full max-w-[1240px] space-y-6 px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
             {!hideShellBanner && (
               <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
                 <div className="cleaner-stage__media" aria-hidden="true" />

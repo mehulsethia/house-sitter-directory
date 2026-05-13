@@ -189,7 +189,7 @@ export default function CleanerDashboardPage() {
   if (loading) return <DashboardPageSkeleton />
 
   return (
-    <div className="space-y-6">
+    <div className="internal-page space-y-6">
       <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
         <div className="client-stage__media" aria-hidden="true" />
         <div className="client-stage__grain" aria-hidden="true" />
@@ -223,7 +223,7 @@ export default function CleanerDashboardPage() {
 
           <div className="animate-stage-up delay-120">
             <div className="ml-auto w-full max-w-lg rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-              <p className="text-[0.7rem] uppercase tracking-[0.24em] text-cyan-200/90">
+              <p className="text-[0.7rem] uppercase tracking-[0.24em] text-amber-100/90">
                 Live Snapshot
               </p>
               <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -290,11 +290,11 @@ export default function CleanerDashboardPage() {
           </div>
         </div>
       ) : lifecycleStatus === 'pending_approval' && completionPct === 100 && !profileComplete ? (
-        <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3">
+        <div className="rounded-2xl border border-[#e1d4c6] bg-gradient-to-r from-[#f8f3ee] to-[#f6eee6] px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-blue-900">Your profile is complete.</p>
-              <p className="text-xs text-blue-700">Submit your profile for admin review to start receiving bookings.</p>
+              <p className="text-sm font-semibold text-[#3f3429]">Your profile is complete.</p>
+              <p className="text-xs text-[#5a4a3b]">Submit your profile for admin review to start receiving bookings.</p>
             </div>
             <Button
               size="sm"
@@ -330,7 +330,7 @@ export default function CleanerDashboardPage() {
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2 border-slate-200">
+        <Card className="internal-card xl:col-span-2 border-slate-200">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">New Job Requests</CardTitle>
@@ -438,7 +438,7 @@ export default function CleanerDashboardPage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="border-slate-200">
+          <Card className="internal-card border-slate-200">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Quick Actions</CardTitle>
             </CardHeader>
@@ -466,7 +466,7 @@ export default function CleanerDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200">
+          <Card className="internal-card border-slate-200">
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Upcoming Jobs</CardTitle>
             </CardHeader>
@@ -490,7 +490,7 @@ export default function CleanerDashboardPage() {
                       </div>
                       <p className="text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
                       {isActiveProposal && (
-                        <p className="mt-1 text-xs font-semibold text-blue-700">{proposalSummary}</p>
+                        <p className="mt-1 text-xs font-semibold text-[#5a4a3b]">{proposalSummary}</p>
                       )}
                       <p className="mt-1 text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
                     </Link>
@@ -502,7 +502,7 @@ export default function CleanerDashboardPage() {
         </div>
       </div>
 
-      <Card className="border-slate-200">
+      <Card className="internal-card border-slate-200">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-lg">Recent Activity</CardTitle>
@@ -530,7 +530,7 @@ export default function CleanerDashboardPage() {
                     <p className="mt-1 text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
                     <p className="mt-2 text-xs text-slate-500">{b.city}, {b.postcode}</p>
                     {isActiveProposal && (
-                      <p className="mt-2 text-xs font-semibold text-blue-700">{proposalSummary}</p>
+                      <p className="mt-2 text-xs font-semibold text-[#5a4a3b]">{proposalSummary}</p>
                     )}
                     <div className="mt-2 flex items-center justify-between">
                       <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} showPaymentRequiredForUnpaid={false} />
@@ -585,7 +585,7 @@ export default function CleanerDashboardPage() {
         .client-stage {
           position: relative;
           isolation: isolate;
-          background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
+          background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
         .client-stage__media {
@@ -593,7 +593,7 @@ export default function CleanerDashboardPage() {
           inset: 0;
           background-image:
             linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
+            radial-gradient(circle at 82% 18%, rgba(255, 236, 214, 0.16), transparent 34%),
             repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
           background-size: cover;
           background-position: center;
@@ -606,7 +606,7 @@ export default function CleanerDashboardPage() {
           inset: 0;
           background-image:
             linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-            radial-gradient(circle at 18% 22%, rgba(56, 220, 255, 0.22), transparent 28%),
+            radial-gradient(circle at 18% 22%, rgba(255, 240, 225, 0.14), transparent 28%),
             radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
           animation: hero-sweep 11s ease-in-out infinite;
           pointer-events: none;

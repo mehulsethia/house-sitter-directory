@@ -374,7 +374,7 @@ export default function ClientBookingDetailPage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-amber-100/90`}>
                   Current Status
                 </p>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -464,7 +464,7 @@ export default function ClientBookingDetailPage() {
             </Card>
 
             {hasOpenProposalFlow && (
-              <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+              <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
                 {cleanerProposed
                   ? isAmendProposal
                     ? `House Sitter requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
@@ -487,7 +487,7 @@ export default function ClientBookingDetailPage() {
               </p>
             )}
             {booking.status === 'accepted' && canAuthorize && (
-              <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+              <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
                 Authorise your card now to keep this booking active. Your card is reserved, not charged yet.
               </p>
             )}
@@ -941,7 +941,7 @@ export default function ClientBookingDetailPage() {
         .client-stage {
           position: relative;
           isolation: isolate;
-          background: linear-gradient(125deg, #04162f 8%, #0f3b76 58%, #0e5698);
+          background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
         .client-stage__media {
@@ -949,7 +949,7 @@ export default function ClientBookingDetailPage() {
           inset: 0;
           background-image:
             linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
-            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
+            radial-gradient(circle at 82% 18%, rgba(255, 236, 214, 0.16), transparent 34%),
             repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
           background-size: cover;
           background-position: center;
@@ -962,7 +962,7 @@ export default function ClientBookingDetailPage() {
           inset: 0;
           background-image:
             linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-            radial-gradient(circle at 18% 22%, rgba(56, 220, 255, 0.22), transparent 28%),
+            radial-gradient(circle at 18% 22%, rgba(255, 240, 225, 0.14), transparent 28%),
             radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
           animation: hero-sweep 11s ease-in-out infinite;
           pointer-events: none;

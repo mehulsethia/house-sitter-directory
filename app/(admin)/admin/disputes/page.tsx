@@ -259,7 +259,7 @@ export default function AdminDisputesPage() {
   }
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="internal-page w-full space-y-6">
       {active.length > 0 && (
         <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 font-medium">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -267,7 +267,7 @@ export default function AdminDisputesPage() {
         </div>
       )}
       <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as DisputeFilter)}>
-        <TabsList className="scrollbar-hide h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap pb-1 [-webkit-overflow-scrolling:touch]">
+        <TabsList className="scrollbar-hide h-auto w-full justify-start overflow-x-auto whitespace-nowrap pb-1 [-webkit-overflow-scrolling:touch]">
           {DISPUTE_FILTERS.map((filter) => (
             <TabsTrigger key={filter} value={filter} className="gap-1.5">
               {DISPUTE_FILTER_LABELS[filter]}
@@ -384,7 +384,7 @@ export default function AdminDisputesPage() {
               />
             </div>
 
-            <p className="text-xs text-muted-foreground bg-blue-50 border border-blue-200 rounded px-3 py-2 text-blue-700">
+            <p className="text-xs text-muted-foreground bg-[#f8f3ee] border border-[#e1d4c6] rounded px-3 py-2 text-[#5a4a3b]">
               This action applies the payment outcome immediately for this dispute.
             </p>
 

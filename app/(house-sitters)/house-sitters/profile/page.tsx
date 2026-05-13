@@ -575,11 +575,11 @@ function CleanerProfilePageContent() {
           </div>
         </div>
       ) : lifecycleStatus === 'pending_approval' && completionPct === 100 && !profileComplete ? (
-        <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3">
+        <div className="rounded-2xl border border-[#e1d4c6] bg-gradient-to-r from-[#f8f3ee] to-[#f6eee6] px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-blue-900">Your profile is complete.</p>
-              <p className="text-xs text-blue-700">Submit your profile for admin review to start receiving bookings.</p>
+              <p className="text-sm font-semibold text-[#3f3429]">Your profile is complete.</p>
+              <p className="text-xs text-[#5a4a3b]">Submit your profile for admin review to start receiving bookings.</p>
             </div>
             <Button size="sm" onClick={submitForApproval} loading={submitting} className="shrink-0">
               Submit for approval
@@ -901,11 +901,11 @@ function CleanerProfilePageContent() {
                       <p className="text-xs text-slate-500">{new Date(r.created_at).toLocaleDateString('en-IE', { timeZone: 'Europe/Nicosia' })}</p>
                       <p className="mt-2 text-sm text-slate-700">{r.comment || 'No written comment provided.'}</p>
                       {r.cleaner_reply ? (
-                        <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-                          <p className="text-xs font-semibold text-blue-900">Your public reply</p>
-                          <p className="mt-1 text-sm text-blue-900">{r.cleaner_reply}</p>
+                        <div className="mt-3 rounded-lg border border-blue-100 bg-[#f8f3ee] px-3 py-2">
+                          <p className="text-xs font-semibold text-[#3f3429]">Your public reply</p>
+                          <p className="mt-1 text-sm text-[#3f3429]">{r.cleaner_reply}</p>
                           {r.cleaner_reply_at && (
-                            <p className="mt-1 text-xs text-blue-700">
+                            <p className="mt-1 text-xs text-[#5a4a3b]">
                               Posted {new Date(r.cleaner_reply_at).toLocaleDateString('en-IE', { timeZone: 'Europe/Nicosia' })}
                             </p>
                           )}

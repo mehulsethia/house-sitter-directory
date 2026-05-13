@@ -386,7 +386,7 @@ export default function CleanerBookingsPage() {
                         <p className="mt-1 text-xs text-slate-500">Only approximate location details are shown before acceptance to protect client privacy.</p>
                       )}
                       {b.status === 'pending' && b.proposed_start && b.proposal_by && (
-                        <p className="mt-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                        <p className="mt-1 rounded-lg border border-[#e1d4c6] bg-[#f8f3ee] px-2 py-1 text-xs text-[#5a4a3b]">
                           {b.proposal_by === 'cleaner'
                             ? `You proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Waiting for client response.`
                             : `Homeowner proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Review and respond before expiry.`}

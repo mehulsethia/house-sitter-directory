@@ -36,7 +36,12 @@ function Tabs({ defaultValue = '', value, onValueChange, children, className }: 
 
 function TabsList({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn('inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground', className)}>
+    <div
+      className={cn(
+        'inline-flex h-11 items-center justify-center gap-1 rounded-xl border border-[#e7dfd6] bg-[#fcfaf8] p-1 text-[#6b7280]',
+        className,
+      )}
+    >
       {children}
     </div>
   )
@@ -48,8 +53,10 @@ function TabsTrigger({ value, children, className }: { value: string; children: 
     <button
       onClick={() => setActive(value)}
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
-        active === value ? 'bg-background text-foreground shadow-sm' : 'hover:bg-background/50',
+        'inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+        active === value
+          ? 'bg-[#5a4a3b] text-white shadow-[0_3px_10px_rgba(90,74,59,0.25)]'
+          : 'text-[#6b7280] hover:bg-white hover:text-[#3f3429]',
         className,
       )}
     >

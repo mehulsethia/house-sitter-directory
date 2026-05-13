@@ -136,7 +136,9 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
             </nav>
           </header>
 
-          <main className="app-shell-main mx-auto w-full max-w-[1240px] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">{children}</main>
+          <main className="internal-app-shell app-shell-main mx-auto w-full max-w-[1240px] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+            {children}
+          </main>
         </div>
       </div>
     </div>

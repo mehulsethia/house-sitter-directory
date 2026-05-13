@@ -61,22 +61,22 @@ function BookingTable({ bookings }: { bookings: BookingRead[] }) {
   if (bookings.length === 0) return <EmptyState title="No bookings" />
 
   return (
-    <div className="-mx-4 w-[calc(100%+2rem)] max-w-none overflow-x-auto overscroll-x-contain rounded-lg border sm:mx-0 sm:w-full">
-      <table className="w-full min-w-[680px] text-sm sm:min-w-[760px]">
-        <thead className="bg-muted/40">
-          <tr className="text-left text-muted-foreground text-xs uppercase tracking-wide">
-            <th className="px-4 py-3 font-medium">Booking</th>
-            <th className="px-4 py-3 font-medium">Service</th>
-            <th className="px-4 py-3 font-medium">Location</th>
-            <th className="px-4 py-3 font-medium">Scheduled</th>
-            <th className="px-4 py-3 font-medium">Status</th>
-            <th className="px-4 py-3 font-medium text-right">Amount</th>
-            <th className="px-4 py-3 font-medium text-right">Platform Fee (10%)</th>
+    <div className="internal-table-wrap">
+      <table className="internal-table text-sm">
+        <thead>
+          <tr>
+            <th>Booking</th>
+            <th>Service</th>
+            <th>Location</th>
+            <th>Scheduled</th>
+            <th>Status</th>
+            <th className="text-right">Amount</th>
+            <th className="text-right">Platform Fee (10%)</th>
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody>
           {bookings.map(b => (
-            <tr key={b.id} className="hover:bg-muted/20 transition-colors">
+            <tr key={b.id}>
               <td className="px-4 py-3 min-w-[140px]">
                 <span className="font-mono text-xs text-muted-foreground">#{b.id.slice(0, 8)}</span>
                 <p className="text-[10px] text-muted-foreground">{formatDate(b.created_at)}</p>
@@ -153,9 +153,9 @@ export default function AdminBookingsPage() {
   }, [searchParams])
 
   return (
-    <div className="space-y-6">
+    <div className="internal-page space-y-6">
       <Tabs value={activeGroup} onValueChange={v => { setActiveGroup(v) }}>
-      <TabsList className="scrollbar-hide h-auto w-full justify-start gap-1 overflow-x-auto whitespace-nowrap pb-1 [-webkit-overflow-scrolling:touch]">
+      <TabsList className="scrollbar-hide h-auto w-full justify-start overflow-x-auto whitespace-nowrap pb-1 [-webkit-overflow-scrolling:touch]">
           {GROUPS.map(g => (
             <TabsTrigger key={g.key} value={g.key}>
               {g.label}

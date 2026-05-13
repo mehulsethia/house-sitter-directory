@@ -185,3 +185,106 @@
   background-size: cover;
   background-position: center;
 }
+
+.internal-app-shell {
+  --internal-bg: #f3f3f3;
+  --internal-surface: #ffffff;
+  --internal-surface-soft: #fcfaf8;
+  --internal-border: #e7dfd6;
+  --internal-text: #1f2937;
+  --internal-muted: #6b7280;
+  --internal-heading: #3f3429;
+  --internal-shadow: 0 14px 36px rgba(74, 56, 39, 0.1);
+}
+
+.internal-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.internal-card {
+  border: 1px solid var(--internal-border);
+  background: color-mix(in srgb, var(--internal-surface) 94%, transparent);
+  border-radius: 1.25rem;
+  box-shadow: var(--internal-shadow);
+}
+
+.internal-heading {
+  color: var(--internal-heading);
+  font-family: 'Times New Roman', Times, serif;
+  letter-spacing: -0.01em;
+}
+
+.internal-kicker {
+  font-family: Montserrat, Helvetica, Arial, sans-serif;
+  color: var(--internal-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.internal-subtle {
+  color: var(--internal-muted);
+}
+
+.internal-filter-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .internal-filter-grid {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}
+
+.internal-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--internal-border);
+  border-radius: 0.9rem;
+  background: var(--internal-surface);
+}
+
+.internal-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  color: var(--internal-text);
+}
+
+.internal-table thead {
+  background: var(--internal-surface-soft);
+}
+
+.internal-table thead tr {
+  color: var(--internal-muted);
+  font-family: Montserrat, Helvetica, Arial, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.internal-table th {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.internal-table tbody tr {
+  border-top: 1px solid var(--internal-border);
+  transition: background-color 0.16s ease;
+}
+
+.internal-table tbody tr:hover {
+  background: #faf7f4;
+}
+
+.internal-table td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+}

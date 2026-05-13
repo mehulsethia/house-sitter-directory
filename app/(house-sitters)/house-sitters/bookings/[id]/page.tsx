@@ -505,29 +505,29 @@ export default function CleanerBookingDetailPage() {
           </p>
         )}
         {!isCancelledPreConfirmation && booking.status === 'pending' && hasProposal && (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
             {isCleanerProposal
               ? `You proposed a new time (${formatDate(booking.proposed_start!)}). Waiting for client response.`
               : `Homeowner countered with ${formatDate(booking.proposed_start!)}. Accept or decline before request expiry.`}
           </p>
         )}
         {!isCancelledPreConfirmation && isCleanerPostConfirmationProposal && (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
             You proposed a reschedule: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Waiting for client response before the 24-hour cutoff.
           </p>
         )}
         {!isCancelledPreConfirmation && isClientPostConfirmationProposal && (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
             Homeowner proposed a reschedule: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Accept, decline, or counter once before the 24-hour cutoff.
           </p>
         )}
         {!isCancelledPreConfirmation && isAmendProposal && booking.proposal_by === 'cleaner' && (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
             You requested Amend Start Time: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Waiting for client response.
           </p>
         )}
         {!isCancelledPreConfirmation && canRespondToClientAmendProposal && (
-          <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
             Homeowner requested Amend Start Time: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Accept, decline, or counter once.
           </p>
         )}

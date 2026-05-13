@@ -101,17 +101,18 @@ export default function CleanerChatsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="internal-page space-y-6">
       <div className="grid gap-4 md:h-[calc(100vh-12.5rem)] md:grid-cols-[300px_1fr] lg:grid-cols-[340px_1fr]">
-      <Card className="border-slate-200 md:h-full">
+      <Card className="internal-card border-slate-200 md:h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Conversations</CardTitle>
+          <CardTitle className="internal-heading text-lg">Conversations</CardTitle>
         </CardHeader>
         <CardContent className="flex h-full flex-col space-y-3">
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search conversation"
+            className="border-[#e2d8cd]"
           />
 
           {filtered.length === 0 ? (
@@ -156,7 +157,7 @@ export default function CleanerChatsPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 md:h-full">
+      <Card className="internal-card border-slate-200 md:h-full">
         <CardContent className="h-full p-0">
           {!selected ? (
             <div className="flex h-full min-h-[22rem] flex-col items-center justify-center gap-3 text-center text-slate-500 sm:min-h-[26rem] md:min-h-0">
@@ -165,7 +166,7 @@ export default function CleanerChatsPage() {
             </div>
           ) : (
             <div className="flex h-full min-h-0 flex-col p-3 md:p-4">
-              <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="mb-3 rounded-xl border border-[#e7dfd6] bg-[#fcfaf8] px-3 py-2">
                 <p className="text-sm font-semibold text-slate-900">{resolveJobTypeTitle(selected)}</p>
                 <p className="text-xs text-slate-500">{selected.city}, {selected.postcode} · {formatDate(selected.scheduled_start)}</p>
                 <Link href={`/house-sitters/bookings/${selected.id}`} className="mt-1 inline-block text-xs font-medium text-primary hover:underline">

@@ -104,7 +104,7 @@ export default function ClientDashboardPage() {
 
   return (
     <>
-      <div className="dashboard-revamp space-y-8 md:space-y-10">
+      <div className="dashboard-revamp internal-page space-y-8 md:space-y-10">
         <section className="dashboard-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
           <div className="dashboard-stage__media" aria-hidden="true" />
           <div className="dashboard-stage__grain" aria-hidden="true" />
@@ -149,7 +149,7 @@ export default function ClientDashboardPage() {
 
             <div className="animate-stage-up delay-150">
               <div className="ml-auto w-full max-w-md rounded-3xl border border-white/25 bg-black/35 p-5 backdrop-blur-sm sm:p-6">
-                <p className={`text-[0.68rem] uppercase tracking-[0.24em] text-cyan-200/90`}>
+                <p className={`text-[0.68rem] uppercase tracking-[0.24em] text-amber-100/90`}>
                   Live Snapshot
                 </p>
 
@@ -209,7 +209,7 @@ export default function ClientDashboardPage() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.5fr_0.95fr]">
-          <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:p-6">
+          <div className="internal-card rounded-[1.5rem] p-4 backdrop-blur-sm sm:p-6">
             <div className="mb-4 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <div>
                 <p className={`text-[0.68rem] uppercase tracking-[0.22em] text-slate-500`}>
@@ -266,7 +266,7 @@ export default function ClientDashboardPage() {
                     <div className="flex min-w-0 flex-col items-start gap-1 text-left sm:min-w-[11rem] sm:items-end sm:text-right">
                       <BookingStatusBadge status={booking.status} paymentStatus={booking.payment?.status} proposalBy={booking.proposal_by} />
                       {isActiveProposal && (
-                        <p className="text-xs font-semibold text-blue-700">
+                        <p className="text-xs font-semibold text-[#5a4a3b]">
                           {proposalSummary}
                         </p>
                       )}
@@ -295,7 +295,7 @@ export default function ClientDashboardPage() {
             </div>
 
             <div className="rounded-[1.25rem] border border-slate-200/80 bg-gradient-to-br from-[#1a1a1a] to-[#5a4a3b] p-4 text-white shadow-[0_16px_36px_rgba(11,33,78,0.25)] sm:p-5">
-              <p className={`text-[0.68rem] uppercase tracking-[0.22em] text-cyan-200/85`}>
+              <p className={`text-[0.68rem] uppercase tracking-[0.22em] text-amber-100/85`}>
                 This Week
               </p>
               <h2 className={`mt-1 text-xl font-bold tracking-[-0.02em]`}>
@@ -309,7 +309,7 @@ export default function ClientDashboardPage() {
                   </span>
                   <div>
                     <p className="text-sm font-semibold">{total} total bookings</p>
-                    <p className="text-xs text-cyan-100/80">Across all statuses</p>
+                    <p className="text-xs text-amber-100/85">Across all statuses</p>
                   </div>
                 </div>
 
@@ -319,7 +319,7 @@ export default function ClientDashboardPage() {
                   </span>
                   <div>
                     <p className="text-sm font-semibold">{activeCount} currently active</p>
-                    <p className="text-xs text-cyan-100/80">Pending, accepted, confirmed, in progress</p>
+                    <p className="text-xs text-amber-100/85">Pending, accepted, confirmed, in progress</p>
                   </div>
                 </div>
               </div>
@@ -385,9 +385,9 @@ export default function ClientDashboardPage() {
 
       <style jsx>{`
         .dashboard-revamp {
-          --dash-stage-top: #04162f;
-          --dash-stage-mid: #0f3b76;
-          --dash-stage-bottom: #0e5698;
+          --dash-stage-top: #3f3429;
+          --dash-stage-mid: #5a4a3b;
+          --dash-stage-bottom: #6c5947;
         }
 
         .dashboard-stage {
@@ -401,7 +401,7 @@ export default function ClientDashboardPage() {
           inset: 0;
           background-image:
             linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.48) 55%, rgba(8, 22, 44, 0.72) 100%),
-            radial-gradient(circle at 82% 18%, rgba(56, 220, 255, 0.24), transparent 34%),
+            radial-gradient(circle at 82% 18%, rgba(255, 236, 214, 0.16), transparent 34%),
             repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0 2px, rgba(255, 255, 255, 0) 2px 12px);
           background-size: cover;
           background-position: center;
@@ -414,7 +414,7 @@ export default function ClientDashboardPage() {
           inset: 0;
           background-image:
             linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
-            radial-gradient(circle at 18% 22%, rgba(56, 220, 255, 0.22), transparent 28%),
+            radial-gradient(circle at 18% 22%, rgba(255, 240, 225, 0.14), transparent 28%),
             radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
           animation: hero-sweep 11s ease-in-out infinite;
           pointer-events: none;
