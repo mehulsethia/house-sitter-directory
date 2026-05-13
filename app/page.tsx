@@ -11,6 +11,7 @@ import {
   Star,
 } from 'lucide-react'
 import { CookieConsentBanner } from '@/components/cookie-consent-banner'
+import { DatePickerInput } from '@/components/date-picker-input'
 import { LandingHeader } from '@/components/landing-header'
 import Footer from '@/components/footer'
 
@@ -253,16 +254,14 @@ export default function HomePage() {
                 placeholder="📍 Where?"
                 className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
               />
-              <input
+              <DatePickerInput
                 name="from"
-                type="date"
-                aria-label="From date"
+                ariaLabel="From date"
                 className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
               />
-              <input
+              <DatePickerInput
                 name="to"
-                type="date"
-                aria-label="To date"
+                ariaLabel="To date"
                 className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
               />
             </div>

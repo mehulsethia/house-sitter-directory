@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Suspense, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Bath, BedDouble, Calendar, MapPin, PawPrint, Star } from 'lucide-react'
+import { DatePickerInput } from '@/components/date-picker-input'
 import { LandingHeader } from '@/components/landing-header'
 import Footer from '@/components/footer'
 
@@ -229,10 +230,11 @@ function FindHouseSitsContent() {
                 label="Start Date"
                 icon={<Calendar className="h-4 w-4" />}
                 input={
-                  <input
-                    type="date"
+                  <DatePickerInput
+                    name="from"
                     value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
+                    ariaLabel="Start Date"
+                    onChange={setStartDate}
                     className="w-full bg-transparent text-[12px] text-[#1a1a1a] outline-none"
                   />
                 }
@@ -241,10 +243,11 @@ function FindHouseSitsContent() {
                 label="End Date"
                 icon={<Calendar className="h-4 w-4" />}
                 input={
-                  <input
-                    type="date"
+                  <DatePickerInput
+                    name="to"
                     value={endDate}
-                    onChange={(event) => setEndDate(event.target.value)}
+                    ariaLabel="End Date"
+                    onChange={setEndDate}
                     className="w-full bg-transparent text-[12px] text-[#1a1a1a] outline-none"
                   />
                 }
