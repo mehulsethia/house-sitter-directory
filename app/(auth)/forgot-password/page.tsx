@@ -38,16 +38,16 @@ export default function ForgotPasswordPage() {
       <div className="hidden lg:flex flex-col bg-gray-50 p-5 lg:p-6">
         <div className="relative overflow-hidden rounded-xl shadow-lg flex-1 min-h-[360px]">
           <Image
-            src="/images/join-maidhive.avif"
-            alt="Trusted house sitting team"
+            src="/images/auth-cleaners.jpg"
+            alt="House sitter dashboard and home care"
             fill
             className="object-cover"
             sizes="400px"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(2,15,36,0.66),rgba(8,38,85,0.24)_48%,rgba(11,43,87,0.78))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(33,24,17,0.72),rgba(90,74,59,0.28)_48%,rgba(63,52,41,0.82))]" />
           <div className="absolute inset-x-0 bottom-0 p-7">
             <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/85">The House Sitter Directory</p>
-            <p className="mt-2 text-xl font-bold text-white">Securely reset access and get back to your schedule.</p>
+            <p className="mt-2 text-xl font-bold text-white">Securely reset access and get back to your house sits.</p>
           </div>
         </div>
       </div>

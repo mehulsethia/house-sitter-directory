@@ -28,10 +28,18 @@ function Dialog({ open, onClose, children, className }: DialogProps) {
 
   React.useEffect(() => {
     if (!open) return
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const body = document.body
+    const currentLocks = Number(body.dataset.dialogLocks ?? '0')
+    body.dataset.dialogLocks = String(currentLocks + 1)
+    body.style.overflow = 'hidden'
     return () => {
-      document.body.style.overflow = previousOverflow
+      const nextLocks = Math.max(0, Number(body.dataset.dialogLocks ?? '1') - 1)
+      if (nextLocks === 0) {
+        delete body.dataset.dialogLocks
+        body.style.overflow = ''
+      } else {
+        body.dataset.dialogLocks = String(nextLocks)
+      }
     }
   }, [open])
 

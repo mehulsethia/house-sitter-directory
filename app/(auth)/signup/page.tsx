@@ -93,8 +93,8 @@ function SignupForm() {
       <div className="hidden lg:flex flex-col bg-gray-50 p-8 lg:p-10">
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1">
           <Image
-            src="/images/join-maidhive.avif"
-            alt="Warm house sitting community"
+            src="/images/trusted-cleaner.avif"
+            alt="Trusted house sitter profile"
             fill
             className="object-cover"
             sizes="400px"

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Eye, EyeOff, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -35,9 +36,19 @@ function ResetPasswordForm() {
     <div className="grid min-h-[560px] lg:min-h-[620px] lg:grid-cols-2">
       {/* Left — Branding panel */}
       <div className="hidden lg:flex flex-col bg-slate-50 p-5 lg:p-6">
-        <div className="flex flex-1 min-h-[360px] flex-col justify-end rounded-xl border border-slate-200/70 bg-[linear-gradient(130deg,#04162f_5%,#0f3b76_55%,#0e5698_100%)] p-7 shadow-lg">
+        <div className="relative flex flex-1 min-h-[360px] flex-col justify-end overflow-hidden rounded-xl border border-slate-200/70 p-7 shadow-lg">
+          <Image
+            src="/images/trusted-cleaner.avif"
+            alt="House sitter profile and security"
+            fill
+            className="object-cover"
+            sizes="400px"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(130deg,rgba(33,24,17,0.74)_8%,rgba(90,74,59,0.44)_56%,rgba(63,52,41,0.84)_100%)]" />
+          <div className="relative z-10">
           <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/85">The House Sitter Directory</p>
           <p className="mt-2 text-xl font-bold text-white">Create a new password and protect your account.</p>
+          </div>
         </div>
       </div>
 
