@@ -21,15 +21,15 @@ import { toast } from 'sonner'
 
 const STEP_LABELS = ['1', '2', '3', '4', '5']
 const SERVICE_OPTIONS = [
-  'Regular home cleaning',
-  'One-off cleaning',
-  'Airbnb / short-term rental cleaning',
+  'Short Term',
+  'Long Term',
+  'Pet Sitting',
   'Laundry / folding clothes',
-  'Kitchen deep clean',
-  'Bathroom deep clean',
+  'Plant Care',
+  'Home Monitoring',
   'Ironing',
   'Windows',
-  'Deep cleaning',
+  'Pet and Plant Care',
   'Move in/out',
 ]
 const QUIZ_PASS_PERCENT = 80
@@ -41,14 +41,14 @@ type StandardsCard = {
 
 const STANDARDS_CARDS: StandardsCard[] = [
   {
-    title: 'MaidHive Cleaning Standards',
+    title: 'The House Sitter Directory House Sitting Standards',
     subtitle: 'This takes about 1 minute to complete.',
     body: [
       'These standards help you:',
       'Get better reviews',
       'Avoid problems',
       'Get more bookings',
-      'Cleaners who follow these standards usually get better ratings and more bookings.',
+      'House Sitters who follow these standards usually get better ratings and more bookings.',
     ],
   },
   {
@@ -117,7 +117,7 @@ const STANDARDS_CARDS: StandardsCard[] = [
     ],
   },
   {
-    title: 'Cleaning supplies',
+    title: 'Home-care supplies',
     body: [
       'Be clear if you bring your own supplies',
       'Or if the client needs to provide them',
@@ -442,7 +442,7 @@ function CleanerOnboardingPageContent() {
     if (!hourlyRate || Number(hourlyRate) < MIN_HOURLY_RATE) return toast.error(`Min hourly rate is €${MIN_HOURLY_RATE}.`)
     if (Number(hourlyRate) > MAX_HOURLY_RATE) return toast.error(`Max hourly rate is €${MAX_HOURLY_RATE}.`)
     if (skills.length === 0) return toast.error('Select at least one service.')
-    if (!cleaningSupplies) return toast.error('Cleaning supplies preference is required.')
+    if (!cleaningSupplies) return toast.error('Home-care supplies preference is required.')
 
     setSaving(true)
     try {
@@ -782,7 +782,7 @@ function CleanerOnboardingPageContent() {
               </div>
 
               <div>
-                <Label className="text-sm font-medium">Cleaning supplies <span className="text-red-500">*</span></Label>
+                <Label className="text-sm font-medium">Home-care supplies <span className="text-red-500">*</span></Label>
                 <div className="mt-2 grid gap-2">
                   <label className="flex items-center gap-2 text-sm text-gray-700">
                     <input
@@ -800,7 +800,7 @@ function CleanerOnboardingPageContent() {
                       checked={cleaningSupplies === 'client_supplies'}
                       onChange={() => setCleaningSupplies('client_supplies')}
                     />
-                    Client must provide supplies
+                    Homeowner must provide supplies
                   </label>
                 </div>
               </div>
@@ -947,8 +947,8 @@ function CleanerOnboardingPageContent() {
                   </div>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <p className="text-sm font-medium text-gray-800">Are you legally allowed to work in Cyprus and provide cleaning services independently? <span className="text-red-500">*</span></p>
-                  <p className="mt-1 text-xs text-gray-500">If your work permit only allows you to work for one employer, you cannot use MaidHive.</p>
+                  <p className="text-sm font-medium text-gray-800">Are you legally allowed to work in Cyprus and provide house sitting services independently? <span className="text-red-500">*</span></p>
+                  <p className="mt-1 text-xs text-gray-500">If your work permit only allows you to work for one employer, you cannot use The House Sitter Directory.</p>
                   <div className="mt-2 flex gap-4">
                     <label className="flex items-center gap-2 text-sm text-gray-700">
                       <input type="radio" name="work-eligibility" checked={workEligibilityAnswer === true} onChange={() => setWorkEligibilityAnswer(true)} />
@@ -962,7 +962,7 @@ function CleanerOnboardingPageContent() {
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={workEligibilityConfirmed} onChange={(e) => setWorkEligibilityConfirmed(e.target.checked)} />
-                  I confirm that I am legally allowed to work in Cyprus and provide cleaning services independently, and I am not restricted to working for a single employer. <span className="text-red-500">*</span>
+                  I confirm that I am legally allowed to work in Cyprus and provide house sitting services independently, and I am not restricted to working for a single employer. <span className="text-red-500">*</span>
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
@@ -1091,9 +1091,9 @@ function CleanerOnboardingPageContent() {
                 <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                   <p className="text-lg font-semibold text-slate-900">Confirmation</p>
                   <p className="text-sm text-slate-700">
-                    I confirm that I have read and understand the MaidHive Cleaning Standards and agree to follow them when accepting bookings.
+                    I confirm that I have read and understand the House Sitter Directory Cleaning Standards and agree to follow them when accepting bookings.
                   </p>
-                  <p className="text-sm text-slate-700">MaidHive is a marketplace.</p>
+                  <p className="text-sm text-slate-700">The House Sitter Directory is a marketplace.</p>
                   <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
                     <li>You are an independent cleaner</li>
                     <li>You are responsible for your work and behaviour</li>
@@ -1198,7 +1198,7 @@ function CleanerOnboardingPageContent() {
 
       {progress && progress.completion_pct < 100 && (
         <p className="text-xs text-gray-600 mt-3 text-center">
-          Your profile is {progress.completion_pct}% complete. Cleaner profiles are visible to clients only after admin approval.
+          Your profile is {progress.completion_pct}% complete. House Sitter profiles are visible to clients only after admin approval.
         </p>
       )}
     </div>

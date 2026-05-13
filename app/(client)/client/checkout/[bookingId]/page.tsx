@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { ArrowLeft } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -16,8 +15,6 @@ import type { BookingRead } from '@/types'
 import { toast } from 'sonner'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess: () => void }) {
   const stripe = useStripe()
@@ -191,10 +188,10 @@ export default function CheckoutPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Secure Checkout
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Secure Checkout
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                 Authorise Card
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -204,10 +201,10 @@ export default function CheckoutPage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
                   Total to authorise
                 </p>
-                <p className={`${displayFont.className} mt-1 text-4xl font-bold tracking-[-0.02em] text-white`}>
+                <p className={`mt-1 text-4xl font-bold tracking-[-0.02em] text-white`}>
                   {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
                 </p>
                 <p className="mt-1 text-sm text-white/80">Status: {booking.status.replace('_', ' ')}</p>

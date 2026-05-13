@@ -2,7 +2,6 @@
 
 import { useDeferredValue, useEffect, useState, startTransition } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import {
   ArrowLeft,
   Briefcase,
@@ -26,8 +25,6 @@ import { pickupFullLabel } from '@/lib/transport-pickup'
 import type { CleanerRead, ReviewRead } from '@/types'
 import { toast } from 'sonner'
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 export default function CleanerProfilePage() {
   const { id } = useParams<{ id: string }>()
@@ -50,7 +47,7 @@ export default function CleanerProfilePage() {
       bookingsApi.my(),
     ])
       .then(([cleanerRes, reviewsRes, availabilityRes, bookingsRes]) => {
-        if (cleanerRes.status !== 'fulfilled') throw new Error('Failed to load cleaner profile')
+        if (cleanerRes.status !== 'fulfilled') throw new Error('Failed to load house sitter profile')
         startTransition(() => {
           setCleaner(cleanerRes.value.data ?? null)
           setReviews(reviewsRes.status === 'fulfilled' ? (reviewsRes.value.data ?? []) : [])
@@ -71,7 +68,7 @@ export default function CleanerProfilePage() {
         })
       })
       .catch(() => {
-        toast.error('Failed to load cleaner profile')
+        toast.error('Failed to load house sitter profile')
         setLoading(false)
       })
   }, [id])
@@ -150,9 +147,9 @@ export default function CleanerProfilePage() {
     : null
 
   if (loading) return <DetailPageSkeleton />
-  if (!cleaner) return <div className="py-16 text-center text-muted-foreground">Cleaner not found.</div>
+  if (!cleaner) return <div className="py-16 text-center text-muted-foreground">House Sitter not found.</div>
 
-  const cleanerName = cleaner.user?.name ?? 'Professional Cleaner'
+  const cleanerName = cleaner.user?.name ?? 'Professional House Sitter'
   const memberSince = cleaner.created_at
     ? new Date(cleaner.created_at).toLocaleDateString('en-IE', {
         month: 'long',
@@ -167,7 +164,7 @@ export default function CleanerProfilePage() {
 
   function suppliesText(value?: string) {
     if (value === 'own_supplies') return 'Brings own supplies'
-    if (value === 'client_supplies') return 'Client must provide supplies'
+    if (value === 'client_supplies') return 'Homeowner must provide supplies'
     return null
   }
 
@@ -187,8 +184,8 @@ export default function CleanerProfilePage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Cleaner Profile
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory House Sitter Profile
               </p>
               <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <UserAvatar
@@ -199,7 +196,7 @@ export default function CleanerProfilePage() {
                   textClassName="text-lg font-bold"
                   fallback="C"
                 />
-                <h1 className={`${displayFont.className} text-xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+                <h1 className={`text-xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                   {cleanerName}
                 </h1>
                 <button
@@ -222,15 +219,15 @@ export default function CleanerProfilePage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
                   Snapshot
                 </p>
-                <p className={`${displayFont.className} mt-1 text-2xl font-bold tracking-[-0.02em] text-white`}>
+                <p className={`mt-1 text-2xl font-bold tracking-[-0.02em] text-white`}>
                   {formatCurrency(cleaner.hourly_rate)} / hr
                 </p>
                 <p className="mt-1 text-sm text-white/80">{deferredReviews.length} reviews · {cleaner.total_jobs} jobs completed</p>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <Button onClick={() => router.push(`/client/book/${id}?reset=1&step=1`)} className="h-9 rounded-full bg-[#f4b400] px-4 text-slate-950 hover:bg-[#ffca3a]">
+                  <Button onClick={() => router.push(`/client/book/${id}?reset=1&step=1`)} className="h-9 rounded-full bg-[#5a4a3b] px-4 text-slate-950 hover:bg-[#6a5746]">
                     Book Service
                   </Button>
                   <Button
@@ -260,10 +257,10 @@ export default function CleanerProfilePage() {
         </div>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <MetricCard title="Jobs Completed" value={cleaner.total_jobs} icon={<CheckCircle className="h-6 w-6 text-[#0d4bc9]" />} displayFont={displayFont.className} />
-          <MetricCard title="Average Rating" value={avgRating > 0 ? `${avgRating.toFixed(1)}/5` : 'No reviews yet'} icon={<Star className="h-6 w-6 text-amber-400" />} displayFont={displayFont.className} />
+          <MetricCard title="Jobs Completed" value={cleaner.total_jobs} icon={<CheckCircle className="h-6 w-6 text-[#5a4a3b]" />} displayFont={'font-heading'} />
+          <MetricCard title="Average Rating" value={avgRating > 0 ? `${avgRating.toFixed(1)}/5` : 'No reviews yet'} icon={<Star className="h-6 w-6 text-amber-400" />} displayFont={'font-heading'} />
           {completionRate !== null && (
-            <MetricCard title="On-time Rate" value={`${completionRate}%`} icon={<TrendingUp className="h-6 w-6 text-emerald-500" />} displayFont={displayFont.className} />
+            <MetricCard title="On-time Rate" value={`${completionRate}%`} icon={<TrendingUp className="h-6 w-6 text-emerald-500" />} displayFont={'font-heading'} />
           )}
         </section>
 
@@ -274,7 +271,7 @@ export default function CleanerProfilePage() {
               onClick={() => setTab('overview')}
               className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors sm:px-6 ${
                 tab === 'overview'
-                  ? 'border-[#0d4bc9] text-[#0d4bc9]'
+                  ? 'border-[#5a4a3b] text-[#5a4a3b]'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -284,7 +281,7 @@ export default function CleanerProfilePage() {
               onClick={() => setTab('reviews')}
               className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors sm:px-6 ${
                 tab === 'reviews'
-                  ? 'border-[#0d4bc9] text-[#0d4bc9]'
+                  ? 'border-[#5a4a3b] text-[#5a4a3b]'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -294,7 +291,7 @@ export default function CleanerProfilePage() {
               onClick={() => setTab('availability')}
               className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors sm:px-6 ${
                 tab === 'availability'
-                  ? 'border-[#0d4bc9] text-[#0d4bc9]'
+                  ? 'border-[#5a4a3b] text-[#5a4a3b]'
                   : 'border-transparent text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -308,7 +305,7 @@ export default function CleanerProfilePage() {
               <div className="space-y-4">
                 <Card className="border-slate-200">
                   <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
-                    <h3 className={`${displayFont.className} mb-2 text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
+                    <h3 className={`mb-2 text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
                       About {cleanerName}
                     </h3>
                     <p className="text-sm leading-relaxed text-slate-600">{cleaner.bio || 'No bio provided yet.'}</p>
@@ -331,7 +328,7 @@ export default function CleanerProfilePage() {
 
               <Card className="h-fit border-slate-200">
                 <CardContent className="space-y-4 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
-                  <h3 className="font-semibold text-slate-900">Cleaner Details</h3>
+                  <h3 className="font-semibold text-slate-900">House Sitter Details</h3>
                   {cleaner.transport_mode && (
                     <InfoLine
                       icon={<Clock className="h-4 w-4 text-slate-400" />}
@@ -427,7 +424,7 @@ export default function CleanerProfilePage() {
             <div className="grid gap-4 px-4 pb-4 pt-6 sm:px-5 sm:pb-5 sm:pt-6 lg:grid-cols-[240px_1fr]">
               <Card className="h-fit border-slate-200">
                 <CardContent className="px-5 pb-5 pt-6 text-center sm:px-6 sm:pb-6 sm:pt-6">
-                  <p className={`${displayFont.className} text-4xl font-bold tracking-[-0.02em] text-slate-900`}>
+                  <p className={`text-4xl font-bold tracking-[-0.02em] text-slate-900`}>
                     {avgRating > 0 ? avgRating.toFixed(1) : '—'}
                   </p>
                   <StarRating rating={avgRating} size="md" showValue={false} className="mt-1 justify-center" />
@@ -465,8 +462,8 @@ export default function CleanerProfilePage() {
                       <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
                         <div className="mb-2 flex items-start justify-between">
                           <div>
-                            <p className="font-semibold text-slate-900">Client</p>
-                            <p className={`${monoFont.className} text-[0.68rem] tracking-wide text-slate-500`}>
+                            <p className="font-semibold text-slate-900">Homeowner</p>
+                            <p className={`text-[0.68rem] tracking-wide text-slate-500`}>
                               {formatDate(review.created_at)}
                             </p>
                           </div>
@@ -477,7 +474,7 @@ export default function CleanerProfilePage() {
                         </p>
                         {review.cleaner_reply && (
                           <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-                            <p className="text-xs font-semibold text-blue-900">Cleaner reply</p>
+                            <p className="text-xs font-semibold text-blue-900">House Sitter reply</p>
                             <p className="mt-1 text-sm text-blue-900">{review.cleaner_reply}</p>
                             {review.cleaner_reply_at && (
                               <p className="mt-1 text-xs text-blue-700">
@@ -505,7 +502,7 @@ export default function CleanerProfilePage() {
               ) : (
                 <Card className="border-slate-200">
                   <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
-                    <h3 className={`${displayFont.className} mb-3 text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
+                    <h3 className={`mb-3 text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
                       Upcoming Available Dates
                     </h3>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

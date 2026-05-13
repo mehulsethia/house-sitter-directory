@@ -1,13 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { NotificationBell } from '@/components/notification-bell'
 import { useRouter } from 'next/navigation'
 
-interface NavLink { href: string; label: string }
+interface NavLink {
+  href: string
+  label: string
+}
 
 interface NavBarProps {
   links: NavLink[]
@@ -29,13 +33,15 @@ export function NavBar({ links }: NavBarProps) {
   }
 
   return (
-    <header className="border-b px-6 py-3 flex items-center justify-between">
-      <Link href="/" className="text-xl font-bold text-primary">MaidHive</Link>
+    <header className="flex items-center justify-between border-b border-[#ece6e0] bg-white px-6 py-3">
+      <Link href="/" className="inline-flex items-center">
+        <Image src="/branding/logo.png" alt="The House Sitter Directory" width={220} height={66} className="h-8 w-auto" />
+      </Link>
 
       <nav className="flex items-center gap-6">
-        {links.map(l => (
-          <Link key={l.href} href={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            {l.label}
+        {links.map((link) => (
+          <Link key={link.href} href={link.href} className="text-sm text-[#6b6b6b] hover:text-[#5a4a3b]">
+            {link.label}
           </Link>
         ))}
       </nav>
@@ -44,7 +50,7 @@ export function NavBar({ links }: NavBarProps) {
         {userId && <NotificationBell userId={userId} />}
         <button
           onClick={signOut}
-          className="h-9 w-9 rounded-md flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-[#6b6b6b] transition-colors hover:bg-[#f5f1ec] hover:text-[#1a1a1a]"
           aria-label="Sign out"
         >
           <LogOut className="h-4 w-4" />

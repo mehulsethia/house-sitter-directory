@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useEffect, useMemo, useState, startTransition } from 'react'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { Grid3x3, List, Car, Package, Heart, Briefcase, Star } from 'lucide-react'
 import { cleanersApi, favoritesApi } from '@/lib/api'
 import { EmptyState } from '@/components/empty-state'
@@ -30,9 +29,6 @@ type CleanerVM = CleanerSummary & {
   cleaning_supplies?: 'own_supplies' | 'client_supplies'
 }
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
-
 function transportLabel(value?: string) {
   if (value === 'own_car') return 'Own car'
   if (value === 'bus_walk') return 'Bus / walk'
@@ -42,21 +38,15 @@ function transportLabel(value?: string) {
 
 function suppliesLabel(value?: string) {
   if (value === 'own_supplies') return 'Brings own supplies'
-  if (value === 'client_supplies') return 'Client must provide supplies'
+  if (value === 'client_supplies') return 'Homeowner must provide supplies'
   return null
 }
 
 const SERVICE_FILTER_OPTIONS = [
-  'Regular home cleaning',
-  'One-off cleaning',
-  'Airbnb / short-term rental cleaning',
-  'Laundry / folding clothes',
-  'Kitchen deep clean',
-  'Bathroom deep clean',
-  'Ironing',
-  'Windows',
-  'Deep cleaning',
-  'Move in/out',
+  'Short Term',
+  'Long Term',
+  'Pet Sitting',
+  'Plant Care',
 ]
 
 export default function ClientCleanersPage() {
@@ -101,7 +91,7 @@ export default function ClientCleanersPage() {
         setCleaners(
           items.map((cleaner) => ({
             ...cleaner,
-            name: cleaner?.user?.name ?? 'Cleaner',
+            name: cleaner?.user?.name ?? 'House Sitter',
             city: cleaner?.service_areas?.[0]?.city,
             years_experience: cleaner?.years_experience ?? cleaner?.yearsExperience,
             profile_image_url:
@@ -117,7 +107,7 @@ export default function ClientCleanersPage() {
         setLoading(false)
       })
     } catch {
-      toast.error('Failed to load cleaners.')
+      toast.error('Failed to load sitters.')
       setCleaners([])
       setLoading(false)
     }
@@ -177,13 +167,13 @@ export default function ClientCleanersPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Talent Directory
+              <p className="text-[0.7rem] uppercase tracking-[0.24em] text-white/75">
+                The House Sitter Directory Talent Directory
               </p>
               <h1
-                className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}
+                className="text-2xl tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl"
               >
-                Find Your Cleaner
+                Find Your House Sitter
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 Discover trusted professionals, compare rates and ratings, then book with confidence.
@@ -192,13 +182,13 @@ export default function ClientCleanersPage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className="text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90">
                   Results
                 </p>
-                <p className={`${displayFont.className} mt-1 text-4xl font-bold tracking-[-0.02em] text-white`}>
+                <p className="mt-1 text-4xl tracking-[-0.02em] text-white">
                   {filtered.length}
                 </p>
-                <p className="mt-1 text-sm text-white/80">Approved cleaner profiles matching your filters.</p>
+                <p className="mt-1 text-sm text-white/80">Approved house sitter profiles matching your filters.</p>
               </div>
             </div>
           </div>
@@ -236,7 +226,7 @@ export default function ClientCleanersPage() {
               <option value="no">No</option>
             </Select>
             <Select value={service} onChange={(event) => setService(event.target.value)} className="w-full">
-              <option value="">Services: Any</option>
+              <option value="">Sit Type: Any</option>
               {SERVICE_FILTER_OPTIONS.map((option) => (
                 <option key={option} value={option}>
                   {option}
@@ -270,7 +260,7 @@ export default function ClientCleanersPage() {
                 type="button"
                 onClick={() => setView('list')}
                 className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 text-sm font-semibold ${
-                  view === 'list' ? 'bg-[#0d4bc9] text-white' : 'text-slate-600'
+                  view === 'list' ? 'bg-[#5a4a3b] text-white' : 'text-slate-600'
                 }`}
               >
                 <List className="h-4 w-4" /> List
@@ -279,7 +269,7 @@ export default function ClientCleanersPage() {
                 type="button"
                 onClick={() => setView('card')}
                 className={`inline-flex flex-1 items-center justify-center gap-1 rounded-full px-2.5 text-sm font-semibold ${
-                  view === 'card' ? 'bg-[#0d4bc9] text-white' : 'text-slate-600'
+                  view === 'card' ? 'bg-[#5a4a3b] text-white' : 'text-slate-600'
                 }`}
               >
                 <Grid3x3 className="h-4 w-4" /> Card
@@ -291,7 +281,7 @@ export default function ClientCleanersPage() {
         {loading ? (
           <ListPageSkeleton />
         ) : filtered.length === 0 ? (
-          <EmptyState title="No cleaners available right now" description="Try adjusting your filters and search criteria." />
+          <EmptyState title="No sitters available right now" description="Try adjusting your filters and search criteria." />
         ) : view === 'card' ? (
           <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((cleaner, index) => (
@@ -323,7 +313,7 @@ export default function ClientCleanersPage() {
                       fallback="C"
                     />
                     <div className="min-w-0">
-                      <h3 className={`${displayFont.className} truncate text-[20px] font-bold tracking-[-0.02em] text-[#0f1733]`}>
+                      <h3 className={`truncate text-[20px] font-bold tracking-[-0.02em] text-[#0f1733]`}>
                         {cleaner.name}
                       </h3>
                       <div className="mt-1 flex items-center gap-2">
@@ -360,7 +350,7 @@ export default function ClientCleanersPage() {
                       {cleaner.bio?.trim() || 'Detail-oriented cleaner with a calm, methodical approach.'}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {['Pro Cleaner', ...(cleaner.skills ?? []).slice(0, 3)].map((tag) => (
+                      {['Pro House Sitter', ...(cleaner.skills ?? []).slice(0, 3)].map((tag) => (
                         <span key={tag} className="rounded-full bg-[#eef1ff] px-[11px] py-[5px] text-[12.5px] font-semibold tracking-[0.005em] text-[#1f3bd6]">
                           {tag}
                         </span>
@@ -369,7 +359,7 @@ export default function ClientCleanersPage() {
                   </div>
 
                   <div className="flex w-full flex-wrap items-center justify-start gap-2.5 xl:w-auto xl:justify-end">
-                    <p className={`${displayFont.className} shrink-0 text-[18px] font-bold tracking-[-0.02em] text-[#0f1733]`}>
+                    <p className={`shrink-0 text-[18px] font-bold tracking-[-0.02em] text-[#0f1733]`}>
                       {formatCurrency(Number(cleaner.hourly_rate ?? 0))}
                       <span className="ml-1 text-[12px] font-medium text-[#8a90a8]">/hr</span>
                     </p>

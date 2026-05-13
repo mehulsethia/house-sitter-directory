@@ -20,7 +20,7 @@ import { SidebarProfile } from '@/components/sidebar-profile'
 
 const NAV_ITEMS = [
   { href: '/client/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { href: '/client/cleaners', label: 'Cleaners', icon: Users },
+  { href: '/client/cleaners', label: 'Sitters', icon: Users },
   { href: '/client/bookings', label: 'Bookings', icon: CalendarDays },
   { href: '/client/chats', label: 'Messages', icon: MessagesSquare },
   { href: '/client/notifications', label: 'Notifications', icon: Bell },
@@ -56,7 +56,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
         <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-slate-200/80 lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur-md">
           <Link href="/client/dashboard" className="mb-8 inline-flex items-center gap-2.5">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-indigo-700 font-extrabold text-white shadow-[0_10px_24px_rgba(39,70,250,0.35)]">M</span>
-            <span className="text-[1.7rem] font-bold tracking-tight text-primary">MaidHive</span>
+            <span className="text-[1.7rem] font-bold tracking-tight text-primary">The House Sitter Directory</span>
           </Link>
           <div className="mb-5 border-t border-slate-200/80" />
 
@@ -98,7 +98,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
             <div className="mb-3 flex items-center justify-between">
               <Link href="/client/dashboard" className="inline-flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-primary to-indigo-700 text-sm font-bold text-white">M</span>
-                <span className="text-lg font-bold tracking-tight text-primary">MaidHive</span>
+                <span className="text-lg font-bold tracking-tight text-primary">The House Sitter Directory</span>
               </Link>
               <button
                 type="button"

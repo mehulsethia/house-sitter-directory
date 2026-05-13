@@ -1,14 +1,12 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-
 export const metadata: Metadata = {
-  title: 'MaidHive — Book trusted cleaners near you',
-  description: 'Find, book, and pay verified professional cleaners in your area.',
+  title: 'The House Sitter Directory — Your Home, Lovingly Cared For',
+  description:
+    'Connect with verified, trusted house sitters who treat your home like their own.',
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
@@ -19,10 +17,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
-        <Providers>
-          {children}
-        </Providers>
+      <body className="font-sans antialiased bg-background text-foreground">
+        <Providers>{children}</Providers>
         <Toaster richColors position="top-right" />
       </body>
     </html>

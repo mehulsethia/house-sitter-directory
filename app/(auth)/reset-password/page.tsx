@@ -36,7 +36,7 @@ function ResetPasswordForm() {
       {/* Left — Branding panel */}
       <div className="hidden lg:flex flex-col bg-slate-50 p-5 lg:p-6">
         <div className="flex flex-1 min-h-[360px] flex-col justify-end rounded-xl border border-slate-200/70 bg-[linear-gradient(130deg,#04162f_5%,#0f3b76_55%,#0e5698_100%)] p-7 shadow-lg">
-          <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/85">MaidHive</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-cyan-100/85">The House Sitter Directory</p>
           <p className="mt-2 text-xl font-bold text-white">Create a new password and protect your account.</p>
         </div>
       </div>

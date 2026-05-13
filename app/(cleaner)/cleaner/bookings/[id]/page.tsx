@@ -329,7 +329,7 @@ export default function CleanerBookingDetailPage() {
     ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
     : null
   const completedBookingsCount = Number(clientTrust?.completedBookingsCount ?? 0)
-  const clientDisplayName = booking.client?.user?.name?.trim() || 'Client'
+  const clientDisplayName = booking.client?.user?.name?.trim() || 'Homeowner'
   const clientAvatarUrl = booking.client?.user?.avatar_url ?? null
   const cleanerPrivacy = (booking as any)?.cleanerPrivacy as {
     phoneVisible?: boolean
@@ -412,7 +412,7 @@ export default function CleanerBookingDetailPage() {
                 fallback="C"
               />
               <div className="min-w-0">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Client</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Homeowner</p>
                 <p className="truncate text-sm font-semibold text-slate-800">{clientDisplayName}</p>
               </div>
             </div>
@@ -420,7 +420,7 @@ export default function CleanerBookingDetailPage() {
             <p className="flex items-center gap-2"><Clock className="h-4 w-4" />{booking.duration_hours} hours</p>
             <p className="flex items-center gap-2"><MapPin className="h-4 w-4" />{booking.address}, {booking.city}, {booking.postcode}</p>
             {((booking.client as any)?.idFileUrl || (booking.client as any)?.id_file_url) && (
-              <p className="text-xs font-medium text-emerald-700">Client trust badge: ID provided</p>
+              <p className="text-xs font-medium text-emerald-700">Homeowner trust badge: ID provided</p>
             )}
             <div className="flex flex-wrap items-center gap-2">
               {memberSinceLabel && (
@@ -456,7 +456,7 @@ export default function CleanerBookingDetailPage() {
               )
             ) : (
               <p className="text-xs text-slate-500">
-                Client phone can be revealed only inside confirmed bookings.
+                Homeowner phone can be revealed only inside confirmed bookings.
                 {cleanerPrivacy?.phoneVisibleAt ? ` Available from ${formatDate(cleanerPrivacy.phoneVisibleAt)}.` : ''}
               </p>
             )}
@@ -508,7 +508,7 @@ export default function CleanerBookingDetailPage() {
           <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
             {isCleanerProposal
               ? `You proposed a new time (${formatDate(booking.proposed_start!)}). Waiting for client response.`
-              : `Client countered with ${formatDate(booking.proposed_start!)}. Accept or decline before request expiry.`}
+              : `Homeowner countered with ${formatDate(booking.proposed_start!)}. Accept or decline before request expiry.`}
           </p>
         )}
         {!isCancelledPreConfirmation && isCleanerPostConfirmationProposal && (
@@ -518,7 +518,7 @@ export default function CleanerBookingDetailPage() {
         )}
         {!isCancelledPreConfirmation && isClientPostConfirmationProposal && (
           <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Client proposed a reschedule: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Accept, decline, or counter once before the 24-hour cutoff.
+            Homeowner proposed a reschedule: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Accept, decline, or counter once before the 24-hour cutoff.
           </p>
         )}
         {!isCancelledPreConfirmation && isAmendProposal && booking.proposal_by === 'cleaner' && (
@@ -528,7 +528,7 @@ export default function CleanerBookingDetailPage() {
         )}
         {!isCancelledPreConfirmation && canRespondToClientAmendProposal && (
           <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
-            Client requested Amend Start Time: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Accept, decline, or counter once.
+            Homeowner requested Amend Start Time: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Accept, decline, or counter once.
           </p>
         )}
         {!isCancelledPreConfirmation && hasOpenProposalFlow && proposalCountdownLabel && (
@@ -935,7 +935,7 @@ export default function CleanerBookingDetailPage() {
               }
               className="mt-1"
             >
-              <option value="client_no_show">Client no-show</option>
+              <option value="client_no_show">Homeowner no-show</option>
               <option value="service_not_completed">Service not completed as expected</option>
               <option value="property_damage_safety">Property damage or safety issue</option>
               <option value="other_issue">Other issue</option>

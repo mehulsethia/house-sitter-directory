@@ -75,7 +75,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
     router.refresh()
   }
 
-  const roleLabel = role === 'cleaner' ? 'Cleaner' : 'Client'
+  const roleLabel = role === 'cleaner' ? 'House Sitter' : 'Homeowner'
   return (
     <div ref={ref} className="relative mt-auto border-t border-slate-200 pt-2">
       {/* Popover — rises up above trigger */}

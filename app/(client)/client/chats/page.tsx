@@ -3,7 +3,6 @@
 import { Suspense, useDeferredValue, useEffect, useState, startTransition } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { MessageCircleMore, Search } from 'lucide-react'
 import { authApi, bookingsApi } from '@/lib/api'
 import { createClient } from '@/lib/supabase'
@@ -16,8 +15,6 @@ import { formatDate } from '@/lib/utils'
 import type { BookingRead } from '@/types'
 import { toast } from 'sonner'
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',
@@ -105,10 +102,10 @@ function ClientChatsPageContent() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Message Channel
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Message Channel
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                 Messages
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -118,10 +115,10 @@ function ClientChatsPageContent() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
                   Active Threads
                 </p>
-                <p className={`${displayFont.className} mt-1 text-4xl font-bold tracking-[-0.02em] text-white`}>
+                <p className={`mt-1 text-4xl font-bold tracking-[-0.02em] text-white`}>
                   {deferredBookings.length}
                 </p>
                 <p className="mt-1 text-sm text-white/80">
@@ -137,7 +134,7 @@ function ClientChatsPageContent() {
         <section className="grid gap-4 md:h-[calc(100vh-15rem)] md:grid-cols-[300px_1fr] lg:h-[calc(100vh-16rem)] lg:grid-cols-[360px_1fr]">
           <div className="flex min-h-[22rem] flex-col rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm sm:min-h-[26rem] sm:p-5 md:min-h-0">
             <div>
-              <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>Conversations</h2>
+              <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>Conversations</h2>
               <p className="mt-1 text-sm text-slate-500">Search and switch between booking threads.</p>
             </div>
 
@@ -159,7 +156,7 @@ function ClientChatsPageContent() {
               <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {filtered.map((booking, index) => {
                   const active = booking.id === selectedBookingId
-                  const cleanerName = booking.cleaner?.user?.name ?? 'Cleaner'
+                  const cleanerName = booking.cleaner?.user?.name ?? 'House Sitter'
                   const cleanerImage = booking.cleaner?.profile_image_url
                   return (
                     <button
@@ -167,7 +164,7 @@ function ClientChatsPageContent() {
                       onClick={() => setSelectedBookingId(booking.id)}
                       className={`chat-row w-full rounded-2xl border px-3 py-3 text-left transition duration-300 ${
                         active
-                          ? 'border-[#0d4bc9]/30 bg-[#0d4bc9]/10'
+                          ? 'border-[#5a4a3b]/30 bg-[#5a4a3b]/10'
                           : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50'
                       }`}
                       style={{ animationDelay: `${index * 65}ms` }}
@@ -177,13 +174,13 @@ function ClientChatsPageContent() {
                           name={cleanerName}
                           imageUrl={cleanerImage}
                           className="h-10 w-10 shrink-0"
-                          textClassName="text-sm font-bold text-[#0d4bc9]"
-                          fallbackClassName="bg-[#0d4bc9]/10 text-[#0d4bc9]"
+                          textClassName="text-sm font-bold text-[#5a4a3b]"
+                          fallbackClassName="bg-[#5a4a3b]/10 text-[#5a4a3b]"
                           fallback="C"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-slate-900">{cleanerName}</p>
-                          <p className={`${monoFont.className} truncate text-[0.7rem] tracking-wide text-slate-500`}>
+                          <p className={`truncate text-[0.7rem] tracking-wide text-slate-500`}>
                             {formatDate(booking.scheduled_start)}
                           </p>
                         </div>
@@ -204,14 +201,14 @@ function ClientChatsPageContent() {
             ) : (
               <div className="flex h-full min-h-0 flex-col p-3 md:p-4">
                 <div className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                  <p className={`${displayFont.className} text-base font-semibold tracking-[-0.01em] text-slate-900`}>
+                  <p className={`text-base font-semibold tracking-[-0.01em] text-slate-900`}>
                     {SERVICE_LABELS[selected.service_type] ?? selected.service_type}
                   </p>
-                  <p className="text-xs text-slate-600">{selected.cleaner?.user?.name ?? 'Cleaner'}</p>
-                  <p className={`${monoFont.className} text-[0.7rem] tracking-wide text-slate-500`}>
+                  <p className="text-xs text-slate-600">{selected.cleaner?.user?.name ?? 'House Sitter'}</p>
+                  <p className={`text-[0.7rem] tracking-wide text-slate-500`}>
                     {selected.city}, {selected.postcode} · {formatDate(selected.scheduled_start)}
                   </p>
-                  <Link href={`/client/bookings/${selected.id}`} className="mt-1 inline-block text-xs font-medium text-[#0d4bc9] hover:underline">
+                  <Link href={`/client/bookings/${selected.id}`} className="mt-1 inline-block text-xs font-medium text-[#5a4a3b] hover:underline">
                     Open booking details
                   </Link>
                 </div>

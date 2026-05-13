@@ -1,101 +1,88 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 
+const NAV_LINKS = [
+  { href: '/client/cleaners', label: 'Find a House Sitter' },
+  { href: '/for-cleaners', label: 'House Sitter Info' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/faq', label: 'FAQ' },
+]
+
 export function LandingHeader() {
-  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-white font-bold text-sm">M</span>
-          </div>
-          <span className="text-xl font-bold text-gray-900">MaidHive</span>
+    <header className="sticky top-0 z-50 border-b border-[#ece6e0] bg-white/95 backdrop-blur">
+      <div className="max-site-width flex h-20 items-center justify-between gap-6">
+        <Link href="/" className="inline-flex items-center">
+          <Image
+            src="/branding/logo.png"
+            alt="The House Sitter Directory"
+            width={320}
+            height={96}
+            className="h-12 w-auto"
+            priority
+          />
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8">
-          <Link
-            href="/"
-            className={`text-sm font-medium transition-colors ${
-              pathname === '/' ? 'text-primary' : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            For Clients
-          </Link>
-          <Link
-            href="/for-cleaners"
-            className={`text-sm font-medium transition-colors ${
-              pathname === '/for-cleaners' ? 'text-primary' : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            For Cleaners
-          </Link>
+        <nav className="hidden items-center gap-7 md:flex">
+          {NAV_LINKS.map((item) => (
+            <Link key={item.href} href={item.href} className="text-[14px] text-[#1a1a1a] hover:text-[#5a4a3b]">
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            href="/login"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
-          >
-            Log in
+        <div className="hidden items-center gap-3 md:flex">
+          <Link href="/login" className="text-[14px] text-[#1a1a1a] hover:text-[#5a4a3b]">
+            Log In
           </Link>
           <Link
             href="/signup"
-            className="text-sm font-semibold text-white bg-primary hover:bg-primary/90 transition-all px-6 py-2.5 rounded-full shadow-sm hover:shadow-md"
+            className="inline-flex h-10 items-center rounded-[4px] bg-[#5a4a3b] px-5 text-[14px] font-medium text-white hover:opacity-95"
           >
-            Get Started
+            Start Now
           </Link>
         </div>
 
-        {/* Mobile menu button */}
         <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          type="button"
+          onClick={() => setMobileOpen((prev) => !prev)}
+          className="rounded-[4px] border border-[#e0e0e0] p-2 md:hidden"
           aria-label="Toggle menu"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 sm:px-6 space-y-3">
-          <Link
-            href="/"
-            onClick={() => setMobileOpen(false)}
-            className="block text-sm font-medium text-gray-700 py-2"
-          >
-            For Clients
-          </Link>
-          <Link
-            href="/for-cleaners"
-            onClick={() => setMobileOpen(false)}
-            className="block text-sm font-medium text-gray-700 py-2"
-          >
-            For Cleaners
-          </Link>
-          <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-700 py-2"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/signup"
-              className="text-sm font-semibold text-white bg-primary text-center py-2.5 rounded-full"
-            >
-              Get Started
-            </Link>
+        <div className="border-t border-[#ece6e0] bg-white px-4 py-4 md:hidden">
+          <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-3">
+            {NAV_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="py-1 text-[14px] text-[#1a1a1a]"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <div className="mt-2 flex items-center gap-2 border-t border-[#ece6e0] pt-3">
+              <Link href="/login" className="text-[14px] text-[#1a1a1a]">
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-10 items-center rounded-[4px] bg-[#5a4a3b] px-4 text-[14px] text-white"
+              >
+                Start Now
+              </Link>
+            </div>
           </div>
         </div>
       )}

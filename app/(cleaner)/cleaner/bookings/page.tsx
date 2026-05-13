@@ -350,7 +350,7 @@ export default function CleanerBookingsPage() {
                   : null
                 const completedBookingsCount = Number(trust?.completedBookingsCount ?? 0)
                 const startJobState = getStartJobAvailability(b.scheduled_start)
-                const clientName = b.client?.user?.name?.trim() || 'Client'
+                const clientName = b.client?.user?.name?.trim() || 'Homeowner'
                 const clientAvatarUrl = b.client?.user?.avatar_url ?? null
                 return (
                   <div key={b.id} className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)] sm:p-5">
@@ -365,7 +365,7 @@ export default function CleanerBookingsPage() {
                           textClassName="text-[10px]"
                           fallback="C"
                         />
-                        <p className="text-sm text-slate-600">Client: {clientName}</p>
+                        <p className="text-sm text-slate-600">Homeowner: {clientName}</p>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {memberSinceLabel && (
@@ -389,7 +389,7 @@ export default function CleanerBookingsPage() {
                         <p className="mt-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
                           {b.proposal_by === 'cleaner'
                             ? `You proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Waiting for client response.`
-                            : `Client proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Review and respond before expiry.`}
+                            : `Homeowner proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Review and respond before expiry.`}
                         </p>
                       )}
                     </div>

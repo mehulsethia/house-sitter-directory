@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Responsible Disclosure Policy — MaidHive',
-  description: 'MaidHive\u2019s policy for responsible security vulnerability disclosure.',
+  title: 'Responsible Disclosure Policy — The House Sitter Directory',
+  description: 'The House Sitter Directory\u2019s policy for responsible security vulnerability disclosure.',
 }
 
 export default function DisclosurePage() {
@@ -25,30 +25,30 @@ export default function DisclosurePage() {
           {/* Preamble */}
           <div className="mb-12 text-gray-600 leading-relaxed space-y-4 text-[15px]">
             <p>
-              At MaidHive, we take the security of our platform and user data seriously.
+              At The House Sitter Directory, we take the security of our platform and user data seriously.
             </p>
             <p>
               We welcome responsible security research and encourage individuals to report potential vulnerabilities in a manner that protects our users and the integrity of the platform.
             </p>
             <p>
-              This Responsible Disclosure Policy outlines how vulnerabilities should be reported and how MaidHive will respond to such reports.
+              This Responsible Disclosure Policy outlines how vulnerabilities should be reported and how The House Sitter Directory will respond to such reports.
             </p>
           </div>
 
           {/* ─── Section 1 ─── */}
           <Section number="1" title="Scope">
-            <p>This policy applies to vulnerabilities affecting the following systems operated by MaidHive:</p>
+            <p>This policy applies to vulnerabilities affecting the following systems operated by The House Sitter Directory:</p>
             <BulletList items={[
-              'The MaidHive website and web application',
+              'The House Sitter Directory website and web application',
               'User authentication and account access',
               'Booking workflows and booking state management',
               'Messaging systems',
               'Payment-related flows (including Stripe integrations)',
-              'APIs and backend services operated by MaidHive',
+              'APIs and backend services operated by The House Sitter Directory',
             ]} />
             <p>The following are out of scope:</p>
             <BulletList items={[
-              'Third-party services not controlled by MaidHive (e.g. Stripe, hosting providers)',
+              'Third-party services not controlled by The House Sitter Directory (e.g. Stripe, hosting providers)',
               'Issues requiring access to third-party infrastructure',
             ]} />
             <p>Vulnerabilities affecting third-party services should be reported directly to the relevant provider.</p>
@@ -78,7 +78,7 @@ export default function DisclosurePage() {
               'Avoid accessing, modifying, or deleting data that does not belong to you',
               'Avoid actions that could negatively impact platform availability (e.g. denial-of-service attacks)',
               'Not attempt social engineering, phishing, or physical security testing',
-              'Not publicly disclose the vulnerability until MaidHive has had a reasonable opportunity to investigate and resolve the issue',
+              'Not publicly disclose the vulnerability until The House Sitter Directory has had a reasonable opportunity to investigate and resolve the issue',
             ]} />
             <p>If your testing involves exposure to personal data, you must stop testing immediately and report the issue.</p>
           </Section>
@@ -92,7 +92,7 @@ export default function DisclosurePage() {
               'We will keep you informed of progress where appropriate',
               'We will take reasonable steps to resolve confirmed vulnerabilities',
             ]} />
-            <p>MaidHive will not pursue legal action against individuals who act in good faith, comply with this policy, and do not violate applicable laws.</p>
+            <p>The House Sitter Directory will not pursue legal action against individuals who act in good faith, comply with this policy, and do not violate applicable laws.</p>
             <p>This protection applies only to activities conducted within the scope and guidelines of this policy.</p>
             <p>We aim to resolve confirmed vulnerabilities within a reasonable timeframe, taking into account the complexity and potential impact of the issue.</p>
           </Section>
@@ -105,15 +105,15 @@ export default function DisclosurePage() {
               'Issues requiring physical access to a user\u2019s device',
               'Missing best-practice configurations without a demonstrated exploit',
               'Rate limiting or brute force concerns without clear evidence of impact',
-              'Issues affecting third-party platforms not controlled by MaidHive',
+              'Issues affecting third-party platforms not controlled by The House Sitter Directory',
             ]} />
           </Section>
 
           {/* ─── Section 6 ─── */}
           <Section number="6" title="No Bug Bounty Program">
-            <p>MaidHive does not currently operate a public bug bounty program.</p>
+            <p>The House Sitter Directory does not currently operate a public bug bounty program.</p>
             <p>Submission of a vulnerability report does not entitle the reporter to financial compensation unless explicitly agreed in writing.</p>
-            <p>MaidHive may, at its discretion, acknowledge or thank individuals who report valid vulnerabilities.</p>
+            <p>The House Sitter Directory may, at its discretion, acknowledge or thank individuals who report valid vulnerabilities.</p>
           </Section>
 
           {/* ─── Section 7 ─── */}

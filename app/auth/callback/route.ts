@@ -73,13 +73,13 @@ export async function GET(request: NextRequest) {
                 await pushInAppNotification({
                   userId: user.id,
                   type: 'account_created',
-                  title: 'Welcome to MaidHive',
-                  body: 'Your client profile is ready. Start by browsing available cleaners.',
+                  title: 'Welcome to The House Sitter Directory',
+                  body: 'Your homeowner profile is ready. Start by browsing available sitters.',
                 })
                 try {
                   await loopsEmailService.sendClientAccountCreated({
                     email: dbUser.email,
-                    fullName: dbUser.name ?? 'Client',
+                    fullName: dbUser.name ?? 'Homeowner',
                   })
                 } catch (emailError) {
                   console.error('Failed to send client account created email via Loops:', emailError)
@@ -92,13 +92,13 @@ export async function GET(request: NextRequest) {
                 await pushInAppNotification({
                   userId: user.id,
                   type: 'account_created',
-                  title: 'Welcome to MaidHive',
-                  body: 'Your cleaner profile is created. Complete onboarding to start receiving jobs.',
+                  title: 'Welcome to The House Sitter Directory',
+                  body: 'Your house sitter profile is created. Complete onboarding to start receiving sit requests.',
                 })
                 try {
                   await loopsEmailService.sendCleanerSignup({
                     email: dbUser.email,
-                    fullName: dbUser.name ?? 'Cleaner',
+                    fullName: dbUser.name ?? 'House Sitter',
                   })
                 } catch (emailError) {
                   console.error('Failed to send cleaner signup email via Loops:', emailError)

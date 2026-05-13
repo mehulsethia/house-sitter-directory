@@ -57,8 +57,8 @@ function parseSpecialInstructions(raw: string): ParsedBookingInstructions {
       parsed.propertyCondition = sanitizeValue(line.replace('Property condition:', ''))
       continue
     }
-    if (line.startsWith('Cleaning supplies:')) {
-      parsed.cleaningSupplies = sanitizeValue(line.replace('Cleaning supplies:', ''))
+    if (line.startsWith('Home-care supplies:')) {
+      parsed.cleaningSupplies = sanitizeValue(line.replace('Home-care supplies:', ''))
       continue
     }
     if (line.startsWith('What needs to be cleaned:')) {
@@ -88,7 +88,7 @@ export function BookingInstructions({ value, compact = false }: { value: string;
     ['Bedrooms', parsed.bedrooms],
     ['Bathrooms', parsed.bathrooms],
     ['Property condition', parsed.propertyCondition],
-    ['Cleaning supplies', parsed.cleaningSupplies],
+    ['Home-care supplies', parsed.cleaningSupplies],
   ].filter(([, val]) => Boolean(val)) as Array<[string, string]>
 
   return (

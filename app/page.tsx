@@ -1,403 +1,240 @@
-'use client'
-
-import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { MapPin, Star, BedDouble, Bath, PawPrint } from 'lucide-react'
 import { LandingHeader } from '@/components/landing-header'
-import { CookieConsentBanner } from '@/components/cookie-consent-banner'
-import { ScrollReveal, StaggerChildren } from '@/components/scroll-reveal'
 import Footer from '@/components/footer'
-import {
-  Shield,
-  CreditCard,
-  DollarSign,
-  UserCheck,
-  ClipboardCheck,
-  Star,
-  Clock,
-  Sparkles,
-  Home,
-  Building,
-  CheckCircle2,
-  ArrowRight,
-  ChevronRight,
-} from 'lucide-react'
+import { CookieConsentBanner } from '@/components/cookie-consent-banner'
 
-const HOW_IT_WORKS_STEPS = [
-  {
-    step: '01',
-    title: 'Choose an approved cleaner',
-    desc: 'Browse verified profiles with real reviews and transparent pricing.',
-    icon: UserCheck,
-    image: '/images/Property%201=Variant.jpg',
-  },
-  {
-    step: '02',
-    title: 'Pick a time that works',
-    desc: 'Select from available slots that fit your schedule.',
-    icon: Clock,
-    image: '/images/Property%202=Time.jpg',
-  },
-  {
-    step: '03',
-    title: 'Get your home cleaned',
-    desc: 'Your cleaner arrives on time and completes the service professionally.',
-    icon: Sparkles,
-    image: '/images/Property%203=Cleaning.jpg',
-  },
-  {
-    step: '04',
-    title: 'Pay securely after completion',
-    desc: 'Payment is processed only after you confirm the work is done.',
-    icon: CreditCard,
-    image: '/images/Property%204=Giving%20money.jpg',
-  },
-]
+const SITTERS = Array.from({ length: 9 }).map((_, idx) => ({
+  id: idx + 1,
+  name: ['Emma Carter', 'Noah Bennett', 'Sophie Lane', 'James Turner', 'Olivia Hayes', 'Luca Morgan', 'Mia Collins', 'Ethan Brooks', 'Ava Reed'][idx],
+  location: ['London', 'Bristol', 'Manchester', 'Leeds', 'Edinburgh', 'Cardiff', 'Bath', 'York', 'Brighton'][idx],
+  rating: ['4.9', '4.8', '4.9', '4.7', '5.0', '4.8', '4.9', '4.8', '4.9'][idx],
+  reviews: [182, 140, 205, 96, 134, 121, 164, 109, 177][idx],
+  tags: [
+    ['Dog Sitting', 'Long Term', 'Experienced'],
+    ['Pet Friendly', 'House Security', 'Trusted'],
+    ['Cat Care', 'Verified', 'Top Rated'],
+    ['Plant Care', 'Long Term', 'Verified'],
+    ['Senior Homes', 'Pet Friendly', 'Experienced'],
+    ['Family Homes', 'Top Rated', 'Verified'],
+    ['Dog Sitting', 'Plant Care', 'Trusted'],
+    ['Long Term', 'Verified', 'Experienced'],
+    ['Pet Friendly', 'Top Rated', 'Calm'],
+  ][idx],
+}))
 
-export default function ClientLandingPage() {
-  const [activeHowStepIndex, setActiveHowStepIndex] = useState(0)
+const SITS = Array.from({ length: 6 }).map((_, idx) => ({
+  id: idx + 1,
+  title: ['Riverside Family Home', 'Cotswold Cottage Retreat', 'Modern Townhouse', 'Seaside Villa', 'Country Barn House', 'Central Apartment'][idx],
+  location: ['Oxford', 'Gloucester', 'London', 'Brighton', 'Somerset', 'Birmingham'][idx],
+  beds: [3, 2, 4, 5, 3, 2][idx],
+  baths: [2, 1, 3, 3, 2, 1][idx],
+  pets: ['2 Dogs', '1 Cat', 'None', '1 Dog', '2 Cats', '1 Dog'][idx],
+  rating: ['4.9', '4.8', '4.9', '5.0', '4.8', '4.7'][idx],
+  status: idx % 2 === 0 ? 'Available' : 'NEW',
+}))
 
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setActiveHowStepIndex((prev) => (prev + 1) % HOW_IT_WORKS_STEPS.length)
-    }, 3000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [])
-
+export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen bg-white text-[#1a1a1a]">
       <LandingHeader />
 
-      {/* ─── Hero ─── */}
-      <section className="relative bg-gradient-to-br from-gray-950 via-gray-900 to-primary/30 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(59,91,219,0.15),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(59,91,219,0.1),transparent_50%)]" />
+      <section className="relative overflow-hidden bg-[#f9f6f3] pt-16">
+        <div className="hero-bg absolute inset-0" aria-hidden="true" />
+        <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 lg:py-28">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left */}
-            <div className="animate-fade-in">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1] mb-6">
-                A better way to book a cleaner
-              </h1>
-              <p className="text-lg text-gray-300 leading-relaxed mb-8 max-w-lg">
-                MaidHive connects you to trusted local cleaners with transparent
-                pricing and secure payments, all managed directly on the platform.
-              </p>
+        <div className="max-site-width relative z-10 pb-16 text-white">
+          <div className="max-w-3xl">
+            <p className="inline-flex rounded-full bg-white/15 px-3 py-1 text-sm">Trusted by 5000+ Members</p>
+            <h1 className="mt-4 text-4xl leading-tight sm:text-5xl">Your Home, Lovingly Cared For</h1>
+            <p className="mt-4 max-w-2xl text-base text-white/90">
+              Connect with verified, trusted house sitters who treat your home like their own. Find the perfect match for your home and lifestyle.
+            </p>
+          </div>
 
-              <Link
-                href="/signup"
-                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3.5 rounded-lg text-base transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
-              >
-                Find a cleaner
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-
-              <div className="mt-10 flex flex-col gap-3">
-                {[
-                  'Approved cleaners with background checks',
-                  'Clear pricing, no hidden fees',
-                  'Secure payment after completion',
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                    <span className="text-sm text-gray-300">{item}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="mt-8 brand-card rounded-[8px] bg-white p-4 text-[#1a1a1a]">
+            <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
+              <input type="text" placeholder="📍 Where?" className="h-11 px-3" />
+              <input type="text" placeholder="📅 From" className="h-11 px-3" />
+              <input type="text" placeholder="📅 To" className="h-11 px-3" />
+              <button className="h-11 rounded-[4px] bg-[#5a4a3b] px-5 text-white">Search Sitters</button>
             </div>
-
-            {/* Right — Hero image */}
-            <div className="relative hidden lg:block animate-fade-in-right">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
-                <Image
-                  src="/images/hero-client.gif"
-                  alt="Professional cleaner at work"
-                  fill
-                  className="object-cover"
-                  unoptimized
-                  priority
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
-              </div>
+            <div className="mt-4 flex flex-wrap gap-3 text-sm text-[#5a4a3b]">
+              <span>🐾 Pet Friendly</span>
+              <span>✅ Verified Sitters</span>
+              <span>⭐ Top Rated</span>
+              <span>💬 Best Feedback</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── How it works ─── */}
-      <section id="how-it-works" className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <ScrollReveal className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              See how MaidHive works
-            </h2>
-            <p className="text-gray-500 text-lg">
-              A seamless platform that handles everything
-            </p>
-          </ScrollReveal>
+      <section className="bg-[#1a1a1a] py-8">
+        <div className="max-site-width grid gap-6 text-center text-white sm:grid-cols-2 lg:grid-cols-4">
+          <Stat value="15,000+" label="Active Sitters" />
+          <Stat value="25,000+" label="Verified Connections" />
+          <Stat value="4.9/5" label="Average Rating" />
+          <Stat value="98%" label="Satisfaction Rate" />
+        </div>
+      </section>
 
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Auto-rotating step image */}
-            <ScrollReveal animation="fade-right" className="relative flex items-center justify-center">
-              <div className="relative w-full max-w-md">
-                <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 p-4">
-                  <div className="relative rounded-xl overflow-hidden aspect-[4/3]">
-                    <Image
-                      src={HOW_IT_WORKS_STEPS[activeHowStepIndex].image}
-                      alt={HOW_IT_WORKS_STEPS[activeHowStepIndex].title}
-                      fill
-                      className="object-cover"
-                      sizes="(min-width: 1024px) 420px, 100vw"
-                    />
-                  </div>
-                  <div className="mt-4 flex items-center justify-center gap-2">
-                    {HOW_IT_WORKS_STEPS.map((step, index) => (
-                      <span
-                        key={step.step}
-                        className={`h-2 rounded-full transition-all ${
-                          index === activeHowStepIndex ? 'w-8 bg-primary' : 'w-2 bg-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
+      <section className="bg-white" id="why-us">
+        <div className="max-site-width">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-4xl">Why Choose Us?</h2>
+            <p className="mt-3 text-[#6b6b6b]">You&apos;ve built the most trusted platform for house sitting.</p>
+          </div>
 
-            {/* Right — Steps */}
-            <StaggerChildren className="space-y-8" stagger={120} animation="fade-left">
-              {HOW_IT_WORKS_STEPS.map((item, index) => (
-                <div key={item.step} className="flex gap-5 group">
-                  <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                    index === activeHowStepIndex ? 'bg-primary/20' : 'bg-primary/10 group-hover:bg-primary/20'
-                  }`}>
-                    <item.icon className="h-5 w-5 text-primary" />
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoCard icon="✅" title="Verified Sitters" desc="All our sitters go through thorough identity verification and background checks." />
+            <InfoCard icon="⭐" title="Trusted Reviews" desc="Real reviews from real homeowners to help you make informed decisions." />
+            <InfoCard icon="🛡️" title="Insurance Included" desc="Comprehensive insurance included with every booking for complete peace of mind." />
+            <InfoCard icon="🕐" title="24/7 Support" desc="Round-the-clock support whenever you need us, day or night." />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#f9f6f3]" id="featured-sitters">
+        <div className="max-site-width">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-4xl">Featured House Sitters</h2>
+              <p className="mt-2 text-[#6b6b6b]">Connect with verified, skilled sitters</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-[#d4c8be] px-4 py-1.5 text-sm">View All</span>
+              <span className="rounded-full bg-[#5a4a3b] px-4 py-1.5 text-sm text-white">Top Rated</span>
+            </div>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {SITTERS.map((sitter) => (
+              <article key={sitter.id} className="brand-card overflow-hidden rounded-[8px] border border-[#efe9e3] p-5">
+                <div className="flex items-start gap-4">
+                  <div className="h-16 w-16 overflow-hidden rounded-full bg-[#ece3db]">
+                    <Image src="/images/stage/cleaner-default.jpg" alt={sitter.name} width={64} height={64} className="h-full w-full object-cover" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                      <span className="text-xs font-mono text-gray-400">{item.step}</span>
-                    </div>
-                    <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+                    <h3 className="text-2xl leading-tight">{sitter.name}</h3>
+                    <p className="mt-1 inline-flex items-center gap-1 text-sm text-[#6b6b6b]"><MapPin className="h-4 w-4" />{sitter.location}</p>
+                    <p className="mt-1 inline-flex items-center gap-1 text-sm text-[#6b6b6b]"><Star className="h-4 w-4 fill-current text-[#5a4a3b]" />{sitter.rating} ({sitter.reviews} reviews)</p>
                   </div>
                 </div>
-              ))}
-            </StaggerChildren>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {sitter.tags.map((tag) => (
+                    <span key={tag} className="rounded-full bg-[#f2ece7] px-3 py-1 text-xs text-[#5a4a3b]">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <button className="mt-5 h-10 w-full rounded-[4px] bg-[#5a4a3b] text-white">View Profile</button>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link href="/client/cleaners" className="text-sm text-[#5a4a3b]">View All Sitters →</Link>
           </div>
         </div>
       </section>
 
-      {/* ─── Why MaidHive ─── */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <ScrollReveal className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Why MaidHive
-            </h2>
-            <p className="text-gray-500 text-lg">
-              Reliable cleaners, transparent pricing, and a process you can trust.
-            </p>
-          </ScrollReveal>
+      <section className="bg-white" id="featured-sits">
+        <div className="max-site-width">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-4xl">Featured House Sits</h2>
+              <p className="mt-2 text-[#6b6b6b]">Explore our most popular listings for your perfect sit</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-[#d4c8be] px-4 py-1.5 text-sm">View All</span>
+              <span className="rounded-full bg-[#5a4a3b] px-4 py-1.5 text-sm text-white">Available</span>
+              <span className="rounded-full border border-[#d4c8be] px-4 py-1.5 text-sm">New</span>
+            </div>
+          </div>
 
-          {/* Top row — 3 cards */}
-          <StaggerChildren className="grid md:grid-cols-3 gap-6 mb-6" stagger={100}>
-            {[
-              {
-                icon: UserCheck,
-                title: 'Choose an approved cleaner',
-                desc: 'Browse ID-verified profiles with real reviews and transparent hourly rates. Every cleaner is approved before joining MaidHive.',
-                color: 'bg-primary/10 text-primary',
-              },
-              {
-                icon: Shield,
-                title: 'Secure payments, always protected',
-                desc: 'Payments authorized at booking, charged only after completion. Your money is never at risk.',
-                color: 'bg-emerald-50 text-emerald-600',
-              },
-              {
-                icon: DollarSign,
-                title: 'Transparent pricing',
-                desc: 'See exact hourly rates upfront. No hidden platform fees, no last-minute charges. What you see is what you pay.',
-                color: 'bg-amber-50 text-amber-600',
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-gray-200 group"
-              >
-                <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-                  <f.icon className="h-6 w-6" />
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {SITS.map((sit) => (
+              <article key={sit.id} className="brand-card overflow-hidden rounded-[8px] border border-[#efe9e3]">
+                <div className="relative h-48">
+                  <Image src="/images/stage/client-booking-detail.jpg" alt={sit.title} fill className="object-cover" />
+                  <span
+                    className={`absolute right-3 top-3 rounded-full px-3 py-1 text-xs font-medium text-white ${
+                      sit.status === 'Available' ? 'bg-green-600' : 'bg-red-600'
+                    }`}
+                  >
+                    {sit.status}
+                  </span>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </StaggerChildren>
 
-          {/* Bottom row — 3 cards */}
-          <StaggerChildren className="grid md:grid-cols-3 gap-6" stagger={100}>
-            {[
-              {
-                icon: ClipboardCheck,
-                title: 'Clear cancellation policies',
-                desc: 'Straightforward rules that protect both clients and cleaners equally. Everyone knows where they stand before the job begins.',
-                color: 'bg-blue-50 text-blue-600',
-              },
-              {
-                icon: Shield,
-                title: 'Structured dispute handling',
-                desc: 'If something goes wrong, our team reviews the case and ensures a fair resolution for both sides — every time.',
-                color: 'bg-violet-50 text-violet-600',
-              },
-              {
-                icon: Star,
-                title: 'Verified reviews you can trust',
-                desc: 'Every review is from a real completed booking. No fake ratings, just honest feedback.',
-                color: 'bg-rose-50 text-rose-600',
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-gray-200 group"
-              >
-                <div className={`w-12 h-12 rounded-xl ${f.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-                  <f.icon className="h-6 w-6" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </StaggerChildren>
-        </div>
-      </section>
+                <div className="p-4">
+                  <h3 className="text-2xl leading-tight">{sit.title}</h3>
+                  <p className="mt-1 inline-flex items-center gap-1 text-sm text-[#6b6b6b]"><MapPin className="h-4 w-4" />{sit.location}</p>
 
-      {/* ─── What you can book ─── */}
-      <section id="services" className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <ScrollReveal className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              What you can book on MaidHive
-            </h2>
-            <p className="text-gray-500 text-lg">
-              All services are booked hourly — choose the number of hours based on your needs.
-            </p>
-          </ScrollReveal>
-
-          <StaggerChildren className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" stagger={120}>
-            {[
-              {
-                icon: Home,
-                title: 'Regular home cleaning',
-                desc: 'Consistent, reliable cleaning on your schedule. Choose weekly or bi-weekly visits to keep your home always fresh.',
-              },
-              {
-                icon: Sparkles,
-                title: 'One-off cleaning',
-                desc: 'A thorough clean whenever you need it. Perfect for special occasions, guests arriving, or a seasonal refresh.',
-              },
-              {
-                icon: ClipboardCheck,
-                title: 'Deep cleaning sessions',
-                desc: 'An intensive clean covering every surface, corner, and hard-to-reach area. Ideal for spring cleaning or moving into a new home.',
-              },
-              {
-                icon: Building,
-                title: 'End-of-tenancy cleaning',
-                desc: 'A comprehensive clean carried out to professional standards, helping ensure you get your full deposit back.',
-              },
-            ].map((s) => (
-              <div
-                key={s.title}
-                className="bg-white rounded-2xl p-7 border border-gray-100 hover:shadow-lg hover:border-gray-200 transition-all duration-300 group"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mb-5 group-hover:bg-primary/10 transition-colors">
-                  <s.icon className="h-6 w-6 text-gray-600 group-hover:text-primary transition-colors" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{s.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
-              </div>
-            ))}
-          </StaggerChildren>
-        </div>
-      </section>
-
-      {/* ─── CTA Banner ─── */}
-      <section className="bg-gradient-to-br from-gray-950 via-gray-900 to-primary/30 py-20">
-        <ScrollReveal className="max-w-3xl mx-auto px-4 sm:px-6 text-center" animation="zoom-in">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Ready to book with confidence?
-          </h2>
-          <p className="text-gray-300 text-lg mb-10">
-            Used by homeowners and renters who value reliability
-          </p>
-          <Link
-            href="/signup"
-            className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-semibold px-8 py-3.5 rounded-lg text-base transition-all shadow-lg"
-          >
-            Find a trusted cleaner
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </ScrollReveal>
-      </section>
-
-      {/* ─── Become a cleaner cross-sell ─── */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Image */}
-            <ScrollReveal animation="fade-right" className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
-              <Image
-                src="/images/Become%20a%20Cleaner.png"
-                alt="Professional cleaner with cleaning supplies"
-                fill
-                className="object-cover"
-                sizes="(min-width: 1024px) 50vw, 100vw"
-              />
-            </ScrollReveal>
-
-            {/* Content */}
-            <ScrollReveal animation="fade-left">
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                Become a cleaner
-              </h2>
-              <p className="text-gray-500 text-lg leading-relaxed mb-8">
-                Join MaidHive and work with flexible hours, fair compensation,
-                and the backing of a professional platform. Set your rates and
-                build your client base.
-              </p>
-
-              <div className="space-y-5 mb-10">
-                {[
-                  { title: 'Choose an approved cleaner', desc: 'Choose when and where you work.' },
-                  { title: 'Fair pay, weekly deposits', desc: 'Reliable income with transparent rates.' },
-                  { title: 'Join a trusted network', desc: 'Be part of an approved professional community.' },
-                ].map((item) => (
-                  <div key={item.title} className="flex items-start gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-gray-900 text-sm">{item.title}</h4>
-                      <p className="text-sm text-gray-500">{item.desc}</p>
-                    </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    <span className="rounded-full bg-[#f2ece7] px-3 py-1 text-[#5a4a3b]"><BedDouble className="mr-1 inline h-3.5 w-3.5" />{sit.beds} Bedrooms</span>
+                    <span className="rounded-full bg-[#f2ece7] px-3 py-1 text-[#5a4a3b]"><Bath className="mr-1 inline h-3.5 w-3.5" />{sit.baths} Bathrooms</span>
+                    <span className="rounded-full bg-[#f2ece7] px-3 py-1 text-[#5a4a3b]"><PawPrint className="mr-1 inline h-3.5 w-3.5" />{sit.pets}</span>
                   </div>
-                ))}
-              </div>
 
-              <Link
-                href="/for-cleaners"
-                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold px-7 py-3 rounded-lg transition-all shadow-sm hover:shadow-md text-sm"
-              >
-                Join MaidHive as a cleaner
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-              <p className="text-xs text-gray-400 mt-4">
-                Set your availability, accept bookings, and get paid securely through the platform.
-              </p>
-            </ScrollReveal>
+                  <p className="mt-3 inline-flex items-center gap-1 text-sm text-[#6b6b6b]"><Star className="h-4 w-4 fill-current text-[#5a4a3b]" />{sit.rating}</p>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button className="h-10 rounded-[4px] border border-[#5a4a3b] bg-transparent text-[#5a4a3b]">View Details</button>
+                    <button className="h-10 rounded-[4px] bg-[#5a4a3b] text-white">Message</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link href="/client/bookings" className="text-sm text-[#5a4a3b]">View All Sits →</Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#f9f6f3]" id="how-it-works">
+        <div className="max-site-width">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-4xl">How It Works</h2>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            <StepCard
+              step="1"
+              title="Create Your Profile"
+              desc="Sign up and create a detailed profile showcasing your experience and preferences."
+            />
+            <StepCard
+              step="2"
+              title="Browse & Connect"
+              desc="Search for house sits or sitters that match your requirements and location."
+            />
+            <StepCard
+              step="3"
+              title="Book with Confidence"
+              desc="Communicate directly, arrange the details, and enjoy the peace of mind."
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#1a1a1a]">
+        <div className="max-site-width text-center text-white">
+          <h2 className="text-4xl text-white">Ready to Get Started?</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-white/85">
+            Join thousands of homeowners and sitters who trust The House Sitter Directory.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/client/cleaners" className="inline-flex h-11 items-center justify-center rounded-[4px] bg-[#5a4a3b] px-6 text-white">
+              Find a Sitter
+            </Link>
+            <Link href="/signup?role=cleaner" className="inline-flex h-11 items-center justify-center rounded-[4px] border border-white bg-black px-6 text-white">
+              Become a Sitter
+            </Link>
           </div>
         </div>
       </section>
@@ -405,5 +242,34 @@ export default function ClientLandingPage() {
       <Footer />
       <CookieConsentBanner />
     </main>
+  )
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <p className="text-3xl text-white">{value}</p>
+      <p className="mt-1 text-sm text-white/80">{label}</p>
+    </div>
+  )
+}
+
+function InfoCard({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+  return (
+    <article className="brand-card rounded-[8px] border border-[#efe9e3] p-5">
+      <p className="text-2xl">{icon}</p>
+      <h3 className="mt-3 text-2xl">{title}</h3>
+      <p className="mt-2 text-sm text-[#6b6b6b]">{desc}</p>
+    </article>
+  )
+}
+
+function StepCard({ step, title, desc }: { step: string; title: string; desc: string }) {
+  return (
+    <article className="brand-card rounded-[8px] border border-[#efe9e3] p-6 text-center">
+      <p className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#5a4a3b] text-sm text-white">{step}</p>
+      <h3 className="mt-3 text-2xl">{title}</h3>
+      <p className="mt-2 text-sm text-[#6b6b6b]">{desc}</p>
+    </article>
   )
 }

@@ -2,7 +2,6 @@
 
 import { Suspense, useDeferredValue, useEffect, useState, startTransition } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { CalendarDays, Search } from 'lucide-react'
 import { bookingsApi, disputesApi } from '@/lib/api'
 import { EmptyState } from '@/components/empty-state'
@@ -23,7 +22,7 @@ const DISPUTE_WINDOW_HOURS = Number(process.env.NEXT_PUBLIC_DISPUTE_WINDOW_HOURS
 const DISPUTE_WINDOW_MS = DISPUTE_WINDOW_HOURS * 60 * 60 * 1000
 
 const ISSUE_OPTIONS = [
-  { value: 'cleaner_didnt_arrive', label: "Cleaner didn't arrive" },
+  { value: 'cleaner_didnt_arrive', label: "House Sitter didn't arrive" },
   { value: 'service_not_completed', label: 'Service not completed as expected' },
   { value: 'property_damage_safety', label: 'Property damage or safety issue' },
   { value: 'other_issue', label: 'Other issue' },
@@ -43,8 +42,6 @@ const STATUS_LABELS: Record<ReportStatus, string> = {
   closed: 'Closed',
 }
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 function getDisputeBookingId(dispute: any) {
   return dispute?.booking_id ?? dispute?.bookingId ?? ''
@@ -158,7 +155,7 @@ function ClientReportPageContent() {
     if (issueType === 'cleaner_didnt_arrive') {
       const canReportNoShowAt = new Date(selectedBooking.scheduled_start).getTime() + 30 * 60 * 1000
       if (Date.now() < canReportNoShowAt) {
-        return toast.error('Cleaner no-show can be reported 30 minutes after the scheduled start time.')
+        return toast.error('House Sitter no-show can be reported 30 minutes after the scheduled start time.')
       }
     }
     if (explanation.trim().length < 20) {
@@ -251,10 +248,10 @@ function ClientReportPageContent() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Resolution Desk
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Resolution Desk
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                 Reports & Disputes
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -264,9 +261,9 @@ function ClientReportPageContent() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto grid w-full max-w-sm grid-cols-1 gap-2 rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm sm:grid-cols-3">
-                <StatTile label="Open" value={pendingCount} monoFont={monoFont.className} displayFont={displayFont.className} active={dashboardFilter === 'open'} onClick={() => { setDashboardFilter('open'); setStatusFilter('all') }} />
-                <StatTile label="Review" value={underReviewCount} monoFont={monoFont.className} displayFont={displayFont.className} active={dashboardFilter === 'under_review'} onClick={() => { setDashboardFilter('under_review'); setStatusFilter('all') }} />
-                <StatTile label="Done" value={resolvedCount} monoFont={monoFont.className} displayFont={displayFont.className} active={dashboardFilter === 'done'} onClick={() => { setDashboardFilter('done'); setStatusFilter('all') }} />
+                <StatTile label="Open" value={pendingCount} monoFont={'font-montserrat'} displayFont={'font-heading'} active={dashboardFilter === 'open'} onClick={() => { setDashboardFilter('open'); setStatusFilter('all') }} />
+                <StatTile label="Review" value={underReviewCount} monoFont={'font-montserrat'} displayFont={'font-heading'} active={dashboardFilter === 'under_review'} onClick={() => { setDashboardFilter('under_review'); setStatusFilter('all') }} />
+                <StatTile label="Done" value={resolvedCount} monoFont={'font-montserrat'} displayFont={'font-heading'} active={dashboardFilter === 'done'} onClick={() => { setDashboardFilter('done'); setStatusFilter('all') }} />
               </div>
             </div>
           </div>
@@ -274,7 +271,7 @@ function ClientReportPageContent() {
 
         <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
           <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
-            <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
+            <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
               Report a problem
             </h2>
             <p className="mt-1 text-sm text-slate-500">
@@ -282,7 +279,7 @@ function ClientReportPageContent() {
             </p>
             {queryBookingDisputeStatus === 'under_review' && (
               <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-                This booking is currently under review by MaidHive.
+                This booking is currently under review by The House Sitter Directory.
               </p>
             )}
 
@@ -297,7 +294,7 @@ function ClientReportPageContent() {
                   <Select value={bookingId} onChange={(event) => setBookingId(event.target.value)} className="mt-1">
                     {eligibleBookings.map((booking) => (
                       <option key={booking.id} value={booking.id}>
-                        {booking.cleaner?.user?.name ?? 'Cleaner'} · {formatDate(booking.scheduled_start)} · {booking.city}
+                        {booking.cleaner?.user?.name ?? 'House Sitter'} · {formatDate(booking.scheduled_start)} · {booking.city}
                       </option>
                     ))}
                   </Select>
@@ -316,7 +313,7 @@ function ClientReportPageContent() {
                   </Select>
                   {!canUseCleanerNoShowOption && (
                     <p className="mt-1 text-xs text-slate-500">
-                      “Cleaner didn&apos;t arrive” becomes available 30 minutes after scheduled start.
+                      “House Sitter didn&apos;t arrive” becomes available 30 minutes after scheduled start.
                     </p>
                   )}
                 </div>
@@ -362,7 +359,7 @@ function ClientReportPageContent() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={submitReport} loading={saving || uploadingEvidence} className="rounded-full bg-[#0d4bc9] hover:bg-[#0a3ea8]">
+                  <Button onClick={submitReport} loading={saving || uploadingEvidence} className="rounded-full bg-[#5a4a3b] hover:bg-[#4b3d31]">
                     Submit Report
                   </Button>
                 </div>
@@ -371,7 +368,7 @@ function ClientReportPageContent() {
           </div>
 
           <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-5 shadow-[0_18px_45px_rgba(11,33,78,0.08)] backdrop-blur-sm">
-            <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
+            <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
               Report history
             </h2>
             <p className="mt-1 text-sm text-slate-500">Filter and track all submitted cases.</p>
@@ -413,10 +410,10 @@ function ClientReportPageContent() {
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <p className={`${displayFont.className} text-base font-semibold tracking-[-0.01em] text-slate-900`}>
+                          <p className={`text-base font-semibold tracking-[-0.01em] text-slate-900`}>
                             {booking?.service_type ?? 'Service booking'}
                           </p>
-                          <p className={`${monoFont.className} text-[0.68rem] tracking-wide text-slate-500`}>
+                          <p className={`text-[0.68rem] tracking-wide text-slate-500`}>
                             Booking {getDisputeBookingId(dispute)}
                           </p>
                         </div>

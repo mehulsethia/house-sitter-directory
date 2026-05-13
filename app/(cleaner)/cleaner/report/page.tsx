@@ -2,7 +2,6 @@
 
 import { Suspense, useDeferredValue, useEffect, useState, startTransition } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { CalendarDays, Search } from 'lucide-react'
 import { bookingsApi, disputesApi } from '@/lib/api'
 import { EmptyState } from '@/components/empty-state'
@@ -21,7 +20,7 @@ type ReportStatus = 'open' | 'under_review' | 'resolved' | 'closed'
 const CLEANER_WINDOW_MS = 24 * 60 * 60 * 1000
 
 const ISSUE_OPTIONS = [
-  { value: 'client_no_show', label: 'Client no-show' },
+  { value: 'client_no_show', label: 'Homeowner no-show' },
   { value: 'other_issue', label: 'Access issue' },
   { value: 'property_damage_safety', label: 'Safety concern' },
   { value: 'service_not_completed', label: 'Service dispute' },
@@ -41,8 +40,6 @@ const STATUS_LABELS: Record<ReportStatus, string> = {
   closed: 'Closed',
 }
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 function getDisputeBookingId(dispute: any) {
   return dispute?.booking_id ?? dispute?.bookingId ?? ''
@@ -159,10 +156,10 @@ function CleanerReportPageContent() {
         <div className="client-stage__grain" aria-hidden="true" />
         <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
           <div className="animate-stage-up space-y-4">
-            <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-              MaidHive Resolution Desk
+            <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+              The House Sitter Directory Resolution Desk
             </p>
-            <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+            <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
               Reports &amp; Disputes
             </h1>
             <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -172,9 +169,9 @@ function CleanerReportPageContent() {
 
           <div className="animate-stage-up delay-120">
             <div className="ml-auto grid w-full max-w-sm grid-cols-1 gap-2 rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm sm:grid-cols-3">
-              <StatTile label="Open" value={openCount} monoFont={monoFont.className} displayFont={displayFont.className} />
-              <StatTile label="Review" value={underReviewCount} monoFont={monoFont.className} displayFont={displayFont.className} />
-              <StatTile label="Done" value={doneCount} monoFont={monoFont.className} displayFont={displayFont.className} />
+              <StatTile label="Open" value={openCount} monoFont={'font-montserrat'} displayFont={'font-heading'} />
+              <StatTile label="Review" value={underReviewCount} monoFont={'font-montserrat'} displayFont={'font-heading'} />
+              <StatTile label="Done" value={doneCount} monoFont={'font-montserrat'} displayFont={'font-heading'} />
             </div>
           </div>
         </div>
@@ -182,7 +179,7 @@ function CleanerReportPageContent() {
 
       <section className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] sm:p-5">
-          <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>Report a problem</h2>
+          <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>Report a problem</h2>
           <p className="mt-1 text-sm text-slate-500">Available during the job and up to 24 hours after scheduled completion.</p>
           {eligibleBookings.length === 0 ? (
             <div className="mt-4"><EmptyState title="No bookings available to report." description="No eligible bookings right now." /></div>
@@ -193,7 +190,7 @@ function CleanerReportPageContent() {
                 <Select value={bookingId} onChange={(event) => setBookingId(event.target.value)} className="mt-1">
                   {eligibleBookings.map((booking) => (
                     <option key={booking.id} value={booking.id}>
-                      {booking.client?.user?.name ?? 'Client'} · {formatDate(booking.scheduled_start)} · {booking.city}
+                      {booking.client?.user?.name ?? 'Homeowner'} · {formatDate(booking.scheduled_start)} · {booking.city}
                     </option>
                   ))}
                 </Select>
@@ -211,14 +208,14 @@ function CleanerReportPageContent() {
                 <Textarea value={explanation} onChange={(event) => setExplanation(event.target.value)} className="mt-1" rows={4} placeholder="Describe what happened in clear detail." />
               </div>
               <div className="flex justify-end">
-                <Button onClick={submitReport} loading={saving} className="rounded-full bg-[#0d4bc9] hover:bg-[#0a3ea8]">Submit Report</Button>
+                <Button onClick={submitReport} loading={saving} className="rounded-full bg-[#5a4a3b] hover:bg-[#4b3d31]">Submit Report</Button>
               </div>
             </div>
           )}
         </div>
 
         <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(11,33,78,0.08)] sm:p-5">
-          <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>Report history</h2>
+          <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>Report history</h2>
           <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_180px]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -242,10 +239,10 @@ function CleanerReportPageContent() {
                   <article key={dispute.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <p className={`${displayFont.className} text-base font-semibold tracking-[-0.01em] text-slate-900`}>
+                        <p className={`text-base font-semibold tracking-[-0.01em] text-slate-900`}>
                           {dispute.booking?.service_type ?? 'Service booking'}
                         </p>
-                        <p className={`${monoFont.className} text-[0.68rem] tracking-wide text-slate-500`}>
+                        <p className={`text-[0.68rem] tracking-wide text-slate-500`}>
                           Booking {getDisputeBookingId(dispute)}
                         </p>
                       </div>

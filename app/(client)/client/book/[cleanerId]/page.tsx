@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Clock, ExternalLink, Lock, Shield, Star, X } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -26,8 +25,6 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',
@@ -60,8 +57,8 @@ const PROPERTY_CONDITION_OPTIONS = [
 ] as const
 
 const SUPPLIES_OPTIONS = [
-  { value: 'client_provides', label: 'I will provide cleaning supplies' },
-  { value: 'cleaner_brings', label: 'Cleaner should bring supplies' },
+  { value: 'client_provides', label: 'I will provide home-care supplies' },
+  { value: 'cleaner_brings', label: 'House Sitter should bring supplies' },
 ] as const
 
 const STEP_INFO = [
@@ -185,7 +182,7 @@ function parseBookingSnapshotDetails(specialInstructions?: string | null): Booki
     bedrooms: readLine('Bedrooms'),
     bathrooms: readLine('Bathrooms'),
     propertyCondition: readLine('Property condition'),
-    supplies: readLine('Cleaning supplies'),
+    supplies: readLine('Home-care supplies'),
     needsCleaning: readLine('What needs to be cleaned'),
     photos,
   }
@@ -333,7 +330,7 @@ function BookingSummary({
   postcode: string
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false)
-  const cleanerName = cleaner.user?.name ?? 'Professional Cleaner'
+  const cleanerName = cleaner.user?.name ?? 'Professional House Sitter'
   const total = breakdown?.total_amount ?? Number((cleaner.hourly_rate * duration * 1.1).toFixed(2))
   const serviceCost = breakdown?.subtotal ?? cleaner.hourly_rate * duration
   const platformFee = breakdown?.platform_fee ?? Number((serviceCost * 0.1).toFixed(2))
@@ -349,7 +346,7 @@ function BookingSummary({
     cleaner.cleaning_supplies === 'own_supplies'
       ? 'Brings own supplies'
       : cleaner.cleaning_supplies === 'client_supplies'
-        ? 'Client must provide supplies'
+        ? 'Homeowner must provide supplies'
       : 'Not set'
   const selectedJobType = JOB_TYPE_OPTIONS.find((option) => option.value === jobType)
   const serviceTypeLabel = selectedJobType?.label ?? 'Cleaning Service'
@@ -372,7 +369,7 @@ function BookingSummary({
       </CardHeader>
       <CardContent className="space-y-4">
 
-        {/* Cleaner info */}
+        {/* House Sitter info */}
         <div className="flex items-center gap-3">
           <UserAvatar
             name={cleanerName}
@@ -461,7 +458,7 @@ function BookingSummary({
 
         <Separator />
         <div className="space-y-2 text-sm">
-          <p className="font-semibold text-slate-900">Cleaner Details</p>
+          <p className="font-semibold text-slate-900">House Sitter Details</p>
           <p className="text-slate-600">Transport: {transportLabel}</p>
           {cleaner.transport_mode === 'requires_pickup' && Boolean((cleaner as any).transport_pickup_location) && (
             <p className="text-slate-600">Pick-up location: {pickupFullLabel((cleaner as any).transport_pickup_location)}</p>
@@ -1510,8 +1507,8 @@ export default function BookingFlowPage() {
       `Bedrooms: ${bedrooms}`,
       `Bathrooms: ${bathrooms}`,
       `Property condition: ${conditionMeta?.label ?? 'Not provided'}`,
-      `Cleaning supplies: ${suppliesMeta?.label ?? 'Not provided'}`,
-      `Cleaner transport: ${transportSnapshot}`,
+      `Home-care supplies: ${suppliesMeta?.label ?? 'Not provided'}`,
+      `House Sitter transport: ${transportSnapshot}`,
       ...(pickupLocationSnapshot ? [`Pickup location snapshot: ${pickupLocationSnapshot}`] : []),
       `What needs to be cleaned: ${notes.trim()}`,
     ]
@@ -1544,7 +1541,7 @@ export default function BookingFlowPage() {
         return
       }
       if (cleanerNeedsClientSupplies && !suppliesAgreementConfirmed) {
-        toast.error('Please confirm cleaning supplies arrangement before proceeding.')
+        toast.error('Please confirm home-care supplies arrangement before proceeding.')
         return
       }
       if (!date) { toast.error('Please select a date.'); return }
@@ -1590,7 +1587,7 @@ export default function BookingFlowPage() {
       if (!bedrooms) { toast.error('Please select bedrooms.'); return }
       if (!bathrooms) { toast.error('Please select bathrooms.'); return }
       if (!propertyCondition) { toast.error('Please select the current condition of the property.'); return }
-      if (!effectiveSuppliesProvider) { toast.error('Please select who will provide cleaning supplies.'); return }
+      if (!effectiveSuppliesProvider) { toast.error('Please select who will provide home-care supplies.'); return }
       if (!notes.trim()) {
         setNotesValidationWarning(true)
         toast.error('Please add a short description of what needs to be cleaned')
@@ -1748,7 +1745,7 @@ export default function BookingFlowPage() {
 
     setCancelRequestLoading(true)
     try {
-      await bookingsApi.cancel(booking.id, 'Client cancelled draft before payment authorisation')
+      await bookingsApi.cancel(booking.id, 'Homeowner cancelled draft before payment authorisation')
       clearSessionDraft()
       toast.success('Draft cancelled. You can start a new booking now.')
       setCancelRequestConfirmOpen(false)
@@ -1767,9 +1764,9 @@ export default function BookingFlowPage() {
     !isPaymentAuthorizedStatus(booking?.payment?.status)
 
   if (loading || restoringDraft) return <FormPageSkeleton />
-  if (!cleaner) return <div className="text-center py-16 text-muted-foreground">Cleaner not found.</div>
+  if (!cleaner) return <div className="text-center py-16 text-muted-foreground">House Sitter not found.</div>
 
-  const cleanerName = cleaner.user?.name ?? 'Professional Cleaner'
+  const cleanerName = cleaner.user?.name ?? 'Professional House Sitter'
   const showDeepCleanAdvisory = jobType === 'deep_clean' || jobType === 'move_out_end_of_tenancy'
   const cleanerRequiresPickup = cleaner.transport_mode === 'requires_pickup'
   const cleanerNeedsClientSupplies = cleaner.cleaning_supplies === 'client_supplies'
@@ -1785,10 +1782,10 @@ export default function BookingFlowPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Booking Flow
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Booking Flow
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                 Book {cleanerName}
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -1798,10 +1795,10 @@ export default function BookingFlowPage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
                   Current Step
                 </p>
-                <p className={`${displayFont.className} mt-1 text-3xl font-bold tracking-[-0.02em] text-white`}>
+                <p className={`mt-1 text-3xl font-bold tracking-[-0.02em] text-white`}>
                   {step} / 4
                 </p>
                 <p className="mt-1 text-sm text-white/80">
@@ -1819,7 +1816,7 @@ export default function BookingFlowPage() {
                 onClick={() => (step > 1 ? navigateToStep(step - 1) : router.back())}
                 className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-900"
               >
-                <ArrowLeft className="h-4 w-4" /> {step > 1 ? 'Previous' : 'Back to All Cleaners'}
+                <ArrowLeft className="h-4 w-4" /> {step > 1 ? 'Previous' : 'Back to All House Sitters'}
               </button>
             )}
           </div>
@@ -1883,14 +1880,14 @@ export default function BookingFlowPage() {
 
                 {cleanerNeedsClientSupplies && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    <p>This cleaner does not bring cleaning supplies. You will need to provide all required supplies.</p>
+                    <p>This cleaner does not bring home-care supplies. You will need to provide all required supplies.</p>
                     <label className="mt-2 inline-flex items-start gap-2 text-xs font-medium text-amber-900">
                       <input
                         type="checkbox"
                         checked={suppliesAgreementConfirmed}
                         onChange={(event) => setSuppliesAgreementConfirmed(event.target.checked)}
                       />
-                      I confirm I will provide cleaning supplies.
+                      I confirm I will provide home-care supplies.
                     </label>
                   </div>
                 )}
@@ -2097,7 +2094,7 @@ export default function BookingFlowPage() {
                   </div>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Your full address is only shared after the cleaner accepts the booking. Before acceptance, cleaners only see an approximate area/location.
+                  Your full address is only shared after the cleaner accepts the booking. Before acceptance, house sitters only see an approximate area/location.
                 </p>
 
                   <div>
@@ -2167,7 +2164,7 @@ export default function BookingFlowPage() {
 
                   {showDeepCleanAdvisory && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                      Deep and move-out cleans often take significantly longer than regular cleaning. Underestimating time may result in incomplete tasks or cleaners declining the request.
+                      Deep and move-out cleans often take significantly longer than regular house sitting. Underestimating time may result in incomplete tasks or house sitters declining the request.
                       <div className="mt-2">
                         <button type="button" onClick={() => navigateToStep(1)} className="text-xs font-semibold text-amber-900 underline">
                           Adjust duration
@@ -2220,7 +2217,7 @@ export default function BookingFlowPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-sm font-semibold">Who will provide cleaning supplies? <span className="text-red-500">*</span></Label>
+                    <Label className="text-sm font-semibold">Who will provide home-care supplies? <span className="text-red-500">*</span></Label>
                     <div className="grid gap-2">
                       {SUPPLIES_OPTIONS.map((option) => (
                         <label key={option.value} className="flex items-start gap-2 rounded-lg border border-slate-200 p-2 text-sm text-slate-700">
@@ -2238,7 +2235,7 @@ export default function BookingFlowPage() {
                       ))}
                     </div>
                     {cleanerNeedsClientSupplies && (
-                      <p className="text-xs text-amber-700">This cleaner requires client-provided supplies, so this is locked to: I will provide cleaning supplies.</p>
+                      <p className="text-xs text-amber-700">This cleaner requires client-provided supplies, so this is locked to: I will provide home-care supplies.</p>
                     )}
                   </div>
 
@@ -2513,10 +2510,10 @@ export default function BookingFlowPage() {
                     <span className="font-medium text-slate-900 capitalize">
                       {booking.status === 'pending'
                         ? booking.proposal_by === 'cleaner'
-                          ? 'Awaiting Client Response'
+                          ? 'Awaiting Homeowner Response'
                           : booking.proposal_by === 'client'
-                            ? 'Awaiting Cleaner Response'
-                            : 'Pending Cleaner Acceptance'
+                            ? 'Awaiting House Sitter Response'
+                            : 'Pending House Sitter Acceptance'
                         : booking.status.replace('_', ' ')}
                     </span>
                   </div>

@@ -3,7 +3,7 @@ import type { BookingStatus } from '@/types'
 
 const STATUS_CONFIG: Record<BookingStatus, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline' | 'info' }> = {
   draft:       { label: 'Draft', variant: 'outline' },
-  pending:     { label: 'Pending Cleaner Acceptance',     variant: 'warning' },
+  pending:     { label: 'Pending House Sitter Acceptance',     variant: 'warning' },
   accepted:    { label: 'Accepted',    variant: 'info' },
   confirmed:   { label: 'Confirmed',   variant: 'info' },
   in_progress: { label: 'In Progress', variant: 'default' },
@@ -19,8 +19,8 @@ function isPaymentAuthorized(paymentStatus?: string | null) {
 }
 
 function pendingLabel(proposalBy?: 'client' | 'cleaner' | null) {
-  if (proposalBy === 'cleaner') return 'Awaiting Client Response'
-  if (proposalBy === 'client') return 'Awaiting Cleaner Response'
+  if (proposalBy === 'cleaner') return 'Awaiting Homeowner Response'
+  if (proposalBy === 'client') return 'Awaiting House Sitter Response'
   return STATUS_CONFIG.pending.label
 }
 

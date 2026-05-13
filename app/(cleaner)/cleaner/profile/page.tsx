@@ -37,15 +37,15 @@ const DAYS = [
 ]
 
 const SERVICE_OPTIONS = [
-  'Regular home cleaning',
-  'One-off cleaning',
-  'Airbnb / short-term rental cleaning',
+  'Short Term',
+  'Long Term',
+  'Pet Sitting',
   'Laundry / folding clothes',
-  'Kitchen deep clean',
-  'Bathroom deep clean',
+  'Plant Care',
+  'Home Monitoring',
   'Ironing',
   'Windows',
-  'Deep cleaning',
+  'Pet and Plant Care',
   'Move in/out',
 ]
 const BIO_MAX_CHARS = 1000
@@ -252,7 +252,7 @@ function CleanerProfilePageContent() {
     return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
   }, [reviews])
   const initials = useMemo(() => {
-    const parts = String(fullName || 'Cleaner')
+    const parts = String(fullName || 'House Sitter')
       .trim()
       .split(/\s+/)
       .filter(Boolean)
@@ -325,7 +325,7 @@ function CleanerProfilePageContent() {
     if (bio.trim().length > BIO_MAX_CHARS) return toast.error(`Professional bio can be up to ${BIO_MAX_CHARS} characters.`)
     if (skills.length === 0) return toast.error('Select at least one service.')
     if (!transportMode) return toast.error('Mode of transport is required.')
-    if (!cleaningSupplies) return toast.error('Cleaning supplies setting is required.')
+    if (!cleaningSupplies) return toast.error('Home-care supplies setting is required.')
     if (transportMode === 'requires_pickup' && !pickupLabel.trim()) {
       return toast.error('Location label is required.')
     }
@@ -616,7 +616,7 @@ function CleanerProfilePageContent() {
                   onUploaded={(url) => setProfileImageUrl(url)}
                 />
               </div>
-              <p className="text-2xl font-bold text-slate-900">{fullName || 'Cleaner'}</p>
+              <p className="text-2xl font-bold text-slate-900">{fullName || 'House Sitter'}</p>
               <p className="text-sm text-slate-500">{email || 'No email found'}</p>
               <div className="mt-2 flex items-center justify-center gap-1 text-amber-500">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -698,11 +698,11 @@ function CleanerProfilePageContent() {
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
                     <div><Label>Hourly Rate (€{MIN_HOURLY_RATE}–€{MAX_HOURLY_RATE})</Label><Input type="number" min={MIN_HOURLY_RATE} max={MAX_HOURLY_RATE} value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} className="mt-1" /></div>
                     <div>
-                      <Label>Cleaning supplies</Label>
+                      <Label>Home-care supplies</Label>
                       <Select value={cleaningSupplies} onChange={(e) => setCleaningSupplies(e.target.value)} className="mt-1">
                         <option value="">Choose an option...</option>
-                        <option value="own_supplies">I bring cleaning supplies</option>
-                        <option value="client_supplies">Client must provide cleaning supplies</option>
+                        <option value="own_supplies">I bring home-care supplies</option>
+                        <option value="client_supplies">Homeowner must provide home-care supplies</option>
                       </Select>
                     </div>
                     <div>

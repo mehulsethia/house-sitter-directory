@@ -53,7 +53,7 @@ export default function CleanerDashboardPage() {
 
   async function refresh() {
     try {
-      // Call cleaners/me first — it auto-creates the cleaner profile if missing.
+      // Call cleaners/me first — it auto-creates the house sitter profile if missing.
       // Bookings endpoint needs the cleaner row to exist, so this must complete first.
       try {
         const cleanerRes = await cleanersApi.me()
@@ -197,10 +197,10 @@ export default function CleanerDashboardPage() {
         <div className="relative z-10 grid gap-3 px-5 py-4 sm:px-6 sm:py-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-6">
           <div className="animate-stage-up space-y-4">
             <p className="text-[0.72rem] uppercase tracking-[0.24em] text-white/75">
-              MaidHive Cleaner Hub
+              The House Sitter Directory House Sitter Hub
             </p>
             <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl">
-              Cleaner Dashboard
+              House Sitter Dashboard
             </h1>
             <p className="max-w-xl text-base text-slate-100/90 sm:text-lg">
               Track jobs, manage requests, and run your cleaner business from one focused workspace.
@@ -214,7 +214,7 @@ export default function CleanerDashboardPage() {
               </Link>
               <Link
                 href="/cleaner/bookings?status=pending"
-                className="inline-flex h-11 items-center rounded-full bg-[#f4b400] px-5 text-sm font-semibold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-[#ffca3a]"
+                className="inline-flex h-11 items-center rounded-full bg-[#5a4a3b] px-5 text-sm font-semibold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-[#6a5746]"
               >
                 View bookings
               </Link>
@@ -352,7 +352,7 @@ export default function CleanerDashboardPage() {
                     ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
                     : null
                   const completedBookingsCount = Number(trust?.completedBookingsCount ?? 0)
-                  const clientName = b.client?.user?.name?.trim() || 'Client'
+                  const clientName = b.client?.user?.name?.trim() || 'Homeowner'
                   const clientAvatarUrl = b.client?.user?.avatar_url ?? null
                   const waitingForClientResponse = b.proposal_by === 'cleaner'
                   return (
@@ -369,7 +369,7 @@ export default function CleanerDashboardPage() {
                           textClassName="text-[10px]"
                           fallback="C"
                         />
-                        <p className="text-sm text-slate-600">Client: {clientName}</p>
+                        <p className="text-sm text-slate-600">Homeowner: {clientName}</p>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {memberSinceLabel && (
@@ -478,7 +478,7 @@ export default function CleanerDashboardPage() {
                   const hasProposal = Boolean(b.proposed_start && b.proposal_by)
                   const isActiveProposal = hasProposal && ['pending', 'accepted', 'confirmed'].includes(b.status)
                   const isAmendProposal = b.proposal_context === 'amend_start'
-                  const proposalActor = b.proposal_by === 'client' ? 'Client' : 'You'
+                  const proposalActor = b.proposal_by === 'client' ? 'Homeowner' : 'You'
                   const proposalSummary = isAmendProposal
                     ? `${proposalActor} requested Amend Start Time: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`
                     : `${proposalActor} proposed: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`
@@ -520,7 +520,7 @@ export default function CleanerDashboardPage() {
                 const hasProposal = Boolean(b.proposed_start && b.proposal_by)
                 const isActiveProposal = hasProposal && ['pending', 'accepted', 'confirmed'].includes(b.status)
                 const isAmendProposal = b.proposal_context === 'amend_start'
-                const proposalActor = b.proposal_by === 'client' ? 'Client' : 'You'
+                const proposalActor = b.proposal_by === 'client' ? 'Homeowner' : 'You'
                 const proposalSummary = isAmendProposal
                   ? `${proposalActor} requested Amend Start Time: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`
                   : `${proposalActor} proposed: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`

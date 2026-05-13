@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useDeferredValue, useEffect, useState, startTransition } from 'react'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { CalendarCheck2, CircleX, Clock3, Search } from 'lucide-react'
 import { bookingsApi, disputesApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
@@ -17,14 +16,12 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import type { BookingRead, BookingStatus } from '@/types'
 import { toast } from 'sonner'
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 type ClientStatusFilter = 'all' | BookingStatus | 'awaiting_client_response'
 
 const STATUS_FILTERS: Array<{ key: ClientStatusFilter; label: string }> = [
   { key: 'all', label: 'All' },
-  { key: 'awaiting_client_response', label: 'Awaiting Client Response' },
+  { key: 'awaiting_client_response', label: 'Awaiting Homeowner Response' },
   { key: 'pending', label: 'Pending Response / Payment Required' },
   { key: 'accepted', label: 'Accepted' },
   { key: 'confirmed', label: 'Confirmed' },
@@ -191,10 +188,10 @@ export default function ClientBookingsPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Booking Command
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Booking Command
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                 Your Bookings
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -202,7 +199,7 @@ export default function ClientBookingsPage() {
               </p>
               <Link
                 href="/client/cleaners"
-                className="inline-flex h-11 items-center rounded-full bg-[#f4b400] px-5 text-sm font-semibold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-[#ffca3a]"
+                className="inline-flex h-11 items-center rounded-full bg-[#5a4a3b] px-5 text-sm font-semibold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-[#6a5746]"
               >
                 Book another service
               </Link>
@@ -210,9 +207,9 @@ export default function ClientBookingsPage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto grid w-full max-w-sm grid-cols-1 gap-2 rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm sm:grid-cols-3 sm:gap-3">
-                <MetricChip label="Active" value={activeCount} icon={<Clock3 className="h-4 w-4" />} monoFont={monoFont.className} displayFont={displayFont.className} active={dashboardFilter === 'active'} onClick={() => { setDashboardFilter('active'); setFilter('all') }} />
-                <MetricChip label="Done" value={completedCount} icon={<CalendarCheck2 className="h-4 w-4" />} monoFont={monoFont.className} displayFont={displayFont.className} active={dashboardFilter === 'completed'} onClick={() => { setDashboardFilter('completed'); setFilter('all') }} />
-                <MetricChip label="Closed" value={cancelledCount} icon={<CircleX className="h-4 w-4" />} monoFont={monoFont.className} displayFont={displayFont.className} active={dashboardFilter === 'closed'} onClick={() => { setDashboardFilter('closed'); setFilter('all') }} />
+                <MetricChip label="Active" value={activeCount} icon={<Clock3 className="h-4 w-4" />} monoFont={'font-montserrat'} displayFont={'font-heading'} active={dashboardFilter === 'active'} onClick={() => { setDashboardFilter('active'); setFilter('all') }} />
+                <MetricChip label="Done" value={completedCount} icon={<CalendarCheck2 className="h-4 w-4" />} monoFont={'font-montserrat'} displayFont={'font-heading'} active={dashboardFilter === 'completed'} onClick={() => { setDashboardFilter('completed'); setFilter('all') }} />
+                <MetricChip label="Closed" value={cancelledCount} icon={<CircleX className="h-4 w-4" />} monoFont={'font-montserrat'} displayFont={'font-heading'} active={dashboardFilter === 'closed'} onClick={() => { setDashboardFilter('closed'); setFilter('all') }} />
               </div>
             </div>
           </div>
@@ -260,9 +257,9 @@ export default function ClientBookingsPage() {
                 action={
                   <Link
                     href="/client/cleaners"
-                    className="inline-flex h-9 items-center rounded-full bg-[#0d4bc9] px-4 text-sm font-semibold text-white hover:bg-[#0a3ea8]"
+                    className="inline-flex h-9 items-center rounded-full bg-[#5a4a3b] px-4 text-sm font-semibold text-white hover:bg-[#4b3d31]"
                   >
-                    Browse cleaners
+                    Browse sitters
                   </Link>
                 }
               />
@@ -286,18 +283,18 @@ export default function ClientBookingsPage() {
                     >
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                          <p className={`${displayFont.className} text-lg font-semibold tracking-[-0.01em] text-slate-900`}>
+                          <p className={`text-lg font-semibold tracking-[-0.01em] text-slate-900`}>
                             {getBookingDisplayTitle(booking)}
                           </p>
-                          <p className="text-sm text-slate-600">{booking.cleaner?.user?.name ?? 'Cleaner'}</p>
-                          <p className={`${monoFont.className} mt-1 text-[0.72rem] tracking-wide text-slate-500`}>
+                          <p className="text-sm text-slate-600">{booking.cleaner?.user?.name ?? 'House Sitter'}</p>
+                          <p className={`mt-1 text-[0.72rem] tracking-wide text-slate-500`}>
                             {formatDate(booking.scheduled_start)}
                           </p>
                           <p className="text-xs text-slate-500">{booking.address}, {booking.city}, {booking.postcode}</p>
                           {booking.status === 'pending' && booking.proposed_start && booking.proposal_by && (
                             <p className="mt-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
                               {booking.proposal_by === 'cleaner'
-                                ? `Cleaner proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}.`
+                                ? `House Sitter proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}.`
                                 : `You proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}. Waiting for cleaner response.`}
                             </p>
                           )}
@@ -305,7 +302,7 @@ export default function ClientBookingsPage() {
 
                         <div className="text-left sm:text-right">
                           <BookingStatusBadge status={booking.status} paymentStatus={booking.payment?.status} proposalBy={booking.proposal_by} />
-                          <p className={`${displayFont.className} mt-2 text-base font-semibold text-slate-900`}>
+                          <p className={`mt-2 text-base font-semibold text-slate-900`}>
                             {formatCurrency(Number(booking.total_amount ?? 0))}
                           </p>
                         </div>
@@ -321,7 +318,7 @@ export default function ClientBookingsPage() {
                         {canContinuePayment && (
                           <Link
                             href={`/client/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`}
-                            className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
+                            className="inline-flex h-8 items-center rounded-full bg-[#5a4a3b] px-3 text-xs font-semibold text-white transition hover:bg-[#4b3d31]"
                           >
                             Continue payment
                           </Link>
@@ -361,14 +358,14 @@ export default function ClientBookingsPage() {
                         {canDispute && (
                           <Link
                             href={`/client/report?booking=${booking.id}`}
-                            className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
+                            className="inline-flex h-8 items-center rounded-full bg-[#5a4a3b] px-3 text-xs font-semibold text-white transition hover:bg-[#4b3d31]"
                           >
                             Report a problem
                           </Link>
                         )}
                         {disputeStatusForBooking === 'under_review' && (
                           <span className="inline-flex h-8 items-center rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-700">
-                            This booking is currently under review by MaidHive.
+                            This booking is currently under review by The House Sitter Directory.
                           </span>
                         )}
 
@@ -376,7 +373,7 @@ export default function ClientBookingsPage() {
                           <>
                             <Link
                               href={`/client/book/${booking.cleaner_id}?reset=1&step=1`}
-                              className="inline-flex h-8 items-center rounded-full bg-[#0d4bc9] px-3 text-xs font-semibold text-white transition hover:bg-[#0a3ea8]"
+                              className="inline-flex h-8 items-center rounded-full bg-[#5a4a3b] px-3 text-xs font-semibold text-white transition hover:bg-[#4b3d31]"
                             >
                               Book again
                             </Link>
@@ -384,7 +381,7 @@ export default function ClientBookingsPage() {
                               href="/client/cleaners"
                               className="inline-flex h-8 items-center rounded-full border border-slate-300 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                             >
-                              Choose another cleaner
+                              Choose another sitter
                             </Link>
                           </>
                         )}

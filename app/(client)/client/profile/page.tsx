@@ -1,7 +1,6 @@
 'use client'
 
 import { useDeferredValue, useEffect, useState, startTransition } from 'react'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { CreditCard, ShieldCheck } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
@@ -22,8 +21,6 @@ import type { BookingRead, ClientAddressRead } from '@/types'
 import { toast } from 'sonner'
 import { MAX_SAVED_ADDRESSES, MVP_CITY, MVP_COUNTRY_CODE, MVP_COUNTRY_NAME, normalizeCyprusPostcode } from '@/lib/location-policy'
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 export default function ClientProfilePage() {
@@ -527,7 +524,7 @@ export default function ClientProfilePage() {
 
   if (loading) return <ProfilePageSkeleton />
 
-  const fullName = `${firstName} ${lastName}`.trim() || 'Client'
+  const fullName = `${firstName} ${lastName}`.trim() || 'Homeowner'
   const initials = fullName
     .split(/\s+/)
     .filter(Boolean)
@@ -547,11 +544,11 @@ export default function ClientProfilePage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Identity Vault
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Identity Vault
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
-                Client Profile
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+                Homeowner Profile
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 Manage your personal details, default booking addresses, and account preferences from one polished workspace.
@@ -560,15 +557,15 @@ export default function ClientProfilePage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
                   Account Snapshot
                 </p>
-                <p className={`${displayFont.className} mt-1 text-2xl font-bold tracking-[-0.02em] text-white`}>
+                <p className={`mt-1 text-2xl font-bold tracking-[-0.02em] text-white`}>
                   {fullName}
                 </p>
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <StatTile label="Bookings" value={totalBookings} monoFont={monoFont.className} displayFont={displayFont.className} />
-                  <StatTile label="Spent" value={formatCurrency(totalSpent)} monoFont={monoFont.className} displayFont={displayFont.className} />
+                  <StatTile label="Bookings" value={totalBookings} monoFont={'font-montserrat'} displayFont={'font-heading'} />
+                  <StatTile label="Spent" value={formatCurrency(totalSpent)} monoFont={'font-montserrat'} displayFont={'font-heading'} />
                 </div>
               </div>
             </div>
@@ -584,7 +581,7 @@ export default function ClientProfilePage() {
                 onUploaded={(url) => setAvatarUrl(url)}
               />
               <div className="min-w-0">
-                <p className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>{fullName}</p>
+                <p className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>{fullName}</p>
                 <p className="truncate text-sm text-slate-500">{email || 'No email available'}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {memberSince && (
@@ -626,7 +623,7 @@ export default function ClientProfilePage() {
 
             {tab === 'overview' && (
               <>
-                <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
+                <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
                   Profile Details
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">These details are used to prefill future bookings.</p>
@@ -745,7 +742,7 @@ export default function ClientProfilePage() {
 
             {tab === 'address' && (
               <>
-                <h2 className={`${displayFont.className} text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
+                <h2 className={`text-2xl font-bold tracking-[-0.02em] text-slate-900`}>
                   Addresses
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">Saved/default addresses used to prefill booking flow.</p>
@@ -951,7 +948,7 @@ export default function ClientProfilePage() {
             )}
 
             <div className="mt-5 flex justify-end">
-              <Button onClick={saveProfile} loading={saving} className="rounded-full bg-[#0d4bc9] hover:bg-[#0a3ea8]">
+              <Button onClick={saveProfile} loading={saving} className="rounded-full bg-[#5a4a3b] hover:bg-[#4b3d31]">
                 Save & Publish
               </Button>
             </div>

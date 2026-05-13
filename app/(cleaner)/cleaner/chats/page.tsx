@@ -122,7 +122,7 @@ export default function CleanerChatsPage() {
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
               {filtered.map((b) => {
                 const active = b.id === selectedBookingId
-                const clientName = (b as any)?.client?.user?.name ?? 'Client'
+                const clientName = (b as any)?.client?.user?.name ?? 'Homeowner'
                 const clientImage = (b as any)?.client?.user?.avatar_url as string | undefined
                 return (
                   <button

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { LayoutGrid, CalendarDays, MessagesSquare, Bell, User, Flag } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { clearAuthCache } from '@/lib/auth-cache'
@@ -21,29 +20,27 @@ const NAV_ITEMS = [
   { href: '/cleaner/profile', label: 'Profile', icon: User },
 ]
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 function cleanerStageCopy(pathname: string) {
   if (pathname.startsWith('/cleaner/dashboard')) {
     return {
-      tag: 'MaidHive Cleaner Hub',
-      title: 'Cleaner Dashboard',
+      tag: 'The House Sitter Directory House Sitter Hub',
+      title: 'House Sitter Dashboard',
       desc: 'Track jobs, manage requests, and run your cleaner business from one focused workspace.',
       image: '/images/stage/cleaner-dashboard.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/bookings')) {
     return {
-      tag: 'MaidHive Cleaner Jobs',
-      title: 'Cleaner Bookings',
+      tag: 'The House Sitter Directory House Sitter Sits',
+      title: 'House Sitter Bookings',
       desc: 'Review every booking, update status, and keep delivery consistent.',
       image: '/images/stage/cleaner-bookings.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/chats')) {
     return {
-      tag: 'MaidHive Conversations',
+      tag: 'The House Sitter Directory Conversations',
       title: 'Messages',
       desc: 'Coordinate directly with clients and keep context tied to each job.',
       image: '/images/stage/cleaner-chats.jpg',
@@ -51,7 +48,7 @@ function cleanerStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/cleaner/report')) {
     return {
-      tag: 'MaidHive Resolution Desk',
+      tag: 'The House Sitter Directory Resolution Desk',
       title: 'Report Issues',
       desc: 'Report no-shows, access problems, safety concerns, and disputes for admin review.',
       image: '/images/stage/cleaner-default.jpg',
@@ -59,23 +56,23 @@ function cleanerStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/cleaner/notifications')) {
     return {
-      tag: 'MaidHive Updates',
-      title: 'Cleaner Notifications',
+      tag: 'The House Sitter Directory Updates',
+      title: 'House Sitter Notifications',
       desc: 'Track booking actions, payouts, disputes, and account alerts in one timeline.',
       image: '/images/stage/cleaner-default.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/profile')) {
     return {
-      tag: 'MaidHive Cleaner Identity',
-      title: 'Cleaner Profile',
+      tag: 'The House Sitter Directory House Sitter Identity',
+      title: 'House Sitter Profile',
       desc: 'Present your experience, rates, and availability with a clear professional profile.',
       image: '/images/stage/cleaner-profile.jpg',
     }
   }
   if (pathname.startsWith('/cleaner/availability')) {
     return {
-      tag: 'MaidHive Schedule Control',
+      tag: 'The House Sitter Directory Schedule Control',
       title: 'Availability',
       desc: 'Shape your schedule and block times with precision.',
       image: '/images/stage/cleaner-availability.jpg',
@@ -83,7 +80,7 @@ function cleanerStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/cleaner/earnings')) {
     return {
-      tag: 'MaidHive Earnings',
+      tag: 'The House Sitter Directory Earnings',
       title: 'Payouts & Earnings',
       desc: 'Monitor completed payouts and performance trends over time.',
       image: '/images/stage/cleaner-earnings.jpg',
@@ -91,16 +88,16 @@ function cleanerStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/cleaner/onboarding')) {
     return {
-      tag: 'MaidHive Onboarding',
-      title: 'Cleaner Onboarding',
+      tag: 'The House Sitter Directory Onboarding',
+      title: 'House Sitter Onboarding',
       desc: 'Complete your setup and move into live booking mode.',
       image: '/images/stage/cleaner-onboarding.jpg',
     }
   }
   return {
-    tag: 'MaidHive Cleaner',
-    title: 'Cleaner Workspace',
-    desc: 'Manage all cleaner operations in one place.',
+    tag: 'The House Sitter Directory House Sitter',
+    title: 'House Sitter Workspace',
+    desc: 'Manage all house sitter operations in one place.',
     image: '/images/stage/cleaner-default.jpg',
   }
 }
@@ -168,10 +165,10 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
             <div className="cleaner-stage__media" aria-hidden="true" />
             <div className="cleaner-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-3 sm:px-6 sm:py-3">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 {stage.tag}
               </p>
-              <h1 className={`${displayFont.className} mt-1.5 text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl`}>
+              <h1 className={`mt-1.5 text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl`}>
                 {stage.title}
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>
@@ -237,7 +234,7 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
         <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-slate-200/80 lg:bg-white/90 lg:px-5 lg:py-6 lg:backdrop-blur-md">
           <Link href="/cleaner/dashboard" className="mb-8 inline-flex items-center gap-2.5">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-primary to-indigo-700 font-extrabold text-white shadow-[0_10px_24px_rgba(39,70,250,0.35)]">M</span>
-            <span className="text-[1.7rem] font-bold tracking-tight text-primary">MaidHive</span>
+            <span className="text-[1.7rem] font-bold tracking-tight text-primary">The House Sitter Directory</span>
           </Link>
           <div className="mb-5 border-t border-slate-200/80" />
 
@@ -279,7 +276,7 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
             <div className="mb-3 flex items-center justify-between">
               <Link href="/cleaner/dashboard" className="inline-flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-primary to-indigo-700 text-sm font-bold text-white">M</span>
-                <span className="text-lg font-bold tracking-tight text-primary">MaidHive</span>
+                <span className="text-lg font-bold tracking-tight text-primary">The House Sitter Directory</span>
               </Link>
               <button
                 type="button"
@@ -324,10 +321,10 @@ export function CleanerShell({ children }: { children: React.ReactNode }) {
                 <div className="cleaner-stage__media" aria-hidden="true" />
                 <div className="cleaner-stage__grain" aria-hidden="true" />
                 <div className="relative z-10 px-5 py-3 sm:px-6 sm:py-3">
-                  <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                  <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                     {stage.tag}
                   </p>
-                  <h1 className={`${displayFont.className} mt-1.5 text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl`}>
+                  <h1 className={`mt-1.5 text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl`}>
                     {stage.title}
                   </h1>
                   <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>

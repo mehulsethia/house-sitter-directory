@@ -18,8 +18,8 @@ const PAGE_SIZE = 30
 
 const ROLE_BADGE: Record<string, any> = {
   admin:   { variant: 'destructive', label: 'Admin' },
-  cleaner: { variant: 'warning',     label: 'Cleaner' },
-  client:  { variant: 'secondary',   label: 'Client' },
+  cleaner: { variant: 'warning',     label: 'House Sitter' },
+  client:  { variant: 'secondary',   label: 'Homeowner' },
 }
 
 export default function AdminUsersPage() {
@@ -95,8 +95,8 @@ export default function AdminUsersPage() {
           className="w-full"
         >
           <option value="">All roles</option>
-          <option value="client">Clients</option>
-          <option value="cleaner">Cleaners</option>
+          <option value="client">Homeowners</option>
+          <option value="cleaner">House Sitters</option>
           <option value="admin">Admins</option>
         </Select>
       </div>

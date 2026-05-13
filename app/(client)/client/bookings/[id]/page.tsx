@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { ArrowLeft, Calendar, Clock, MapPin } from 'lucide-react'
 import { authApi, availabilityApi, bookingsApi, paymentsApi, reviewsApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
@@ -33,8 +32,6 @@ import { isChatActiveForBooking, isChatReadOnly } from '@/lib/chat-window'
 import type { BookingRead } from '@/types'
 import { toast } from 'sonner'
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 const SERVICE_LABELS: Record<string, string> = {
   standard: 'Standard Clean',
@@ -364,10 +361,10 @@ export default function ClientBookingDetailPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Booking Detail
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Booking Detail
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
                 {SERVICE_LABELS[booking.service_type]}
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
@@ -377,12 +374,12 @@ export default function ClientBookingDetailPage() {
 
             <div className="animate-stage-up delay-120">
               <div className="ml-auto w-full max-w-sm rounded-3xl border border-white/20 bg-black/35 p-4 backdrop-blur-sm">
-                <p className={`${monoFont.className} text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
+                <p className={`text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/90`}>
                   Current Status
                 </p>
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
                   <BookingStatusBadge status={booking.status} paymentStatus={booking.payment?.status} proposalBy={booking.proposal_by} />
-                  <p className={`${displayFont.className} text-xl font-bold tracking-[-0.02em] text-white`}>
+                  <p className={`text-xl font-bold tracking-[-0.02em] text-white`}>
                     {new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(booking.total_amount)}
                   </p>
                 </div>
@@ -407,7 +404,7 @@ export default function ClientBookingDetailPage() {
           <div className="space-y-4">
             <Card className="border-slate-200 bg-white/90">
               <CardContent className="space-y-3 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
-                <h2 className={`${displayFont.className} text-xl font-semibold tracking-[-0.02em]`}>
+                <h2 className={`text-xl font-semibold tracking-[-0.02em]`}>
                   Booking Information
                 </h2>
                 <Separator />
@@ -445,8 +442,8 @@ export default function ClientBookingDetailPage() {
           <div className="space-y-4">
             <Card className="border-slate-200 bg-white/90">
               <CardContent className="space-y-2 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
-                <h2 className={`${displayFont.className} text-lg font-semibold tracking-[-0.02em] text-slate-900`}>
-                  Cleaner contact
+                <h2 className={`text-lg font-semibold tracking-[-0.02em] text-slate-900`}>
+                  House Sitter contact
                 </h2>
                 {canRevealCleanerPhone ? (
                   cleanerPhone ? (
@@ -458,10 +455,10 @@ export default function ClientBookingDetailPage() {
                       </Button>
                     )
                   ) : (
-                    <p className="text-sm text-slate-500">Cleaner phone is not available yet.</p>
+                    <p className="text-sm text-slate-500">House Sitter phone is not available yet.</p>
                   )
                 ) : (
-                  <p className="text-sm text-slate-500">Chat becomes available once the booking is confirmed. Cleaner phone number is revealed 6 hours before the booking start time.</p>
+                  <p className="text-sm text-slate-500">Chat becomes available once the booking is confirmed. House Sitter phone number is revealed 6 hours before the booking start time.</p>
                 )}
               </CardContent>
             </Card>
@@ -470,8 +467,8 @@ export default function ClientBookingDetailPage() {
               <p className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
                 {cleanerProposed
                   ? isAmendProposal
-                    ? `Cleaner requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
-                    : `Cleaner proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
+                    ? `House Sitter requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
+                    : `House Sitter proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
                   : clientProposed && isAmendProposal
                     ? `You requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Waiting for cleaner response.`
                     : `You proposed a reschedule: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Waiting for cleaner response before the 24-hour cutoff.`}
@@ -497,7 +494,7 @@ export default function ClientBookingDetailPage() {
 
             <Card className="border-slate-200 bg-white/90">
               <CardContent className="space-y-2 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
-                <h2 className={`${displayFont.className} text-lg font-semibold tracking-[-0.02em] text-slate-900`}>
+                <h2 className={`text-lg font-semibold tracking-[-0.02em] text-slate-900`}>
                   Next actions
                 </h2>
                 {Boolean(completedAtMs) && (
@@ -639,7 +636,7 @@ export default function ClientBookingDetailPage() {
                   )}
                   {booking.status === 'in_progress' && (
                     <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                      Cleaner can complete this job from 5 minutes before scheduled end time.
+                      House Sitter can complete this job from 5 minutes before scheduled end time.
                     </p>
                   )}
                   {canReportInProgress && (
@@ -709,7 +706,7 @@ export default function ClientBookingDetailPage() {
           <p className="text-sm text-muted-foreground">
             {isAmendProposal
               ? 'You can counter once for this amendment. Booking date remains unchanged.'
-              : 'You can counter once. Cleaner will then only be able to accept or decline.'}
+              : 'You can counter once. House Sitter will then only be able to accept or decline.'}
           </p>
           <div>
             <Label>Counter start time</Label>
@@ -771,7 +768,7 @@ export default function ClientBookingDetailPage() {
           <p className="text-sm text-muted-foreground">
             {proposalAction === 'propose_alternative'
               ? 'You can request a new date or time for this booking. The other party must accept before the booking changes. If they decline or do not respond before the 24-hour cutoff, the original booking time will remain unchanged.'
-              : 'Choose an available slot on the same day. Cleaner can only accept or decline this amendment request.'}
+              : 'Choose an available slot on the same day. House Sitter can only accept or decline this amendment request.'}
           </p>
           {proposalAction === 'propose_alternative' && (
             <ul className="list-disc space-y-1 pl-5 text-xs text-slate-600">

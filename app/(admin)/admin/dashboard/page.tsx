@@ -168,7 +168,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <WidgetShell
-          title="Pending Cleaner Approvals"
+          title="Pending House Sitter Approvals"
           count={queues?.pending_cleaner_approvals.count ?? 0}
           href="/admin/cleaners"
         >
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
                   <p className="text-xs font-mono text-muted-foreground">Booking #{issue.booking_id.slice(0, 8)}</p>
                   <Badge variant="warning">{issue.payment_status}</Badge>
                 </div>
-                <p className="mt-1 text-sm text-slate-800">Client: {issue.client_name}</p>
+                <p className="mt-1 text-sm text-slate-800">Homeowner: {issue.client_name}</p>
                 <p className="text-xs text-muted-foreground">Re-authorize by {issue.failed_at ? formatDate(issue.failed_at) : 'soon'}</p>
               </div>
             ))
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
                   <p className="text-xs font-mono text-muted-foreground">Booking #{issue.booking_id.slice(0, 8)}</p>
                   <Badge variant="destructive">{issue.payment_status}</Badge>
                 </div>
-                <p className="mt-1 text-sm text-slate-800">Client: {issue.client_name}</p>
+                <p className="mt-1 text-sm text-slate-800">Homeowner: {issue.client_name}</p>
                 <p className="text-xs text-muted-foreground">Failed {issue.failed_at ? formatDate(issue.failed_at) : 'recently'}</p>
               </div>
             ))
@@ -348,7 +348,7 @@ export default function AdminDashboard() {
 
         <Card className="border-slate-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Cleaner Lifecycle Health</CardTitle>
+            <CardTitle className="text-base">House Sitter Lifecycle Health</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
               <span className="font-semibold">{stats?.suspended_cleaners ?? 0}</span>
             </div>
             <Link href="/admin/cleaners" className="inline-flex">
-              <Button className="mt-2 w-full" variant="outline">Open Cleaner Management</Button>
+              <Button className="mt-2 w-full" variant="outline">Open House Sitter Management</Button>
             </Link>
           </CardContent>
         </Card>

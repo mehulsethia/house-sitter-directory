@@ -1,5 +1,5 @@
 /**
- * Typed API client for the MaidHive FastAPI backend.
+ * Typed API client for the House Sitter Directory FastAPI backend.
  * Every request attaches the Supabase JWT from the current session.
  */
 import { getAccessToken } from '@/lib/auth-cache'

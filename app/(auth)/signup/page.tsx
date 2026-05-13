@@ -94,7 +94,7 @@ function SignupForm() {
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1">
           <Image
             src="/images/join-maidhive.avif"
-            alt="Professional cleaning team"
+            alt="Warm home care community"
             fill
             className="object-cover"
             sizes="400px"
@@ -117,7 +117,7 @@ function SignupForm() {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {r === 'client' ? "I'm a Client" : "I'm a Cleaner"}
+              {r === 'client' ? "I'm a Homeowner" : "I'm a House Sitter"}
             </button>
           ))}
         </div>
@@ -165,13 +165,13 @@ function SignupForm() {
           {role === 'cleaner' ? (
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                Years of Experience <span className="text-red-500">*</span>
+                Years of House Sitting Experience <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 required
                 min="0"
-                placeholder="Enter your years of experience"
+                placeholder="Enter your years of house sitting experience"
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-gray-400"

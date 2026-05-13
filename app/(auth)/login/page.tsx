@@ -82,7 +82,7 @@ function LoginForm() {
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1 min-h-[360px]">
           <Image
             src="/images/join-maidhive.avif"
-            alt="Professional cleaning team"
+            alt="Trusted house sitting team"
             fill
             className="object-cover"
             sizes="400px"

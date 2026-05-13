@@ -1,10 +1,7 @@
 'use client'
 
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import { NotificationsCenter } from '@/components/notifications-center'
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 export default function ClientNotificationsPage() {
   return (
@@ -16,11 +13,11 @@ export default function ClientNotificationsPage() {
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Alerts
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Alerts
               </p>
-              <h1 className={`${displayFont.className} text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
-                Client Notifications
+              <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
+                Homeowner Notifications
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 Stay on top of bookings, disputes, payments, and account updates in one stream.

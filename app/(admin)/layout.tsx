@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Bricolage_Grotesque, IBM_Plex_Mono } from 'next/font/google'
 import {
   BarChart3,
   Bell,
@@ -22,20 +21,18 @@ import { useCounts } from '@/hooks/use-counts'
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Overview',  icon: BarChart3 },
-  { href: '/admin/cleaners',  label: 'Cleaners',  icon: ShieldCheck },
+  { href: '/admin/cleaners',  label: 'House Sitters',  icon: ShieldCheck },
   { href: '/admin/bookings',  label: 'Bookings',  icon: BookOpen },
   { href: '/admin/disputes',  label: 'Disputes',  icon: MessageSquareWarning },
   { href: '/admin/notifications', label: 'Notifications', icon: Bell },
   { href: '/admin/users',     label: 'Users',     icon: Users },
 ]
 
-const displayFont = Bricolage_Grotesque({ subsets: ['latin'], weight: ['400', '500', '700', '800'] })
-const monoFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 function adminStageCopy(pathname: string) {
   if (pathname.startsWith('/admin/dashboard')) {
     return {
-      tag: 'MaidHive Admin Console',
+      tag: 'The House Sitter Directory Admin Console',
       title: 'Platform Overview',
       desc: 'Monitor platform health, revenue, and operational signals in real time.',
       image: '/images/stage/admin-dashboard.jpg',
@@ -43,15 +40,15 @@ function adminStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/admin/cleaners')) {
     return {
-      tag: 'MaidHive Admin Console',
-      title: 'Cleaner Operations',
+      tag: 'The House Sitter Directory Admin Console',
+      title: 'House Sitter Operations',
       desc: 'Review onboarding quality, approvals, and cleaner account status.',
       image: '/images/stage/admin-cleaners.jpg',
     }
   }
   if (pathname.startsWith('/admin/bookings')) {
     return {
-      tag: 'MaidHive Admin Console',
+      tag: 'The House Sitter Directory Admin Console',
       title: 'Booking Operations',
       desc: 'Inspect booking flow, statuses, and edge-case interventions.',
       image: '/images/stage/admin-bookings.jpg',
@@ -59,7 +56,7 @@ function adminStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/admin/disputes')) {
     return {
-      tag: 'MaidHive Admin Console',
+      tag: 'The House Sitter Directory Admin Console',
       title: 'Dispute Resolution',
       desc: 'Triages active disputes and apply structured resolution outcomes.',
       image: '/images/stage/admin-disputes.jpg',
@@ -67,7 +64,7 @@ function adminStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/admin/users')) {
     return {
-      tag: 'MaidHive Admin Console',
+      tag: 'The House Sitter Directory Admin Console',
       title: 'User Management',
       desc: 'Audit user accounts, access controls, and account activity.',
       image: '/images/stage/admin-users.jpg',
@@ -75,14 +72,14 @@ function adminStageCopy(pathname: string) {
   }
   if (pathname.startsWith('/admin/notifications')) {
     return {
-      tag: 'MaidHive Admin Console',
+      tag: 'The House Sitter Directory Admin Console',
       title: 'Notifications',
       desc: 'Monitor system alerts, disputes, payouts, and operational events in real time.',
       image: '/images/stage/admin-default.jpg',
     }
   }
   return {
-    tag: 'MaidHive Admin Console',
+    tag: 'The House Sitter Directory Admin Console',
     title: 'Administration',
     desc: 'Control and monitor platform operations from one command surface.',
     image: '/images/stage/admin-default.jpg',
@@ -193,8 +190,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="admin-stage__media" aria-hidden="true" />
             <div className="admin-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-4 text-white">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
-                MaidHive Admin Console
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+                The House Sitter Directory Admin Console
               </p>
               <p className="mt-2 text-sm text-slate-100/90">Sign in with authorized admin credentials to continue.</p>
             </div>
@@ -268,7 +265,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-60 lg:flex-col lg:border-r lg:bg-muted/20">
         <div className="px-6 py-5">
           <Link href="/admin/dashboard" className="text-base font-bold text-primary">
-            MaidHive
+            The House Sitter Directory
           </Link>
           <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-widest">
             Admin console
@@ -319,7 +316,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-3 py-3 backdrop-blur lg:hidden">
         <div className="mb-2 flex items-center justify-between">
           <Link href="/admin/dashboard" className="text-base font-bold text-primary">
-            MaidHive
+            The House Sitter Directory
           </Link>
           <button
             onClick={signOut}
@@ -364,10 +361,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="admin-stage__media" aria-hidden="true" />
             <div className="admin-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-4 sm:px-6 sm:py-4">
-              <p className={`${monoFont.className} text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
+              <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 {stage.tag}
               </p>
-              <h1 className={`${displayFont.className} mt-2 text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl`}>
+              <h1 className={`mt-2 text-3xl font-extrabold tracking-[-0.03em] text-white sm:text-4xl`}>
                 {stage.title}
               </h1>
               <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>

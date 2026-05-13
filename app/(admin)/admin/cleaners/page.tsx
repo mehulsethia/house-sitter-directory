@@ -57,7 +57,7 @@ const TRANSPORT_LABELS: Record<string, string> = {
 
 const SUPPLIES_LABELS: Record<string, string> = {
   own_supplies: 'Own supplies',
-  client_supplies: 'Client supplies',
+  client_supplies: 'Homeowner supplies',
 }
 
 const ID_TYPE_LABELS: Record<string, string> = {
@@ -94,7 +94,7 @@ function CleanerCard({
 }) {
   const lifecycle = cleanerLifecycle(cleaner)
   const sb = STATUS_BADGE[lifecycle]
-  const fallbackName = cleaner.user_name?.trim() || cleaner.user_email?.split('@')[0] || 'Cleaner'
+  const fallbackName = cleaner.user_name?.trim() || cleaner.user_email?.split('@')[0] || 'House Sitter'
 
   return (
     <Card className="rounded-2xl border-slate-200">
@@ -303,7 +303,7 @@ export default function AdminCleanersPage() {
     setActionLoading(cleaner.id)
     try {
       await adminApi.approveCleaner(cleaner.id, 'approve')
-      toast.success(`${cleaner.user_name || 'Cleaner'} approved.`)
+      toast.success(`${cleaner.user_name || 'House Sitter'} approved.`)
       await refreshStatusSets(['pending_approval', 'approved', 'live'])
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to approve.')
@@ -321,7 +321,7 @@ export default function AdminCleanersPage() {
         rejection_reason_code: rejectReasonCode,
         rejection_custom_message: customMessage || undefined,
       })
-      toast.success(`${rejectTarget.user_name || 'Cleaner'} rejected.`)
+      toast.success(`${rejectTarget.user_name || 'House Sitter'} rejected.`)
       setRejectTarget(null)
       setRejectReasonCode(CLEANER_REJECTION_REASON_OPTIONS[0].code)
       setRejectCustomMessage('')
@@ -343,8 +343,8 @@ export default function AdminCleanersPage() {
       })
       toast.success(
         newLifecycle === 'suspended'
-          ? `${cleaner.user_name || 'Cleaner'} suspended.`
-          : `${cleaner.user_name || 'Cleaner'} reinstated.`,
+          ? `${cleaner.user_name || 'House Sitter'} suspended.`
+          : `${cleaner.user_name || 'House Sitter'} reinstated.`,
       )
       await refreshStatusSets(['approved', 'live', 'suspended'])
     } catch (err: any) {
@@ -359,7 +359,7 @@ export default function AdminCleanersPage() {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-        <p className="text-sm text-muted-foreground">Cleaner lifecycle queue</p>
+        <p className="text-sm text-muted-foreground">House Sitter lifecycle queue</p>
         <p className="text-lg font-semibold text-slate-900">{tabCount} records in {tab.replace('_', ' ')}</p>
       </div>
 

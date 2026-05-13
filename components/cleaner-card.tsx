@@ -34,11 +34,11 @@ export function CleanerCard({ cleaner, isFavorite, onToggleFavorite }: CleanerCa
   const suppliesText = cleaner.cleaning_supplies === 'own_supplies'
     ? 'Brings supplies'
     : cleaner.cleaning_supplies === 'client_supplies'
-      ? 'Client supplies'
+      ? 'Homeowner supplies'
       : null
-  const tags = ['Pro Cleaner', ...(cleaner.skills ?? []).slice(0, 3)]
+  const tags = ['Pro House Sitter', ...(cleaner.skills ?? []).slice(0, 3)]
   const bio = cleaner.bio?.trim() || 'Detail-oriented cleaner with a calm, methodical approach.'
-  const name = cleaner.name ?? cleaner.user?.name ?? 'Cleaner'
+  const name = cleaner.name ?? cleaner.user?.name ?? 'House Sitter'
   const hasRating = averageRating > 0
   const displayRating = hasRating ? averageRating.toFixed(1) : null
   const displayCount = hasRating ? `(${reviewCount})` : '(0)'
