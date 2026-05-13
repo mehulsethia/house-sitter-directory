@@ -14,212 +14,7 @@ import { CookieConsentBanner } from '@/components/cookie-consent-banner'
 import { DatePickerInput } from '@/components/date-picker-input'
 import { LandingHeader } from '@/components/landing-header'
 import Footer from '@/components/footer'
-
-type Sitter = {
-  name: string
-  city: string
-  rating: string
-  reviews: number
-  tags: string[]
-  image: string
-}
-
-type HouseSit = {
-  title: string
-  city: string
-  status: 'Available' | 'NEW'
-  beds: number
-  baths: number
-  pets: string
-  rating: string
-  image: string
-}
-
-const sitters: Sitter[] = [
-  {
-    name: 'Ivy',
-    city: 'New York, NY',
-    rating: '4.9',
-    reviews: 116,
-    tags: ['Dog Sitting', 'Long Term', 'Experienced'],
-    image:
-      'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Rosie Walker',
-    city: 'Chicago, IL',
-    rating: '4.8',
-    reviews: 92,
-    tags: ['Pet Friendly', 'Verified', 'Top Rated'],
-    image:
-      'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Sia',
-    city: 'Austin, TX',
-    rating: '5.0',
-    reviews: 104,
-    tags: ['Plant Care', 'Long Term', 'Trusted'],
-    image:
-      'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Luca',
-    city: 'Seattle, WA',
-    rating: '4.7',
-    reviews: 88,
-    tags: ['Short Term', 'Verified', 'Experienced'],
-    image:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'JJ',
-    city: 'San Diego, CA',
-    rating: '4.9',
-    reviews: 121,
-    tags: ['Dog Sitting', 'Top Rated', 'Long Term'],
-    image:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'George P',
-    city: 'Miami, FL',
-    rating: '4.8',
-    reviews: 97,
-    tags: ['Pet Sitting', 'Experienced', 'Verified'],
-    image:
-      'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Ria',
-    city: 'Denver, CO',
-    rating: '4.9',
-    reviews: 133,
-    tags: ['Plant Care', 'Top Rated', 'Trusted'],
-    image:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Ari',
-    city: 'Portland, OR',
-    rating: '4.7',
-    reviews: 89,
-    tags: ['Verified', 'Short Term', 'Flexible'],
-    image:
-      'https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Ash',
-    city: 'Boston, MA',
-    rating: '4.8',
-    reviews: 102,
-    tags: ['Dog Sitting', 'Long Term', 'Reliable'],
-    image:
-      'https://images.unsplash.com/photo-1542204625-de293a06df53?auto=format&fit=crop&w=900&q=80',
-  },
-]
-
-const houseSits: HouseSit[] = [
-  {
-    title: 'Serene Family Home',
-    city: 'Atlanta, GA',
-    status: 'Available',
-    beds: 3,
-    baths: 2,
-    pets: '2 Pets',
-    rating: '4.8',
-    image:
-      'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'City Loft Stay',
-    city: 'Nashville, TN',
-    status: 'NEW',
-    beds: 2,
-    baths: 1,
-    pets: 'No Pets',
-    rating: '4.7',
-    image:
-      'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Beautiful Home',
-    city: 'Salt Lake City, UT',
-    status: 'NEW',
-    beds: 4,
-    baths: 3,
-    pets: '1 Pet',
-    rating: '4.9',
-    image:
-      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Modern Villa',
-    city: 'Phoenix, AZ',
-    status: 'Available',
-    beds: 3,
-    baths: 2,
-    pets: 'No Pets',
-    rating: '4.7',
-    image:
-      'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Cozy Kitchen Home',
-    city: 'Boise, ID',
-    status: 'NEW',
-    beds: 2,
-    baths: 2,
-    pets: '2 Pets',
-    rating: '4.8',
-    image:
-      'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'West End Stay',
-    city: 'Cleveland, OH',
-    status: 'Available',
-    beds: 3,
-    baths: 2,
-    pets: '1 Pet',
-    rating: '4.8',
-    image:
-      'https://images.unsplash.com/photo-1572120360610-d971b9d7767c?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Lakeside Retreat',
-    city: 'Madison, WI',
-    status: 'Available',
-    beds: 4,
-    baths: 2,
-    pets: '3 Pets',
-    rating: '4.9',
-    image:
-      'https://images.unsplash.com/photo-1434082033009-b81d41d32e1c?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Corner Modern House',
-    city: 'Raleigh, NC',
-    status: 'Available',
-    beds: 3,
-    baths: 2,
-    pets: 'No Pets',
-    rating: '4.7',
-    image:
-      'https://images.unsplash.com/photo-1613553497126-a44624272024?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'New Build Home',
-    city: 'Plano, TX',
-    status: 'NEW',
-    beds: 4,
-    baths: 3,
-    pets: '1 Pet',
-    rating: '4.8',
-    image:
-      'https://images.unsplash.com/photo-1600585153490-76fb20a32601?auto=format&fit=crop&w=1200&q=80',
-  },
-]
+import { PUBLIC_HOUSE_SITS, PUBLIC_SITTERS } from '@/lib/public-marketplace-data'
 
 export default function HomePage() {
   return (
@@ -232,45 +27,61 @@ export default function HomePage() {
           alt="Relaxed home lifestyle"
           className="hero-bg absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-[rgba(48,30,16,0.46)]" />
-        <div className="max-site-width relative z-10 py-20 text-center text-white md:py-24">
-          <p className="mx-auto inline-flex rounded-[2px] bg-[rgba(34,23,15,0.75)] px-3 py-1 text-[11px]">
-            Trusted by 5000+ Members
+        <div className="absolute inset-0 bg-[rgba(48,30,16,0.42)]" />
+        <div className="max-site-width relative z-10 py-24 text-center text-white md:py-36">
+          <p className="mx-auto inline-flex rounded-[6px] bg-[rgba(34,23,15,0.8)] px-6 py-2 text-[14px]">
+            Trusted by 10,000+ Members
           </p>
-          <h1 className="mt-4 text-[38px] leading-tight text-white md:text-[48px]">Your Home, Lovingly Cared For</h1>
-          <p className="mx-auto mt-2 max-w-2xl text-[14px] leading-relaxed text-white/95 md:text-[15px]">
-            Connect with verified, trusted house sitters who treat your home like their own. Find the perfect match
-            for your home and lifestyle.
+          <h1 className="mt-6 text-[52px] leading-tight text-white md:text-[72px]">Your Home, Lovingly Cared For</h1>
+          <p className="mx-auto mt-3 max-w-3xl text-[19px] leading-relaxed text-white/95">
+            Connect with verified house sitters or find your perfect house sit
           </p>
+
+          <div className="mx-auto mt-8 flex max-w-[520px] rounded-full border border-white bg-[#f8f8f8] p-1">
+            <Link
+              href="/find-house-sitters"
+              className="inline-flex h-16 flex-1 items-center justify-center rounded-full bg-[#5a4a3b] text-[38px] text-white"
+            >
+              Find a Sitter
+            </Link>
+            <Link
+              href="/find-house-sits"
+              className="inline-flex h-16 flex-1 items-center justify-center rounded-full text-[38px] text-[#5a5a5a]"
+            >
+              Find a House Sit
+            </Link>
+          </div>
 
           <form
             action="/find-house-sitters"
             method="get"
-            className="mx-auto mt-6 max-w-[760px] rounded-[8px] bg-white p-3 text-left text-[#1a1a1a] shadow-[0_10px_28px_rgba(0,0,0,0.2)]"
+            className="mx-auto mt-10 max-w-[980px] rounded-[20px] bg-white p-4 text-left text-[#1a1a1a] shadow-[0_12px_34px_rgba(0,0,0,0.2)]"
           >
-            <div className="grid gap-2 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-3">
               <input
                 name="location"
-                placeholder="📍 Where?"
-                className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
+                placeholder="Where?"
+                className="h-14 rounded-[8px] border border-[#e0e0e0] px-4 text-[16px]"
               />
               <DatePickerInput
                 name="from"
                 ariaLabel="From date"
-                className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
+                className="h-14 rounded-[8px] border border-[#e0e0e0] px-4 text-[16px]"
               />
               <DatePickerInput
                 name="to"
                 ariaLabel="To date"
-                className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
+                className="h-14 rounded-[8px] border border-[#e0e0e0] px-4 text-[16px]"
               />
             </div>
-            <button type="submit" className="mt-2 h-9 w-full rounded-[4px] bg-[#5a4a3b] text-[13px] text-white">
+            <button type="submit" className="mt-3 h-14 w-full rounded-[10px] bg-[#5a4a3b] text-[17px] text-white">
               Search Sitters
             </button>
           </form>
 
-          <p className="mt-4 text-[11px] text-white/90">🐾 Pet Friendly &nbsp; • &nbsp; ✅ Verified Sitters &nbsp; • &nbsp; ⭐ Top Rated &nbsp; • &nbsp; 💬 Best Feedback</p>
+          <p className="mt-7 text-[14px] text-white/95">
+            ✅ Background Checked &nbsp; • &nbsp; 🛡️ Fully Insured &nbsp; • &nbsp; 🐾 Pet Care Available
+          </p>
         </div>
       </section>
 
@@ -330,8 +141,8 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sitters.map((sitter) => (
-              <article key={sitter.name} className="brand-card overflow-hidden border border-[#e8e1da]">
+            {PUBLIC_SITTERS.map((sitter) => (
+              <article key={sitter.id} className="brand-card overflow-hidden border border-[#e8e1da]">
                 <div className="relative">
                   <img src={sitter.image} alt={sitter.name} className="h-[218px] w-full object-cover" />
                   <span className="absolute right-2 top-2 rounded bg-[#f1994f] px-2 py-1 text-[10px] text-white">Top Rated</span>
@@ -340,11 +151,11 @@ export default function HomePage() {
                   <h3 className="text-[22px] leading-tight">{sitter.name}</h3>
                   <p className="mt-1 flex items-center gap-1 text-[11px] text-[#6b6b6b]">
                     <MapPin className="h-3.5 w-3.5" />
-                    {sitter.city}
+                    {sitter.location}
                   </p>
                   <p className="mt-2 flex items-center gap-1 text-[11px] text-[#6b6b6b]">
                     <Star className="h-3.5 w-3.5 fill-current text-[#f6b019]" />
-                    {sitter.rating} ({sitter.reviews} reviews)
+                    {sitter.rating.toFixed(1)} ({sitter.reviews} reviews)
                   </p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {sitter.tags.map((tag) => (
@@ -353,7 +164,12 @@ export default function HomePage() {
                       </span>
                     ))}
                   </div>
-                  <button className="mt-4 h-9 w-full rounded-[4px] bg-[#5a4a3b] text-[12px] text-white">View Profile</button>
+                  <Link
+                    href={`/find-house-sitters/${sitter.id}`}
+                    className="mt-4 inline-flex h-9 w-full items-center justify-center rounded-[4px] bg-[#5a4a3b] text-[12px] text-white"
+                  >
+                    View Profile
+                  </Link>
                 </div>
               </article>
             ))}
@@ -386,23 +202,23 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {houseSits.map((sit) => (
-              <article key={sit.title} className="brand-card overflow-hidden border border-[#e8e1da]">
+            {PUBLIC_HOUSE_SITS.map((sit) => (
+              <article key={sit.id} className="brand-card overflow-hidden border border-[#e8e1da]">
                 <div className="relative">
                   <img src={sit.image} alt={sit.title} className="h-[185px] w-full object-cover" />
                   <span
                     className={`absolute right-2 top-2 rounded px-2 py-1 text-[10px] text-white ${
-                      sit.status === 'NEW' ? 'bg-[#db4a40]' : 'bg-[#2d9852]'
+                      sit.badge === 'Urgent' ? 'bg-[#db4a40]' : 'bg-[#2d9852]'
                     }`}
                   >
-                    {sit.status}
+                    {sit.badge}
                   </span>
                 </div>
                 <div className="p-4">
                   <h3 className="text-[20px] leading-tight">{sit.title}</h3>
                   <p className="mt-1 flex items-center gap-1 text-[11px] text-[#6b6b6b]">
                     <MapPin className="h-3.5 w-3.5" />
-                    {sit.city}
+                    {sit.location}
                   </p>
 
                   <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
@@ -422,15 +238,23 @@ export default function HomePage() {
 
                   <p className="mt-3 flex items-center gap-1 text-[11px] text-[#6b6b6b]">
                     <Star className="h-3.5 w-3.5 fill-current text-[#f6b019]" />
-                    {sit.rating}
+                    {sit.rating.toFixed(1)}
                   </p>
 
                   <div className="mt-4 grid grid-cols-2 gap-2">
-                    <button className="h-9 rounded-[4px] border border-[#5a4a3b] text-[12px] text-[#5a4a3b]">View Details</button>
-                    <button className="h-9 rounded-[4px] bg-[#5a4a3b] text-[12px] text-white">
+                    <Link
+                      href={`/find-house-sits/${sit.id}`}
+                      className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#5a4a3b] text-[12px] text-[#5a4a3b]"
+                    >
+                      View Details
+                    </Link>
+                    <Link
+                      href={`/login?next=${encodeURIComponent(`/find-house-sits/${sit.id}`)}`}
+                      className="inline-flex h-9 items-center justify-center rounded-[4px] bg-[#5a4a3b] text-[12px] text-white"
+                    >
                       <MessageSquare className="mr-1 inline h-3.5 w-3.5" />
                       Message
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </article>

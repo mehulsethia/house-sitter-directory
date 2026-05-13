@@ -7,164 +7,7 @@ import { Bath, BedDouble, Calendar, MapPin, PawPrint, Star } from 'lucide-react'
 import { DatePickerInput } from '@/components/date-picker-input'
 import { LandingHeader } from '@/components/landing-header'
 import Footer from '@/components/footer'
-
-type SitCard = {
-  title: string
-  location: string
-  dateRange: string
-  type: string
-  beds: string
-  baths: string
-  pets: string
-  rating: string
-  applications: number
-  badge: string
-  daysLeft: string
-  image: string
-}
-
-const sitCards: SitCard[] = [
-  {
-    title: 'demo',
-    location: 'Mumbai, Maharashtra, India',
-    dateRange: '11/05/2026 - 25/05/2026',
-    type: 'Studio',
-    beds: '2 bed',
-    baths: '1 bath',
-    pets: '1 pet',
-    rating: '0',
-    applications: 0,
-    badge: 'Urgent',
-    daysLeft: '14 days',
-    image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Gravity House',
-    location: 'Mumbai, Maharashtra, India',
-    dateRange: '12/05/2026 - 16/05/2026',
-    type: 'House',
-    beds: '3 bed',
-    baths: '6 bath',
-    pets: '2 pets',
-    rating: '0',
-    applications: 0,
-    badge: 'Urgent',
-    daysLeft: '4 days',
-    image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Beautiful Home',
-    location: 'Ahmedabad, Gujarat, India',
-    dateRange: '12/05/2026 - 14/05/2026',
-    type: 'Apartment',
-    beds: '3 bed',
-    baths: '5 bath',
-    pets: '1 pet',
-    rating: '0',
-    applications: 0,
-    badge: 'Active',
-    daysLeft: '2 days',
-    image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'sada',
-    location: 'Suratgarh, Rajasthan 335804, India',
-    dateRange: '08/05/2026 - 25/05/2026',
-    type: 'Villa',
-    beds: '2 bed',
-    baths: '1 bath',
-    pets: '0 pets',
-    rating: '0',
-    applications: 0,
-    badge: 'Active',
-    daysLeft: '17 days',
-    image: 'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Test House',
-    location: 'London, UK',
-    dateRange: '18/05/2026 - 25/05/2026',
-    type: 'Apartment',
-    beds: '4 bed',
-    baths: '3 bath',
-    pets: '1 pet',
-    rating: '0',
-    applications: 0,
-    badge: 'Urgent',
-    daysLeft: '7 days',
-    image: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'tested',
-    location: 'Surat, Gujarat, India',
-    dateRange: '05/05/2026 - 27/05/2026',
-    type: 'Apartment',
-    beds: '3 bed',
-    baths: '4 bath',
-    pets: '1 pet',
-    rating: '0',
-    applications: 0,
-    badge: 'Urgent',
-    daysLeft: '22 days',
-    image: 'https://images.unsplash.com/photo-1605146769289-440113cc3d00?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Rustic Farmhouse',
-    location: 'Cotswold District, UK',
-    dateRange: '06/05/2026 - 26/05/2026',
-    type: 'Farmhouse',
-    beds: '4 bed',
-    baths: '4 bath',
-    pets: '2 pets',
-    rating: '4.9',
-    applications: 1,
-    badge: 'Active',
-    daysLeft: '20 days',
-    image: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Cozy Family Home in Quiet Suburb',
-    location: 'Austin, TX, USA',
-    dateRange: '10/08/2026 - 20/08/2026',
-    type: 'House',
-    beds: '3 bed',
-    baths: '1 bath',
-    pets: '1 pet',
-    rating: '4.8',
-    applications: 2,
-    badge: 'Urgent',
-    daysLeft: '10 days',
-    image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Oceanfront Condo in Miami Beach',
-    location: 'Miami, FL, USA',
-    dateRange: '10/08/2026 - 30/08/2026',
-    type: 'Apartment',
-    beds: '3 bed',
-    baths: '2 bath',
-    pets: '0 pets',
-    rating: '4.7',
-    applications: 0,
-    badge: 'Urgent',
-    daysLeft: '19 days',
-    image: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    title: 'Modern 3-Bedroom Family Home',
-    location: 'United States',
-    dateRange: '10/08/2026 - 20/08/2026',
-    type: 'House',
-    beds: '2 bed',
-    baths: '1 bath',
-    pets: '1 pet',
-    rating: '4.6',
-    applications: 2,
-    badge: 'Active',
-    daysLeft: '12 days',
-    image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80',
-  },
-]
+import { PUBLIC_HOUSE_SITS } from '@/lib/public-marketplace-data'
 
 function daysToNumber(value: string) {
   const parsed = Number(value.replace(/[^0-9]/g, ''))
@@ -181,7 +24,7 @@ function FindHouseSitsContent() {
 
   const filteredCards = useMemo(() => {
     const query = location.trim().toLowerCase()
-    let list = sitCards.filter((card) => {
+    let list = PUBLIC_HOUSE_SITS.filter((card) => {
       const matchLocation = !query || card.location.toLowerCase().includes(query) || card.title.toLowerCase().includes(query)
       const matchEmergency = !emergencyOnly || card.badge === 'Urgent'
       return matchLocation && matchEmergency
@@ -192,7 +35,7 @@ function FindHouseSitsContent() {
     } else if (sortBy === 'soonest') {
       list = [...list].sort((a, b) => daysToNumber(a.daysLeft) - daysToNumber(b.daysLeft))
     } else if (sortBy === 'rating_desc') {
-      list = [...list].sort((a, b) => Number(b.rating) - Number(a.rating))
+      list = [...list].sort((a, b) => b.rating - a.rating)
     }
 
     return list
@@ -290,7 +133,7 @@ function FindHouseSitsContent() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredCards.map((card, idx) => (
-                <article key={`${card.title}-${idx}`} className="overflow-hidden rounded-[8px] border border-[#e6ddd4] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+                <article key={`${card.id}-${idx}`} className="overflow-hidden rounded-[8px] border border-[#e6ddd4] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
                   <div className="relative">
                     <img src={card.image} alt={card.title} className="h-[250px] w-full object-cover" />
                     <span className="absolute left-2 top-2 rounded bg-[#ececec] px-2 py-1 text-[10px] text-[#5a5a5a]">{card.daysLeft}</span>
@@ -310,22 +153,27 @@ function FindHouseSitsContent() {
 
                     <div className="mt-3 grid grid-cols-4 gap-2 text-[10px] text-[#6b6b6b]">
                       <span className="rounded bg-[#f1ece7] px-2 py-1">{card.type}</span>
-                      <span className="rounded bg-[#f1ece7] px-2 py-1"><BedDouble className="mr-1 inline h-3 w-3" />{card.beds}</span>
-                      <span className="rounded bg-[#f1ece7] px-2 py-1"><Bath className="mr-1 inline h-3 w-3" />{card.baths}</span>
+                      <span className="rounded bg-[#f1ece7] px-2 py-1"><BedDouble className="mr-1 inline h-3 w-3" />{card.beds} bed</span>
+                      <span className="rounded bg-[#f1ece7] px-2 py-1"><Bath className="mr-1 inline h-3 w-3" />{card.baths} bath</span>
                       <span className="rounded bg-[#f1ece7] px-2 py-1"><PawPrint className="mr-1 inline h-3 w-3" />{card.pets}</span>
                     </div>
 
                     <p className="mt-2 flex items-center gap-1 text-[11px] text-[#6b6b6b]">
-                      <Star className="h-3.5 w-3.5 fill-current text-[#f5b01a]" /> {card.rating}
+                      <Star className="h-3.5 w-3.5 fill-current text-[#f5b01a]" /> {card.rating.toFixed(1)}
                       <span className="px-1">•</span>
                       {card.applications} Application{card.applications === 1 ? '' : 's'}
                     </p>
 
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                      <Link href="/signup" className="inline-flex h-9 items-center justify-center rounded-[4px] bg-[#5a4a3b] text-[12px] text-white">
+                      <Link href={`/find-house-sits/${card.id}`} className="inline-flex h-9 items-center justify-center rounded-[4px] bg-[#5a4a3b] text-[12px] text-white">
                         View Details
                       </Link>
-                      <button className="h-9 rounded-[4px] border border-[#5a4a3b] text-[12px] text-[#5a4a3b]">Message</button>
+                      <Link
+                        href={`/login?next=${encodeURIComponent(`/find-house-sits/${card.id}`)}`}
+                        className="inline-flex h-9 items-center justify-center rounded-[4px] border border-[#5a4a3b] text-[12px] text-[#5a4a3b]"
+                      >
+                        Message
+                      </Link>
                     </div>
                   </div>
                 </article>

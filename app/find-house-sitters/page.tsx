@@ -7,110 +7,7 @@ import { Calendar, MapPin, Star } from 'lucide-react'
 import { DatePickerInput } from '@/components/date-picker-input'
 import { LandingHeader } from '@/components/landing-header'
 import Footer from '@/components/footer'
-
-type SitterCard = {
-  name: string
-  location: string
-  rating: string
-  reviews: number
-  tags: string[]
-  badge: string
-  badgeTone: 'orange' | 'green'
-  image: string
-}
-
-const sitterCards: SitterCard[] = [
-  {
-    name: 'Hol',
-    location: 'No Location Found',
-    rating: '0.0',
-    reviews: 0,
-    tags: ['Dog Walking', 'Garden Maintenance'],
-    badge: 'Premium Verified',
-    badgeTone: 'orange',
-    image: 'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Faye Walker',
-    location: 'Lower Dicker, Hailsham BN27, UK',
-    rating: '0.0',
-    reviews: 0,
-    tags: ['Dog Walking', 'Property Care & Security', 'Cleaning'],
-    badge: 'Premium Verified',
-    badgeTone: 'orange',
-    image: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Bee',
-    location: 'Sydney NSW, Australia',
-    rating: '5.0',
-    reviews: 1,
-    tags: ['Pet Care', 'Dog Walking', 'Cat Care'],
-    badge: 'Premium Verified',
-    badgeTone: 'orange',
-    image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'ZC',
-    location: 'Cotswolds, UK',
-    rating: '5.0',
-    reviews: 1,
-    tags: ['Dog Walking', 'Plant Care', 'Garden Maintenance'],
-    badge: 'Premium Verified',
-    badgeTone: 'orange',
-    image: 'https://images.unsplash.com/photo-1542204625-de293a06df53?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Liv K',
-    location: 'Crewe-by-Farndon, Chester CH3 6PH, UK',
-    rating: '4.0',
-    reviews: 1,
-    tags: ['Dog Walking', 'Cooking', 'Cleaning', 'Driving'],
-    badge: 'Premium Verified',
-    badgeTone: 'orange',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Mia',
-    location: 'Carmel Valley, San Diego, CA, USA',
-    rating: '3.5',
-    reviews: 6,
-    tags: ['Plant Care', 'Property Care & Security', 'First Aid'],
-    badge: 'Premium Verified',
-    badgeTone: 'orange',
-    image: 'https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Shez',
-    location: 'No Location Found',
-    rating: '3.3',
-    reviews: 3,
-    tags: ['Pool Maintenance', 'Property Care & Security'],
-    badge: 'Verified',
-    badgeTone: 'green',
-    image: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Olivia Martinez',
-    location: 'No Location Found',
-    rating: '3.5',
-    reviews: 2,
-    tags: ['Cat Care', 'Cleaning', 'CPR Certified'],
-    badge: 'Verified',
-    badgeTone: 'green',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Liv K',
-    location: 'Davenham, UK',
-    rating: '5.0',
-    reviews: 1,
-    tags: ['Pet Care', 'Dog Walking', 'Cooking', 'Cleaning'],
-    badge: 'Verified',
-    badgeTone: 'green',
-    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80',
-  },
-]
+import { PUBLIC_SITTERS } from '@/lib/public-marketplace-data'
 
 function FindHouseSittersContent() {
   const searchParams = useSearchParams()
@@ -121,7 +18,7 @@ function FindHouseSittersContent() {
 
   const filteredCards = useMemo(() => {
     const locationQuery = location.trim().toLowerCase()
-    let list = sitterCards.filter((card) => {
+    let list = PUBLIC_SITTERS.filter((card) => {
       if (!locationQuery) return true
       return (
         card.name.toLowerCase().includes(locationQuery) ||
@@ -131,7 +28,7 @@ function FindHouseSittersContent() {
     })
 
     if (sortBy === 'rating_desc') {
-      list = [...list].sort((a, b) => Number(b.rating) - Number(a.rating))
+      list = [...list].sort((a, b) => b.rating - a.rating)
     } else if (sortBy === 'reviews_desc') {
       list = [...list].sort((a, b) => b.reviews - a.reviews)
     } else if (sortBy === 'name_asc') {
@@ -243,7 +140,7 @@ function FindHouseSittersContent() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredCards.map((card, idx) => (
-                <article key={`${card.name}-${idx}`} className="overflow-hidden rounded-[8px] border border-[#e6ddd4] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
+                <article key={`${card.id}-${idx}`} className="overflow-hidden rounded-[8px] border border-[#e6ddd4] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
                   <div className="relative">
                     <img src={card.image} alt={card.name} className="h-[280px] w-full object-cover" />
                     <span
@@ -264,7 +161,7 @@ function FindHouseSittersContent() {
 
                     <p className="mt-2 flex items-center gap-1 text-[11px] text-[#6b6b6b]">
                       <Star className="h-3.5 w-3.5 fill-current text-[#f5b01a]" />
-                      {card.rating} <span className="px-1">•</span> {card.reviews} Reviews
+                      {card.rating.toFixed(1)} <span className="px-1">•</span> {card.reviews} Reviews
                     </p>
 
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -276,7 +173,7 @@ function FindHouseSittersContent() {
                     </div>
 
                     <Link
-                      href="/signup"
+                      href={`/find-house-sitters/${card.id}`}
                       className="mt-4 inline-flex h-9 w-full items-center justify-center rounded-[4px] bg-[#5a4a3b] text-[12px] text-white"
                     >
                       View Profile
