@@ -94,7 +94,7 @@ function SignupForm() {
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1">
           <Image
             src="/images/join-maidhive.avif"
-            alt="Warm home care community"
+            alt="Warm house sitting community"
             fill
             className="object-cover"
             sizes="400px"
@@ -117,7 +117,7 @@ function SignupForm() {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {r === 'client' ? "I'm a Homeowner" : "I'm a House Sitter"}
+              {r === 'client' ? "I'm posting a House Sit" : "I'm a House Sitter"}
             </button>
           ))}
         </div>

@@ -27,7 +27,7 @@ export default function SitterInfoPage() {
               <Link href="/signup?role=cleaner" className="inline-flex h-11 items-center rounded-[4px] bg-[#5a4a3b] px-5 text-white">
                 Become a Sitter
               </Link>
-              <Link href="/client/cleaners" className="inline-flex h-11 items-center rounded-[4px] border border-[#5a4a3b] px-5 text-[#5a4a3b]">
+              <Link href="/find-house-sitters" className="inline-flex h-11 items-center rounded-[4px] border border-[#5a4a3b] px-5 text-[#5a4a3b]">
                 Browse Sitters
               </Link>
             </div>

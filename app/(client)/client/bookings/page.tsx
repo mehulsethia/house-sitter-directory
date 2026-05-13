@@ -102,7 +102,7 @@ export default function ClientBookingsPage() {
         bookingId,
         isDraftLike
           ? 'Cancelled by client while in draft payment-required state'
-          : 'Cancelled by client while pending cleaner acceptance',
+          : 'Cancelled by client while pending house sitter acceptance',
       )
       if (booking?.cleaner_id) {
         await bookingsApi.clearFlowDraft(booking.cleaner_id).catch(() => null)
@@ -223,7 +223,7 @@ export default function ClientBookingsPage() {
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search by cleaner, service, city, or postcode"
+                  placeholder="Search by house sitter, sit type, city, or postcode"
                   className="h-11 rounded-full border-slate-300 pl-9"
                 />
               </div>
@@ -295,7 +295,7 @@ export default function ClientBookingsPage() {
                             <p className="mt-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
                               {booking.proposal_by === 'cleaner'
                                 ? `House Sitter proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}.`
-                                : `You proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}. Waiting for cleaner response.`}
+                                : `You proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}. Waiting for house sitter response.`}
                             </p>
                           )}
                         </div>

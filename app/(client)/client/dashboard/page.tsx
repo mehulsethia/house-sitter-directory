@@ -112,7 +112,7 @@ export default function ClientDashboardPage() {
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:min-h-[12rem] lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:px-8 lg:py-4">
             <div className="space-y-5 lg:space-y-6 animate-stage-up">
               <p className={`text-[0.72rem] uppercase tracking-[0.28em] text-white/75`}>
-                The House Sitter Directory Homeowner Space
+                The House Sitter Directory House Sit Space
               </p>
 
               <div className="space-y-2">

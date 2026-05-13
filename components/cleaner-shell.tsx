@@ -26,7 +26,7 @@ function cleanerStageCopy(pathname: string) {
     return {
       tag: 'The House Sitter Directory House Sitter Hub',
       title: 'House Sitter Dashboard',
-      desc: 'Track jobs, manage requests, and run your cleaner business from one focused workspace.',
+      desc: 'Track sits, manage requests, and run your house sitter profile from one focused workspace.',
       image: '/images/stage/cleaner-dashboard.jpg',
     }
   }
@@ -42,7 +42,7 @@ function cleanerStageCopy(pathname: string) {
     return {
       tag: 'The House Sitter Directory Conversations',
       title: 'Messages',
-      desc: 'Coordinate directly with clients and keep context tied to each job.',
+      desc: 'Coordinate directly with house sit hosts and keep context tied to each sit.',
       image: '/images/stage/cleaner-chats.jpg',
     }
   }

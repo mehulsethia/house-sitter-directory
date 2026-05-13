@@ -3,49 +3,61 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
-  { href: '/client/cleaners', label: 'Find a House Sitter' },
-  { href: '/for-cleaners', label: 'House Sitter Info' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/faq', label: 'FAQ' },
+  { href: '/find-house-sitters', label: 'Find House Sitters' },
+  { href: '/find-house-sits', label: 'Find House Sits' },
+  { href: '/pricing', label: 'Pricing' },
 ]
 
 export function LandingHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const pathname = usePathname()
+
+  function isActive(href: string) {
+    if (href === '/pricing') return pathname === '/pricing'
+    return pathname === href
+  }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#ece6e0] bg-white/95 backdrop-blur">
-      <div className="max-site-width flex h-20 items-center justify-between gap-6">
+    <header className="sticky top-0 z-50 border-b border-[#e9e3de] bg-white">
+      <div className="max-site-width flex h-[60px] items-center justify-between gap-6">
         <Link href="/" className="inline-flex items-center">
           <Image
             src="/branding/logo.png"
             alt="The House Sitter Directory"
-            width={320}
-            height={96}
-            className="h-12 w-auto"
+            width={280}
+            height={80}
+            className="h-8 w-auto"
             priority
           />
         </Link>
 
-        <nav className="hidden items-center gap-7 md:flex">
+        <nav className="hidden items-center gap-2 md:flex">
           {NAV_LINKS.map((item) => (
-            <Link key={item.href} href={item.href} className="text-[14px] text-[#1a1a1a] hover:text-[#5a4a3b]">
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`inline-flex h-8 items-center rounded-[4px] px-3 text-[13px] transition ${
+                isActive(item.href) ? 'bg-[#5a4a3b] text-white' : 'text-[#3d3d3d] hover:text-[#5a4a3b]'
+              }`}
+            >
               {item.label}
             </Link>
           ))}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link href="/login" className="text-[14px] text-[#1a1a1a] hover:text-[#5a4a3b]">
+          <Link href="/login" className="text-[13px] text-[#3d3d3d] hover:text-[#5a4a3b]">
             Log In
           </Link>
           <Link
             href="/signup"
-            className="inline-flex h-10 items-center rounded-[4px] bg-[#5a4a3b] px-5 text-[14px] font-medium text-white hover:opacity-95"
+            className="inline-flex h-8 items-center rounded-[4px] bg-[#5a4a3b] px-4 text-[12px] text-white hover:opacity-95"
           >
-            Start Now
+            Join Now
           </Link>
         </div>
 
@@ -67,7 +79,9 @@ export function LandingHeader() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className="py-1 text-[14px] text-[#1a1a1a]"
+                className={`rounded-[4px] px-2 py-1 text-[14px] ${
+                  isActive(item.href) ? 'bg-[#5a4a3b] text-white' : 'text-[#1a1a1a]'
+                }`}
               >
                 {item.label}
               </Link>
@@ -80,7 +94,7 @@ export function LandingHeader() {
                 href="/signup"
                 className="inline-flex h-10 items-center rounded-[4px] bg-[#5a4a3b] px-4 text-[14px] text-white"
               >
-                Start Now
+                Join Now
               </Link>
             </div>
           </div>
