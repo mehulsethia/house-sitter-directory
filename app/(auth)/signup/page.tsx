@@ -93,8 +93,8 @@ function SignupForm() {
       <div className="hidden lg:flex flex-col bg-gray-50 p-8 lg:p-10">
         <div className="relative rounded-xl overflow-hidden shadow-lg flex-1">
           <Image
-            src="/images/trusted-cleaner.avif"
-            alt="Trusted house sitter profile"
+            src="/images/auth-signup-house-sit.jpg"
+            alt="House sitter walking dogs outdoors"
             fill
             className="object-cover"
             sizes="400px"

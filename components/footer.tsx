@@ -68,7 +68,7 @@ export default function Footer() {
 
         <div className="mt-10 flex flex-col gap-2 border-t border-[#e2d9cf] pt-6 text-xs text-[#8d8d8d] sm:flex-row sm:items-center sm:justify-between">
           <span>© 2026 The House Sitter Directory. All rights reserved.</span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Link href="/privacy-policy" className="hover:text-[#5a4a3b]">
               Privacy Policy
             </Link>

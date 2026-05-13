@@ -49,13 +49,17 @@ function FindHouseSittersContent() {
           <p className="mx-auto inline-flex rounded-[4px] bg-[#5a4a3b] px-3 py-1 text-[11px] text-white">
             {filteredCards.length} Sitters Available
           </p>
-          <h1 className="mt-4 text-[64px] leading-[1.05] md:text-[68px]">Find Your Perfect<br />House Sitter</h1>
+          <h1 className="mt-4 text-[38px] leading-[1.08] sm:text-[48px] md:text-[56px] lg:text-[64px]">
+            Find Your Perfect
+            <br />
+            House Sitter
+          </h1>
           <p className="mx-auto mt-3 max-w-2xl text-[14px] text-[#6b6b6b]">
             Browse our directory of verified, experienced house sitters ready to care for your home and pets
           </p>
 
           <div className="mx-auto mt-7 max-w-[980px] rounded-[12px] border border-[#e7e1db] bg-white p-4 shadow-[0_6px_20px_rgba(0,0,0,0.08)]">
-            <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_180px]">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_180px]">
               <SearchInput
                 label="Location"
                 icon={<MapPin className="h-4 w-4" />}
@@ -99,7 +103,7 @@ function FindHouseSittersContent() {
                 onClick={() => {
                   // Filters are live-updating; this keeps UX aligned with a search CTA.
                 }}
-                className="h-11 rounded-[4px] bg-[#5a4a3b] text-[13px] text-white"
+                className="h-11 w-full rounded-[4px] bg-[#5a4a3b] text-[13px] text-white md:col-span-2 lg:col-span-1"
               >
                 Search
               </button>
@@ -115,15 +119,15 @@ function FindHouseSittersContent() {
         <div className="max-site-width">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-[36px]">{filteredCards.length} Sitters Available</h2>
+              <h2 className="text-[30px] leading-tight sm:text-[36px]">{filteredCards.length} Sitters Available</h2>
               <p className="mt-1 text-sm text-[#6b6b6b]">Showing matching sitters</p>
             </div>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex w-full flex-col gap-2 text-sm sm:w-auto sm:flex-row sm:items-center">
               <span className="text-[#4a4a4a]">Sort by:</span>
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value as 'default' | 'rating_desc' | 'reviews_desc' | 'name_asc')}
-                className="h-10 min-w-[170px] rounded-[4px] border border-[#dcd3ca] bg-white px-3 text-sm"
+                className="h-10 w-full rounded-[4px] border border-[#dcd3ca] bg-white px-3 text-sm sm:min-w-[170px] sm:w-auto"
               >
                 <option value="default">Sort by</option>
                 <option value="rating_desc">Top Rated</option>
@@ -153,7 +157,7 @@ function FindHouseSittersContent() {
                   </div>
 
                   <div className="p-4">
-                    <h3 className="text-[34px] leading-tight">{card.name}</h3>
+                    <h3 className="text-[26px] leading-tight sm:text-[34px]">{card.name}</h3>
                     <p className="mt-1 flex items-center gap-1 text-[11px] text-[#7a7a7a]">
                       <MapPin className="h-3 w-3" />
                       {card.location}

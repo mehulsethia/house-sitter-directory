@@ -42,7 +42,7 @@ export default function AboutUsPage() {
 
       <section className="bg-[#f3f3f3] pb-10 pt-14">
         <div className="max-site-width text-center">
-          <h1 className="text-[62px] leading-tight md:text-[68px]">About The House Sitter Directory</h1>
+          <h1 className="text-[40px] leading-tight sm:text-[52px] md:text-[62px] lg:text-[68px]">About The House Sitter Directory</h1>
           <p className="mx-auto mt-3 max-w-3xl text-[18px] text-[#6b6b6b]">
             We&apos;re building the most trusted platform for homeowners and house sitters to connect, creating peace of mind for travellers and opportunities for reliable caretakers.
           </p>
@@ -51,7 +51,7 @@ export default function AboutUsPage() {
 
       <section className="bg-[#f3f3f3] pt-0">
         <div className="max-site-width max-w-[980px]">
-          <h2 className="text-[42px]">Our Story</h2>
+          <h2 className="text-[30px] sm:text-[42px]">Our Story</h2>
           <div className="mt-4 space-y-4 text-[15px] leading-8 text-[#5f5f5f]">
             <p>
               The House Sitter Directory began in 2024 as a small, trusted community created after we experienced the shortcomings of other house sitting platforms. Many platforms claimed to verify users, but the checks were often incomplete or unclear.
@@ -67,29 +67,29 @@ export default function AboutUsPage() {
             </p>
           </div>
 
-          <div className="mt-8 rounded-[8px] border border-[#e2d9cf] bg-[#f7f3ef] p-6">
-            <h3 className="text-[34px]">Our Mission</h3>
+          <div className="mt-8 rounded-[8px] border border-[#e2d9cf] bg-[#f7f3ef] p-5 sm:p-6">
+            <h3 className="text-[28px] sm:text-[34px]">Our Mission</h3>
             <p className="mt-2 text-[15px] leading-8 text-[#5f5f5f]">
               To create the safest, most trusted house sitting community by ensuring every sitter and homeowner is genuinely verified, transparently tiered, and supported by clear standards, meaningful protection, and accountability.
             </p>
-            <h3 className="mt-5 text-[34px]">Our Vision</h3>
+            <h3 className="mt-5 text-[28px] sm:text-[34px]">Our Vision</h3>
             <p className="mt-2 text-[15px] leading-8 text-[#5f5f5f]">
               To become the UK&apos;s leading trusted house sitting platform where homeowners travel with complete confidence and sitters build meaningful opportunities through transparent verification and genuine trust.
             </p>
           </div>
 
-          <h2 className="mt-10 text-[42px]">Our Values</h2>
+          <h2 className="mt-10 text-[30px] sm:text-[42px]">Our Values</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {values.map((value) => (
               <article key={value.title} className="rounded-[8px] border border-[#e4dbd1] bg-white p-5">
                 <value.icon className="h-5 w-5 text-[#5a4a3b]" />
-                <h3 className="mt-2 text-[28px]">{value.title}</h3>
+                <h3 className="mt-2 text-[24px] sm:text-[28px]">{value.title}</h3>
                 <p className="mt-2 text-[14px] leading-7 text-[#666]">{value.text}</p>
               </article>
             ))}
           </div>
 
-          <h2 className="mt-10 text-[42px]">What Sets Us Apart</h2>
+          <h2 className="mt-10 text-[30px] sm:text-[42px]">What Sets Us Apart</h2>
           <ul className="mt-4 space-y-3">
             {apart.map((item) => (
               <li key={item} className="flex items-start gap-2 text-[15px] text-[#5f5f5f]">
@@ -99,7 +99,7 @@ export default function AboutUsPage() {
             ))}
           </ul>
 
-          <h2 className="mt-10 text-[42px]">Our Team</h2>
+          <h2 className="mt-10 text-[30px] sm:text-[42px]">Our Team</h2>
           <div className="mt-4 space-y-4 text-[15px] leading-8 text-[#5f5f5f]">
             <p>
               The House Sitter Directory was born from real experience. We saw how inconsistent verification, unclear standards, and a lack of accountability could leave both homeowners and sitters exposed.
@@ -113,7 +113,7 @@ export default function AboutUsPage() {
           </div>
 
           <div className="mt-10 rounded-[8px] bg-[#5a4a3b] px-6 py-8 text-center text-white">
-            <h3 className="text-[42px] text-white">Join Our Community</h3>
+            <h3 className="text-[32px] text-white sm:text-[42px]">Join Our Community</h3>
             <p className="mx-auto mt-3 max-w-2xl text-[14px] text-white/90">
               Whether you&apos;re a homeowner looking for reliable care or a house sitter seeking new opportunities, we&apos;d love to have you as part of our trusted community.
             </p>

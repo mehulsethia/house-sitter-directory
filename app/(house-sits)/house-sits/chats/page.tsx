@@ -131,7 +131,7 @@ function ClientChatsPageContent() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:h-[calc(100vh-15rem)] md:grid-cols-[300px_1fr] lg:h-[calc(100vh-16rem)] lg:grid-cols-[360px_1fr]">
+        <section className="grid gap-4 lg:h-[calc(100vh-16rem)] lg:grid-cols-[340px_1fr]">
           <div className="internal-card flex min-h-[22rem] flex-col rounded-[1.5rem] p-4 backdrop-blur-sm sm:min-h-[26rem] sm:p-5 md:min-h-0">
             <div>
               <h2 className="internal-heading text-2xl font-bold tracking-[-0.02em]">Conversations</h2>

@@ -38,8 +38,8 @@ function ResetPasswordForm() {
       <div className="hidden lg:flex flex-col bg-slate-50 p-5 lg:p-6">
         <div className="relative flex flex-1 min-h-[360px] flex-col justify-end overflow-hidden rounded-xl border border-slate-200/70 p-7 shadow-lg">
           <Image
-            src="/images/trusted-cleaner.avif"
-            alt="House sitter profile and security"
+            src="/images/auth-reset-house-sit.jpg"
+            alt="Protected modern home exterior"
             fill
             className="object-cover"
             sizes="400px"

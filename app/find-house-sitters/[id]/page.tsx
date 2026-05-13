@@ -54,13 +54,13 @@ export default async function PublicSitterDetailPage({
           </Link>
 
           <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-            <div className="rounded-[10px] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
+            <div className="rounded-[10px] bg-white p-4 shadow-[0_2px_10px_rgba(0,0,0,0.06)] sm:p-5">
               <div className="grid gap-5 md:grid-cols-[210px_1fr]">
                 <div className="overflow-hidden rounded-[12px]">
                   <img src={sitter.image} alt={sitter.name} className="h-[230px] w-full object-cover" />
                 </div>
                 <div>
-                  <h1 className="text-[56px] leading-[1.05]">{sitter.name}</h1>
+                  <h1 className="text-[36px] leading-[1.08] sm:text-[44px] lg:text-[56px]">{sitter.name}</h1>
                   <div className="mt-2 flex flex-wrap items-center gap-5 text-[15px] text-[#4b5563]">
                     <span className="inline-flex items-center gap-2">
                       <MapPin className="h-6 w-6" />
@@ -91,8 +91,8 @@ export default async function PublicSitterDetailPage({
               </div>
             </div>
 
-            <aside className="rounded-[10px] border border-[#d9d1c9] bg-white p-6">
-              <p className="text-[58px] leading-none text-[#5a4a3b]">£/hr</p>
+            <aside className="rounded-[10px] border border-[#d9d1c9] bg-white p-5 sm:p-6">
+              <p className="text-[42px] leading-none text-[#5a4a3b] sm:text-[58px]">£/hr</p>
               <p className="mt-2 text-sm text-[#4b5563]">Average rate</p>
               <Link
                 href={contactHref}
@@ -126,14 +126,14 @@ export default async function PublicSitterDetailPage({
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
             <div className="rounded-[10px] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
-              <div className="grid grid-cols-3 overflow-hidden rounded-[8px] bg-[#f5f5f5] text-center text-[13px]">
+              <div className="grid grid-cols-3 overflow-hidden rounded-[8px] bg-[#f5f5f5] text-center text-[11px] sm:text-[13px]">
                 <span className="bg-white px-3 py-3">Availability</span>
                 <span className="px-3 py-3">About</span>
                 <span className="px-3 py-3">Reviews</span>
               </div>
 
-              <div className="mt-6 rounded-[10px] border border-[#e5e7eb] p-5">
-                <h2 className="text-[38px]">Availability</h2>
+              <div className="mt-6 rounded-[10px] border border-[#e5e7eb] p-4 sm:p-5">
+                <h2 className="text-[30px] sm:text-[38px]">Availability</h2>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {sitter.availability.map((slot) => (
                     <span key={slot} className="rounded bg-[#dcfce7] px-3 py-1 text-[12px] text-[#166534]">
@@ -141,14 +141,14 @@ export default async function PublicSitterDetailPage({
                     </span>
                   ))}
                 </div>
-                <h3 className="mt-6 text-[34px]">About</h3>
+                <h3 className="mt-6 text-[28px] sm:text-[34px]">About</h3>
                 <p className="mt-2 text-base leading-relaxed text-[#4b5563]">{sitter.about}</p>
               </div>
             </div>
 
             <div className="space-y-5">
               <article className="rounded-[10px] border border-[#d9d1c9] bg-white p-5">
-                <h3 className="text-[44px]">Quick Stats</h3>
+                <h3 className="text-[34px] sm:text-[44px]">Quick Stats</h3>
                 <dl className="mt-4 space-y-3 text-base">
                   <div className="flex items-center justify-between">
                     <dt className="text-[#4b5563]">Response Time</dt>
@@ -166,7 +166,7 @@ export default async function PublicSitterDetailPage({
               </article>
 
               <article className="rounded-[10px] border border-[#86efac] bg-[#f0fdf4] p-5">
-                <h3 className="text-[40px] text-[#14532d]">Trust & Safety</h3>
+                <h3 className="text-[32px] text-[#14532d] sm:text-[40px]">Trust & Safety</h3>
                 <ul className="mt-4 space-y-2 text-base text-[#166534]">
                   <li>Identity verified</li>
                   <li>Background check completed</li>
@@ -176,7 +176,7 @@ export default async function PublicSitterDetailPage({
               </article>
 
               <article className="rounded-[10px] border border-[#d9d1c9] bg-white p-5">
-                <h3 className="text-[40px]">Similar Sitters</h3>
+                <h3 className="text-[32px] sm:text-[40px]">Similar Sitters</h3>
                 <div className="mt-4 space-y-3">
                   {similar.map((item) => (
                     <Link key={item.id} href={`/find-house-sitters/${item.id}`} className="flex items-center gap-3">

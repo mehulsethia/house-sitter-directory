@@ -102,7 +102,7 @@ export default function CleanerChatsPage() {
 
   return (
     <div className="internal-page space-y-6">
-      <div className="grid gap-4 md:h-[calc(100vh-12.5rem)] md:grid-cols-[300px_1fr] lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-4 lg:h-[calc(100vh-16rem)] lg:grid-cols-[340px_1fr]">
       <Card className="internal-card border-slate-200 md:h-full">
         <CardHeader className="pb-3">
           <CardTitle className="internal-heading text-lg">Conversations</CardTitle>

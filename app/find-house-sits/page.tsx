@@ -50,13 +50,17 @@ function FindHouseSitsContent() {
           <p className="mx-auto inline-flex rounded-[4px] bg-[#5a4a3b] px-3 py-1 text-[11px] text-white">
             {filteredCards.length} Active House Sits
           </p>
-          <h1 className="mt-4 text-[64px] leading-[1.05] md:text-[68px]">Find Your Perfect<br />House Sitting Opportunity</h1>
+          <h1 className="mt-4 text-[38px] leading-[1.08] sm:text-[48px] md:text-[56px] lg:text-[64px]">
+            Find Your Perfect
+            <br />
+            House Sitting Opportunity
+          </h1>
           <p className="mx-auto mt-3 max-w-2xl text-[14px] text-[#6b6b6b]">
             Browse verified house sitting opportunities from trusted homeowners worldwide
           </p>
 
           <div className="mx-auto mt-7 max-w-[980px] rounded-[12px] border border-[#e7e1db] bg-white p-4 shadow-[0_6px_20px_rgba(0,0,0,0.08)]">
-            <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_180px]">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_180px]">
               <SearchInput
                 label="Location"
                 icon={<MapPin className="h-4 w-4" />}
@@ -95,7 +99,9 @@ function FindHouseSitsContent() {
                   />
                 }
               />
-              <button type="button" className="h-11 rounded-[4px] bg-[#5a4a3b] text-[13px] text-white">Search</button>
+              <button type="button" className="h-11 w-full rounded-[4px] bg-[#5a4a3b] text-[13px] text-white md:col-span-2 lg:col-span-1">
+                Search
+              </button>
             </div>
           </div>
         </div>
@@ -105,10 +111,10 @@ function FindHouseSitsContent() {
         <div className="max-site-width">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-[36px]">{filteredCards.length} Opportunities Available</h2>
+              <h2 className="text-[30px] leading-tight sm:text-[36px]">{filteredCards.length} Opportunities Available</h2>
               <p className="mt-1 text-sm text-[#6b6b6b]">Showing matching listings</p>
             </div>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex w-full flex-col gap-2 text-sm sm:w-auto sm:flex-row sm:items-center">
               <label className="inline-flex items-center gap-1 rounded-[4px] border border-[#dcd3ca] bg-white px-3 py-2 text-[12px] text-[#6b6b6b]">
                 <input type="checkbox" checked={emergencyOnly} onChange={(event) => setEmergencyOnly(event.target.checked)} />
                 Emergency sits only
@@ -116,7 +122,7 @@ function FindHouseSitsContent() {
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value as 'default' | 'urgent_first' | 'soonest' | 'rating_desc')}
-                className="h-10 min-w-[170px] rounded-[4px] border border-[#dcd3ca] bg-white px-3 text-sm"
+                className="h-10 w-full rounded-[4px] border border-[#dcd3ca] bg-white px-3 text-sm sm:min-w-[170px] sm:w-auto"
               >
                 <option value="default">Sort by</option>
                 <option value="urgent_first">Urgent first</option>
@@ -141,7 +147,7 @@ function FindHouseSitsContent() {
                   </div>
 
                   <div className="p-4">
-                    <h3 className="text-[30px] leading-tight">{card.title}</h3>
+                    <h3 className="text-[24px] leading-tight sm:text-[30px]">{card.title}</h3>
                     <p className="mt-1 flex items-center gap-1 text-[11px] text-[#7a7a7a]">
                       <MapPin className="h-3 w-3" />
                       {card.location}
@@ -151,7 +157,7 @@ function FindHouseSitsContent() {
                       {card.dateRange}
                     </p>
 
-                    <div className="mt-3 grid grid-cols-4 gap-2 text-[10px] text-[#6b6b6b]">
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] text-[#6b6b6b] sm:grid-cols-4">
                       <span className="rounded bg-[#f1ece7] px-2 py-1">{card.type}</span>
                       <span className="rounded bg-[#f1ece7] px-2 py-1"><BedDouble className="mr-1 inline h-3 w-3" />{card.beds} bed</span>
                       <span className="rounded bg-[#f1ece7] px-2 py-1"><Bath className="mr-1 inline h-3 w-3" />{card.baths} bath</span>
@@ -185,7 +191,7 @@ function FindHouseSitsContent() {
 
       <section className="bg-[#5a4a3b] py-16 text-center text-white">
         <div className="max-site-width">
-          <h2 className="text-[44px] leading-tight text-white">Ready to Start Your House Sitting Journey?</h2>
+          <h2 className="text-[34px] leading-tight text-white sm:text-[44px]">Ready to Start Your House Sitting Journey?</h2>
           <p className="mx-auto mt-3 max-w-2xl text-[14px] text-white/85">Create your sitter profile and start applying to house sitting opportunities today</p>
           <Link href="/signup?role=cleaner" className="mt-7 inline-flex h-10 items-center rounded-[4px] bg-white px-6 text-[13px] text-[#5a4a3b]">
             Create Your Profile

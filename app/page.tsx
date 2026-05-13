@@ -32,7 +32,7 @@ export default function HomePage() {
           <p className="mx-auto inline-flex rounded-[6px] bg-[rgba(34,23,15,0.8)] px-4 py-1.5 text-[12px] md:text-[13px]">
             Trusted by 10,000+ Members
           </p>
-          <h1 className="mt-5 text-[44px] leading-tight text-white md:text-[62px]">Your Home, Lovingly Cared For</h1>
+          <h1 className="mt-5 text-[36px] leading-tight text-white sm:text-[44px] md:text-[62px]">Your Home, Lovingly Cared For</h1>
           <p className="mx-auto mt-3 max-w-3xl text-[16px] leading-relaxed text-white/95 md:text-[18px]">
             Connect with verified house sitters or find your perfect house sit
           </p>
@@ -125,7 +125,7 @@ export default function HomePage() {
 
       <section className="bg-[#f9f6f3]">
         <div className="max-site-width">
-          <div className="mb-7 flex items-end justify-between gap-4">
+          <div className="mb-7 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <h2 className="text-[30px]">Featured House Sitters</h2>
               <p className="mt-1 text-[14px] text-[#6b6b6b]">Connect with verified, skilled sitters</p>
@@ -185,7 +185,7 @@ export default function HomePage() {
 
       <section className="bg-white">
         <div className="max-site-width">
-          <div className="mb-7 flex items-end justify-between gap-4">
+          <div className="mb-7 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <h2 className="text-[30px]">Featured House Sits</h2>
               <p className="mt-1 text-[14px] text-[#6b6b6b]">Explore our most popular listings for your perfect sit</p>
@@ -221,7 +221,7 @@ export default function HomePage() {
                     {sit.location}
                   </p>
 
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] sm:grid-cols-3">
                     <span className="rounded bg-[#f4f0ec] px-2 py-1 text-[#5a4a3b]">
                       <BedDouble className="mr-1 inline h-3 w-3" />
                       {sit.beds} Beds

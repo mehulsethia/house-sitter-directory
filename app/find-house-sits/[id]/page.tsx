@@ -55,17 +55,17 @@ export default async function PublicHouseSitDetailPage({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="overflow-hidden rounded-[10px]">
-              <img src={sit.gallery[0] ?? sit.image} alt={sit.title} className="h-[380px] w-full object-cover" />
+              <img src={sit.gallery[0] ?? sit.image} alt={sit.title} className="h-[250px] w-full object-cover sm:h-[320px] md:h-[380px]" />
             </div>
             <div className="overflow-hidden rounded-[10px]">
-              <img src={sit.gallery[1] ?? sit.image} alt={`${sit.title} interior`} className="h-[380px] w-full object-cover" />
+              <img src={sit.gallery[1] ?? sit.image} alt={`${sit.title} interior`} className="h-[250px] w-full object-cover sm:h-[320px] md:h-[380px]" />
             </div>
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-            <div className="rounded-[10px] border border-[#ddd6ce] bg-white p-6">
-              <div className="flex items-start justify-between gap-3">
-                <h1 className="text-[54px] leading-[1.05]">{sit.title}</h1>
+            <div className="rounded-[10px] border border-[#ddd6ce] bg-white p-4 sm:p-6">
+              <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
+                <h1 className="text-[34px] leading-[1.08] sm:text-[44px] lg:text-[54px]">{sit.title}</h1>
                 <span className="rounded bg-[#dcfce7] px-3 py-1 text-xs text-[#15803d]">{sit.statusLabel}</span>
               </div>
 
@@ -74,7 +74,7 @@ export default async function PublicHouseSitDetailPage({
                 {sit.location}
               </p>
 
-              <div className="mt-5 grid grid-cols-3 gap-4 border-b border-[#e5e7eb] pb-5 text-sm">
+              <div className="mt-5 grid grid-cols-1 gap-3 border-b border-[#e5e7eb] pb-5 text-sm sm:grid-cols-3 sm:gap-4">
                 <div>
                   <p className="text-[#6b7280]">Property Type</p>
                   <p className="font-semibold text-[#111827]">{sit.type}</p>
@@ -91,18 +91,18 @@ export default async function PublicHouseSitDetailPage({
 
               <div className="mt-6 space-y-6 text-[#374151]">
                 <div>
-                  <h2 className="text-[40px]">Description</h2>
+                  <h2 className="text-[30px] sm:text-[40px]">Description</h2>
                   <p className="mt-2 text-base leading-relaxed">{sit.description}</p>
                 </div>
                 <div>
-                  <h2 className="text-[40px]">Dates</h2>
+                  <h2 className="text-[30px] sm:text-[40px]">Dates</h2>
                   <p className="mt-2 flex items-center gap-2 text-base">
                     <Calendar className="h-4 w-4" />
                     {sit.dateRange}
                   </p>
                 </div>
                 <div>
-                  <h2 className="text-[40px]">Amenities</h2>
+                  <h2 className="text-[30px] sm:text-[40px]">Amenities</h2>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {sit.amenities.map((amenity) => (
                       <span key={amenity} className="rounded bg-[#f1ece7] px-3 py-1 text-[12px] text-[#5a4a3b]">
@@ -112,13 +112,13 @@ export default async function PublicHouseSitDetailPage({
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-[40px]">Pets</h2>
+                  <h2 className="text-[30px] sm:text-[40px]">Pets</h2>
                   <span className="mt-2 inline-flex rounded bg-[#f1ece7] px-3 py-1 text-[12px] text-[#5a4a3b]">
                     {sit.pets}
                   </span>
                 </div>
                 <div>
-                  <h2 className="text-[40px]">Responsibilities</h2>
+                  <h2 className="text-[30px] sm:text-[40px]">Responsibilities</h2>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-base">
                     {sit.responsibilities.map((item) => (
                       <li key={item}>{item}</li>
@@ -130,7 +130,7 @@ export default async function PublicHouseSitDetailPage({
 
             <aside className="space-y-4">
               <article className="rounded-[10px] border border-[#ddd6ce] bg-white p-5">
-                <h3 className="text-[40px]">Homeowner</h3>
+                <h3 className="text-[30px] sm:text-[40px]">Homeowner</h3>
                 <div className="mt-3 flex items-center gap-3">
                   <img src={sit.homeownerAvatar} alt={sit.homeownerName} className="h-12 w-12 rounded-full object-cover" />
                   <p className="text-lg font-semibold text-[#111827]">{sit.homeownerName}</p>
@@ -138,7 +138,7 @@ export default async function PublicHouseSitDetailPage({
               </article>
 
               <article className="rounded-[10px] border border-[#ddd6ce] bg-white p-5">
-                <h3 className="text-[40px]">Compensation</h3>
+                <h3 className="text-[30px] sm:text-[40px]">Compensation</h3>
                 <p className="mt-2 text-base text-[#4b5563]">£ {sit.compensation}</p>
                 <Link
                   href={applyHref}
