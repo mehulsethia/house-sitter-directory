@@ -1,0 +1,103 @@
+{
+  "generated_at": "2026-05-13T14:55:51.022Z",
+  "base_url": "http://127.0.0.1:3100",
+  "artifacts": {
+    "users": {
+      "client": {
+        "id": "7f596ee9-8a18-4545-877a-3de2901bf725",
+        "email": "qa-client-1778684112391@testmail.com"
+      },
+      "sitter": {
+        "id": "5e3d79f0-1467-4aaf-9ced-fd7d352bb12b",
+        "email": "qa-sitter-1778684112391@testmail.com"
+      }
+    },
+    "bookings": {}
+  },
+  "results": [
+    {
+      "area": "Login/signup/onboarding",
+      "test": "Account creation",
+      "status": "PASS",
+      "details": "Created test auth users via Supabase Admin"
+    },
+    {
+      "area": "Login/signup/onboarding",
+      "test": "Login + auth session",
+      "status": "FAIL",
+      "details": "client=500, sitter=500"
+    },
+    {
+      "area": "Login/signup/onboarding",
+      "test": "Auth sync bootstrap",
+      "status": "FAIL",
+      "details": "client=500, sitter=500"
+    },
+    {
+      "area": "Login/signup/onboarding",
+      "test": "Onboarding completion",
+      "status": "FAIL",
+      "details": "client=500, sitter=500, avail=500, submit=500"
+    },
+    {
+      "area": "Sitter search/filter + profile/book flow",
+      "test": "Search + filters",
+      "status": "FAIL",
+      "details": "status=500, found=false"
+    },
+    {
+      "area": "Sitter search/filter + profile/book flow",
+      "test": "Profile endpoint",
+      "status": "FAIL",
+      "details": "status=500"
+    },
+    {
+      "area": "Sitter search/filter + profile/book flow",
+      "test": "Booking create flow",
+      "status": "FAIL",
+      "details": "create failed: 500 "
+    },
+    {
+      "area": "Booking state transitions",
+      "test": "Pending -> Confirmed (accept)",
+      "status": "BLOCKED",
+      "details": "Blocked by booking creation failure"
+    },
+    {
+      "area": "Booking state transitions",
+      "test": "Pending -> Declined",
+      "status": "BLOCKED",
+      "details": "Blocked by booking creation failure"
+    },
+    {
+      "area": "Alternate proposal, Rescheduling, Accept/Decline/Counter",
+      "test": "Proposal/counter/accept",
+      "status": "BLOCKED",
+      "details": "Blocked by booking creation failure"
+    },
+    {
+      "area": "Messaging",
+      "test": "Send + fetch booking chat",
+      "status": "BLOCKED",
+      "details": "Blocked by booking creation failure"
+    },
+    {
+      "area": "Notifications/payments statuses",
+      "test": "Payment status endpoint",
+      "status": "BLOCKED",
+      "details": "Blocked by booking creation failure"
+    },
+    {
+      "area": "Notifications/payments statuses",
+      "test": "In-app notifications",
+      "status": "BLOCKED",
+      "details": "Blocked by booking creation failure"
+    },
+    {
+      "area": "Availability setup",
+      "test": "Save + fetch schedule",
+      "status": "FAIL",
+      "details": "status=500"
+    }
+  ]
+}

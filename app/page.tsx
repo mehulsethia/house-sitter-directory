@@ -242,14 +242,34 @@ export default function HomePage() {
             for your home and lifestyle.
           </p>
 
-          <div className="mx-auto mt-6 max-w-[760px] rounded-[8px] bg-white p-3 text-left text-[#1a1a1a] shadow-[0_10px_28px_rgba(0,0,0,0.2)]">
+          <form
+            action="/find-house-sitters"
+            method="get"
+            className="mx-auto mt-6 max-w-[760px] rounded-[8px] bg-white p-3 text-left text-[#1a1a1a] shadow-[0_10px_28px_rgba(0,0,0,0.2)]"
+          >
             <div className="grid gap-2 md:grid-cols-3">
-              <input placeholder="📍 Where?" className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]" />
-              <input placeholder="📅 From" className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]" />
-              <input placeholder="📅 To" className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]" />
+              <input
+                name="location"
+                placeholder="📍 Where?"
+                className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
+              />
+              <input
+                name="from"
+                type="date"
+                aria-label="From date"
+                className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
+              />
+              <input
+                name="to"
+                type="date"
+                aria-label="To date"
+                className="h-10 rounded-[4px] border border-[#e0e0e0] px-3 text-[13px]"
+              />
             </div>
-            <button className="mt-2 h-9 w-full rounded-[4px] bg-[#5a4a3b] text-[13px] text-white">Search Sitters</button>
-          </div>
+            <button type="submit" className="mt-2 h-9 w-full rounded-[4px] bg-[#5a4a3b] text-[13px] text-white">
+              Search Sitters
+            </button>
+          </form>
 
           <p className="mt-4 text-[11px] text-white/90">🐾 Pet Friendly &nbsp; • &nbsp; ✅ Verified Sitters &nbsp; • &nbsp; ⭐ Top Rated &nbsp; • &nbsp; 💬 Best Feedback</p>
         </div>
