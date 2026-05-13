@@ -5,6 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 import { Clock3, MapPin, MessageSquare, ShieldCheck, Share2, Star } from 'lucide-react'
 import { LandingHeader } from '@/components/landing-header'
 import Footer from '@/components/footer'
+import { PublicSitterDetailTabs } from '@/components/public-sitter-detail-tabs'
 import { PUBLIC_SITTERS } from '@/lib/public-marketplace-data'
 
 async function getSignedInUser() {
@@ -44,7 +45,7 @@ export default async function PublicSitterDetailPage({
   const similar = PUBLIC_SITTERS.filter((item) => item.id !== sitter.id).slice(0, 3)
 
   return (
-    <main className="min-h-screen bg-[#f3f3f3] text-[#111827]">
+    <main className="flex min-h-screen flex-col bg-[#f3f3f3] text-[#111827]">
       <LandingHeader />
 
       <section className="pb-16 pt-10">
@@ -125,26 +126,7 @@ export default async function PublicSitterDetailPage({
           </div>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
-            <div className="rounded-[10px] bg-white p-5 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">
-              <div className="grid grid-cols-3 overflow-hidden rounded-[8px] bg-[#f5f5f5] text-center text-[11px] sm:text-[13px]">
-                <span className="bg-white px-3 py-3">Availability</span>
-                <span className="px-3 py-3">About</span>
-                <span className="px-3 py-3">Reviews</span>
-              </div>
-
-              <div className="mt-6 rounded-[10px] border border-[#e5e7eb] p-4 sm:p-5">
-                <h2 className="text-[30px] sm:text-[38px]">Availability</h2>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {sitter.availability.map((slot) => (
-                    <span key={slot} className="rounded bg-[#dcfce7] px-3 py-1 text-[12px] text-[#166534]">
-                      {slot}
-                    </span>
-                  ))}
-                </div>
-                <h3 className="mt-6 text-[28px] sm:text-[34px]">About</h3>
-                <p className="mt-2 text-base leading-relaxed text-[#4b5563]">{sitter.about}</p>
-              </div>
-            </div>
+            <PublicSitterDetailTabs sitter={sitter} />
 
             <div className="space-y-5">
               <article className="rounded-[10px] border border-[#d9d1c9] bg-white p-5">

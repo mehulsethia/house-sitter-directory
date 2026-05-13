@@ -63,7 +63,7 @@ export function PublicSitterDetailTabs({ sitter }: { sitter: PublicSitter }) {
   const [tab, setTab] = useState<DetailTab>('availability')
 
   const schedule = useMemo(() => buildSchedule(sitter.availability), [sitter.availability])
-  const scheduledDays = useMemo(() => schedule.filter((item) => item.slots.length > 0), [schedule])
+  const hasAnyAvailability = useMemo(() => schedule.some((item) => item.slots.length > 0), [schedule])
 
   const specialties = sitter.tags.slice(0, 4)
   const skills = sitter.tags
@@ -99,32 +99,46 @@ export function PublicSitterDetailTabs({ sitter }: { sitter: PublicSitter }) {
 
       {tab === 'availability' && (
         <div className="mt-6 rounded-[10px] border border-[#e5e7eb] p-5">
-          <h2 className="flex items-center gap-2 text-[34px]">
+          <h2 className="flex items-center gap-2 text-[30px] sm:text-[34px]">
             <CalendarDays className="h-7 w-7 text-[#5a4a3b]" />
             Availability
           </h2>
 
-          {scheduledDays.length === 0 ? (
-            <div className="mt-5 rounded-[8px] border border-dashed border-[#d8d8d8] bg-[#fafafa] px-4 py-6 text-center text-sm text-[#6b7280]">
-              No availability added yet.
-            </div>
-          ) : (
+          {hasAnyAvailability ? (
             <div className="mt-4 space-y-3">
-              {scheduledDays.map((item) => (
-                <div key={item.day} className="rounded-[8px] border border-[#ece7e2] bg-[#fcfaf8] p-3">
-                  <p className="text-sm font-semibold text-[#1f2937]">{item.day}</p>
+              {schedule.map((item) => (
+                <div
+                  key={item.day}
+                  className={`rounded-[8px] border p-3 ${item.slots.length > 0 ? 'border-[#ece7e2] bg-[#fcfaf8]' : 'border-[#f0f0f0] bg-[#fafafa]'}`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-[#1f2937]">{item.day}</p>
+                    {item.slots.length === 0 ? (
+                      <span className="text-[11px] text-[#9ca3af]">No slots selected</span>
+                    ) : (
+                      <span className="text-[11px] text-[#16a34a]">Selected</span>
+                    )}
+                  </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {item.slots.map((slot) => (
-                      <span
-                        key={`${item.day}-${slot}`}
-                        className="rounded bg-[#dcfce7] px-2.5 py-1 text-[12px] font-medium text-[#166534]"
-                      >
-                        {slot}
-                      </span>
-                    ))}
+                    {item.slots.length > 0 ? (
+                      item.slots.map((slot) => (
+                        <span
+                          key={`${item.day}-${slot}`}
+                          className="rounded bg-[#dcfce7] px-2.5 py-1 text-[12px] font-medium text-[#166534]"
+                        >
+                          {slot}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="rounded bg-[#f3f4f6] px-2.5 py-1 text-[11px] text-[#9ca3af]">Not available</span>
+                    )}
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="mt-5 rounded-[8px] border border-dashed border-[#d8d8d8] bg-[#fafafa] px-4 py-6 text-center text-sm text-[#6b7280]">
+              No availability added yet.
             </div>
           )}
 

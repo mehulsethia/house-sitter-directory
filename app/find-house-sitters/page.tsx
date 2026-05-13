@@ -41,7 +41,7 @@ function FindHouseSittersContent() {
   const hasDateRange = Boolean(startDate || endDate)
 
   return (
-    <main className="min-h-screen bg-[#f3f3f3] text-[#1a1a1a]">
+    <main className="flex min-h-screen flex-col bg-[#f3f3f3] text-[#1a1a1a]">
       <LandingHeader />
 
       <section className="pb-14 pt-14">
@@ -115,7 +115,7 @@ function FindHouseSittersContent() {
         </div>
       </section>
 
-      <section className="bg-[#f3f3f3] pt-0">
+      <section className="bg-[#f3f3f3] pb-0 pt-0">
         <div className="max-site-width">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
