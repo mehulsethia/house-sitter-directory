@@ -1,6 +1,6 @@
-@tailwind url('https://fonts.googleapis.com/css2?family=Montserrat:wght&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap');
 
- base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
