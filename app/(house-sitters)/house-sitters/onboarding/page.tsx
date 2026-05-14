@@ -1047,7 +1047,7 @@ function HouseSitterOnboardingPageContent() {
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                   {step5Mode === 'quiz' || step5Mode === 'success'
                     ? 'Step 2 of 2: Quiz'
-                    : 'Step 1 of 2: Cleaning Standards'}
+                    : 'Step 1 of 2: House Sitting Standards'}
                 </p>
               </div>
 
@@ -1091,7 +1091,7 @@ function HouseSitterOnboardingPageContent() {
                 <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
                   <p className="text-lg font-semibold text-slate-900">Confirmation</p>
                   <p className="text-sm text-slate-700">
-                    I confirm that I have read and understand the House Sitter Directory Cleaning Standards and agree to follow them when accepting bookings.
+                    I confirm that I have read and understand the House Sitter Directory House Sitting Standards and agree to follow them when accepting bookings.
                   </p>
                   <p className="text-sm text-slate-700">The House Sitter Directory is a marketplace.</p>
                   <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">

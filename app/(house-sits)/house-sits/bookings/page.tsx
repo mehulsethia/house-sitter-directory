@@ -199,7 +199,7 @@ export default function HouseSitBookingsPage() {
               </p>
               <Link
                 href="/house-sits/house-sitters"
-                className="inline-flex h-11 items-center rounded-full bg-[#5a4a3b] px-5 text-sm font-semibold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-[#6a5746]"
+                className="inline-flex h-11 items-center rounded-full border border-[#b8905f] bg-[#2b1f15] px-5 text-sm font-semibold text-[#f7e7cc] transition duration-300 hover:-translate-y-0.5 hover:bg-[#3a2a1d]"
               >
                 Book another service
               </Link>

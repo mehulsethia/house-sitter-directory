@@ -165,7 +165,7 @@ function HouseSitterCard({
           <div className="flex items-start gap-2">
             <Shield className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Cleaning standards</p>
+              <p className="text-xs text-muted-foreground">Service standards</p>
               <div className="mt-0.5">{yesNoBadge(houseSitter.cleaning_standards_accepted)}</div>
             </div>
           </div>

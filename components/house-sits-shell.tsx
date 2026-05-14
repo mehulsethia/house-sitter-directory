@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutGrid,
@@ -50,6 +51,12 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
     router.push('/login')
     router.refresh()
   }
+
+  useEffect(() => {
+    for (const item of NAV_ITEMS) {
+      router.prefetch(item.href)
+    }
+  }, [router])
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#f3f3f3] text-slate-900 lg:pl-72">

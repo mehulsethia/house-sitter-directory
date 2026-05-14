@@ -135,7 +135,7 @@ export default function HouseSitDashboardPage() {
               <div className="flex flex-wrap gap-3 pt-1">
                 <Link
                   href="/house-sits/house-sitters"
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5a4a3b] px-5 text-sm font-semibold text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-[#6a5746]"
+                  className="inline-flex h-11 items-center gap-2 rounded-full border border-[#b8905f] bg-[#2b1f15] px-5 text-sm font-semibold text-[#f7e7cc] transition duration-300 hover:-translate-y-0.5 hover:bg-[#3a2a1d]"
                 >
                   Book New Service
                   <ArrowUpRight className="h-4 w-4" />

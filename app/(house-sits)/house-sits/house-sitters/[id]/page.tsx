@@ -227,7 +227,7 @@ export default function HouseSitterProfilePage() {
                 </p>
                 <p className="mt-1 text-sm text-white/80">{deferredReviews.length} reviews · {houseSitter.total_jobs} jobs completed</p>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <Button onClick={() => router.push(`/house-sits/book/${id}?reset=1&step=1`)} className="h-9 rounded-full bg-[#5a4a3b] px-4 text-slate-950 hover:bg-[#6a5746]">
+                  <Button onClick={() => router.push(`/house-sits/book/${id}?reset=1&step=1`)} className="h-9 rounded-full border border-[#b8905f] bg-[#2b1f15] px-4 text-[#f7e7cc] hover:bg-[#3a2a1d]">
                     Book Service
                   </Button>
                   <Button

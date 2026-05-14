@@ -112,6 +112,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     checkAdmin()
   }, [])
 
+  useEffect(() => {
+    for (const item of NAV) {
+      router.prefetch(item.href)
+    }
+  }, [router])
+
   async function checkAdmin() {
     setAuthState('loading')
     const supabase = createClient()

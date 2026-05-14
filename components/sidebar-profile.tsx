@@ -36,7 +36,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
         const authUser = authData.user
         const profileData = (profileRes?.data ?? null) as any
         const profileUser = role === 'house_sitter'
-          ? profileData?.houseSitter?.user
+          ? (profileData?.houseSitter ?? profileData?.house_sitter)?.user
           : profileData?.user
         const dbName = String(profileUser?.name ?? '').trim()
         const metaName = String(authUser?.user_metadata?.name ?? '').trim()
@@ -45,7 +45,10 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
         setUser({
           name: dbName || metaName || fallbackName,
           email: profileUser?.email ?? authUser?.email ?? '',
-          avatarUrl: profileUser?.avatar_url ?? profileData?.houseSitter?.profile_image_url ?? null,
+          avatarUrl:
+            profileUser?.avatar_url ??
+            (profileData?.houseSitter ?? profileData?.house_sitter)?.profile_image_url ??
+            null,
         })
       } finally {
         setLoading(false)

@@ -69,6 +69,6 @@ export function rejectionFixGuidance(code?: HouseSitterRejectionReasonCode | nul
   if (code === 'id_not_clear') return 'Upload a clear, readable government ID image.'
   if (code === 'profile_incomplete') return 'Complete every required profile field before resubmission.'
   if (code === 'low_quality_profile') return 'Improve profile quality: photo, bio, and service details.'
-  if (code === 'failed_standards_quiz') return 'Review cleaning standards and pass the quiz again.'
+  if (code === 'failed_standards_quiz') return 'Review house sitting standards and pass the quiz again.'
   return 'Review the feedback and update your profile before resubmitting.'
 }

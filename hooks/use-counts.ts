@@ -19,14 +19,14 @@ async function fetchCounts(): Promise<{ unread_chats: number; pending_bookings: 
     fetch(toApiV1Url('/counts'), {
       headers,
       credentials: 'include',
-      cache: 'no-store',
+      cache: 'default',
     }),
     // Use notifications endpoint for unread count so badge remains reliable
     // even if aggregate count query logic changes.
     fetch(toApiV1Url('/notifications?unread_only=true&page=1&page_size=1'), {
       headers,
       credentials: 'include',
-      cache: 'no-store',
+      cache: 'default',
     }),
   ])
 
@@ -68,10 +68,10 @@ export function useCounts() {
   return useQuery({
     queryKey: ['sidebar-counts'],
     queryFn: fetchCounts,
-    staleTime: 10 * 1000,
-    refetchInterval: 15 * 1000,
+    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
     refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     retry: 2,
   })
 }

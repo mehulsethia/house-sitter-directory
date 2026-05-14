@@ -294,7 +294,7 @@ function HouseSitterProfilePageContent() {
       ['step2_kyc', 'KYC and legal details'],
       ['step3_availability', 'Availability schedule'],
       ['step4_stripe_setup', 'Stripe step'],
-      ['step5_training', 'Cleaning standards quiz'],
+      ['step5_training', 'House sitting standards quiz'],
     ]
     return labels.filter(([key]) => !onboardingSteps[key]).map(([, label]) => label)
   }, [onboardingSteps])

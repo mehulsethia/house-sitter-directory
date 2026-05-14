@@ -317,13 +317,42 @@
 
 .internal-app-shell.app-shell-main {
   padding-top: 0.75rem !important;
-  padding-bottom: 0.75rem !important;
+  padding-bottom: 0 !important;
 }
 
 /* Onboarding banner should be centered and vertically tight. */
 .onboarding-stage-content {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* Shared internal banner art direction: deeper contrast, richer gold highlights. */
+:is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) {
+  background: linear-gradient(130deg, #1e140d 0%, #2f2015 28%, #4b3322 60%, #7a5639 84%, #b08456 100%) !important;
+}
+
+.houseSit-stage__media,
+.houseSitter-stage__media,
+.dashboard-stage__media,
+.admin-stage__media {
+  background-image:
+    radial-gradient(circle at 12% 22%, rgba(255, 226, 181, 0.26), transparent 42%),
+    radial-gradient(circle at 88% 14%, rgba(255, 193, 118, 0.3), transparent 38%),
+    linear-gradient(118deg, rgba(13, 9, 6, 0.68) 0%, rgba(25, 18, 12, 0.46) 44%, rgba(17, 12, 8, 0.7) 100%) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+}
+
+.houseSit-stage__grain,
+.houseSitter-stage__grain,
+.dashboard-stage__grain,
+.admin-stage__grain {
+  background-image:
+    repeating-linear-gradient(132deg, rgba(255, 255, 255, 0.08) 0 1px, rgba(255, 255, 255, 0) 1px 14px),
+    radial-gradient(circle at 20% 82%, rgba(255, 238, 210, 0.12), transparent 36%),
+    linear-gradient(95deg, rgba(255, 242, 220, 0.06) 0%, rgba(255, 242, 220, 0) 45%) !important;
 }
 
 @media (min-width: 640px) {

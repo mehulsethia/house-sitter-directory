@@ -35,7 +35,7 @@ import type {
 } from '@/types'
 
 const BASE = getApiBaseUrl()
-const GET_CACHE_TTL_MS = Number(process.env.NEXT_PUBLIC_API_CLIENT_CACHE_TTL_MS ?? 30000)
+const GET_CACHE_TTL_MS = Number(process.env.NEXT_PUBLIC_API_CLIENT_CACHE_TTL_MS ?? 120000)
 
 type AnyObj = Record<string, any>
 type CachedResponse = { expiresAt: number; data: unknown }
@@ -90,7 +90,7 @@ async function executeRequest<T>(path: string, options: RequestInit, method: str
   const headers = await getAuthHeaders()
   const res = await fetch(`${BASE}/api/v1${path}`, {
     ...options,
-    cache: 'no-store',
+    cache: method === 'GET' ? 'default' : 'no-store',
     credentials: 'include',
     headers: { ...headers, ...options.headers },
   })
@@ -129,6 +129,16 @@ async function executeRequest<T>(path: string, options: RequestInit, method: str
     clearApiCache()
   }
   return json
+}
+
+function withHouseSitterAlias<T extends APIResponse<any>>(res: T): T {
+  const payload = res?.data as AnyObj | undefined
+  if (!payload || typeof payload !== 'object') return res
+
+  if (payload.house_sitter && !payload.houseSitter) payload.houseSitter = payload.house_sitter
+  if (payload.houseSitter && !payload.house_sitter) payload.house_sitter = payload.houseSitter
+
+  return { ...res, data: payload } as T
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -279,19 +289,30 @@ export const houseSittersApi = {
     return { ...res, data: normalizePaginated<HouseSitterSummary>(res.data ?? {}, 'house_sitters') }
   },
   getById: (id: string) => request<APIResponse<HouseSitterRead>>(`/house-sitters/${id}`),
-  me: () =>
-    request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me'),
-  updateMyProfile: (body: { bio?: string; years_experience?: number; hourly_rate: number }) =>
-    request<APIResponse<HouseSitterRead>>('/house-sitters/me', { method: 'PATCH', body: JSON.stringify(body) }),
-  updateMyOnboarding: (body: Record<string, unknown>) =>
-    request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me', {
-      method: 'PATCH',
-      body: JSON.stringify(body),
-    }),
-  submitForApproval: () =>
-    request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me/submit', {
-      method: 'POST',
-    }),
+  me: async () =>
+    withHouseSitterAlias(
+      await request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me'),
+    ),
+  updateMyProfile: async (body: { bio?: string; years_experience?: number; hourly_rate: number }) =>
+    withHouseSitterAlias(
+      await request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    ),
+  updateMyOnboarding: async (body: Record<string, unknown>) =>
+    withHouseSitterAlias(
+      await request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me', {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      }),
+    ),
+  submitForApproval: async () =>
+    withHouseSitterAlias(
+      await request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me/submit', {
+        method: 'POST',
+      }),
+    ),
 }
 
 // ---------------------------------------------------------------------------

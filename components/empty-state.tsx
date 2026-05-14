@@ -10,7 +10,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center py-14 text-center', className)}>
+    <div className={cn('flex flex-col items-center justify-center py-8 text-center', className)}>
       <div className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500">
         <Inbox className="h-5 w-5" />
       </div>

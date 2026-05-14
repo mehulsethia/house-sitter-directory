@@ -140,6 +140,12 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
     }
   }, [isOnboardingRoute, router])
 
+  useEffect(() => {
+    for (const item of NAV_ITEMS) {
+      router.prefetch(item.href)
+    }
+  }, [router])
+
   const { data: counts } = useCounts()
 
   function getBadge(href: string): number {
