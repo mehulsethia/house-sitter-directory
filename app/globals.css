@@ -320,9 +320,20 @@
   padding-bottom: 0.75rem !important;
 }
 
+/* Onboarding banner should be centered and vertically tight. */
+.onboarding-stage-content {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 @media (min-width: 640px) {
   :is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) > .relative.z-10 {
     padding-top: 0.65rem !important;
     padding-bottom: 0.65rem !important;
+  }
+
+  .onboarding-stage-content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 }

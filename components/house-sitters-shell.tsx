@@ -162,17 +162,17 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-[#f3f3f3] px-3 py-3 sm:px-4 md:px-8 md:py-4">
         <div className="mx-auto w-full max-w-5xl space-y-6">
-          <section className="houseSitter-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <section className="houseSitter-stage overflow-hidden rounded-[2rem] border border-slate-200/70 py-0">
             <div className="houseSitter-stage__media" aria-hidden="true" />
             <div className="houseSitter-stage__grain" aria-hidden="true" />
-            <div className="relative z-10 px-5 py-2 sm:px-6 sm:py-2.5">
+            <div className="relative z-10 onboarding-stage-content px-5 sm:px-6 text-center">
               <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 {stage.tag}
               </p>
-              <h1 className={`mt-1.5 text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl`}>
+              <h1 className={`mt-0.5 text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl`}>
                 {stage.title}
               </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>
+              <p className="mt-1 mx-auto max-w-2xl text-sm text-slate-100/90 sm:text-base">{stage.desc}</p>
             </div>
           </section>
           <div>{children}</div>

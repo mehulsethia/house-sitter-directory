@@ -478,7 +478,7 @@ function HouseSitterOnboardingPageContent() {
     if (!idType) return toast.error('Select ID type.')
     if (!idFileName.trim()) return toast.error('Valid ID file is required.')
     if (petComfortable === null) return toast.error('Please answer the pets question.')
-    if (workEligibilityAnswer !== true) return toast.error('You must be legally allowed to work independently in Cyprus.')
+    if (workEligibilityAnswer !== true) return toast.error('You must be legally allowed to work independently in UK.')
     if (!workEligibilityConfirmed) return toast.error('Please confirm legal work eligibility.')
     if (!termsAccepted) return toast.error('Please accept terms and platform rules.')
     if (!phone.trim()) return toast.error('Phone number is required.')
@@ -693,15 +693,15 @@ function HouseSitterOnboardingPageContent() {
   }
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto pb-0">
       <Card className="bg-[#F7F7F8] border-[#ECECEF]">
-        <CardContent className="px-6 pb-6 pt-6 md:px-8 md:pb-8 md:pt-6">
+        <CardContent className="!flex-none px-6 pb-1 pt-5 md:px-8 md:pb-2 md:pt-5">
           <StepDots current={step} />
 
           <p className="text-center text-[32px] leading-none text-primary font-semibold mb-1">
             {progress?.completion_pct ?? 0}%
           </p>
-          <p className="text-center text-sm text-gray-700 mb-4">Welcome on board. Please complete your account setup to get started.</p>
+          <p className="text-center text-sm text-gray-700 mb-3">Welcome on board. Please complete your account setup to get started.</p>
           <div className="h-px bg-gray-200 mb-5" />
 
           {step === 1 && (
@@ -947,7 +947,7 @@ function HouseSitterOnboardingPageContent() {
                   </div>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                  <p className="text-sm font-medium text-gray-800">Are you legally allowed to work in Cyprus and provide house sitting services independently? <span className="text-red-500">*</span></p>
+                  <p className="text-sm font-medium text-gray-800">Are you legally allowed to work in UK and provide house sitting services independently? <span className="text-red-500">*</span></p>
                   <p className="mt-1 text-xs text-gray-500">If your work permit only allows you to work for one employer, you cannot use The House Sitter Directory.</p>
                   <div className="mt-2 flex gap-4">
                     <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -962,7 +962,7 @@ function HouseSitterOnboardingPageContent() {
                 </div>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={workEligibilityConfirmed} onChange={(e) => setWorkEligibilityConfirmed(e.target.checked)} />
-                  I confirm that I am legally allowed to work in Cyprus and provide house sitting services independently, and I am not restricted to working for a single employer. <span className="text-red-500">*</span>
+                  I confirm that I am legally allowed to work in UK and provide house sitting services independently, and I am not restricted to working for a single employer. <span className="text-red-500">*</span>
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} />
@@ -970,7 +970,7 @@ function HouseSitterOnboardingPageContent() {
                 </label>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-1">
                 <Button variant="outline" onClick={() => setStep(1)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
@@ -1001,7 +1001,7 @@ function HouseSitterOnboardingPageContent() {
                 }}
               />
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-1">
                 <Button variant="outline" onClick={() => setStep(2)}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
@@ -1112,12 +1112,12 @@ function HouseSitterOnboardingPageContent() {
                     />
                     I understand and agree
                   </label>
-                  <div className="flex items-center justify-between pt-2">
-                    <Button variant="outline" onClick={() => setStep5Mode('standards')}>
-                      <ArrowLeft className="h-4 w-4 mr-1" /> Back
-                    </Button>
-                    <Button onClick={continueToQuiz} disabled={!standardsConfirmChecked} loading={saving}>
-                      Continue to quiz
+              <div className="flex items-center justify-between pt-1">
+                <Button variant="outline" onClick={() => setStep5Mode('standards')}>
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Back
+                </Button>
+                <Button onClick={continueToQuiz} disabled={!standardsConfirmChecked} loading={saving}>
+                  Continue to quiz
                     </Button>
                   </div>
                 </div>
@@ -1195,12 +1195,6 @@ function HouseSitterOnboardingPageContent() {
           )}
         </CardContent>
       </Card>
-
-      {progress && progress.completion_pct < 100 && (
-        <p className="text-xs text-gray-600 mt-3 text-center">
-          Your profile is {progress.completion_pct}% complete. House Sitter profiles are visible to house_sits only after admin approval.
-        </p>
-      )}
     </div>
   )
 }
