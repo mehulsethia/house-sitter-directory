@@ -42,7 +42,7 @@ function todayInCyprus(): string {
 
 export const availabilityService = {
   /**
-   * Returns 30-minute interval slots for a given cleaner on a given date.
+   * Returns 30-minute interval slots for a given houseSitter on a given date.
    *
    * Each slot represents a possible start time. Slots are generated at 30-min
    * intervals from the start of each schedule window to (end - 30min).
@@ -54,7 +54,7 @@ export const availabilityService = {
    *  - There is a conflict with a blocked time or existing booking
    */
   async getAvailableSlots(
-    cleanerId: string,
+    houseSitterId: string,
     dateStr: string,
     durationHours: number,
   ): Promise<TimeSlot[]> {
@@ -66,9 +66,9 @@ export const availabilityService = {
     dayEndUTC.setUTCSeconds(59, 999)
 
     const [schedules, blockedTimes, existingBookings] = await Promise.all([
-      availabilityRepo.getSchedule(cleanerId),
-      availabilityRepo.getBlockedTimesInRange(cleanerId, dayStartUTC, dayEndUTC),
-      bookingRepo.findActiveForCleaner(cleanerId, dayStartUTC, dayEndUTC),
+      availabilityRepo.getSchedule(houseSitterId),
+      availabilityRepo.getBlockedTimesInRange(houseSitterId, dayStartUTC, dayEndUTC),
+      bookingRepo.findActiveForCleaner(houseSitterId, dayStartUTC, dayEndUTC),
     ])
 
     const daySchedules = schedules
@@ -150,7 +150,7 @@ export const availabilityService = {
   },
 
   async getBookableDates(
-    cleanerId: string,
+    houseSitterId: string,
     durationHours: number,
     daysAhead: number,
   ): Promise<string[]> {
@@ -175,9 +175,9 @@ export const availabilityService = {
     rangeEnd.setUTCSeconds(59, 999)
 
     const [schedules, blockedTimes, existingBookings] = await Promise.all([
-      availabilityRepo.getSchedule(cleanerId),
-      availabilityRepo.getBlockedTimesInRange(cleanerId, rangeStart, rangeEnd),
-      bookingRepo.findActiveForCleaner(cleanerId, rangeStart, rangeEnd),
+      availabilityRepo.getSchedule(houseSitterId),
+      availabilityRepo.getBlockedTimesInRange(houseSitterId, rangeStart, rangeEnd),
+      bookingRepo.findActiveForCleaner(houseSitterId, rangeStart, rangeEnd),
     ])
 
     const durationMs = durationHours * 60 * 60 * 1000

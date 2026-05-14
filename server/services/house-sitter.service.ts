@@ -5,7 +5,7 @@ import { loopsEmailService } from './loops-email.service'
 import { pushInAppNotification } from './in-app-notification.service'
 import type { User } from '@prisma/client'
 import {
-  CleanerRejectionReasonCode,
+  HouseSitterRejectionReasonCode,
   composeCleanerRejectionMessage,
   rejectionFixGuidance,
 } from '@/lib/house-sitter-status'
@@ -14,22 +14,22 @@ const STRIKE_SUSPEND_THRESHOLD = 3
 
 export const houseSitterService = {
   async approve(
-    cleanerId: string,
+    houseSitterId: string,
     adminUser: User,
     action: 'approve' | 'reject',
     rejectionReason?: string,
-    rejectionReasonCode?: CleanerRejectionReasonCode,
+    rejectionReasonCode?: HouseSitterRejectionReasonCode,
     rejectionCustomMessage?: string,
   ) {
-    const cleaner = await houseSitterRepo.findById(cleanerId)
-    if (!cleaner) throw new ServiceError('Cleaner not found', 404)
-    if (cleaner.status !== 'pending') throw new ServiceError('Cleaner is not in pending status', 400)
+    const houseSitter = await houseSitterRepo.findById(houseSitterId)
+    if (!houseSitter) throw new ServiceError('HouseSitter not found', 404)
+    if (houseSitter.status !== 'pending') throw new ServiceError('HouseSitter is not in pending status', 400)
     const resolvedRejectionMessage = composeCleanerRejectionMessage({
       reasonCode: rejectionReasonCode,
       customMessage: rejectionCustomMessage ?? rejectionReason,
     })
 
-    const updated = await houseSitterRepo.update(cleanerId, {
+    const updated = await houseSitterRepo.update(houseSitterId, {
       status: action === 'approve' ? 'approved' : 'rejected',
       rejectionReason: action === 'reject' ? resolvedRejectionMessage : null,
       approvedAt: action === 'approve' ? new Date() : null,
@@ -38,16 +38,16 @@ export const houseSitterService = {
 
     await pushInAppNotification({
       userId: updated.userId,
-      type: action === 'approve' ? 'cleaner_application_approved' : 'cleaner_application_rejected',
-      title: action === 'approve' ? 'Cleaner profile approved' : 'Cleaner profile rejected',
+      type: action === 'approve' ? 'house_sitter_application_approved' : 'house_sitter_application_rejected',
+      title: action === 'approve' ? 'HouseSitter profile approved' : 'HouseSitter profile rejected',
       body:
         action === 'approve'
           ? updated.stripeOnboardingComplete
-            ? 'Your profile is approved and live for client bookings.'
+            ? 'Your profile is approved and live for houseSit bookings.'
             : 'Your profile is approved. Connect Stripe to go live.'
-          : `Your cleaner profile was rejected: ${resolvedRejectionMessage} ${rejectionFixGuidance(rejectionReasonCode)}`,
+          : `Your houseSitter profile was rejected: ${resolvedRejectionMessage} ${rejectionFixGuidance(rejectionReasonCode)}`,
       data: {
-        cleaner_id: updated.id,
+        house_sitter_id: updated.id,
         rejection_reason_code: rejectionReasonCode ?? null,
       },
     })
@@ -56,31 +56,31 @@ export const houseSitterService = {
       if (action === 'approve') {
         await loopsEmailService.sendCleanerApplicationApproved({
           email: updated.user.email,
-          fullName: updated.user.name ?? 'Cleaner',
+          fullName: updated.user.name ?? 'HouseSitter',
         })
       } else {
         await loopsEmailService.sendCleanerApplicationRejected({
           email: updated.user.email,
-          fullName: updated.user.name ?? 'Cleaner',
+          fullName: updated.user.name ?? 'HouseSitter',
         })
       }
     } catch (emailError) {
-      console.error('Failed to send cleaner application status email via Loops:', emailError)
+      console.error('Failed to send houseSitter application status email via Loops:', emailError)
     }
 
     return updated
   },
 
   async issueStrike(
-    cleanerId: string,
+    houseSitterId: string,
     issuedBy: string | null,
     strikeType: string,
     reason: string,
     bookingId?: string,
   ) {
-    await db.cleanerStrike.create({
+    await db.houseSitterStrike.create({
       data: {
-        cleanerId,
+        houseSitterId,
         strikeType,
         reason,
         issuedBy,
@@ -88,19 +88,19 @@ export const houseSitterService = {
       },
     })
 
-    const strikeCount = await houseSitterRepo.countStrikes(cleanerId)
+    const strikeCount = await houseSitterRepo.countStrikes(houseSitterId)
     if (strikeCount >= STRIKE_SUSPEND_THRESHOLD) {
-      await houseSitterRepo.update(cleanerId, { status: 'suspended' })
+      await houseSitterRepo.update(houseSitterId, { status: 'suspended' })
     }
 
     return strikeCount
   },
 
-  async toggleSuspension(cleanerId: string) {
-    const cleaner = await houseSitterRepo.findById(cleanerId)
-    if (!cleaner) throw new ServiceError('Cleaner not found', 404)
+  async toggleSuspension(houseSitterId: string) {
+    const houseSitter = await houseSitterRepo.findById(houseSitterId)
+    if (!houseSitter) throw new ServiceError('HouseSitter not found', 404)
 
-    const suspend = cleaner.status !== 'suspended'
-    return houseSitterRepo.suspend(cleanerId, suspend)
+    const suspend = houseSitter.status !== 'suspended'
+    return houseSitterRepo.suspend(houseSitterId, suspend)
   },
 }

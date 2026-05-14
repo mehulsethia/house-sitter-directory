@@ -7,38 +7,38 @@ import type { HouseSitterSummary } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface HouseSitterCardProps {
-  cleaner: HouseSitterSummary & {
+  houseSitter: HouseSitterSummary & {
     name?: string
     city?: string
     years_experience?: number
     profile_image_url?: string
     skills?: string[]
     transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
-    cleaning_supplies?: 'own_supplies' | 'client_supplies'
+    cleaning_supplies?: 'own_supplies' | 'house_sit_supplies'
   }
   isFavorite: boolean
-  onToggleFavorite: (cleanerId: string) => void
+  onToggleFavorite: (houseSitterId: string) => void
 }
 
-export function HouseSitterCard({ cleaner, isFavorite, onToggleFavorite }: HouseSitterCardProps) {
-  const averageRating = Number(cleaner.average_rating ?? 0)
-  const reviewCount = Number(cleaner.total_jobs ?? 0)
-  const years = cleaner.years_experience ?? 0
-  const transportText = cleaner.transport_mode === 'own_car'
+export function HouseSitterCard({ houseSitter, isFavorite, onToggleFavorite }: HouseSitterCardProps) {
+  const averageRating = Number(houseSitter.average_rating ?? 0)
+  const reviewCount = Number(houseSitter.total_jobs ?? 0)
+  const years = houseSitter.years_experience ?? 0
+  const transportText = houseSitter.transport_mode === 'own_car'
     ? 'Own car'
-    : cleaner.transport_mode === 'bus_walk'
+    : houseSitter.transport_mode === 'bus_walk'
       ? 'Bus / walk'
-      : cleaner.transport_mode === 'requires_pickup'
+      : houseSitter.transport_mode === 'requires_pickup'
         ? 'Requires pick-up'
         : null
-  const suppliesText = cleaner.cleaning_supplies === 'own_supplies'
+  const suppliesText = houseSitter.cleaning_supplies === 'own_supplies'
     ? 'Brings supplies'
-    : cleaner.cleaning_supplies === 'client_supplies'
+    : houseSitter.cleaning_supplies === 'house_sit_supplies'
       ? 'Homeowner supplies'
       : null
-  const tags = ['Pro House Sitter', ...(cleaner.skills ?? []).slice(0, 3)]
-  const bio = cleaner.bio?.trim() || 'Detail-oriented cleaner with a calm, methodical approach.'
-  const name = cleaner.name ?? cleaner.user?.name ?? 'House Sitter'
+  const tags = ['Pro House Sitter', ...(houseSitter.skills ?? []).slice(0, 3)]
+  const bio = houseSitter.bio?.trim() || 'Detail-oriented houseSitter with a calm, methodical approach.'
+  const name = houseSitter.name ?? houseSitter.user?.name ?? 'House Sitter'
   const hasRating = averageRating > 0
   const displayRating = hasRating ? averageRating.toFixed(1) : null
   const displayCount = hasRating ? `(${reviewCount})` : '(0)'
@@ -50,7 +50,7 @@ export function HouseSitterCard({ cleaner, isFavorite, onToggleFavorite }: House
           <div className="flex items-start gap-3.5">
             <UserAvatar
               name={name}
-              imageUrl={cleaner.profile_image_url ?? cleaner.user?.avatar_url}
+              imageUrl={houseSitter.profile_image_url ?? houseSitter.user?.avatar_url}
               className="h-14 w-14 shrink-0 border border-[#e3e6ef]"
               textClassName="text-base"
               fallback="C"
@@ -83,12 +83,12 @@ export function HouseSitterCard({ cleaner, isFavorite, onToggleFavorite }: House
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <p className="text-[18px] leading-none font-bold tracking-[-0.01em] text-[#0f1733]">
-                    {formatCurrency(cleaner.hourly_rate)}
+                    {formatCurrency(houseSitter.hourly_rate)}
                     <span className="ml-1 text-[12px] font-medium text-[#8a90a8]">/hr</span>
                   </p>
                   <button
                     type="button"
-                    onClick={() => onToggleFavorite(cleaner.id)}
+                    onClick={() => onToggleFavorite(houseSitter.id)}
                     aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
                     className={cn(
                       'inline-flex h-8 w-8 items-center justify-center rounded-full border transition',
@@ -145,13 +145,13 @@ export function HouseSitterCard({ cleaner, isFavorite, onToggleFavorite }: House
 
           <div className="grid grid-cols-2 gap-2.5">
             <Link
-              href={`/house-sits/house-sitters/${cleaner.id}`}
+              href={`/house-sits/house-sitters/${houseSitter.id}`}
               className="inline-flex h-[44px] items-center justify-center rounded-xl border border-[#e3e6ef] px-3 text-[14px] font-semibold text-[#0f1733] hover:bg-[#fafbfe]"
             >
               View Profile
             </Link>
             <Link
-              href={`/house-sits/book/${cleaner.id}?fresh=1`}
+              href={`/house-sits/book/${houseSitter.id}?fresh=1`}
               className="inline-flex h-[44px] items-center justify-center rounded-xl bg-[#1f3bd6] px-3 text-[14px] font-semibold text-white hover:bg-[#182fb3]"
             >
               Book Now

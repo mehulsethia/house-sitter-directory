@@ -9,8 +9,8 @@ export const GET = requireAuth(async (_req, ctx, user) => {
   const booking = await bookingRepo.findById(bookingId)
   if (!booking) return err('Booking not found', 404)
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit || booking.houseSitId !== houseSit.id) return err('Forbidden', 403)
 
   const payment = await paymentRepo.findByBookingId(bookingId)
   if (!payment) return err('Payment not found', 404)

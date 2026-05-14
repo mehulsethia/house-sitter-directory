@@ -22,7 +22,7 @@ const NAV_ITEMS = [
 ]
 
 
-function cleanerStageCopy(pathname: string) {
+function houseSitterStageCopy(pathname: string) {
   if (pathname.startsWith('/house-sitters/dashboard')) {
     return {
       tag: 'The House Sitter Directory House Sitter Hub',
@@ -109,7 +109,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
   const isOnboardingRoute = pathname === '/house-sitters/onboarding'
   const hideShellBanner = pathname.startsWith('/house-sitters/report') || pathname.startsWith('/house-sitters/dashboard')
   const [gateChecked, setGateChecked] = useState(false)
-  const stage = cleanerStageCopy(pathname)
+  const stage = houseSitterStageCopy(pathname)
 
   useEffect(() => {
     let mounted = true
@@ -162,9 +162,9 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-[#f3f3f3] px-3 py-6 sm:px-4 md:px-8 md:py-10">
         <div className="mx-auto w-full max-w-5xl space-y-6">
-          <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-            <div className="cleaner-stage__media" aria-hidden="true" />
-            <div className="cleaner-stage__grain" aria-hidden="true" />
+          <section className="houseSitter-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+            <div className="houseSitter-stage__media" aria-hidden="true" />
+            <div className="houseSitter-stage__grain" aria-hidden="true" />
             <div className="relative z-10 px-5 py-3 sm:px-6 sm:py-3">
               <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 {stage.tag}
@@ -178,13 +178,13 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
           <div>{children}</div>
         </div>
         <style jsx>{`
-          .cleaner-stage {
+          .houseSitter-stage {
             position: relative;
             isolation: isolate;
             background: linear-gradient(125deg, #3f3429 12%, #5a4a3b 58%, #6c5947 100%);
           }
 
-          .cleaner-stage__media {
+          .houseSitter-stage__media {
             position: absolute;
             inset: 0;
             background-image:
@@ -195,18 +195,18 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
             opacity: 0.96;
           }
 
-          .cleaner-stage__grain {
+          .houseSitter-stage__grain {
             position: absolute;
             inset: 0;
             background-image:
               linear-gradient(90deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 45%),
               radial-gradient(circle at 20% 28%, rgba(255, 240, 225, 0.14), transparent 28%),
               radial-gradient(circle at 82% 12%, rgba(255, 216, 168, 0.14), transparent 22%);
-            animation: cleaner-sweep 11s ease-in-out infinite;
+            animation: houseSitter-sweep 11s ease-in-out infinite;
             pointer-events: none;
           }
 
-          @keyframes cleaner-sweep {
+          @keyframes houseSitter-sweep {
             0%,
             100% {
               transform: translateX(0%);
@@ -267,7 +267,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <SidebarProfile profileHref="/house-sitters/profile" role="cleaner" />
+          <SidebarProfile profileHref="/house-sitters/profile" role="house_sitter" />
         </aside>
 
         <div className="min-w-0">
@@ -315,9 +315,9 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
 
           <main className="internal-app-shell app-shell-main mx-auto w-full max-w-[1240px] space-y-6 px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
             {!hideShellBanner && (
-              <section className="cleaner-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-                <div className="cleaner-stage__media" aria-hidden="true" />
-                <div className="cleaner-stage__grain" aria-hidden="true" />
+              <section className="houseSitter-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+                <div className="houseSitter-stage__media" aria-hidden="true" />
+                <div className="houseSitter-stage__grain" aria-hidden="true" />
                 <div className="relative z-10 px-5 py-3 sm:px-6 sm:py-3">
                   <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                     {stage.tag}
@@ -335,13 +335,13 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <style jsx>{`
-        .cleaner-stage {
+        .houseSitter-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 12%, #5a4a3b 58%, #6c5947 100%);
         }
 
-        .cleaner-stage__media {
+        .houseSitter-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -352,18 +352,18 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
           opacity: 0.96;
         }
 
-        .cleaner-stage__grain {
+        .houseSitter-stage__grain {
           position: absolute;
           inset: 0;
           background-image:
             linear-gradient(90deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 45%),
             radial-gradient(circle at 20% 28%, rgba(255, 240, 225, 0.14), transparent 28%),
             radial-gradient(circle at 82% 12%, rgba(255, 216, 168, 0.14), transparent 22%);
-          animation: cleaner-sweep 11s ease-in-out infinite;
+          animation: houseSitter-sweep 11s ease-in-out infinite;
           pointer-events: none;
         }
 
-        @keyframes cleaner-sweep {
+        @keyframes houseSitter-sweep {
           0%,
           100% {
             transform: translateX(0%);

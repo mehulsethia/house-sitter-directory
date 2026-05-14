@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 type ViewMode = 'card' | 'list'
 type AvailabilityFilter = 'any' | 'next_7_days'
 
-type CleanerVM = HouseSitterSummary & {
+type HouseSitterVM = HouseSitterSummary & {
   name: string
   city?: string
   years_experience?: number
@@ -26,7 +26,7 @@ type CleanerVM = HouseSitterSummary & {
   unique_key: string
   skills: string[]
   transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
-  cleaning_supplies?: 'own_supplies' | 'client_supplies'
+  cleaning_supplies?: 'own_supplies' | 'house_sit_supplies'
 }
 
 function transportLabel(value?: string) {
@@ -38,7 +38,7 @@ function transportLabel(value?: string) {
 
 function suppliesLabel(value?: string) {
   if (value === 'own_supplies') return 'Brings own supplies'
-  if (value === 'client_supplies') return 'Homeowner must provide supplies'
+  if (value === 'house_sit_supplies') return 'Homeowner must provide supplies'
   return null
 }
 
@@ -49,7 +49,7 @@ const SERVICE_FILTER_OPTIONS = [
   'Plant Care',
 ]
 
-export default function ClientCleanersPage() {
+export default function HouseSitCleanersPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [minRating, setMinRating] = useState('0')
@@ -60,7 +60,7 @@ export default function ClientCleanersPage() {
   const [bringsOwnSupplies, setBringsOwnSupplies] = useState<'any' | 'yes' | 'no'>('any')
   const [service, setService] = useState('')
   const [view, setView] = useState<ViewMode>('card')
-  const [cleaners, setCleaners] = useState<CleanerVM[]>([])
+  const [house_sitters, setCleaners] = useState<HouseSitterVM[]>([])
   const [favoriteCleanerIds, setFavoriteCleanerIds] = useState<Set<string>>(new Set())
 
   async function load() {
@@ -86,21 +86,21 @@ export default function ClientCleanersPage() {
       ])
 
       const items = (res.data?.items ?? []) as any[]
-      const favoriteIds = new Set<string>(((favoritesRes as any)?.data ?? []).map((item: any) => item.cleaner_id))
+      const favoriteIds = new Set<string>(((favoritesRes as any)?.data ?? []).map((item: any) => item.house_sitter_id))
       startTransition(() => {
         setCleaners(
-          items.map((cleaner) => ({
-            ...cleaner,
-            name: cleaner?.user?.name ?? 'House Sitter',
-            city: cleaner?.service_areas?.[0]?.city,
-            years_experience: cleaner?.years_experience ?? cleaner?.yearsExperience,
+          items.map((houseSitter) => ({
+            ...houseSitter,
+            name: houseSitter?.user?.name ?? 'House Sitter',
+            city: houseSitter?.service_areas?.[0]?.city,
+            years_experience: houseSitter?.years_experience ?? houseSitter?.yearsExperience,
             profile_image_url:
-              cleaner?.profile_image_url ?? cleaner?.profileImageUrl ?? cleaner?.user?.avatar_url,
-            created_at: cleaner?.created_at ?? cleaner?.createdAt ?? cleaner?.user?.created_at,
-            unique_key: cleaner?.user_id ?? cleaner?.id ?? '',
-            skills: cleaner?.skills ?? [],
-            transport_mode: cleaner?.transport_mode ?? cleaner?.transportMode,
-            cleaning_supplies: cleaner?.cleaning_supplies ?? cleaner?.cleaningSupplies,
+              houseSitter?.profile_image_url ?? houseSitter?.profileImageUrl ?? houseSitter?.user?.avatar_url,
+            created_at: houseSitter?.created_at ?? houseSitter?.createdAt ?? houseSitter?.user?.created_at,
+            unique_key: houseSitter?.user_id ?? houseSitter?.id ?? '',
+            skills: houseSitter?.skills ?? [],
+            transport_mode: houseSitter?.transport_mode ?? houseSitter?.transportMode,
+            cleaning_supplies: houseSitter?.cleaning_supplies ?? houseSitter?.cleaningSupplies,
           })),
         )
         setFavoriteCleanerIds(favoriteIds)
@@ -117,41 +117,41 @@ export default function ClientCleanersPage() {
     load()
   }, [searchQuery, minRating, minRate, maxRate, availability, transport, bringsOwnSupplies, service])
 
-  const deferredCleaners = useDeferredValue(cleaners)
+  const deferredCleaners = useDeferredValue(house_sitters)
 
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    return deferredCleaners.filter((cleaner) => {
+    return deferredCleaners.filter((houseSitter) => {
       if (!q) return true
       return (
-        cleaner.name.toLowerCase().includes(q) ||
-        (cleaner.bio ?? '').toLowerCase().includes(q) ||
-        (cleaner.city ?? '').toLowerCase().includes(q) ||
-        cleaner.skills.join(' ').toLowerCase().includes(q)
+        houseSitter.name.toLowerCase().includes(q) ||
+        (houseSitter.bio ?? '').toLowerCase().includes(q) ||
+        (houseSitter.city ?? '').toLowerCase().includes(q) ||
+        houseSitter.skills.join(' ').toLowerCase().includes(q)
       )
     }).sort((a, b) => Number(favoriteCleanerIds.has(b.id)) - Number(favoriteCleanerIds.has(a.id)))
   }, [deferredCleaners, searchQuery, favoriteCleanerIds])
 
 
-  async function toggleFavorite(cleanerId: string) {
-    const currentlyFavorite = favoriteCleanerIds.has(cleanerId)
+  async function toggleFavorite(houseSitterId: string) {
+    const currentlyFavorite = favoriteCleanerIds.has(houseSitterId)
     setFavoriteCleanerIds((prev) => {
       const next = new Set(prev)
-      if (currentlyFavorite) next.delete(cleanerId)
-      else next.add(cleanerId)
+      if (currentlyFavorite) next.delete(houseSitterId)
+      else next.add(houseSitterId)
       return next
     })
     try {
       if (currentlyFavorite) {
-        await favoritesApi.remove(cleanerId)
+        await favoritesApi.remove(houseSitterId)
       } else {
-        await favoritesApi.add(cleanerId)
+        await favoritesApi.add(houseSitterId)
       }
     } catch {
       setFavoriteCleanerIds((prev) => {
         const next = new Set(prev)
-        if (currentlyFavorite) next.add(cleanerId)
-        else next.delete(cleanerId)
+        if (currentlyFavorite) next.add(houseSitterId)
+        else next.delete(houseSitterId)
         return next
       })
       toast.error('Could not update favourites. Please try again.')
@@ -160,10 +160,10 @@ export default function ClientCleanersPage() {
 
   return (
     <>
-      <div className="client-cleaners-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-house_sitters-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -284,11 +284,11 @@ export default function ClientCleanersPage() {
           <EmptyState title="No sitters available right now" description="Try adjusting your filters and search criteria." />
         ) : view === 'card' ? (
           <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((cleaner, index) => (
-              <div key={cleaner.id} className="cleaner-row" style={{ animationDelay: `${index * 65}ms` }}>
+            {filtered.map((houseSitter, index) => (
+              <div key={houseSitter.id} className="houseSitter-row" style={{ animationDelay: `${index * 65}ms` }}>
                 <HouseSitterCard
-                  cleaner={cleaner}
-                  isFavorite={favoriteCleanerIds.has(cleaner.id)}
+                  houseSitter={houseSitter}
+                  isFavorite={favoriteCleanerIds.has(houseSitter.id)}
                   onToggleFavorite={toggleFavorite}
                 />
               </div>
@@ -296,61 +296,61 @@ export default function ClientCleanersPage() {
           </section>
         ) : (
           <section className="space-y-2.5">
-            {filtered.map((cleaner, index) => (
+            {filtered.map((houseSitter, index) => (
               <article
-                key={cleaner.id}
-                className="cleaner-row rounded-[20px] border border-[#ecedf3] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,51,0.04),0_10px_28px_-14px_rgba(15,23,51,0.12)]"
+                key={houseSitter.id}
+                className="houseSitter-row rounded-[20px] border border-[#ecedf3] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(15,23,51,0.04),0_10px_28px_-14px_rgba(15,23,51,0.12)]"
                 style={{ animationDelay: `${index * 65}ms` }}
               >
                 <div className="grid gap-4 xl:grid-cols-[320px_1fr_auto] xl:items-center">
                   <div className="flex min-w-0 items-center gap-3">
                     <UserAvatar
-                      name={cleaner.name}
-                      imageUrl={cleaner.profile_image_url}
-                      alt={`${cleaner.name} profile`}
+                      name={houseSitter.name}
+                      imageUrl={houseSitter.profile_image_url}
+                      alt={`${houseSitter.name} profile`}
                       className="h-[58px] w-[58px] border border-[#e3e6ef]"
                       textClassName="text-lg font-bold"
                       fallback="C"
                     />
                     <div className="min-w-0">
                       <h3 className={`truncate text-[20px] font-bold tracking-[-0.02em] text-[#0f1733]`}>
-                        {cleaner.name}
+                        {houseSitter.name}
                       </h3>
                       <div className="mt-1 flex items-center gap-2">
                         <span className="inline-flex items-center gap-0.5 text-[#f5b400]">
                           {Array.from({ length: 5 }).map((_, idx) => {
-                            const avg = Number(cleaner.average_rating ?? 0)
+                            const avg = Number(houseSitter.average_rating ?? 0)
                             const filled = avg > 0 && avg >= idx + 1
                             return <Star key={idx} className={`h-[13px] w-[13px] ${filled ? 'fill-current' : 'text-[#c9cdda]'}`} />
                           })}
                         </span>
-                        {Number(cleaner.average_rating ?? 0) > 0 ? (
+                        {Number(houseSitter.average_rating ?? 0) > 0 ? (
                           <span className="text-[14px] font-semibold leading-none text-[#0f1733]">
-                            {Number(cleaner.average_rating ?? 0).toFixed(1)}
+                            {Number(houseSitter.average_rating ?? 0).toFixed(1)}
                           </span>
                         ) : null}
-                        <span className="text-[14px] leading-none text-[#8a90a8]">({Number(cleaner.total_jobs ?? 0)})</span>
+                        <span className="text-[14px] leading-none text-[#8a90a8]">({Number(houseSitter.total_jobs ?? 0)})</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[#4a5170]">
-                      <span className="inline-flex items-center gap-1.5"><Briefcase className="h-[15px] w-[15px] text-[#8a90a8]" />{cleaner.years_experience ?? 0} yrs</span>
+                      <span className="inline-flex items-center gap-1.5"><Briefcase className="h-[15px] w-[15px] text-[#8a90a8]" />{houseSitter.years_experience ?? 0} yrs</span>
                       <span className="text-[#e3e6ef]">•</span>
-                      <span className="inline-flex items-center gap-1.5"><Car className="h-[15px] w-[15px] text-[#8a90a8]" />{transportLabel(cleaner.transport_mode)}</span>
-                      {suppliesLabel(cleaner.cleaning_supplies) ? (
+                      <span className="inline-flex items-center gap-1.5"><Car className="h-[15px] w-[15px] text-[#8a90a8]" />{transportLabel(houseSitter.transport_mode)}</span>
+                      {suppliesLabel(houseSitter.cleaning_supplies) ? (
                         <>
                           <span className="text-[#e3e6ef]">•</span>
-                          <span className="inline-flex items-center gap-1.5"><Package className="h-[15px] w-[15px] text-[#8a90a8]" />{suppliesLabel(cleaner.cleaning_supplies)}</span>
+                          <span className="inline-flex items-center gap-1.5"><Package className="h-[15px] w-[15px] text-[#8a90a8]" />{suppliesLabel(houseSitter.cleaning_supplies)}</span>
                         </>
                       ) : null}
                     </div>
                     <p className="mt-1.5 line-clamp-2 text-[16px] leading-[1.25] text-[#4a5170]">
-                      {cleaner.bio?.trim() || 'Detail-oriented cleaner with a calm, methodical approach.'}
+                      {houseSitter.bio?.trim() || 'Detail-oriented houseSitter with a calm, methodical approach.'}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {['Pro House Sitter', ...(cleaner.skills ?? []).slice(0, 3)].map((tag) => (
+                      {['Pro House Sitter', ...(houseSitter.skills ?? []).slice(0, 3)].map((tag) => (
                         <span key={tag} className="rounded-full bg-[#eef1ff] px-[11px] py-[5px] text-[12.5px] font-semibold tracking-[0.005em] text-[#1f3bd6]">
                           {tag}
                         </span>
@@ -360,29 +360,29 @@ export default function ClientCleanersPage() {
 
                   <div className="flex w-full flex-wrap items-center justify-start gap-2.5 xl:w-auto xl:justify-end">
                     <p className={`shrink-0 text-[18px] font-bold tracking-[-0.02em] text-[#0f1733]`}>
-                      {formatCurrency(Number(cleaner.hourly_rate ?? 0))}
+                      {formatCurrency(Number(houseSitter.hourly_rate ?? 0))}
                       <span className="ml-1 text-[12px] font-medium text-[#8a90a8]">/hr</span>
                     </p>
                     <button
                       type="button"
-                      onClick={() => toggleFavorite(cleaner.id)}
-                      aria-label={favoriteCleanerIds.has(cleaner.id) ? 'Remove from favourites' : 'Add to favourites'}
+                      onClick={() => toggleFavorite(houseSitter.id)}
+                      aria-label={favoriteCleanerIds.has(houseSitter.id) ? 'Remove from favourites' : 'Add to favourites'}
                       className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition ${
-                        favoriteCleanerIds.has(cleaner.id)
+                        favoriteCleanerIds.has(houseSitter.id)
                           ? 'border-[#ffd9dd] bg-[#fff1f2] text-[#e11d48]'
                           : 'border-[#ffd9dd] bg-white text-[#f06a84] hover:bg-[#fff1f2]'
                       }`}
                     >
-                      <Heart className={`h-4 w-4 ${favoriteCleanerIds.has(cleaner.id) ? 'fill-current' : ''}`} />
+                      <Heart className={`h-4 w-4 ${favoriteCleanerIds.has(houseSitter.id) ? 'fill-current' : ''}`} />
                     </button>
                     <Link
-                      href={`/house-sits/house-sitters/${cleaner.id}`}
+                      href={`/house-sits/house-sitters/${houseSitter.id}`}
                       className="inline-flex h-[44px] items-center justify-center rounded-xl border border-[#e3e6ef] px-4 text-[14px] font-semibold text-[#0f1733] hover:bg-[#fafbfe]"
                     >
                       View Profile
                     </Link>
                     <Link
-                      href={`/house-sits/book/${cleaner.id}?reset=1&step=1`}
+                      href={`/house-sits/book/${houseSitter.id}?reset=1&step=1`}
                       className="inline-flex h-[44px] items-center justify-center rounded-xl bg-[#1f3bd6] px-4 text-[14px] font-semibold text-white hover:bg-[#182fb3]"
                     >
                       Book Now
@@ -396,13 +396,13 @@ export default function ClientCleanersPage() {
       </div>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image: linear-gradient(105deg, rgba(2, 11, 27, 0.82) 10%, rgba(2, 11, 27, 0.5) 55%, rgba(8, 22, 44, 0.72) 100%),
@@ -414,7 +414,7 @@ export default function ClientCleanersPage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
@@ -432,7 +432,7 @@ export default function ClientCleanersPage() {
           animation-delay: 120ms;
         }
 
-        .cleaner-row {
+        .houseSitter-row {
           animation: row-enter 0.45s ease both;
         }
 

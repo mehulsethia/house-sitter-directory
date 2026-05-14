@@ -2,7 +2,7 @@ import { db } from '../db'
 import type { Prisma } from '@prisma/client'
 
 const bookingInclude = {
-  client: {
+  houseSit: {
     include: {
       user: true,
       _count: {
@@ -14,7 +14,7 @@ const bookingInclude = {
       },
     },
   },
-  cleaner: { include: { user: true } },
+  houseSitter: { include: { user: true } },
   payment: true,
   review: true,
 } satisfies Prisma.BookingInclude
@@ -23,9 +23,9 @@ export const bookingRepo = {
   findById: (id: string) =>
     db.booking.findUnique({ where: { id }, include: bookingInclude }),
 
-  findByClient: (clientId: string, params: { page: number; pageSize: number; status?: string }) => {
+  findByClient: (houseSitId: string, params: { page: number; pageSize: number; status?: string }) => {
     const where: Prisma.BookingWhereInput = {
-      clientId,
+      houseSitId,
       ...(params.status ? { status: params.status } : {}),
     }
     return Promise.all([
@@ -40,9 +40,9 @@ export const bookingRepo = {
     ])
   },
 
-  findByCleaner: (cleanerId: string, params: { page: number; pageSize: number; status?: string }) => {
+  findByCleaner: (houseSitterId: string, params: { page: number; pageSize: number; status?: string }) => {
     const where: Prisma.BookingWhereInput = {
-      cleanerId,
+      houseSitterId,
       ...(params.status ? { status: params.status } : {}),
       NOT: { status: 'draft' },
       OR: [
@@ -89,8 +89,8 @@ export const bookingRepo = {
   },
 
   create: (data: {
-    clientId: string
-    cleanerId: string
+    houseSitId: string
+    houseSitterId: string
     serviceType: string
     specialInstructions?: string
     address: string
@@ -106,7 +106,7 @@ export const bookingRepo = {
     subtotal: number
     platformFeePct: number
     platformFee: number
-    cleanerPayout: number
+    houseSitterPayout: number
     totalAmount: number
     acceptBy: Date
     originalScheduledStart?: Date
@@ -118,15 +118,15 @@ export const bookingRepo = {
     db.booking.update({ where: { id }, data, include: bookingInclude }),
 
   findOverlappingDraftForClient: (params: {
-    clientId: string
-    cleanerId: string
+    houseSitId: string
+    houseSitterId: string
     start: Date
     end: Date
   }) =>
     db.booking.findFirst({
       where: {
-        clientId: params.clientId,
-        cleanerId: params.cleanerId,
+        houseSitId: params.houseSitId,
+        houseSitterId: params.houseSitterId,
         status: 'draft',
         scheduledStart: { lt: params.end },
         scheduledEnd: { gt: params.start },
@@ -168,12 +168,12 @@ export const bookingRepo = {
     ])
   },
 
-  findActiveForCleaner: (cleanerId: string, start: Date, end: Date) =>
+  findActiveForCleaner: (houseSitterId: string, start: Date, end: Date) =>
     {
       const now = new Date()
       return db.booking.findMany({
         where: {
-          cleanerId,
+          houseSitterId,
           AND: [
             {
               OR: [

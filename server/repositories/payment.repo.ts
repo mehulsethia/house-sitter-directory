@@ -16,7 +16,7 @@ export const paymentRepo = {
     stripePaymentIntentId: string
     amount: number
     platformFee: number
-    cleanerPayout: number
+    houseSitterPayout: number
     currency?: 'eur'
   }) =>
     db.payment.create({ data }),
@@ -26,7 +26,7 @@ export const paymentRepo = {
     stripePaymentIntentId: string
     amount: number
     platformFee: number
-    cleanerPayout: number
+    houseSitterPayout: number
     currency?: string
   }) =>
     db.payment.upsert({
@@ -36,7 +36,7 @@ export const paymentRepo = {
         stripePaymentIntentId: data.stripePaymentIntentId,
         amount: data.amount,
         platformFee: data.platformFee,
-        cleanerPayout: data.cleanerPayout,
+        houseSitterPayout: data.houseSitterPayout,
         currency: data.currency ?? 'eur',
       },
     }),

@@ -6,8 +6,8 @@ import { ok, err } from '@/server/response'
 export const POST = requireAdmin(async (_req, ctx) => {
   const { id } = await ctx.params
   try {
-    const cleaner = await houseSitterService.toggleSuspension(id)
-    return ok(cleaner)
+    const houseSitter = await houseSitterService.toggleSuspension(id)
+    return ok(houseSitter)
   } catch (e) {
     if (e instanceof ServiceError) return err(e.message, e.status)
     throw e

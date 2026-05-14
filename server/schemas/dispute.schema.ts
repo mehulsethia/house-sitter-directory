@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 export const DISPUTE_ISSUE_TYPES = [
-  'cleaner_didnt_arrive',
-  'client_no_show',
+  'house_sitter_didnt_arrive',
+  'house_sit_no_show',
   'service_not_completed',
   'property_damage_safety',
   'other_issue',

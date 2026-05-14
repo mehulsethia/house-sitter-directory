@@ -19,9 +19,9 @@ import type { AdminDispute } from '@/types'
 import { toast } from 'sonner'
 
 const RESOLUTION_TYPES = [
-  { value: 'full_refund',       label: 'Full refund to client' },
+  { value: 'full_refund',       label: 'Full refund to houseSit' },
   { value: 'partial_refund',    label: 'Partial refund (enter amount below)' },
-  { value: 'no_refund',         label: 'No refund — release payment to cleaner' },
+  { value: 'no_refund',         label: 'No refund — release payment to houseSitter' },
   { value: 'payment_released',  label: 'Dispute withdrawn — release payment' },
 ]
 
@@ -33,8 +33,8 @@ const STATUS_CONFIG: Record<string, { variant: any; label: string; icon: React.E
 }
 
 const ISSUE_QUEUE_LABEL: Record<string, string> = {
-  cleaner_didnt_arrive: 'No-Show',
-  client_no_show: 'No-Show',
+  house_sitter_didnt_arrive: 'No-Show',
+  house_sit_no_show: 'No-Show',
   service_not_completed: 'Payment / Booking',
   property_damage_safety: 'Urgent Safety',
   other_issue: 'Payment / Booking',
@@ -54,7 +54,7 @@ function classifyQueue(dispute: AdminDispute): 'urgent' | 'no_show' | 'payment' 
   if (['property_damage_safety', 'misconduct', 'aggressive_behaviour', 'theft_allegation'].includes(issueType)) {
     return 'urgent'
   }
-  if (['cleaner_didnt_arrive', 'client_no_show'].includes(issueType)) {
+  if (['house_sitter_didnt_arrive', 'house_sit_no_show'].includes(issueType)) {
     return 'no_show'
   }
   return 'payment'

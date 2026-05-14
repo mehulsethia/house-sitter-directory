@@ -4,18 +4,18 @@ import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
 
 export const POST = requireHouseSitter(async (_req, _ctx, user) => {
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) return err('Cleaner profile not found', 404)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) return err('HouseSitter profile not found', 404)
 
-  let accountId = cleaner.stripeAccountId
+  let accountId = houseSitter.stripeAccountId
   if (!accountId) {
     const account = await stripe.accounts.create({
       type: 'express',
       email: user.email,
-      metadata: { cleaner_id: cleaner.id },
+      metadata: { house_sitter_id: houseSitter.id },
     })
     accountId = account.id
-    await houseSitterRepo.update(cleaner.id, { stripeAccountId: accountId })
+    await houseSitterRepo.update(houseSitter.id, { stripeAccountId: accountId })
   }
 
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'

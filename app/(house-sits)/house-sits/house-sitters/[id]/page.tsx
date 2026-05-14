@@ -26,10 +26,10 @@ import type { HouseSitterRead, ReviewRead } from '@/types'
 import { toast } from 'sonner'
 
 
-export default function CleanerProfilePage() {
+export default function HouseSitterProfilePage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
-  const [cleaner, setCleaner] = useState<HouseSitterRead | null>(null)
+  const [houseSitter, setCleaner] = useState<HouseSitterRead | null>(null)
   const [reviews, setReviews] = useState<ReviewRead[]>([])
   const [bookableDates, setBookableDates] = useState<string[]>([])
   const [closestSlots, setClosestSlots] = useState<string[]>([])
@@ -54,10 +54,10 @@ export default function CleanerProfilePage() {
           const dates = availabilityRes.status === 'fulfilled' ? (availabilityRes.value.data ?? []) : []
           setBookableDates(dates)
           if (bookingsRes.status === 'fulfilled') {
-            const clientBookings = bookingsRes.value.data?.items ?? []
-            const canMessage = clientBookings.some(
+            const houseSitBookings = bookingsRes.value.data?.items ?? []
+            const canMessage = houseSitBookings.some(
               (booking) =>
-                booking.cleaner_id === id &&
+                booking.house_sitter_id === id &&
                 isChatActiveForBooking(booking),
             )
             setCanMessageCleaner(canMessage)
@@ -77,7 +77,7 @@ export default function CleanerProfilePage() {
     favoritesApi
       .list()
       .then((res) => {
-        const ids = new Set((res.data ?? []).map((item) => item.cleaner_id))
+        const ids = new Set((res.data ?? []).map((item) => item.house_sitter_id))
         setIsFavorite(ids.has(id))
       })
       .catch(() => {
@@ -142,29 +142,29 @@ export default function CleanerProfilePage() {
     if (review.rating >= 1 && review.rating <= 5) ratingDistribution[review.rating - 1]++
   })
 
-  const completionRate = typeof (cleaner as any)?.on_time_percentage === 'number' && (cleaner as any).on_time_percentage > 0
-    ? (cleaner as any).on_time_percentage
+  const completionRate = typeof (houseSitter as any)?.on_time_percentage === 'number' && (houseSitter as any).on_time_percentage > 0
+    ? (houseSitter as any).on_time_percentage
     : null
 
   if (loading) return <DetailPageSkeleton />
-  if (!cleaner) return <div className="py-16 text-center text-muted-foreground">House Sitter not found.</div>
+  if (!houseSitter) return <div className="py-16 text-center text-muted-foreground">House Sitter not found.</div>
 
-  const cleanerName = cleaner.user?.name ?? 'Professional House Sitter'
-  const memberSince = cleaner.created_at
-    ? new Date(cleaner.created_at).toLocaleDateString('en-IE', {
+  const houseSitterName = houseSitter.user?.name ?? 'Professional House Sitter'
+  const memberSince = houseSitter.created_at
+    ? new Date(houseSitter.created_at).toLocaleDateString('en-IE', {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
         timeZone: 'Europe/Nicosia',
       })
     : ''
-  const location = cleaner.service_areas?.[0]?.city ?? ''
+  const location = houseSitter.service_areas?.[0]?.city ?? ''
   const nextAvailable = closestSlots[0]
-  const cleanerImageUrl = (cleaner as any)?.profile_image_url ?? (cleaner as any)?.profileImageUrl ?? cleaner.user?.avatar_url
+  const houseSitterImageUrl = (houseSitter as any)?.profile_image_url ?? (houseSitter as any)?.profileImageUrl ?? houseSitter.user?.avatar_url
 
   function suppliesText(value?: string) {
     if (value === 'own_supplies') return 'Brings own supplies'
-    if (value === 'client_supplies') return 'Homeowner must provide supplies'
+    if (value === 'house_sit_supplies') return 'Homeowner must provide supplies'
     return null
   }
 
@@ -177,10 +177,10 @@ export default function CleanerProfilePage() {
 
   return (
     <>
-      <div className="client-cleaner-detail-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-houseSitter-detail-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -189,15 +189,15 @@ export default function CleanerProfilePage() {
               </p>
               <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
                 <UserAvatar
-                  name={cleanerName}
-                  imageUrl={cleanerImageUrl}
-                  alt={`${cleanerName} profile`}
+                  name={houseSitterName}
+                  imageUrl={houseSitterImageUrl}
+                  alt={`${houseSitterName} profile`}
                   className="h-12 w-12 border border-white/30 sm:h-14 sm:w-14"
                   textClassName="text-lg font-bold"
                   fallback="C"
                 />
                 <h1 className={`text-xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
-                  {cleanerName}
+                  {houseSitterName}
                 </h1>
                 <button
                   type="button"
@@ -213,7 +213,7 @@ export default function CleanerProfilePage() {
                 </button>
               </div>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
-                View expertise, service quality, and recent client feedback before booking.
+                View expertise, service quality, and recent houseSit feedback before booking.
               </p>
             </div>
 
@@ -223,9 +223,9 @@ export default function CleanerProfilePage() {
                   Snapshot
                 </p>
                 <p className={`mt-1 text-2xl font-bold tracking-[-0.02em] text-white`}>
-                  {formatCurrency(cleaner.hourly_rate)} / hr
+                  {formatCurrency(houseSitter.hourly_rate)} / hr
                 </p>
-                <p className="mt-1 text-sm text-white/80">{deferredReviews.length} reviews · {cleaner.total_jobs} jobs completed</p>
+                <p className="mt-1 text-sm text-white/80">{deferredReviews.length} reviews · {houseSitter.total_jobs} jobs completed</p>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                   <Button onClick={() => router.push(`/house-sits/book/${id}?reset=1&step=1`)} className="h-9 rounded-full bg-[#5a4a3b] px-4 text-slate-950 hover:bg-[#6a5746]">
                     Book Service
@@ -257,7 +257,7 @@ export default function CleanerProfilePage() {
         </div>
 
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <MetricCard title="Jobs Completed" value={cleaner.total_jobs} icon={<CheckCircle className="h-6 w-6 text-[#5a4a3b]" />} displayFont={'font-heading'} />
+          <MetricCard title="Jobs Completed" value={houseSitter.total_jobs} icon={<CheckCircle className="h-6 w-6 text-[#5a4a3b]" />} displayFont={'font-heading'} />
           <MetricCard title="Average Rating" value={avgRating > 0 ? `${avgRating.toFixed(1)}/5` : 'No reviews yet'} icon={<Star className="h-6 w-6 text-amber-400" />} displayFont={'font-heading'} />
           {completionRate !== null && (
             <MetricCard title="On-time Rate" value={`${completionRate}%`} icon={<TrendingUp className="h-6 w-6 text-emerald-500" />} displayFont={'font-heading'} />
@@ -306,15 +306,15 @@ export default function CleanerProfilePage() {
                 <Card className="border-slate-200">
                   <CardContent className="px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
                     <h3 className={`mb-2 text-xl font-semibold tracking-[-0.02em] text-slate-900`}>
-                      About {cleanerName}
+                      About {houseSitterName}
                     </h3>
-                    <p className="text-sm leading-relaxed text-slate-600">{cleaner.bio || 'No bio provided yet.'}</p>
+                    <p className="text-sm leading-relaxed text-slate-600">{houseSitter.bio || 'No bio provided yet.'}</p>
 
-                    {cleaner.skills && cleaner.skills.length > 0 && (
+                    {houseSitter.skills && houseSitter.skills.length > 0 && (
                       <div className="mt-4">
                         <h4 className="mb-2 text-sm font-semibold text-slate-900">Services</h4>
                         <div className="flex flex-wrap gap-2">
-                          {cleaner.skills.map((skill) => (
+                          {houseSitter.skills.map((skill) => (
                             <span key={skill} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700">
                               {skill}
                             </span>
@@ -329,14 +329,14 @@ export default function CleanerProfilePage() {
               <Card className="h-fit border-slate-200">
                 <CardContent className="space-y-4 px-5 pb-5 pt-6 sm:px-6 sm:pb-6 sm:pt-6">
                   <h3 className="font-semibold text-slate-900">House Sitter Details</h3>
-                  {cleaner.transport_mode && (
+                  {houseSitter.transport_mode && (
                     <InfoLine
                       icon={<Clock className="h-4 w-4 text-slate-400" />}
                       title="Mode Of Transport"
                       value={
-                        cleaner.transport_mode === 'own_car'
+                        houseSitter.transport_mode === 'own_car'
                           ? 'Own Car'
-                          : cleaner.transport_mode === 'bus_walk'
+                          : houseSitter.transport_mode === 'bus_walk'
                             ? 'Bus / Walk'
                             : 'Requires Pick-up'
                       }
@@ -379,39 +379,39 @@ export default function CleanerProfilePage() {
                   <InfoLine
                     icon={<Briefcase className="h-4 w-4 text-slate-400" />}
                     title="Experience"
-                    value={`${cleaner.years_experience} year${cleaner.years_experience !== 1 ? 's' : ''}`}
+                    value={`${houseSitter.years_experience} year${houseSitter.years_experience !== 1 ? 's' : ''}`}
                   />
                   <InfoLine
                     icon={<Briefcase className="h-4 w-4 text-slate-400" />}
                     title="Completed Jobs"
-                    value={`${cleaner.total_jobs}`}
+                    value={`${houseSitter.total_jobs}`}
                   />
-                  {(cleaner as any).on_time_percentage > 0 && (
+                  {(houseSitter as any).on_time_percentage > 0 && (
                     <InfoLine
                       icon={<TrendingUp className="h-4 w-4 text-slate-400" />}
                       title="On-time Percentage"
-                      value={`${(cleaner as any).on_time_percentage}%`}
+                      value={`${(houseSitter as any).on_time_percentage}%`}
                     />
                   )}
-                  {(cleaner as any).avg_response_minutes > 0 && (
+                  {(houseSitter as any).avg_response_minutes > 0 && (
                     <InfoLine
                       icon={<Clock className="h-4 w-4 text-slate-400" />}
                       title="Average Response Time"
-                      value={responseTimeText((cleaner as any).avg_response_minutes)}
+                      value={responseTimeText((houseSitter as any).avg_response_minutes)}
                     />
                   )}
-                  {suppliesText((cleaner as any).cleaning_supplies) && (
+                  {suppliesText((houseSitter as any).cleaning_supplies) && (
                     <InfoLine
                       icon={<Clock className="h-4 w-4 text-slate-400" />}
                       title="Supplies"
-                      value={suppliesText((cleaner as any).cleaning_supplies) as string}
+                      value={suppliesText((houseSitter as any).cleaning_supplies) as string}
                     />
                   )}
-                  {cleaner.transport_mode === 'requires_pickup' && (cleaner as any).transport_pickup_location && (
+                  {houseSitter.transport_mode === 'requires_pickup' && (houseSitter as any).transport_pickup_location && (
                     <InfoLine
                       icon={<MapPin className="h-4 w-4 text-slate-400" />}
                       title="Requires pick-up/drop-off"
-                      value={pickupFullLabel(String((cleaner as any).transport_pickup_location))}
+                      value={pickupFullLabel(String((houseSitter as any).transport_pickup_location))}
                     />
                   )}
                   <InfoLine icon={<CalendarCheck className="h-4 w-4 text-slate-400" />} title="Member Since" value={memberSince} />
@@ -472,13 +472,13 @@ export default function CleanerProfilePage() {
                         <p className="text-sm leading-relaxed text-slate-600">
                           {review.comment || 'No written comment provided.'}
                         </p>
-                        {review.cleaner_reply && (
+                        {review.house_sitter_reply && (
                           <div className="mt-3 rounded-lg border border-blue-100 bg-[#f8f3ee] px-3 py-2">
                             <p className="text-xs font-semibold text-[#3f3429]">House Sitter reply</p>
-                            <p className="mt-1 text-sm text-[#3f3429]">{review.cleaner_reply}</p>
-                            {review.cleaner_reply_at && (
+                            <p className="mt-1 text-sm text-[#3f3429]">{review.house_sitter_reply}</p>
+                            {review.house_sitter_reply_at && (
                               <p className="mt-1 text-xs text-[#5a4a3b]">
-                                {formatDate(review.cleaner_reply_at)}
+                                {formatDate(review.house_sitter_reply_at)}
                               </p>
                             )}
                           </div>
@@ -529,13 +529,13 @@ export default function CleanerProfilePage() {
       </div>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -548,7 +548,7 @@ export default function CleanerProfilePage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:

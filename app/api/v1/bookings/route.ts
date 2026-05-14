@@ -8,7 +8,7 @@ import { sanitizeBookingsForRole } from '@/server/services/booking-visibility.se
 import { ok, err } from '@/server/response'
 import { createBookingSchema, myBookingsQuerySchema } from '@/server/schemas/booking.schema'
 
-// GET /api/v1/bookings/my — list user's bookings (client or cleaner)
+// GET /api/v1/bookings/my — list user's bookings (houseSit or houseSitter)
 export const GET = requireAuth(async (req: NextRequest, _ctx, user) => {
   const params = Object.fromEntries(req.nextUrl.searchParams)
   const parsed = myBookingsQuerySchema.safeParse(params)
@@ -16,26 +16,26 @@ export const GET = requireAuth(async (req: NextRequest, _ctx, user) => {
 
   const { page, page_size, status } = parsed.data
 
-  if (user.role === 'client') {
-    let client = await houseSitRepo.findByUserId(user.id)
-    if (!client) client = await houseSitRepo.create(user.id)
-    let [bookings, total] = await bookingRepo.findByClient(client.id, { page, pageSize: page_size, status })
+  if (user.role === 'house_sit') {
+    let houseSit = await houseSitRepo.findByUserId(user.id)
+    if (!houseSit) houseSit = await houseSitRepo.create(user.id)
+    let [bookings, total] = await bookingRepo.findByClient(houseSit.id, { page, pageSize: page_size, status })
     const changed = await bookingService.reconcileDeadlinesForBookings(bookings.map((b) => b.id))
     if (changed) {
-      ;[bookings, total] = await bookingRepo.findByClient(client.id, { page, pageSize: page_size, status })
+      ;[bookings, total] = await bookingRepo.findByClient(houseSit.id, { page, pageSize: page_size, status })
     }
     return ok({ bookings, total, page, page_size })
   }
 
-  if (user.role === 'cleaner') {
-    let cleaner = await houseSitterRepo.findByUserId(user.id)
-    if (!cleaner) cleaner = await houseSitterRepo.create(user.id)
-    let [bookings, total] = await bookingRepo.findByCleaner(cleaner.id, { page, pageSize: page_size, status })
+  if (user.role === 'house_sitter') {
+    let houseSitter = await houseSitterRepo.findByUserId(user.id)
+    if (!houseSitter) houseSitter = await houseSitterRepo.create(user.id)
+    let [bookings, total] = await bookingRepo.findByCleaner(houseSitter.id, { page, pageSize: page_size, status })
     const changed = await bookingService.reconcileDeadlinesForBookings(bookings.map((b) => b.id))
     if (changed) {
-      ;[bookings, total] = await bookingRepo.findByCleaner(cleaner.id, { page, pageSize: page_size, status })
+      ;[bookings, total] = await bookingRepo.findByCleaner(houseSitter.id, { page, pageSize: page_size, status })
     }
-    return ok({ bookings: sanitizeBookingsForRole(bookings as any[], 'cleaner'), total, page, page_size })
+    return ok({ bookings: sanitizeBookingsForRole(bookings as any[], 'house_sitter'), total, page, page_size })
   }
 
   return err('Forbidden', 403)

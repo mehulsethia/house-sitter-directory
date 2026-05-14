@@ -10,15 +10,15 @@ const include = {
 } satisfies Prisma.BookingFlowDraftInclude
 
 export const bookingFlowDraftRepo = {
-  findByClientAndCleaner: (clientId: string, cleanerId: string) =>
+  findByHouseSitAndHouseSitter: (houseSitId: string, houseSitterId: string) =>
     db.bookingFlowDraft.findUnique({
-      where: { clientId_cleanerId: { clientId, cleanerId } },
+      where: { houseSitId_houseSitterId: { houseSitId, houseSitterId } },
       include,
     }),
 
-  upsertByClientAndCleaner: (args: {
-    clientId: string
-    cleanerId: string
+  upsertByHouseSitAndHouseSitter: (args: {
+    houseSitId: string
+    houseSitterId: string
     bookingId?: string | null
     lastStep: number
     durationHours?: number | null
@@ -27,10 +27,10 @@ export const bookingFlowDraftRepo = {
     payload?: Prisma.InputJsonValue | null
   }) =>
     db.bookingFlowDraft.upsert({
-      where: { clientId_cleanerId: { clientId: args.clientId, cleanerId: args.cleanerId } },
+      where: { houseSitId_houseSitterId: { houseSitId: args.houseSitId, houseSitterId: args.houseSitterId } },
       create: {
-        clientId: args.clientId,
-        cleanerId: args.cleanerId,
+        houseSitId: args.houseSitId,
+        houseSitterId: args.houseSitterId,
         bookingId: args.bookingId ?? null,
         lastStep: args.lastStep,
         durationHours: args.durationHours ?? null,
@@ -49,9 +49,9 @@ export const bookingFlowDraftRepo = {
       include,
     }),
 
-  clearByClientAndCleaner: (clientId: string, cleanerId: string) =>
+  clearByHouseSitAndHouseSitter: (houseSitId: string, houseSitterId: string) =>
     db.bookingFlowDraft.deleteMany({
-      where: { clientId, cleanerId },
+      where: { houseSitId, houseSitterId },
     }),
 
   clearByBookingId: (bookingId: string) =>

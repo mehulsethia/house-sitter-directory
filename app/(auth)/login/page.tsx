@@ -41,7 +41,7 @@ function LoginForm() {
         const name = (data.user?.user_metadata?.name as string | undefined)?.trim()
         await authApi.sync({
           ...(name ? { name } : {}),
-          ...(role === 'cleaner' || role === 'client' ? { role } : {}),
+          ...(role === 'house_sitter' || role === 'house_sit' ? { role } : {}),
           ...(metaPhone ? { phone: metaPhone } : {}),
           ...(metaExperience !== undefined && Number.isFinite(metaExperience) ? { experience: metaExperience } : {}),
         })
@@ -51,11 +51,11 @@ function LoginForm() {
 
       const nextParam = params.get('next')
       const safeNext = nextParam && nextParam.startsWith('/') ? nextParam : null
-      const role = (data.user?.user_metadata?.role as string | undefined) ?? 'client'
+      const role = (data.user?.user_metadata?.role as string | undefined) ?? 'house_sit'
 
       let next = safeNext
       if (!next) {
-        if (role === 'cleaner') {
+        if (role === 'house_sitter') {
           try {
             const houseSitterRes = await houseSittersApi.me()
             next = houseSitterRes.data?.onboarding?.completion_pct === 100 ? '/house-sitter/dashboard' : '/house-sitters/onboarding'

@@ -8,7 +8,7 @@ function bestEffortName(name?: string | null, email?: string | null): string {
   if (trimmed) return trimmed
   const emailLocal = email?.split('@')[0]?.trim()
   if (emailLocal) return emailLocal
-  return 'Cleaner'
+  return 'HouseSitter'
 }
 
 export const GET = requireAdmin(async () => {
@@ -34,7 +34,7 @@ export const GET = requireAdmin(async () => {
     noShowDisputes,
   ] =
     await Promise.all([
-      db.cleaner.findMany({
+      db.houseSitter.findMany({
         where: { status: 'pending' },
         include: { user: true },
         orderBy: { createdAt: 'asc' },
@@ -50,7 +50,7 @@ export const GET = requireAdmin(async () => {
           status: 'pending',
           acceptBy: { gte: new Date() },
         },
-        include: { cleaner: { include: { user: true } }, client: { include: { user: true } } },
+        include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
         orderBy: { acceptBy: 'asc' },
         take: 20,
       }),
@@ -59,7 +59,7 @@ export const GET = requireAdmin(async () => {
           status: { in: ['accepted', 'confirmed', 'in_progress'] },
           scheduledStart: { gte: todayStart, lte: todayEnd },
         },
-        include: { cleaner: { include: { user: true } }, client: { include: { user: true } } },
+        include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
         orderBy: { scheduledStart: 'asc' },
         take: 20,
       }),
@@ -68,7 +68,7 @@ export const GET = requireAdmin(async () => {
           status: { in: ['accepted', 'confirmed', 'in_progress'] },
           scheduledStart: { gte: tomorrowStart, lte: tomorrowEnd },
         },
-        include: { cleaner: { include: { user: true } }, client: { include: { user: true } } },
+        include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
         orderBy: { scheduledStart: 'asc' },
         take: 20,
       }),
@@ -78,7 +78,7 @@ export const GET = requireAdmin(async () => {
           reauthorizationRequired: true,
         },
         include: {
-          client: { include: { user: true } },
+          houseSit: { include: { user: true } },
         },
         orderBy: { payBy: 'asc' },
         take: 15,
@@ -89,7 +89,7 @@ export const GET = requireAdmin(async () => {
           failedAt: { gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
         },
         include: {
-          booking: { include: { client: { include: { user: true } } } },
+          booking: { include: { houseSit: { include: { user: true } } } },
         },
         orderBy: [{ failedAt: 'desc' }, { updatedAt: 'desc' }],
         take: 15,
@@ -105,7 +105,7 @@ export const GET = requireAdmin(async () => {
       db.dispute.findMany({
         where: {
           OR: [
-            { issueType: { in: ['cleaner_didnt_arrive', 'client_no_show'] } },
+            { issueType: { in: ['house_sitter_didnt_arrive', 'house_sit_no_show'] } },
             { reason: { contains: 'no-show', mode: 'insensitive' } },
           ],
           createdAt: { gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
@@ -136,35 +136,35 @@ export const GET = requireAdmin(async () => {
     .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime())
     .slice(0, 12)
 
-  const pendingCleanerIds = pendingCleaners.map((cleaner) => cleaner.id)
+  const pendingCleanerIds = pendingCleaners.map((houseSitter) => houseSitter.id)
   const pendingCleanerCompletedJobsAgg = pendingCleanerIds.length
     ? await db.booking.groupBy({
-        by: ['cleanerId'],
+        by: ['houseSitterId'],
         where: {
-          cleanerId: { in: pendingCleanerIds },
+          houseSitterId: { in: pendingCleanerIds },
           status: { in: ['completed', 'disputed'] },
         },
         _count: { _all: true },
       })
     : []
   const pendingCleanerCompletedJobsById = new Map<string, number>(
-    pendingCleanerCompletedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+    pendingCleanerCompletedJobsAgg.map((entry) => [entry.houseSitterId, entry._count._all]),
   )
 
   return ok({
     pending_cleaner_approvals: {
       count: pendingCleaners.length,
-      items: pendingCleaners.map((cleaner) => ({
-        id: cleaner.id,
-        profile_photo: cleaner.profileImageUrl,
-        full_name: bestEffortName(cleaner.user?.name, cleaner.user?.email),
-        years_experience: cleaner.yearsExperience,
-        transport_method: cleaner.transportMode,
-        supplies_status: cleaner.cleaningSupplies,
-        cleaning_standards_completed: cleaner.standardsCompleted,
-        quiz_passed: cleaner.quizPassed,
-        trial_period_flag: (pendingCleanerCompletedJobsById.get(cleaner.id) ?? 0) < 10,
-        submitted_at: cleaner.createdAt.toISOString(),
+      items: pendingCleaners.map((houseSitter) => ({
+        id: houseSitter.id,
+        profile_photo: houseSitter.profileImageUrl,
+        full_name: bestEffortName(houseSitter.user?.name, houseSitter.user?.email),
+        years_experience: houseSitter.yearsExperience,
+        transport_method: houseSitter.transportMode,
+        supplies_status: houseSitter.cleaningSupplies,
+        cleaning_standards_completed: houseSitter.standardsCompleted,
+        quiz_passed: houseSitter.quizPassed,
+        trial_period_flag: (pendingCleanerCompletedJobsById.get(houseSitter.id) ?? 0) < 10,
+        submitted_at: houseSitter.createdAt.toISOString(),
       })),
     },
     active_disputes: {
@@ -184,8 +184,8 @@ export const GET = requireAdmin(async () => {
         status: booking.status,
         city: booking.city,
         scheduled_start: booking.scheduledStart.toISOString(),
-        cleaner_name: bestEffortName(booking.cleaner.user?.name, booking.cleaner.user?.email),
-        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
+        house_sitter_name: bestEffortName(booking.houseSitter.user?.name, booking.houseSitter.user?.email),
+        house_sit_name: bestEffortName(booking.houseSit.user?.name, booking.houseSit.user?.email),
       })),
     },
     todays_jobs: {
@@ -195,8 +195,8 @@ export const GET = requireAdmin(async () => {
         status: booking.status,
         city: booking.city,
         scheduled_start: booking.scheduledStart.toISOString(),
-        cleaner_name: bestEffortName(booking.cleaner.user?.name, booking.cleaner.user?.email),
-        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
+        house_sitter_name: bestEffortName(booking.houseSitter.user?.name, booking.houseSitter.user?.email),
+        house_sit_name: bestEffortName(booking.houseSit.user?.name, booking.houseSit.user?.email),
       })),
     },
     upcoming_jobs: {
@@ -207,16 +207,16 @@ export const GET = requireAdmin(async () => {
         status: booking.status,
         city: booking.city,
         scheduled_start: booking.scheduledStart.toISOString(),
-        cleaner_name: bestEffortName(booking.cleaner.user?.name, booking.cleaner.user?.email),
-        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
+        house_sitter_name: bestEffortName(booking.houseSitter.user?.name, booking.houseSitter.user?.email),
+        house_sit_name: bestEffortName(booking.houseSit.user?.name, booking.houseSit.user?.email),
       })),
       tomorrow_items: tomorrowJobs.map((booking) => ({
         id: booking.id,
         status: booking.status,
         city: booking.city,
         scheduled_start: booking.scheduledStart.toISOString(),
-        cleaner_name: bestEffortName(booking.cleaner.user?.name, booking.cleaner.user?.email),
-        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
+        house_sitter_name: bestEffortName(booking.houseSitter.user?.name, booking.houseSitter.user?.email),
+        house_sit_name: bestEffortName(booking.houseSit.user?.name, booking.houseSit.user?.email),
       })),
     },
     payment_failures: {
@@ -226,7 +226,7 @@ export const GET = requireAdmin(async () => {
         booking_id: payment.bookingId,
         payment_status: payment.status,
         failed_at: payment.failedAt?.toISOString() ?? null,
-        client_name: bestEffortName(payment.booking.client.user?.name, payment.booking.client.user?.email),
+        house_sit_name: bestEffortName(payment.booking.houseSit.user?.name, payment.booking.houseSit.user?.email),
       })),
     },
     payment_issues: {
@@ -236,7 +236,7 @@ export const GET = requireAdmin(async () => {
         booking_id: booking.id,
         payment_status: 'reauthorization_required',
         failed_at: booking.payBy?.toISOString() ?? null,
-        client_name: bestEffortName(booking.client.user?.name, booking.client.user?.email),
+        house_sit_name: bestEffortName(booking.houseSit.user?.name, booking.houseSit.user?.email),
       })),
     },
     cancellations_no_shows: {

@@ -10,10 +10,10 @@ export const GET = requireAuth(async (_req, _ctx, user) => {
 
   // Unread chat messages (messages in my bookings, sent by others, unread)
   const bookingFilter =
-    role === 'cleaner'
-      ? { cleaner: { userId } }
-      : role === 'client'
-        ? { client: { userId } }
+    role === 'house_sitter'
+      ? { houseSitter: { userId } }
+      : role === 'house_sit'
+        ? { houseSit: { userId } }
         : null
 
   const unreadChats = bookingFilter
@@ -32,11 +32,11 @@ export const GET = requireAuth(async (_req, _ctx, user) => {
 
   // Booking badge count
   let pendingBookings = 0
-  if (role === 'cleaner') {
-    // Cleaner: new incoming bookings awaiting accept
+  if (role === 'house_sitter') {
+    // HouseSitter: new incoming bookings awaiting accept
     pendingBookings = await db.booking.count({
       where: {
-        cleaner: { userId },
+        houseSitter: { userId },
         status: 'pending',
         payment: {
           is: {
@@ -45,12 +45,12 @@ export const GET = requireAuth(async (_req, _ctx, user) => {
         },
       },
     })
-  } else if (role === 'client') {
-    // Client: bookings recently accepted (last 7 days)
+  } else if (role === 'house_sit') {
+    // HouseSit: bookings recently accepted (last 7 days)
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     pendingBookings = await db.booking.count({
       where: {
-        client: { userId },
+        houseSit: { userId },
         status: 'accepted',
         acceptedAt: { gte: sevenDaysAgo },
       },

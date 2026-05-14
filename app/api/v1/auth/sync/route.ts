@@ -25,7 +25,7 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   }
 
   // Ensure role-specific profile exists
-  if (user.role === 'client') {
+  if (user.role === 'house_sit') {
     const existing = await houseSitRepo.findByUserId(user.id)
     if (!existing) {
       await houseSitRepo.create(user.id)
@@ -33,18 +33,18 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
         userId: user.id,
         type: 'account_created',
         title: 'Welcome to MaidHive',
-        body: 'Your client profile is ready. Start by browsing available cleaners.',
+        body: 'Your houseSit profile is ready. Start by browsing available house_sitters.',
       })
       try {
         await loopsEmailService.sendClientAccountCreated({
           email: user.email,
-          fullName: user.name ?? data.name ?? 'Client',
+          fullName: user.name ?? data.name ?? 'HouseSit',
         })
       } catch (emailError) {
-        console.error('Failed to send client account created email via Loops:', emailError)
+        console.error('Failed to send houseSit account created email via Loops:', emailError)
       }
     }
-  } else if (user.role === 'cleaner') {
+  } else if (user.role === 'house_sitter') {
     let existing = await houseSitterRepo.findByUserId(user.id)
     if (!existing) {
       await houseSitterRepo.create(user.id)
@@ -53,15 +53,15 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
         userId: user.id,
         type: 'account_created',
         title: 'Welcome to MaidHive',
-        body: 'Your cleaner profile is created. Complete onboarding to start receiving jobs.',
+        body: 'Your houseSitter profile is created. Complete onboarding to start receiving jobs.',
       })
       try {
         await loopsEmailService.sendCleanerSignup({
           email: user.email,
-          fullName: user.name ?? data.name ?? 'Cleaner',
+          fullName: user.name ?? data.name ?? 'HouseSitter',
         })
       } catch (emailError) {
-        console.error('Failed to send cleaner signup email via Loops:', emailError)
+        console.error('Failed to send houseSitter signup email via Loops:', emailError)
       }
     }
 

@@ -64,7 +64,7 @@ const STANDARDS_CARDS: StandardsCard[] = [
     title: 'Work to a good standard',
     body: [
       'Clean properly and carefully',
-      'Focus on the areas the client listed',
+      'Focus on the areas the houseSit listed',
       'Do not rush or leave obvious areas dirty',
       'If work is incomplete, it may lead to complaints or lower ratings.',
     ],
@@ -73,7 +73,7 @@ const STANDARDS_CARDS: StandardsCard[] = [
     title: 'Follow the job notes',
     body: [
       'Always read the job description before starting',
-      'Focus on the tasks listed by the client',
+      'Focus on the tasks listed by the houseSit',
       'If something is not listed:',
       'Use your judgment',
       'Prioritise important areas (kitchen, bathrooms, floors)',
@@ -108,7 +108,7 @@ const STANDARDS_CARDS: StandardsCard[] = [
     ],
   },
   {
-    title: 'Respect the client’s home',
+    title: 'Respect the houseSit’s home',
     body: [
       'Treat the home with care',
       'Do not use items without permission',
@@ -120,7 +120,7 @@ const STANDARDS_CARDS: StandardsCard[] = [
     title: 'Home-care supplies',
     body: [
       'Be clear if you bring your own supplies',
-      'Or if the client needs to provide them',
+      'Or if the houseSit needs to provide them',
     ],
   },
   {
@@ -146,7 +146,7 @@ const STANDARDS_QUIZ = [
   },
   {
     id: 'q2',
-    question: 'If the client did not list specific tasks, what should you do?',
+    question: 'If the houseSit did not list specific tasks, what should you do?',
     options: [
       'Do nothing',
       'Decide yourself and focus on important areas',
@@ -258,7 +258,7 @@ function StepDots({ current }: { current: number }) {
   )
 }
 
-function CleanerOnboardingPageContent() {
+function HouseSitterOnboardingPageContent() {
   const router = useRouter()
   const params = useSearchParams()
   const [loading, setLoading] = useState(true)
@@ -266,7 +266,7 @@ function CleanerOnboardingPageContent() {
   const [step, setStep] = useState(1)
   const [progress, setProgress] = useState<HouseSitterOnboardingProgress | null>(null)
 
-  const [cleaner, setCleaner] = useState<HouseSitterRead | null>(null)
+  const [houseSitter, setCleaner] = useState<HouseSitterRead | null>(null)
 
   const [profileImage, setProfileImage] = useState('')
   const [profileImagePreview, setProfileImagePreview] = useState('')
@@ -274,7 +274,7 @@ function CleanerOnboardingPageContent() {
   const [bio, setBio] = useState('')
   const [hourlyRate, setHourlyRate] = useState('')
   const [skills, setSkills] = useState<string[]>([])
-  const [cleaningSupplies, setCleaningSupplies] = useState<'own_supplies' | 'client_supplies' | ''>('')
+  const [cleaningSupplies, setCleaningSupplies] = useState<'own_supplies' | 'house_sit_supplies' | ''>('')
 
   const [transportMode, setTransportMode] = useState('')
   const [pickupLocation, setPickupLocation] = useState('')
@@ -314,7 +314,7 @@ function CleanerOnboardingPageContent() {
         paymentsApi.getConnectStatus(),
       ])
 
-      const houseSitterData = meRes.data?.cleaner
+      const houseSitterData = meRes.data?.houseSitter
       const onboarding = meRes.data?.onboarding
       if (!houseSitterData || !onboarding) throw new Error('Failed to load onboarding data.')
       const c = houseSitterData as any
@@ -454,7 +454,7 @@ function CleanerOnboardingPageContent() {
         cleaning_supplies: cleaningSupplies,
         onboarding_step: 2,
       })
-      setCleaner(res.data?.cleaner ?? cleaner)
+      setCleaner(res.data?.houseSitter ?? houseSitter)
       setProgress(res.data?.onboarding ?? progress)
       setStep(2)
     } catch (err: any) {
@@ -498,7 +498,7 @@ function CleanerOnboardingPageContent() {
         terms_accepted: termsAccepted,
         onboarding_step: 3,
       })
-      setCleaner(res.data?.cleaner ?? cleaner)
+      setCleaner(res.data?.houseSitter ?? houseSitter)
       setProgress(res.data?.onboarding ?? progress)
       setStep(3)
     } catch (err: any) {
@@ -551,7 +551,7 @@ function CleanerOnboardingPageContent() {
         onboarding_step: 5,
         onboarding_skipped_step4: !stripeConnected,
       })
-      setCleaner(res.data?.cleaner ?? cleaner)
+      setCleaner(res.data?.houseSitter ?? houseSitter)
       setProgress(res.data?.onboarding ?? progress)
       setStep(5)
     } catch (err: any) {
@@ -797,8 +797,8 @@ function CleanerOnboardingPageContent() {
                     <input
                       type="radio"
                       name="cleaning-supplies"
-                      checked={cleaningSupplies === 'client_supplies'}
-                      onChange={() => setCleaningSupplies('client_supplies')}
+                      checked={cleaningSupplies === 'house_sit_supplies'}
+                      onChange={() => setCleaningSupplies('house_sit_supplies')}
                     />
                     Homeowner must provide supplies
                   </label>
@@ -815,7 +815,7 @@ function CleanerOnboardingPageContent() {
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium">Mode of Transport <span className="text-red-500">*</span></Label>
-                <p className="mt-1 text-xs text-gray-500">This helps clients understand how you travel to jobs.</p>
+                <p className="mt-1 text-xs text-gray-500">This helps house_sits understand how you travel to jobs.</p>
                 <Select value={transportMode} onChange={(e) => setTransportMode(e.target.value)} className="mt-2">
                   <option value="">Choose an option...</option>
                   <option value="own_car">Own car</option>
@@ -827,7 +827,7 @@ function CleanerOnboardingPageContent() {
               {transportMode === 'requires_pickup' && (
                 <div>
                   <Label className="text-sm font-medium">Pick-up/Drop-off Location <span className="text-red-500">*</span></Label>
-                  <p className="mt-1 text-xs text-gray-500">Choose a safe nearby public location where clients can pick you up and drop you off for bookings.</p>
+                  <p className="mt-1 text-xs text-gray-500">Choose a safe nearby public location where house_sits can pick you up and drop you off for bookings.</p>
                   <Input
                     value={pickupLocation}
                     onChange={(e) => setPickupLocation(e.target.value)}
@@ -994,7 +994,7 @@ function CleanerOnboardingPageContent() {
                     onboarding_step: 4,
                     onboarding_skipped_step3: false,
                   })
-                  setCleaner(res.data?.cleaner ?? cleaner)
+                  setCleaner(res.data?.houseSitter ?? houseSitter)
                   setProgress(res.data?.onboarding ?? progress)
                   setStep(4)
                   toast.success('Availability saved.')
@@ -1095,7 +1095,7 @@ function CleanerOnboardingPageContent() {
                   </p>
                   <p className="text-sm text-slate-700">The House Sitter Directory is a marketplace.</p>
                   <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
-                    <li>You are an independent cleaner</li>
+                    <li>You are an independent houseSitter</li>
                     <li>You are responsible for your work and behaviour</li>
                   </ul>
                   <p className="text-sm text-slate-700">Failure to follow these standards may affect:</p>
@@ -1198,17 +1198,17 @@ function CleanerOnboardingPageContent() {
 
       {progress && progress.completion_pct < 100 && (
         <p className="text-xs text-gray-600 mt-3 text-center">
-          Your profile is {progress.completion_pct}% complete. House Sitter profiles are visible to clients only after admin approval.
+          Your profile is {progress.completion_pct}% complete. House Sitter profiles are visible to house_sits only after admin approval.
         </p>
       )}
     </div>
   )
 }
 
-export default function CleanerOnboardingPage() {
+export default function HouseSitterOnboardingPage() {
   return (
     <Suspense fallback={<FormPageSkeleton />}>
-      <CleanerOnboardingPageContent />
+      <HouseSitterOnboardingPageContent />
     </Suspense>
   )
 }

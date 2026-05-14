@@ -22,11 +22,11 @@ export function ensureDbSchema(): Promise<void> {
   if (!schemaReadyPromise) {
     schemaReadyPromise = (async () => {
       await db.$executeRawUnsafe(`
-        ALTER TABLE public.cleaners
+        ALTER TABLE public.house_sitters
         ADD COLUMN IF NOT EXISTS id_file_url TEXT
       `)
       await db.$executeRawUnsafe(`
-        ALTER TABLE public.cleaners
+        ALTER TABLE public.house_sitters
         ADD COLUMN IF NOT EXISTS cleaning_supplies TEXT,
         ADD COLUMN IF NOT EXISTS pet_comfortable BOOLEAN,
         ADD COLUMN IF NOT EXISTS work_eligibility_answer BOOLEAN,
@@ -38,7 +38,7 @@ export function ensureDbSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS quiz_score INTEGER
       `)
       await db.$executeRawUnsafe(`
-        UPDATE public.cleaners
+        UPDATE public.house_sitters
         SET
           standards_completed = COALESCE(standards_completed, cleaning_standards_accepted, FALSE),
           quiz_score = COALESCE(quiz_score, cleaning_quiz_score),
@@ -87,9 +87,9 @@ export function ensureDbSchema(): Promise<void> {
         )
       `)
       await db.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS public.client_addresses (
+        CREATE TABLE IF NOT EXISTS public.house_sit_addresses (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+          house_sit_id UUID NOT NULL REFERENCES public.house_sits(id) ON DELETE CASCADE,
           label TEXT,
           address_line1 TEXT NOT NULL,
           city TEXT NOT NULL,
@@ -105,7 +105,7 @@ export function ensureDbSchema(): Promise<void> {
         )
       `)
       await db.$executeRawUnsafe(`
-        ALTER TABLE public.client_addresses
+        ALTER TABLE public.house_sit_addresses
         ADD COLUMN IF NOT EXISTS label TEXT,
         ADD COLUMN IF NOT EXISTS apartment_details TEXT,
         ADD COLUMN IF NOT EXISTS access_notes TEXT,
@@ -116,35 +116,35 @@ export function ensureDbSchema(): Promise<void> {
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       `)
       await db.$executeRawUnsafe(`
-        UPDATE public.client_addresses
+        UPDATE public.house_sit_addresses
         SET access_notes = ''
         WHERE access_notes IS NULL
       `)
       await db.$executeRawUnsafe(`
-        ALTER TABLE public.client_addresses
+        ALTER TABLE public.house_sit_addresses
         ALTER COLUMN access_notes SET DEFAULT '',
         ALTER COLUMN access_notes SET NOT NULL
       `)
       await db.$executeRawUnsafe(`
-        ALTER TABLE public.clients
+        ALTER TABLE public.house_sits
         ADD COLUMN IF NOT EXISTS id_file_name TEXT,
         ADD COLUMN IF NOT EXISTS id_file_url TEXT,
         ADD COLUMN IF NOT EXISTS id_submitted_at TIMESTAMPTZ
       `)
       await db.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS public.client_favorites (
+        CREATE TABLE IF NOT EXISTS public.house_sit_favorites (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-          cleaner_id UUID NOT NULL REFERENCES public.cleaners(id) ON DELETE CASCADE,
+          house_sit_id UUID NOT NULL REFERENCES public.house_sits(id) ON DELETE CASCADE,
+          house_sitter_id UUID NOT NULL REFERENCES public.house_sitters(id) ON DELETE CASCADE,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          UNIQUE (client_id, cleaner_id)
+          UNIQUE (house_sit_id, house_sitter_id)
         )
       `)
       await db.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_client_favorites_client_id ON public.client_favorites(client_id)
+        CREATE INDEX IF NOT EXISTS idx_client_favorites_client_id ON public.house_sit_favorites(house_sit_id)
       `)
       await db.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_client_favorites_cleaner_id ON public.client_favorites(cleaner_id)
+        CREATE INDEX IF NOT EXISTS idx_client_favorites_cleaner_id ON public.house_sit_favorites(house_sitter_id)
       `)
       await db.$executeRawUnsafe(`
         ALTER TABLE public.users

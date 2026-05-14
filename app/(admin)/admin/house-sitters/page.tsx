@@ -31,7 +31,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import type { AdminHouseSitter } from '@/types'
 import {
   CLEANER_REJECTION_REASON_OPTIONS,
-  cleanerLifecycleLabel,
+  houseSitterLifecycleLabel,
   deriveCleanerLifecycleStatus,
   getCleanerRejectionReasonLabel,
 } from '@/lib/house-sitter-status'
@@ -57,7 +57,7 @@ const TRANSPORT_LABELS: Record<string, string> = {
 
 const SUPPLIES_LABELS: Record<string, string> = {
   own_supplies: 'Own supplies',
-  client_supplies: 'Homeowner supplies',
+  house_sit_supplies: 'Homeowner supplies',
 }
 
 const ID_TYPE_LABELS: Record<string, string> = {
@@ -70,31 +70,31 @@ function yesNoBadge(value?: boolean) {
   return value ? <Badge variant="success">Yes</Badge> : <Badge variant="outline">No</Badge>
 }
 
-function cleanerLifecycle(cleaner: AdminHouseSitter): Tab {
-  const lifecycle = cleaner.lifecycle_status as Tab | undefined
+function houseSitterLifecycle(houseSitter: AdminHouseSitter): Tab {
+  const lifecycle = houseSitter.lifecycle_status as Tab | undefined
   if (lifecycle && TAB_STATUS.includes(lifecycle)) return lifecycle
   return deriveCleanerLifecycleStatus({
-    status: cleaner.status,
-    stripeOnboardingComplete: cleaner.stripe_onboarding_complete,
+    status: houseSitter.status,
+    stripeOnboardingComplete: houseSitter.stripe_onboarding_complete,
   }) as Tab
 }
 
 function HouseSitterCard({
-  cleaner,
+  houseSitter,
   onApprove,
   onReject,
   onToggleSuspend,
   loading,
 }: {
-  cleaner: AdminHouseSitter
+  houseSitter: AdminHouseSitter
   onApprove?: () => void
   onReject?: () => void
   onToggleSuspend?: () => void
   loading: boolean
 }) {
-  const lifecycle = cleanerLifecycle(cleaner)
+  const lifecycle = houseSitterLifecycle(houseSitter)
   const sb = STATUS_BADGE[lifecycle]
-  const fallbackName = cleaner.user_name?.trim() || cleaner.user_email?.split('@')[0] || 'House Sitter'
+  const fallbackName = houseSitter.user_name?.trim() || houseSitter.user_email?.split('@')[0] || 'House Sitter'
 
   return (
     <Card className="rounded-2xl border-slate-200">
@@ -103,7 +103,7 @@ function HouseSitterCard({
           <div className="min-w-0 flex items-start gap-3">
             <UserAvatar
               name={fallbackName}
-              imageUrl={cleaner.profile_image_url}
+              imageUrl={houseSitter.profile_image_url}
               className="h-12 w-12 shrink-0 border border-slate-200"
               textClassName="text-sm font-semibold"
               fallbackClassName="bg-primary/10 text-primary"
@@ -113,35 +113,35 @@ function HouseSitterCard({
               <div className="mb-0.5 flex flex-wrap items-center gap-2">
                 <span className="truncate text-lg font-semibold">{fallbackName}</span>
                 <Badge variant={sb.variant}>{sb.label}</Badge>
-                {cleaner.identity_verified && (
+                {houseSitter.identity_verified && (
                   <Badge variant="outline" className="text-[10px] py-0">ID verified</Badge>
                 )}
-                {cleaner.trial_period_flag !== undefined && (
-                  <Badge variant={cleaner.trial_period_flag ? 'warning' : 'outline'} className="text-[10px] py-0">
-                    Trial {cleaner.trial_period_flag ? 'On' : 'Off'}
+                {houseSitter.trial_period_flag !== undefined && (
+                  <Badge variant={houseSitter.trial_period_flag ? 'warning' : 'outline'} className="text-[10px] py-0">
+                    Trial {houseSitter.trial_period_flag ? 'On' : 'Off'}
                   </Badge>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                {cleaner.user_email && (
-                  <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{cleaner.user_email}</span>
+                {houseSitter.user_email && (
+                  <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{houseSitter.user_email}</span>
                 )}
-                {cleaner.user_phone && (
-                  <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{cleaner.user_phone}</span>
+                {houseSitter.user_phone && (
+                  <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{houseSitter.user_phone}</span>
                 )}
               </div>
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-sm font-medium">{formatCurrency(cleaner.hourly_rate)}/hr</p>
+            <p className="text-sm font-medium">{formatCurrency(houseSitter.hourly_rate)}/hr</p>
             <p className="text-xs text-muted-foreground">
-              {cleaner.years_experience > 0 ? `${cleaner.years_experience}y experience` : 'Experience not set'}
+              {houseSitter.years_experience > 0 ? `${houseSitter.years_experience}y experience` : 'Experience not set'}
             </p>
-            {cleaner.average_rating !== undefined && cleaner.average_rating !== null && (
+            {houseSitter.average_rating !== undefined && houseSitter.average_rating !== null && (
               <div className="mt-0.5 flex items-center justify-end gap-1">
                 <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                <span className="text-xs">{cleaner.average_rating.toFixed(1)}</span>
-                <span className="text-xs text-muted-foreground">({cleaner.total_jobs} jobs)</span>
+                <span className="text-xs">{houseSitter.average_rating.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">({houseSitter.total_jobs} jobs)</span>
               </div>
             )}
           </div>
@@ -152,78 +152,78 @@ function HouseSitterCard({
             <Truck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Transport</p>
-              <p className="font-medium">{TRANSPORT_LABELS[cleaner.transport_mode || ''] ?? cleaner.transport_mode ?? 'Not set'}</p>
+              <p className="font-medium">{TRANSPORT_LABELS[houseSitter.transport_mode || ''] ?? houseSitter.transport_mode ?? 'Not set'}</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <Briefcase className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Supplies</p>
-              <p className="font-medium">{SUPPLIES_LABELS[cleaner.cleaning_supplies || ''] ?? cleaner.cleaning_supplies ?? 'Not set'}</p>
+              <p className="font-medium">{SUPPLIES_LABELS[houseSitter.cleaning_supplies || ''] ?? houseSitter.cleaning_supplies ?? 'Not set'}</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <Shield className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Cleaning standards</p>
-              <div className="mt-0.5">{yesNoBadge(cleaner.cleaning_standards_accepted)}</div>
+              <div className="mt-0.5">{yesNoBadge(houseSitter.cleaning_standards_accepted)}</div>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Quiz passed</p>
-              <div className="mt-0.5">{yesNoBadge(cleaner.quiz_passed)}</div>
+              <div className="mt-0.5">{yesNoBadge(houseSitter.quiz_passed)}</div>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <Car className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Stripe setup</p>
-              <div className="mt-0.5">{yesNoBadge(cleaner.stripe_onboarding_complete)}</div>
+              <div className="mt-0.5">{yesNoBadge(houseSitter.stripe_onboarding_complete)}</div>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <UserRound className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Lifecycle</p>
-              <p className="font-medium">{cleanerLifecycleLabel(lifecycle)}</p>
+              <p className="font-medium">{houseSitterLifecycleLabel(lifecycle)}</p>
             </div>
           </div>
         </div>
 
-        {cleaner.id_type && (
+        {houseSitter.id_type && (
           <div className="mb-4 flex items-start gap-2 text-sm">
             <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">KYC document</p>
-              <p className="font-medium">{ID_TYPE_LABELS[cleaner.id_type] ?? cleaner.id_type}</p>
-              {cleaner.id_file_name && (
-                cleaner.id_file_url ? (
+              <p className="font-medium">{ID_TYPE_LABELS[houseSitter.id_type] ?? houseSitter.id_type}</p>
+              {houseSitter.id_file_name && (
+                houseSitter.id_file_url ? (
                   <a
-                    href={cleaner.id_file_url}
+                    href={houseSitter.id_file_url}
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs text-primary underline underline-offset-2 hover:text-primary/80"
                   >
-                    {cleaner.id_file_name}
+                    {houseSitter.id_file_name}
                   </a>
                 ) : (
-                  <p className="max-w-[220px] truncate text-xs text-muted-foreground">{cleaner.id_file_name}</p>
+                  <p className="max-w-[220px] truncate text-xs text-muted-foreground">{houseSitter.id_file_name}</p>
                 )
               )}
             </div>
           </div>
         )}
 
-        {cleaner.rejection_reason && (
+        {houseSitter.rejection_reason && (
           <div className="mb-4 rounded border border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-            <span className="font-semibold">Rejection reason:</span> {cleaner.rejection_reason}
+            <span className="font-semibold">Rejection reason:</span> {houseSitter.rejection_reason}
           </div>
         )}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-muted-foreground">Submitted {formatDate(cleaner.created_at)}</p>
+          <p className="text-xs text-muted-foreground">Submitted {formatDate(houseSitter.created_at)}</p>
           <div className="flex flex-wrap gap-2">
             {lifecycle === 'pending_approval' && (
               <>
@@ -264,7 +264,7 @@ function HouseSitterCard({
 
 export default function AdminCleanersPage() {
   const [tab, setTab] = useState<Tab>('pending_approval')
-  const [cleaners, setCleaners] = useState<Record<Tab, AdminHouseSitter[]>>({
+  const [house_sitters, setCleaners] = useState<Record<Tab, AdminHouseSitter[]>>({
     pending_approval: [],
     approved: [],
     live: [],
@@ -285,7 +285,7 @@ export default function AdminCleanersPage() {
       const res = await adminApi.listHouseSitters({ status })
       setCleaners((prev) => ({ ...prev, [status]: res.data?.items ?? [] }))
     } catch {
-      toast.error(`Failed to load ${status.replace('_', ' ')} cleaners.`)
+      toast.error(`Failed to load ${status.replace('_', ' ')} house_sitters.`)
     } finally {
       setLoading(false)
     }
@@ -299,11 +299,11 @@ export default function AdminCleanersPage() {
     await Promise.all(statuses.map((status) => loadTab(status)))
   }
 
-  async function approve(cleaner: AdminHouseSitter) {
-    setActionLoading(cleaner.id)
+  async function approve(houseSitter: AdminHouseSitter) {
+    setActionLoading(houseSitter.id)
     try {
-      await adminApi.approveHouseSitter(cleaner.id, 'approve')
-      toast.success(`${cleaner.user_name || 'House Sitter'} approved.`)
+      await adminApi.approveHouseSitter(houseSitter.id, 'approve')
+      toast.success(`${houseSitter.user_name || 'House Sitter'} approved.`)
       await refreshStatusSets(['pending_approval', 'approved', 'live'])
     } catch (err: any) {
       toast.error(err.message ?? 'Failed to approve.')
@@ -333,18 +333,18 @@ export default function AdminCleanersPage() {
     }
   }
 
-  async function toggleSuspend(cleaner: AdminHouseSitter) {
-    setActionLoading(cleaner.id)
+  async function toggleSuspend(houseSitter: AdminHouseSitter) {
+    setActionLoading(houseSitter.id)
     try {
-      const res = await adminApi.suspendHouseSitter(cleaner.id)
+      const res = await adminApi.suspendHouseSitter(houseSitter.id)
       const newLifecycle = deriveCleanerLifecycleStatus({
         status: res.data?.status,
-        stripeOnboardingComplete: cleaner.stripe_onboarding_complete,
+        stripeOnboardingComplete: houseSitter.stripe_onboarding_complete,
       })
       toast.success(
         newLifecycle === 'suspended'
-          ? `${cleaner.user_name || 'House Sitter'} suspended.`
-          : `${cleaner.user_name || 'House Sitter'} reinstated.`,
+          ? `${houseSitter.user_name || 'House Sitter'} suspended.`
+          : `${houseSitter.user_name || 'House Sitter'} reinstated.`,
       )
       await refreshStatusSets(['approved', 'live', 'suspended'])
     } catch (err: any) {
@@ -354,7 +354,7 @@ export default function AdminCleanersPage() {
     }
   }
 
-  const tabCount = useMemo(() => cleaners[tab].length, [cleaners, tab])
+  const tabCount = useMemo(() => house_sitters[tab].length, [house_sitters, tab])
 
   return (
     <div className="space-y-6">
@@ -367,8 +367,8 @@ export default function AdminCleanersPage() {
         <TabsList className="scrollbar-hide grid h-auto w-full auto-cols-[minmax(140px,1fr)] grid-flow-col gap-1 overflow-x-auto whitespace-nowrap rounded-xl bg-slate-100 p-1 [-webkit-overflow-scrolling:touch] lg:grid-flow-row lg:grid-cols-5 lg:auto-cols-auto">
           {TAB_STATUS.map((s) => (
             <TabsTrigger key={s} value={s} className="h-9 rounded-lg gap-1.5 text-[12px] sm:text-sm">
-              {cleanerLifecycleLabel(s)}
-              {cleaners[s].length > 0 && (
+              {houseSitterLifecycleLabel(s)}
+              {house_sitters[s].length > 0 && (
                 <span
                   className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-medium ${
                     s === 'pending_approval'
@@ -378,7 +378,7 @@ export default function AdminCleanersPage() {
                         : 'bg-muted text-muted-foreground'
                   }`}
                 >
-                  {cleaners[s].length}
+                  {house_sitters[s].length}
                 </span>
               )}
             </TabsTrigger>
@@ -389,27 +389,27 @@ export default function AdminCleanersPage() {
           <TabsContent key={s} value={s} className="mt-4">
             {loading && tab === s ? (
               <LoadingSpinner />
-            ) : cleaners[s].length === 0 ? (
+            ) : house_sitters[s].length === 0 ? (
               <EmptyState
-                title={`No ${cleanerLifecycleLabel(s).toLowerCase()} cleaners`}
+                title={`No ${houseSitterLifecycleLabel(s).toLowerCase()} house_sitters`}
                 description={
                   s === 'pending_approval'
-                    ? 'New cleaner applications will appear here.'
+                    ? 'New houseSitter applications will appear here.'
                     : s === 'approved'
-                      ? 'No approved (Stripe pending) cleaners.'
+                      ? 'No approved (Stripe pending) house_sitters.'
                       : s === 'live'
-                        ? 'No live cleaners currently.'
+                        ? 'No live house_sitters currently.'
                         : s === 'suspended'
-                          ? 'No suspended cleaners.'
+                          ? 'No suspended house_sitters.'
                           : 'No rejected applications.'
                 }
               />
             ) : (
               <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-white/80 p-4 sm:p-5">
-                {cleaners[s].map((c) => (
+                {house_sitters[s].map((c) => (
                   <HouseSitterCard
                     key={c.id}
-                    cleaner={c}
+                    houseSitter={c}
                     loading={actionLoading === c.id}
                     onApprove={() => approve(c)}
                     onReject={() => setRejectTarget(c)}
@@ -433,7 +433,7 @@ export default function AdminCleanersPage() {
         <DialogTitle>Reject — {rejectTarget?.user_name}</DialogTitle>
         <div className="mt-2 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Select the reason and add optional details. The cleaner will receive an in-app correction notice.
+            Select the reason and add optional details. The houseSitter will receive an in-app correction notice.
           </p>
 
           <div>

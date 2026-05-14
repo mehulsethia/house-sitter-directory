@@ -14,8 +14,8 @@ export const POST = requireHouseSit(async (req: NextRequest, ctx, user) => {
     return err('Can only review completed bookings', 400)
   }
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit || booking.houseSitId !== houseSit.id) return err('Forbidden', 403)
 
   const existing = await reviewRepo.findByBookingId(bookingId)
   if (existing) return err('Review already submitted', 409)
@@ -26,8 +26,8 @@ export const POST = requireHouseSit(async (req: NextRequest, ctx, user) => {
 
   const review = await reviewRepo.create({
     bookingId,
-    cleanerId: booking.cleanerId,
-    clientId: client.id,
+    houseSitterId: booking.houseSitterId,
+    houseSitId: houseSit.id,
     rating: parsed.data.rating,
     comment: parsed.data.comment,
     isPublic: parsed.data.is_public,

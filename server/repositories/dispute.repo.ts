@@ -76,7 +76,7 @@ export const disputeRepo = {
         where: { raisedBy },
         select: {
           ...disputeSelect,
-          booking: { include: { cleaner: { include: { user: true } } } },
+          booking: { include: { houseSitter: { include: { user: true } } } },
         },
         skip: (page - 1) * pageSize,
         take: pageSize,

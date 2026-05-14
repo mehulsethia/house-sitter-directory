@@ -8,41 +8,41 @@ import { ok, err } from '@/server/response'
 import { updateCleanerSchema } from '@/server/schemas/house-sitter.schema'
 import { deriveCleanerLifecycleStatus } from '@/lib/house-sitter-status'
 
-function withCleanerAliases(cleaner: any) {
-  const rawSupplies = cleaner.cleaningSupplies
+function withCleanerAliases(houseSitter: any) {
+  const rawSupplies = houseSitter.cleaningSupplies
   const normalizedSupplies =
-    rawSupplies === 'cleaner_brings'
+    rawSupplies === 'house_sitter_brings'
       ? 'own_supplies'
-      : rawSupplies === 'client_provides'
-        ? 'client_supplies'
+      : rawSupplies === 'house_sit_provides'
+        ? 'house_sit_supplies'
         : rawSupplies
 
-  const rawIdType = cleaner.idType
+  const rawIdType = houseSitter.idType
   const normalizedIdType = rawIdType === 'drivers_license' ? 'drivers_licence' : rawIdType
 
   return {
-    ...cleaner,
+    ...houseSitter,
     cleaningSupplies: normalizedSupplies,
     idType: normalizedIdType,
-    standards_completed: cleaner.standardsCompleted,
-    quiz_passed: cleaner.quizPassed,
-    quiz_score: cleaner.quizScore,
+    standards_completed: houseSitter.standardsCompleted,
+    quiz_passed: houseSitter.quizPassed,
+    quiz_score: houseSitter.quizScore,
   }
 }
 
 function normalizeCleaningSuppliesInput(value: unknown): string | null | undefined {
   if (value === undefined) return undefined
   if (value === null) return null
-  if (value === 'cleaner_brings') return 'own_supplies'
-  if (value === 'client_provides') return 'client_supplies'
+  if (value === 'house_sitter_brings') return 'own_supplies'
+  if (value === 'house_sit_provides') return 'house_sit_supplies'
   return String(value)
 }
 
 function toLegacyCleaningSupplies(value: string | null | undefined): string | null | undefined {
   if (value === undefined) return undefined
   if (value === null) return null
-  if (value === 'own_supplies') return 'cleaner_brings'
-  if (value === 'client_supplies') return 'client_provides'
+  if (value === 'own_supplies') return 'house_sitter_brings'
+  if (value === 'house_sit_supplies') return 'house_sit_provides'
   return value
 }
 
@@ -61,37 +61,37 @@ function toLegacyIdType(value: string | null | undefined): string | null | undef
 }
 
 export const GET = requireHouseSitter(async (_req, _ctx, user) => {
-  let cleaner = await houseSitterRepo.findByUserId(user.id)
+  let houseSitter = await houseSitterRepo.findByUserId(user.id)
 
-  // Auto-create the cleaner profile if it doesn't exist yet (e.g. sync race condition)
-  if (!cleaner) {
-    cleaner = await houseSitterRepo.create(user.id)
+  // Auto-create the houseSitter profile if it doesn't exist yet (e.g. sync race condition)
+  if (!houseSitter) {
+    houseSitter = await houseSitterRepo.create(user.id)
   }
 
-  const schedules = await availabilityRepo.getSchedule(cleaner.id)
+  const schedules = await availabilityRepo.getSchedule(houseSitter.id)
   const hasAvailabilitySlots = schedules.some((s) => s.isActive)
-  const onboarding = computeCleanerOnboardingProgress({ cleaner, hasAvailabilitySlots })
+  const onboarding = computeCleanerOnboardingProgress({ houseSitter, hasAvailabilitySlots })
   const [completedJobsCount, reviewAgg] = await Promise.all([
     db.booking.count({
       where: {
-        cleanerId: cleaner.id,
+        houseSitterId: houseSitter.id,
         status: { in: ['completed', 'disputed'] },
       },
     }),
     db.review.aggregate({
-      where: { cleanerId: cleaner.id },
+      where: { houseSitterId: houseSitter.id },
       _avg: { rating: true },
     }),
   ])
 
   return ok({
-    cleaner: {
-      ...withCleanerAliases(cleaner),
+    houseSitter: {
+      ...withCleanerAliases(houseSitter),
       totalJobs: completedJobsCount,
       averageRating: reviewAgg._avg.rating ?? null,
       lifecycle_status: deriveCleanerLifecycleStatus({
-        status: cleaner.status,
-        stripeOnboardingComplete: cleaner.stripeOnboardingComplete,
+        status: houseSitter.status,
+        stripeOnboardingComplete: houseSitter.stripeOnboardingComplete,
       }),
     },
     onboarding,
@@ -109,22 +109,22 @@ export const PATCH = requireHouseSitter(async (req: NextRequest, _ctx, user) => 
     }
   }
 
-  let cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) {
-    cleaner = await houseSitterRepo.create(user.id)
+  let houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) {
+    houseSitter = await houseSitterRepo.create(user.id)
   }
 
   const normalizedIdType = normalizeIdTypeInput(parsed.data.id_type)
-  const currentIdType = normalizeIdTypeInput(cleaner.idType)
+  const currentIdType = normalizeIdTypeInput(houseSitter.idType)
   const idTypeChangeRequested =
     normalizedIdType !== undefined && normalizedIdType !== currentIdType
   const idFileNameChangeRequested =
-    parsed.data.id_file_name !== undefined && parsed.data.id_file_name !== cleaner.idFileName
+    parsed.data.id_file_name !== undefined && parsed.data.id_file_name !== houseSitter.idFileName
   const idFileUrlChangeRequested =
-    parsed.data.id_file_url !== undefined && parsed.data.id_file_url !== cleaner.idFileUrl
+    parsed.data.id_file_url !== undefined && parsed.data.id_file_url !== houseSitter.idFileUrl
   const kycMutationRequested =
     idTypeChangeRequested || idFileNameChangeRequested || idFileUrlChangeRequested
-  const kycLocked = cleaner.profileComplete && cleaner.status !== 'rejected'
+  const kycLocked = houseSitter.profileComplete && houseSitter.status !== 'rejected'
   if (kycMutationRequested && kycLocked) {
     return err('KYC document cannot be changed after submission unless your application is rejected.', 409)
   }
@@ -173,7 +173,7 @@ export const PATCH = requireHouseSitter(async (req: NextRequest, _ctx, user) => 
 
   let interim
   try {
-    interim = await houseSitterRepo.update(cleaner.id, updatePayload)
+    interim = await houseSitterRepo.update(houseSitter.id, updatePayload)
   } catch (error) {
     const legacyCleaningSupplies = toLegacyCleaningSupplies(normalizedCleaningSupplies)
     const legacyIdType = toLegacyIdType(normalizedIdType)
@@ -184,17 +184,17 @@ export const PATCH = requireHouseSitter(async (req: NextRequest, _ctx, user) => 
 
     if (!shouldRetryWithLegacy) throw error
 
-    interim = await houseSitterRepo.update(cleaner.id, {
+    interim = await houseSitterRepo.update(houseSitter.id, {
       ...updatePayload,
       ...(normalizedCleaningSupplies !== undefined ? { cleaningSupplies: legacyCleaningSupplies } : {}),
       ...(normalizedIdType !== undefined ? { idType: legacyIdType } : {}),
     })
   }
 
-  const schedules = await availabilityRepo.getSchedule(cleaner.id)
+  const schedules = await availabilityRepo.getSchedule(houseSitter.id)
   const hasAvailabilitySlots = schedules.some((s) => s.isActive)
-  const onboarding = computeCleanerOnboardingProgress({ cleaner: interim, hasAvailabilitySlots })
-  const submissionValidation = validateCleanerSubmissionRequirements({ cleaner: interim, hasAvailabilitySlots })
+  const onboarding = computeCleanerOnboardingProgress({ houseSitter: interim, hasAvailabilitySlots })
+  const submissionValidation = validateCleanerSubmissionRequirements({ houseSitter: interim, hasAvailabilitySlots })
 
   if (parsed.data.profile_complete === true && (!onboarding.can_be_listed || !submissionValidation.valid)) {
     const missing = submissionValidation.missingFields.length > 0
@@ -203,14 +203,14 @@ export const PATCH = requireHouseSitter(async (req: NextRequest, _ctx, user) => 
     return err(`Cannot mark onboarding as complete until all required steps are valid.${missing}`, 422)
   }
 
-  const updated = await houseSitterRepo.update(cleaner.id, {
+  const updated = await houseSitterRepo.update(houseSitter.id, {
     profileComplete: parsed.data.profile_complete === true ? true : interim.profileComplete,
     onboardingStep: parsed.data.onboarding_step ?? onboarding.current_step,
     onboardingCompletedAt: onboarding.can_be_listed ? interim.onboardingCompletedAt ?? new Date() : null,
   })
 
   return ok({
-    cleaner: {
+    houseSitter: {
       ...withCleanerAliases(updated),
       lifecycle_status: deriveCleanerLifecycleStatus({
         status: updated.status,

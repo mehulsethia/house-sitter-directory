@@ -57,8 +57,8 @@ const PROPERTY_CONDITION_OPTIONS = [
 ] as const
 
 const SUPPLIES_OPTIONS = [
-  { value: 'client_provides', label: 'I will provide home-care supplies' },
-  { value: 'cleaner_brings', label: 'House Sitter should bring supplies' },
+  { value: 'house_sit_provides', label: 'I will provide home-care supplies' },
+  { value: 'house_sitter_brings', label: 'House Sitter should bring supplies' },
 ] as const
 
 const STEP_INFO = [
@@ -95,7 +95,7 @@ function isPaymentAuthorizedStatus(status?: string | null) {
 
 function bookingExpiryMessage(acceptBy?: string | null) {
   if (!acceptBy) {
-    return 'This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.'
+    return 'This request expires 24 hours after card authorisation. If the houseSitter does not respond, the booking request will expire automatically and your card authorisation will be released.'
   }
   const expiryLabel = new Date(acceptBy).toLocaleString('en-IE', {
     hour: 'numeric',
@@ -106,7 +106,7 @@ function bookingExpiryMessage(acceptBy?: string | null) {
     year: 'numeric',
     timeZone: APP_TIMEZONE,
   })
-  return `This request expires on ${expiryLabel}. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.`
+  return `This request expires on ${expiryLabel}. If the houseSitter does not respond, the booking request will expire automatically and your card authorisation will be released.`
 }
 
 function normalizeToIsoDatetime(value: string): string | null {
@@ -249,7 +249,7 @@ function DatePicker({
     : availableDates.length > 5
 
   if (availableDates.length === 0) {
-    return <p className="text-sm text-slate-500">No available dates found for this cleaner.</p>
+    return <p className="text-sm text-slate-500">No available dates found for this houseSitter.</p>
   }
 
   return (
@@ -311,7 +311,7 @@ function DatePicker({
 
 // ── Booking Summary Sidebar ───────────────────────────────────────────────
 function BookingSummary({
-  cleaner,
+  houseSitter,
   duration,
   breakdown,
   jobType,
@@ -320,7 +320,7 @@ function BookingSummary({
   city,
   postcode,
 }: {
-  cleaner: HouseSitterRead
+  houseSitter: HouseSitterRead
   duration: number
   breakdown: PriceBreakdown | null
   jobType: string
@@ -330,22 +330,22 @@ function BookingSummary({
   postcode: string
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false)
-  const cleanerName = cleaner.user?.name ?? 'Professional House Sitter'
-  const total = breakdown?.total_amount ?? Number((cleaner.hourly_rate * duration * 1.1).toFixed(2))
-  const serviceCost = breakdown?.subtotal ?? cleaner.hourly_rate * duration
+  const houseSitterName = houseSitter.user?.name ?? 'Professional House Sitter'
+  const total = breakdown?.total_amount ?? Number((houseSitter.hourly_rate * duration * 1.1).toFixed(2))
+  const serviceCost = breakdown?.subtotal ?? houseSitter.hourly_rate * duration
   const platformFee = breakdown?.platform_fee ?? Number((serviceCost * 0.1).toFixed(2))
   const transportLabel =
-    cleaner.transport_mode === 'own_car'
+    houseSitter.transport_mode === 'own_car'
       ? 'Own transport'
-      : cleaner.transport_mode === 'bus_walk'
+      : houseSitter.transport_mode === 'bus_walk'
         ? 'Bus / Walk'
-        : cleaner.transport_mode === 'requires_pickup'
+        : houseSitter.transport_mode === 'requires_pickup'
           ? 'Requires pickup/drop-off'
           : 'Not set'
   const suppliesLabel =
-    cleaner.cleaning_supplies === 'own_supplies'
+    houseSitter.cleaning_supplies === 'own_supplies'
       ? 'Brings own supplies'
-      : cleaner.cleaning_supplies === 'client_supplies'
+      : houseSitter.cleaning_supplies === 'house_sit_supplies'
         ? 'Homeowner must provide supplies'
       : 'Not set'
   const selectedJobType = JOB_TYPE_OPTIONS.find((option) => option.value === jobType)
@@ -372,22 +372,22 @@ function BookingSummary({
         {/* House Sitter info */}
         <div className="flex items-center gap-3">
           <UserAvatar
-            name={cleanerName}
-            imageUrl={cleaner.profile_image_url}
+            name={houseSitterName}
+            imageUrl={houseSitter.profile_image_url}
             className="h-10 w-10"
             textClassName="text-sm font-bold"
             fallbackClassName="bg-primary/10 text-primary"
             fallback="C"
           />
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-sm text-slate-900 truncate">{cleanerName}</p>
+            <p className="font-semibold text-sm text-slate-900 truncate">{houseSitterName}</p>
             <div className="flex items-center gap-1">
               <div className="flex items-center">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-3 w-3 ${i < Math.round(cleaner.average_rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                  <Star key={i} className={`h-3 w-3 ${i < Math.round(houseSitter.average_rating ?? 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
                 ))}
               </div>
-              <span className="text-xs text-slate-500">{cleaner.average_rating?.toFixed(1) ?? '—'}/5</span>
+              <span className="text-xs text-slate-500">{houseSitter.average_rating?.toFixed(1) ?? '—'}/5</span>
             </div>
           </div>
         </div>
@@ -460,13 +460,13 @@ function BookingSummary({
         <div className="space-y-2 text-sm">
           <p className="font-semibold text-slate-900">House Sitter Details</p>
           <p className="text-slate-600">Transport: {transportLabel}</p>
-          {cleaner.transport_mode === 'requires_pickup' && Boolean((cleaner as any).transport_pickup_location) && (
-            <p className="text-slate-600">Pick-up location: {pickupFullLabel((cleaner as any).transport_pickup_location)}</p>
+          {houseSitter.transport_mode === 'requires_pickup' && Boolean((houseSitter as any).transport_pickup_location) && (
+            <p className="text-slate-600">Pick-up location: {pickupFullLabel((houseSitter as any).transport_pickup_location)}</p>
           )}
           <p className="text-slate-600">Supplies: {suppliesLabel}</p>
-          <p className="text-slate-600">Rating: {cleaner.average_rating?.toFixed(1) ?? 'N/A'}</p>
-          <p className="text-slate-600">Completed jobs: {cleaner.total_jobs ?? 0}</p>
-          <p className="text-slate-600">Experience: {cleaner.years_experience ?? 0} years</p>
+          <p className="text-slate-600">Rating: {houseSitter.average_rating?.toFixed(1) ?? 'N/A'}</p>
+          <p className="text-slate-600">Completed jobs: {houseSitter.total_jobs ?? 0}</p>
+          <p className="text-slate-600">Experience: {houseSitter.years_experience ?? 0} years</p>
         </div>
 
         {/* Trust signals */}
@@ -553,7 +553,7 @@ function StripePaymentForm({
       try {
         await paymentsApi.confirmWithSavedMethod(booking.id, selectedSavedCardId)
         await onSuccess()
-        toast.success('Saved card authorised. Booking request sent to the cleaner.')
+        toast.success('Saved card authorised. Booking request sent to the houseSitter.')
       } catch (err: any) {
         toast.error(err.message ?? 'Failed to authorise saved card.')
       } finally {
@@ -576,7 +576,7 @@ function StripePaymentForm({
         toast.error(error.message ?? 'Payment failed. Please try again.')
       } else {
         await onSuccess()
-        toast.success('Card authorised. Booking request sent to the cleaner.')
+        toast.success('Card authorised. Booking request sent to the houseSitter.')
       }
     } catch {
       toast.error('Card was authorised, but booking sync failed. Please retry in Bookings.')
@@ -705,8 +705,8 @@ export default function BookingFlowPage() {
   const paymentResumeMode = continueDraft && Boolean(continueBookingId) && !resetDraft
   const stepFromUrl = Math.min(Math.max(Number(searchParams.get('step') ?? (paymentResumeMode ? '3' : '1')), 1), 4)
 
-  const [cleaner, setCleaner] = useState<HouseSitterRead | null>(null)
-  const [clientProfile, setClientProfile] = useState<HouseSitProfileRead | null>(null)
+  const [houseSitter, setCleaner] = useState<HouseSitterRead | null>(null)
+  const [houseSitProfile, setClientProfile] = useState<HouseSitProfileRead | null>(null)
   const [savedAddresses, setSavedAddresses] = useState<HouseSitAddressRead[]>([])
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState(stepFromUrl)
@@ -845,10 +845,10 @@ export default function BookingFlowPage() {
   }, [stepFromUrl])
 
   useEffect(() => {
-    if (cleaner?.cleaning_supplies === 'client_supplies' && suppliesProvider !== 'client_provides') {
-      setSuppliesProvider('client_provides')
+    if (houseSitter?.cleaning_supplies === 'house_sit_supplies' && suppliesProvider !== 'house_sit_provides') {
+      setSuppliesProvider('house_sit_provides')
     }
-  }, [cleaner?.cleaning_supplies, suppliesProvider])
+  }, [houseSitter?.cleaning_supplies, suppliesProvider])
 
   async function initializePaymentIntentForBooking(bookingId: string) {
     const intentRes = await paymentsApi.createIntent(bookingId)
@@ -939,7 +939,7 @@ export default function BookingFlowPage() {
     const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
     try {
       const response = await bookingsApi.saveFlowDraft({
-      cleaner_id: houseSitterId,
+      house_sitter_id: houseSitterId,
       booking_id: (bookingId ?? snapshot.bookingId) || undefined,
       last_step: lastStep,
       duration_hours: snapshot.duration,
@@ -963,7 +963,7 @@ export default function BookingFlowPage() {
     writeLocalDraft(snapshot)
     const normalizedSlot = normalizeToIsoDatetime(snapshot.selectedSlot || '')
     return {
-      cleaner_id: houseSitterId,
+      house_sitter_id: houseSitterId,
       booking_id: (bookingId ?? snapshot.bookingId) || undefined,
       last_step: lastStep,
       duration_hours: snapshot.duration,
@@ -1056,7 +1056,7 @@ export default function BookingFlowPage() {
     }
   }
 
-  // Load cleaner + client profile
+  // Load houseSitter + houseSit profile
   useEffect(() => {
     Promise.all([
       houseSittersApi.getById(houseSitterId),
@@ -1074,7 +1074,7 @@ export default function BookingFlowPage() {
         setClientProfile(cp)
         setSavedAddresses(addresses)
 
-        // Autofill from client profile
+        // Autofill from houseSit profile
         if (cp && canApplyDefaults) {
           if (user?.name) {
             const parts = user.name.trim().split(' ')
@@ -1339,9 +1339,9 @@ export default function BookingFlowPage() {
   }, [loading, draftHydrated, step, booking?.id])
 
   const estimatedCost = useMemo(() => {
-    if (!cleaner) return 0
-    return cleaner.hourly_rate * duration
-  }, [cleaner, duration])
+    if (!houseSitter) return 0
+    return houseSitter.hourly_rate * duration
+  }, [houseSitter, duration])
   const sidebarDuration = step === 3 && booking ? Number(booking.duration_hours) : duration
   const sidebarBreakdown = step === 3 && booking
     ? {
@@ -1350,7 +1350,7 @@ export default function BookingFlowPage() {
         subtotal: Number(booking.subtotal ?? (booking.total_amount - booking.platform_fee)),
         platform_fee_pct: 10,
         platform_fee: Number(booking.platform_fee),
-        cleaner_payout: Number(booking.cleaner_payout),
+        house_sitter_payout: Number(booking.house_sitter_payout),
         total_amount: Number(booking.total_amount),
       }
     : breakdown
@@ -1398,7 +1398,7 @@ export default function BookingFlowPage() {
       applySavedAddress(fallback.id)
       return
     }
-    const cpAny = (clientProfile ?? {}) as any
+    const cpAny = (houseSitProfile ?? {}) as any
     const defaultAddressLine = (cpAny.default_address ?? cpAny.defaultAddress ?? '').trim()
     const defaultCity = (cpAny.default_city ?? cpAny.defaultCity ?? '').trim() || MVP_CITY
     const defaultPostcode = (cpAny.default_postcode ?? cpAny.defaultPostcode ?? '').trim()
@@ -1488,19 +1488,19 @@ export default function BookingFlowPage() {
   function buildSpecialInstructions(photoUrls: string[]) {
     const jobTypeMeta = JOB_TYPE_OPTIONS.find((option) => option.value === jobType)
     const conditionMeta = PROPERTY_CONDITION_OPTIONS.find((option) => option.value === propertyCondition)
-    const selectedSuppliesProvider = cleaner?.cleaning_supplies === 'client_supplies' ? 'client_provides' : suppliesProvider
+    const selectedSuppliesProvider = houseSitter?.cleaning_supplies === 'house_sit_supplies' ? 'house_sit_provides' : suppliesProvider
     const suppliesMeta = SUPPLIES_OPTIONS.find((option) => option.value === selectedSuppliesProvider)
     const transportSnapshot =
-      cleaner?.transport_mode === 'own_car'
+      houseSitter?.transport_mode === 'own_car'
         ? 'Own transport'
-        : cleaner?.transport_mode === 'bus_walk'
+        : houseSitter?.transport_mode === 'bus_walk'
           ? 'Bus / Walk'
-          : cleaner?.transport_mode === 'requires_pickup'
+          : houseSitter?.transport_mode === 'requires_pickup'
             ? 'Requires pickup/drop-off'
             : 'Not set'
     const pickupLocationSnapshot =
-      cleaner?.transport_mode === 'requires_pickup'
-        ? pickupFullLabel((cleaner as any)?.transport_pickup_location ?? '')
+      houseSitter?.transport_mode === 'requires_pickup'
+        ? pickupFullLabel((houseSitter as any)?.transport_pickup_location ?? '')
         : ''
     const lines = [
       `Job type: ${jobTypeMeta?.label ?? 'Not provided'}`,
@@ -1536,11 +1536,11 @@ export default function BookingFlowPage() {
   // Navigation
   async function goNext() {
     if (step === 1) {
-      if (cleanerRequiresPickup && !transportAgreementConfirmed) {
+      if (houseSitterRequiresPickup && !transportAgreementConfirmed) {
         toast.error('Please confirm pickup and drop-off arrangement before proceeding.')
         return
       }
-      if (cleanerNeedsClientSupplies && !suppliesAgreementConfirmed) {
+      if (houseSitterNeedsClientSupplies && !suppliesAgreementConfirmed) {
         toast.error('Please confirm home-care supplies arrangement before proceeding.')
         return
       }
@@ -1630,7 +1630,7 @@ export default function BookingFlowPage() {
       const reusableBooking =
         booking &&
         ['draft', 'pending', 'accepted'].includes(booking.status) &&
-        booking.cleaner_id === houseSitterId &&
+        booking.house_sitter_id === houseSitterId &&
         normalizeToIsoDatetime(booking.scheduled_start) === normalizedScheduledStart &&
         Number(booking.duration_hours) === Number(duration)
           ? booking
@@ -1645,7 +1645,7 @@ export default function BookingFlowPage() {
       failureStage = 'booking_create'
       const b = reusableBooking ?? (
         await bookingsApi.create({
-          cleaner_id: houseSitterId,
+          house_sitter_id: houseSitterId,
           service_type: selectedJobType.serviceType,
           address: address.trim(),
           city: city.trim(),
@@ -1764,21 +1764,21 @@ export default function BookingFlowPage() {
     !isPaymentAuthorizedStatus(booking?.payment?.status)
 
   if (loading || restoringDraft) return <FormPageSkeleton />
-  if (!cleaner) return <div className="text-center py-16 text-muted-foreground">House Sitter not found.</div>
+  if (!houseSitter) return <div className="text-center py-16 text-muted-foreground">House Sitter not found.</div>
 
-  const cleanerName = cleaner.user?.name ?? 'Professional House Sitter'
+  const houseSitterName = houseSitter.user?.name ?? 'Professional House Sitter'
   const showDeepCleanAdvisory = jobType === 'deep_clean' || jobType === 'move_out_end_of_tenancy'
-  const cleanerRequiresPickup = cleaner.transport_mode === 'requires_pickup'
-  const cleanerNeedsClientSupplies = cleaner.cleaning_supplies === 'client_supplies'
-  const effectiveSuppliesProvider = cleanerNeedsClientSupplies ? 'client_provides' : suppliesProvider
+  const houseSitterRequiresPickup = houseSitter.transport_mode === 'requires_pickup'
+  const houseSitterNeedsClientSupplies = houseSitter.cleaning_supplies === 'house_sit_supplies'
+  const effectiveSuppliesProvider = houseSitterNeedsClientSupplies ? 'house_sit_provides' : suppliesProvider
   const bookingSnapshot = booking ? parseBookingSnapshotDetails(booking.special_instructions) : null
 
   return (
     <>
-      <div className="client-book-flow-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-book-flow-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -1786,7 +1786,7 @@ export default function BookingFlowPage() {
                 The House Sitter Directory Booking Flow
               </p>
               <h1 className={`text-2xl font-extrabold tracking-[-0.03em] text-white sm:text-3xl lg:text-4xl`}>
-                Book {cleanerName}
+                Book {houseSitterName}
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
                 Select schedule, fill details, authorise payment, and confirm your booking in one guided flow.
@@ -1848,7 +1848,7 @@ export default function BookingFlowPage() {
                   </div>
                   <div className="md:px-5 md:py-4">
                     <Label className="text-sm font-semibold text-slate-700">Hourly Rate</Label>
-                    <p className="mt-1 text-lg font-bold text-slate-900">{formatCurrency(cleaner.hourly_rate)}<span className="text-sm font-normal text-slate-500">/hr</span></p>
+                    <p className="mt-1 text-lg font-bold text-slate-900">{formatCurrency(houseSitter.hourly_rate)}<span className="text-sm font-normal text-slate-500">/hr</span></p>
                   </div>
                   <div className="md:px-5 md:py-4">
                     <Label className="text-sm font-semibold text-slate-700">Total Price</Label>
@@ -1859,12 +1859,12 @@ export default function BookingFlowPage() {
                   </div>
                 </div>
 
-                {cleanerRequiresPickup && (
+                {houseSitterRequiresPickup && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    <p>This cleaner requires pickup and drop-off. You will need to arrange transport to and from their pickup location.</p>
-                    {(cleaner as any).transport_pickup_location && (
+                    <p>This houseSitter requires pickup and drop-off. You will need to arrange transport to and from their pickup location.</p>
+                    {(houseSitter as any).transport_pickup_location && (
                       <p className="mt-1 text-xs font-medium text-amber-900">
-                        Requires pick-up/drop-off: {pickupFullLabel((cleaner as any).transport_pickup_location)}
+                        Requires pick-up/drop-off: {pickupFullLabel((houseSitter as any).transport_pickup_location)}
                       </p>
                     )}
                     <label className="mt-2 inline-flex items-start gap-2 text-xs font-medium text-amber-900">
@@ -1878,9 +1878,9 @@ export default function BookingFlowPage() {
                   </div>
                 )}
 
-                {cleanerNeedsClientSupplies && (
+                {houseSitterNeedsClientSupplies && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    <p>This cleaner does not bring home-care supplies. You will need to provide all required supplies.</p>
+                    <p>This houseSitter does not bring home-care supplies. You will need to provide all required supplies.</p>
                     <label className="mt-2 inline-flex items-start gap-2 text-xs font-medium text-amber-900">
                       <input
                         type="checkbox"
@@ -2094,7 +2094,7 @@ export default function BookingFlowPage() {
                   </div>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Your full address is only shared after the cleaner accepts the booking. Before acceptance, house sitters only see an approximate area/location.
+                  Your full address is only shared after the houseSitter accepts the booking. Before acceptance, house sitters only see an approximate area/location.
                 </p>
 
                   <div>
@@ -2140,7 +2140,7 @@ export default function BookingFlowPage() {
                 <section className="space-y-5 rounded-xl border border-slate-200 p-4">
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">Describe the job</h3>
-                    <p className="mt-1 text-sm text-slate-500">Help the cleaner understand the job clearly before accepting</p>
+                    <p className="mt-1 text-sm text-slate-500">Help the houseSitter understand the job clearly before accepting</p>
                   </div>
 
                   <div className="space-y-2">
@@ -2227,15 +2227,15 @@ export default function BookingFlowPage() {
                             value={option.value}
                             checked={effectiveSuppliesProvider === option.value}
                             onChange={(event) => setSuppliesProvider(event.target.value as (typeof SUPPLIES_OPTIONS)[number]['value'])}
-                            disabled={cleanerNeedsClientSupplies && option.value !== 'client_provides'}
+                            disabled={houseSitterNeedsClientSupplies && option.value !== 'house_sit_provides'}
                             className="mt-1"
                           />
                           {option.label}
                         </label>
                       ))}
                     </div>
-                    {cleanerNeedsClientSupplies && (
-                      <p className="text-xs text-amber-700">This cleaner requires client-provided supplies, so this is locked to: I will provide home-care supplies.</p>
+                    {houseSitterNeedsClientSupplies && (
+                      <p className="text-xs text-amber-700">This houseSitter requires houseSit-provided supplies, so this is locked to: I will provide home-care supplies.</p>
                     )}
                   </div>
 
@@ -2254,7 +2254,7 @@ export default function BookingFlowPage() {
                       rows={4}
                     />
                     <p className="text-xs text-slate-500">
-                      If specific tasks are not listed, the cleaner may prioritise based on time available. You can also confirm details with the cleaner when they arrive.
+                      If specific tasks are not listed, the houseSitter may prioritise based on time available. You can also confirm details with the houseSitter when they arrive.
                     </p>
                     {notesValidationWarning && (
                       <p className="text-xs font-medium text-amber-700">Please add a short description of what needs to be cleaned</p>
@@ -2375,8 +2375,8 @@ export default function BookingFlowPage() {
                     <p><span className="font-medium">Bedrooms/bathrooms:</span> {bookingSnapshot?.bedrooms || '-'} / {bookingSnapshot?.bathrooms || '-'}</p>
                     <p><span className="font-medium">Property condition:</span> {bookingSnapshot?.propertyCondition || 'Not provided'}</p>
                     <p><span className="font-medium">Supplies choice:</span> {bookingSnapshot?.supplies || 'Not provided'}</p>
-                    {cleanerRequiresPickup && Boolean((cleaner as any).transport_pickup_location) && (
-                      <p className="sm:col-span-2"><span className="font-medium">Pick-up location:</span> {pickupFullLabel((cleaner as any).transport_pickup_location)}</p>
+                    {houseSitterRequiresPickup && Boolean((houseSitter as any).transport_pickup_location) && (
+                      <p className="sm:col-span-2"><span className="font-medium">Pick-up location:</span> {pickupFullLabel((houseSitter as any).transport_pickup_location)}</p>
                     )}
                     <p className="sm:col-span-2"><span className="font-medium">What needs to be cleaned:</span> {bookingSnapshot?.needsCleaning || 'Not provided'}</p>
                     <p className="sm:col-span-2"><span className="font-medium">Total price:</span> {formatCurrency(booking.total_amount)}</p>
@@ -2487,8 +2487,8 @@ export default function BookingFlowPage() {
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
                     {booking.status === 'confirmed'
-                      ? `Your service has been successfully booked with ${cleanerName}`
-                      : `Your card is authorised and your request has been sent to ${cleanerName}`}
+                      ? `Your service has been successfully booked with ${houseSitterName}`
+                      : `Your card is authorised and your request has been sent to ${houseSitterName}`}
                   </p>
                   {booking.status === 'pending' && (
                     <p className="mt-1 text-xs text-slate-500">
@@ -2509,9 +2509,9 @@ export default function BookingFlowPage() {
                     <span className="text-slate-500">Status:</span>
                     <span className="font-medium text-slate-900 capitalize">
                       {booking.status === 'pending'
-                        ? booking.proposal_by === 'cleaner'
+                        ? booking.proposal_by === 'house_sitter'
                           ? 'Awaiting Homeowner Response'
-                          : booking.proposal_by === 'client'
+                          : booking.proposal_by === 'house_sit'
                             ? 'Awaiting House Sitter Response'
                             : 'Pending House Sitter Acceptance'
                         : booking.status.replace('_', ' ')}
@@ -2558,7 +2558,7 @@ export default function BookingFlowPage() {
         {step < 4 && (
           <div className="order-last lg:order-none">
             <BookingSummary
-              cleaner={cleaner}
+              houseSitter={houseSitter}
               duration={sidebarDuration}
               breakdown={sidebarBreakdown}
               jobType={jobType}
@@ -2607,13 +2607,13 @@ export default function BookingFlowPage() {
       </Dialog>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -2626,7 +2626,7 @@ export default function BookingFlowPage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:

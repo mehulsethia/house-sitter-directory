@@ -32,14 +32,14 @@ function makeBackfillKey(userId, type, ref) {
 async function main() {
   console.log(`Starting notification backfill${dryRun ? ' (dry-run)' : ''}...`)
 
-  const [existingNotifications, bookings, disputes, users, cleaners, admins] = await Promise.all([
+  const [existingNotifications, bookings, disputes, users, house_sitters, admins] = await Promise.all([
     prisma.notification.findMany({
       select: { userId: true, type: true, data: true },
     }),
     prisma.booking.findMany({
       include: {
-        client: { include: { user: true } },
-        cleaner: { include: { user: true } },
+        houseSit: { include: { user: true } },
+        houseSitter: { include: { user: true } },
         payment: true,
       },
     }),
@@ -47,17 +47,17 @@ async function main() {
       include: {
         booking: {
           include: {
-            client: { include: { user: true } },
-            cleaner: { include: { user: true } },
+            houseSit: { include: { user: true } },
+            houseSitter: { include: { user: true } },
           },
         },
       },
     }),
     prisma.user.findMany({
-      where: { role: { in: ['client', 'cleaner'] } },
+      where: { role: { in: ['house_sit', 'house_sitter'] } },
       select: { id: true, role: true, createdAt: true },
     }),
-    prisma.cleaner.findMany({
+    prisma.houseSitter.findMany({
       include: { user: { select: { id: true, name: true } } },
     }),
     prisma.user.findMany({
@@ -101,77 +101,77 @@ async function main() {
 
   // Account created notifications
   for (const user of users) {
-    if (user.role === 'client') {
+    if (user.role === 'house_sit') {
       queueNotification({
         userId: user.id,
         type: 'account_created',
         title: 'Welcome to MaidHive',
-        body: 'Your client profile is ready. Start by browsing available cleaners.',
+        body: 'Your houseSit profile is ready. Start by browsing available house_sitters.',
         createdAt: user.createdAt,
         ref: `account:${user.id}`,
       })
-    } else if (user.role === 'cleaner') {
+    } else if (user.role === 'house_sitter') {
       queueNotification({
         userId: user.id,
         type: 'account_created',
         title: 'Welcome to MaidHive',
-        body: 'Your cleaner profile is created. Complete onboarding to start receiving jobs.',
+        body: 'Your houseSitter profile is created. Complete onboarding to start receiving jobs.',
         createdAt: user.createdAt,
         ref: `account:${user.id}`,
       })
     }
   }
 
-  // Cleaner application notifications
-  for (const cleaner of cleaners) {
-    const cleanerUserId = cleaner.userId
-    const name = cleaner.user?.name ?? 'Cleaner'
-    if (cleaner.status === 'pending' && cleaner.profileComplete) {
+  // HouseSitter application notifications
+  for (const houseSitter of house_sitters) {
+    const houseSitterUserId = houseSitter.userId
+    const name = houseSitter.user?.name ?? 'HouseSitter'
+    if (houseSitter.status === 'pending' && houseSitter.profileComplete) {
       queueNotification({
-        userId: cleanerUserId,
-        type: 'cleaner_application_submitted',
+        userId: houseSitterUserId,
+        type: 'house_sitter_application_submitted',
         title: 'Application submitted',
-        body: 'Your cleaner profile has been submitted for admin review.',
-        data: { cleaner_id: cleaner.id },
-        createdAt: cleaner.updatedAt ?? cleaner.createdAt,
-        ref: `cleaner_submission:${cleaner.id}:self`,
+        body: 'Your houseSitter profile has been submitted for admin review.',
+        data: { house_sitter_id: houseSitter.id },
+        createdAt: houseSitter.updatedAt ?? houseSitter.createdAt,
+        ref: `house_sitter_submission:${houseSitter.id}:self`,
       })
       for (const admin of admins) {
         queueNotification({
           userId: admin.id,
-          type: 'cleaner_application_submitted',
-          title: 'New cleaner application',
+          type: 'house_sitter_application_submitted',
+          title: 'New houseSitter application',
           body: `${name} submitted onboarding for approval.`,
-          data: { cleaner_id: cleaner.id },
-          createdAt: cleaner.updatedAt ?? cleaner.createdAt,
-          ref: `cleaner_submission:${cleaner.id}:admin`,
+          data: { house_sitter_id: houseSitter.id },
+          createdAt: houseSitter.updatedAt ?? houseSitter.createdAt,
+          ref: `house_sitter_submission:${houseSitter.id}:admin`,
         })
       }
     }
 
-    if (cleaner.status === 'approved') {
+    if (houseSitter.status === 'approved') {
       queueNotification({
-        userId: cleanerUserId,
-        type: 'cleaner_application_approved',
-        title: 'Cleaner profile approved',
-        body: 'Your cleaner profile has been approved and is now live.',
-        data: { cleaner_id: cleaner.id },
-        createdAt: cleaner.approvedAt ?? cleaner.updatedAt ?? cleaner.createdAt,
-        ref: `cleaner_approved:${cleaner.id}`,
+        userId: houseSitterUserId,
+        type: 'house_sitter_application_approved',
+        title: 'HouseSitter profile approved',
+        body: 'Your houseSitter profile has been approved and is now live.',
+        data: { house_sitter_id: houseSitter.id },
+        createdAt: houseSitter.approvedAt ?? houseSitter.updatedAt ?? houseSitter.createdAt,
+        ref: `house_sitter_approved:${houseSitter.id}`,
       })
     }
 
-    if (cleaner.status === 'rejected') {
+    if (houseSitter.status === 'rejected') {
       queueNotification({
-        userId: cleanerUserId,
-        type: 'cleaner_application_rejected',
-        title: 'Cleaner profile rejected',
-        body: cleaner.rejectionReason
-          ? `Your cleaner profile was rejected: ${cleaner.rejectionReason}`
-          : 'Your cleaner profile was rejected.',
-        data: { cleaner_id: cleaner.id },
-        createdAt: cleaner.updatedAt ?? cleaner.createdAt,
-        ref: `cleaner_rejected:${cleaner.id}`,
+        userId: houseSitterUserId,
+        type: 'house_sitter_application_rejected',
+        title: 'HouseSitter profile rejected',
+        body: houseSitter.rejectionReason
+          ? `Your houseSitter profile was rejected: ${houseSitter.rejectionReason}`
+          : 'Your houseSitter profile was rejected.',
+        data: { house_sitter_id: houseSitter.id },
+        createdAt: houseSitter.updatedAt ?? houseSitter.createdAt,
+        ref: `house_sitter_rejected:${houseSitter.id}`,
       })
     }
   }
@@ -179,15 +179,15 @@ async function main() {
   // Booking + payment-derived notifications
   for (const booking of bookings) {
     const bookingRef = `booking:${booking.id}`
-    const clientUserId = booking.client?.userId
-    const cleanerUserId = booking.cleaner?.userId
-    if (!clientUserId || !cleanerUserId) continue
+    const houseSitUserId = booking.houseSit?.userId
+    const houseSitterUserId = booking.houseSitter?.userId
+    if (!houseSitUserId || !houseSitterUserId) continue
 
     queueNotification({
-      userId: clientUserId,
+      userId: houseSitUserId,
       type: 'booking_created_pending',
       title: 'Booking request created',
-      body: 'Your booking request was created and is waiting for cleaner response.',
+      body: 'Your booking request was created and is waiting for houseSitter response.',
       data: { booking_id: booking.id },
       createdAt: booking.createdAt,
       ref: `${bookingRef}:created_pending`,
@@ -195,10 +195,10 @@ async function main() {
 
     if (booking.payment && ['authorized', 'captured', 'transferred', 'partially_refunded', 'refunded'].includes(booking.payment.status)) {
       queueNotification({
-        userId: cleanerUserId,
+        userId: houseSitterUserId,
         type: 'booking_request',
         title: 'New Booking Request',
-        body: `You have a new booking request from ${booking.client?.user?.name ?? 'a client'}`,
+        body: `You have a new booking request from ${booking.houseSit?.user?.name ?? 'a houseSit'}`,
         data: { booking_id: booking.id },
         createdAt: booking.payment.authorizedAt ?? booking.confirmedAt ?? booking.createdAt,
         ref: `${bookingRef}:request`,
@@ -207,10 +207,10 @@ async function main() {
 
     if (booking.acceptedAt) {
       queueNotification({
-        userId: clientUserId,
+        userId: houseSitUserId,
         type: 'booking_accepted',
         title: 'Booking accepted',
-        body: 'Cleaner accepted your booking request.',
+        body: 'HouseSitter accepted your booking request.',
         data: { booking_id: booking.id },
         createdAt: booking.acceptedAt,
         ref: `${bookingRef}:accepted`,
@@ -219,7 +219,7 @@ async function main() {
 
     if (booking.confirmedAt) {
       queueNotification({
-        userId: clientUserId,
+        userId: houseSitUserId,
         type: 'booking_confirmed',
         title: 'Booking confirmed',
         body: 'Payment authorization is complete and your booking is now confirmed.',
@@ -231,28 +231,28 @@ async function main() {
 
     if (booking.status === 'expired') {
       queueNotification({
-        userId: clientUserId,
+        userId: houseSitUserId,
         type: 'booking_request_expired',
         title: 'Booking request expired',
         body: 'This booking request closed before confirmation.',
         data: { booking_id: booking.id },
         createdAt: booking.updatedAt ?? booking.createdAt,
-        ref: `${bookingRef}:expired:client`,
+        ref: `${bookingRef}:expired:houseSit`,
       })
       queueNotification({
-        userId: cleanerUserId,
+        userId: houseSitterUserId,
         type: 'booking_request_expired',
         title: 'Booking request expired',
         body: 'This booking request closed before confirmation.',
         data: { booking_id: booking.id },
         createdAt: booking.updatedAt ?? booking.createdAt,
-        ref: `${bookingRef}:expired:cleaner`,
+        ref: `${bookingRef}:expired:houseSitter`,
       })
     }
 
     if (booking.status === 'cancelled') {
       const cancelledBy = booking.cancelledBy
-      const notifyUserId = cancelledBy && cancelledBy === clientUserId ? cleanerUserId : clientUserId
+      const notifyUserId = cancelledBy && cancelledBy === houseSitUserId ? houseSitterUserId : houseSitUserId
       queueNotification({
         userId: notifyUserId,
         type: 'booking_cancelled',
@@ -266,28 +266,28 @@ async function main() {
 
     if (booking.completedAt) {
       queueNotification({
-        userId: clientUserId,
+        userId: houseSitUserId,
         type: 'booking_completed',
         title: 'Booking Completed',
-        body: 'Cleaner marked this booking as completed.',
+        body: 'HouseSitter marked this booking as completed.',
         data: { booking_id: booking.id },
         createdAt: booking.completedAt,
-        ref: `${bookingRef}:completed:client`,
+        ref: `${bookingRef}:completed:houseSit`,
       })
       queueNotification({
-        userId: cleanerUserId,
+        userId: houseSitterUserId,
         type: 'booking_completed',
         title: 'Booking completed',
         body: 'Booking marked complete. Payout will be released after the dispute window.',
         data: { booking_id: booking.id },
         createdAt: booking.completedAt,
-        ref: `${bookingRef}:completed:cleaner`,
+        ref: `${bookingRef}:completed:houseSitter`,
       })
     }
 
     if (booking.payment?.capturedAt) {
       queueNotification({
-        userId: clientUserId,
+        userId: houseSitUserId,
         type: 'payment_captured',
         title: 'Payment captured',
         body: 'Payment was captured successfully after booking completion.',
@@ -299,7 +299,7 @@ async function main() {
 
     if (booking.payment?.transferredAt || booking.payment?.status === 'transferred') {
       queueNotification({
-        userId: cleanerUserId,
+        userId: houseSitterUserId,
         type: 'payout_released',
         title: 'Payout released',
         body: 'Payout was released to your connected Stripe account.',
@@ -313,28 +313,28 @@ async function main() {
   // Dispute-derived notifications
   for (const dispute of disputes) {
     const booking = dispute.booking
-    if (!booking?.client?.userId || !booking?.cleaner?.userId) continue
+    if (!booking?.houseSit?.userId || !booking?.houseSitter?.userId) continue
     const bookingId = booking.id
     const disputeRef = `dispute:${dispute.id}`
 
     if (dispute.status === 'under_review' || dispute.status === 'open') {
       queueNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'dispute_under_review',
         title: 'Dispute under review',
         body: 'Your dispute is now under review by MaidHive.',
         data: { booking_id: bookingId, dispute_id: dispute.id },
         createdAt: dispute.updatedAt ?? dispute.createdAt,
-        ref: `${disputeRef}:under_review:client`,
+        ref: `${disputeRef}:under_review:houseSit`,
       })
       queueNotification({
-        userId: booking.cleaner.userId,
+        userId: booking.houseSitter.userId,
         type: 'dispute_under_review',
         title: 'Dispute under review',
         body: 'A dispute was raised for this booking and is under review.',
         data: { booking_id: bookingId, dispute_id: dispute.id },
         createdAt: dispute.updatedAt ?? dispute.createdAt,
-        ref: `${disputeRef}:under_review:cleaner`,
+        ref: `${disputeRef}:under_review:houseSitter`,
       })
       for (const admin of admins) {
         queueNotification({
@@ -353,27 +353,27 @@ async function main() {
       const resolutionCopy = (() => {
         if (dispute.resolutionType === 'full_refund') return 'Resolution: full refund issued.'
         if (dispute.resolutionType === 'partial_refund') return 'Resolution: partial refund issued.'
-        if (dispute.resolutionType === 'payment_released') return 'Resolution: payment released to cleaner.'
-        return 'Resolution: no refund, payment released to cleaner.'
+        if (dispute.resolutionType === 'payment_released') return 'Resolution: payment released to houseSitter.'
+        return 'Resolution: no refund, payment released to houseSitter.'
       })()
 
       queueNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'dispute_resolved',
         title: 'Dispute resolved',
         body: resolutionCopy,
         data: { booking_id: bookingId, dispute_id: dispute.id },
         createdAt: dispute.resolvedAt ?? dispute.updatedAt ?? dispute.createdAt,
-        ref: `${disputeRef}:resolved:client`,
+        ref: `${disputeRef}:resolved:houseSit`,
       })
       queueNotification({
-        userId: booking.cleaner.userId,
+        userId: booking.houseSitter.userId,
         type: 'dispute_resolved',
         title: 'Dispute resolved',
         body: resolutionCopy,
         data: { booking_id: bookingId, dispute_id: dispute.id },
         createdAt: dispute.resolvedAt ?? dispute.updatedAt ?? dispute.createdAt,
-        ref: `${disputeRef}:resolved:cleaner`,
+        ref: `${disputeRef}:resolved:houseSitter`,
       })
       for (const admin of admins) {
         queueNotification({

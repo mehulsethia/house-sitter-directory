@@ -22,22 +22,22 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
       return err('Booking must be draft, pending, or accepted for authorisation', 400)
     }
 
-    const client = await houseSitRepo.findByUserId(user.id)
-    if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
+    const houseSit = await houseSitRepo.findByUserId(user.id)
+    if (!houseSit || booking.houseSitId !== houseSit.id) return err('Forbidden', 403)
 
-    const cleaner = booking.cleaner
-    if (!cleaner.stripeAccountId) return err('Cleaner has not completed Stripe onboarding', 400)
+    const houseSitter = booking.houseSitter
+    if (!houseSitter.stripeAccountId) return err('HouseSitter has not completed Stripe onboarding', 400)
 
-    const account = await stripe.accounts.retrieve(cleaner.stripeAccountId)
+    const account = await stripe.accounts.retrieve(houseSitter.stripeAccountId)
     const restrictedOrIncomplete =
       (account.requirements?.currently_due?.length ?? 0) > 0 ||
       (account.requirements?.past_due?.length ?? 0) > 0 ||
       Boolean(account.requirements?.disabled_reason)
     if (!account.details_submitted || !account.charges_enabled || !account.payouts_enabled || restrictedOrIncomplete) {
-      return err('Cleaner Stripe account is not fully ready to receive payments', 400)
+      return err('HouseSitter Stripe account is not fully ready to receive payments', 400)
     }
 
-    let stripeCustomerId = client.stripeCustomerId ?? null
+    let stripeCustomerId = houseSit.stripeCustomerId ?? null
     if (stripeCustomerId) {
       try {
         await stripe.customers.retrieve(stripeCustomerId)
@@ -47,27 +47,27 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     }
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
-        email: booking.client.user.email,
-        name: booking.client.user.name ?? undefined,
+        email: booking.houseSit.user.email,
+        name: booking.houseSit.user.name ?? undefined,
         metadata: {
-          app_client_id: client.id,
-          app_user_id: booking.client.userId,
+          app_client_id: houseSit.id,
+          app_user_id: booking.houseSit.userId,
         },
       })
       stripeCustomerId = customer.id
-      await houseSitRepo.update(client.id, { stripeCustomerId })
+      await houseSitRepo.update(houseSit.id, { stripeCustomerId })
     }
 
     if (booking.status === 'draft') {
       const repriced = bookingService.previewPrice(
-        Number(booking.cleaner.hourlyRate),
+        Number(booking.houseSitter.hourlyRate),
         Number(booking.durationHours),
       )
       const needsReprice =
         Number(booking.hourlyRate) !== Number(repriced.hourly_rate) ||
         Number(booking.subtotal) !== Number(repriced.subtotal) ||
         Number(booking.platformFee) !== Number(repriced.platform_fee) ||
-        Number(booking.cleanerPayout) !== Number(repriced.cleaner_payout) ||
+        Number(booking.houseSitterPayout) !== Number(repriced.house_sitter_payout) ||
         Number(booking.totalAmount) !== Number(repriced.total_amount)
 
       if (needsReprice) {
@@ -76,7 +76,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
           subtotal: repriced.subtotal,
           platformFeePct: repriced.platform_fee_pct,
           platformFee: repriced.platform_fee,
-          cleanerPayout: repriced.cleaner_payout,
+          houseSitterPayout: repriced.house_sitter_payout,
           totalAmount: repriced.total_amount,
         })
       }
@@ -108,7 +108,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
       await paymentRepo.update(existing.id, {
         amount: Number(booking.totalAmount),
         platformFee: Number(booking.platformFee),
-        cleanerPayout: Number(booking.cleanerPayout),
+        houseSitterPayout: Number(booking.houseSitterPayout),
       })
 
       if (pi.client_secret) {
@@ -124,11 +124,11 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
       capture_method: 'manual',
       setup_future_usage: 'off_session',
       application_fee_amount: feeCents,
-      transfer_data: { destination: cleaner.stripeAccountId },
+      transfer_data: { destination: houseSitter.stripeAccountId },
       metadata: {
         booking_id: booking.id,
-        client_id: client.id,
-        cleaner_id: cleaner.id,
+        house_sit_id: houseSit.id,
+        house_sitter_id: houseSitter.id,
       },
     })
 
@@ -137,7 +137,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
       stripePaymentIntentId: intent.id,
       amount: Number(booking.totalAmount),
       platformFee: Number(booking.platformFee),
-      cleanerPayout: Number(booking.cleanerPayout),
+      houseSitterPayout: Number(booking.houseSitterPayout),
       currency: 'eur',
     })
 

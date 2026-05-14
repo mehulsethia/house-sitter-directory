@@ -53,7 +53,7 @@ function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess:
       setSubmitting(true)
       try {
         await paymentsApi.confirmWithSavedMethod(booking.id, selectedSavedCardId)
-        toast.success('Saved card authorised. Your booking request is now sent to the cleaner.')
+        toast.success('Saved card authorised. Your booking request is now sent to the houseSitter.')
         onSuccess()
       } catch (err: any) {
         toast.error(err.message ?? 'Failed to authorise saved card.')
@@ -81,7 +81,7 @@ function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess:
       } catch {
         // webhook normally handles this; sync is fallback
       }
-      toast.success('Card authorised. Your booking request is now sent to the cleaner.')
+      toast.success('Card authorised. Your booking request is now sent to the houseSitter.')
       onSuccess()
     }
 
@@ -128,7 +128,7 @@ function CheckoutForm({ booking, onSuccess }: { booking: BookingRead; onSuccess:
         Your card will NOT be charged now. Payment is only captured after the job is completed.
       </p>
       <p className="text-xs text-slate-500">
-        This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.
+        This request expires 24 hours after card authorisation. If the houseSitter does not respond, the booking request will expire automatically and your card authorisation will be released.
       </p>
       <Button
         type="submit"
@@ -181,10 +181,10 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <div className="client-checkout-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-checkout-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -302,13 +302,13 @@ export default function CheckoutPage() {
       </div>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -321,7 +321,7 @@ export default function CheckoutPage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:

@@ -1,5 +1,5 @@
 /**
- * Typed API client for the House Sitter Directory FastAPI backend.
+ * Typed API houseSit for the House Sitter Directory FastAPI backend.
  * Every request attaches the Supabase JWT from the current session.
  */
 import { getAccessToken } from '@/lib/auth-cache'
@@ -22,7 +22,7 @@ import type {
   HouseSitAddressUpdate,
   HouseSitAddressRead,
   HouseSitProfileRead,
-  ClientDispute,
+  HouseSitDispute,
   MessageRead,
   NotificationRead,
   PaginatedResponse,
@@ -168,7 +168,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 // ---------------------------------------------------------------------------
 export const authApi = {
   me: () => request<APIResponse<UserRead>>('/auth/me'),
-  sync: (body: { name?: string; phone?: string; role?: 'client' | 'cleaner'; experience?: number }) =>
+  sync: (body: { name?: string; phone?: string; role?: 'house_sit' | 'house_sitter'; experience?: number }) =>
     request<APIResponse<UserRead>>('/auth/sync', { method: 'POST', body: JSON.stringify(body) }),
 }
 
@@ -247,7 +247,7 @@ export const favoritesApi = {
   add: (houseSitterId: string) =>
     request<APIResponse<{ favorite: true }>>('/house-sits/favorites', {
       method: 'POST',
-      body: JSON.stringify({ cleaner_id: houseSitterId }),
+      body: JSON.stringify({ house_sitter_id: houseSitterId }),
     }),
   remove: (houseSitterId: string) =>
     request<APIResponse<{ favorite: false }>>(`/house-sits/favorites/${houseSitterId}`, {
@@ -276,20 +276,20 @@ export const houseSittersApi = {
         .map(([k, v]) => [k, String(v)]),
     ).toString()
     const res = await request<APIResponse<any>>(`/house-sitters?${qs}`)
-    return { ...res, data: normalizePaginated<HouseSitterSummary>(res.data ?? {}, 'cleaners') }
+    return { ...res, data: normalizePaginated<HouseSitterSummary>(res.data ?? {}, 'house_sitters') }
   },
   getById: (id: string) => request<APIResponse<HouseSitterRead>>(`/house-sitters/${id}`),
   me: () =>
-    request<APIResponse<{ cleaner: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me'),
+    request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me'),
   updateMyProfile: (body: { bio?: string; years_experience?: number; hourly_rate: number }) =>
     request<APIResponse<HouseSitterRead>>('/house-sitters/me', { method: 'PATCH', body: JSON.stringify(body) }),
   updateMyOnboarding: (body: Record<string, unknown>) =>
-    request<APIResponse<{ cleaner: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me', {
+    request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me', {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
   submitForApproval: () =>
-    request<APIResponse<{ cleaner: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me/submit', {
+    request<APIResponse<{ houseSitter: HouseSitterRead; onboarding: HouseSitterOnboardingProgress }>>('/house-sitters/me/submit', {
       method: 'POST',
     }),
 }
@@ -331,7 +331,7 @@ export const availabilityApi = {
 // ---------------------------------------------------------------------------
 export const bookingsApi = {
   previewPrice: (houseSitterId: string, durationHours: number) => {
-    const qs = new URLSearchParams({ cleaner_id: houseSitterId, duration_hours: String(durationHours) })
+    const qs = new URLSearchParams({ house_sitter_id: houseSitterId, duration_hours: String(durationHours) })
     return request<APIResponse<PriceBreakdown>>(`/bookings/preview-price?${qs}`)
   },
   create: (body: BookingCreate) =>
@@ -379,9 +379,9 @@ export const bookingsApi = {
       body: JSON.stringify({ reason }),
     }),
   getFlowDraft: (houseSitterId: string) =>
-    request<APIResponse<BookingFlowDraftRead | null>>(`/bookings/draft?cleaner_id=${encodeURIComponent(houseSitterId)}`),
+    request<APIResponse<BookingFlowDraftRead | null>>(`/bookings/draft?house_sitter_id=${encodeURIComponent(houseSitterId)}`),
   saveFlowDraft: (body: {
-    cleaner_id: string
+    house_sitter_id: string
     booking_id?: string
     last_step: number
     duration_hours?: number
@@ -394,7 +394,7 @@ export const bookingsApi = {
       body: JSON.stringify(body),
     }),
   clearFlowDraft: (houseSitterId: string) =>
-    request<APIResponse<{ removed: true }>>(`/bookings/draft?cleaner_id=${encodeURIComponent(houseSitterId)}`, {
+    request<APIResponse<{ removed: true }>>(`/bookings/draft?house_sitter_id=${encodeURIComponent(houseSitterId)}`, {
       method: 'DELETE',
     }),
 }
@@ -576,7 +576,7 @@ export const adminApi = {
         .map(([k, v]) => [k, String(v)]),
     ).toString()
     const res = await request<APIResponse<any>>(`/admin/house-sitters${qs ? `?${qs}` : ''}`)
-    return { ...res, data: normalizePaginated<AdminHouseSitter>(res.data ?? {}, 'cleaners') }
+    return { ...res, data: normalizePaginated<AdminHouseSitter>(res.data ?? {}, 'house_sitters') }
   },
   suspendHouseSitter: (id: string) =>
     request<APIResponse<{ id: string; status: string }>>(`/admin/house-sitters/${id}/suspend`, {
@@ -631,12 +631,12 @@ export const adminApi = {
 export const disputesApi = {
   listMine: async (page = 1, pageSize = 20) => {
     const res = await request<APIResponse<any>>(`/disputes?page=${page}&page_size=${pageSize}`)
-    return { ...res, data: normalizePaginated<ClientDispute>(res.data ?? {}, 'disputes') }
+    return { ...res, data: normalizePaginated<HouseSitDispute>(res.data ?? {}, 'disputes') }
   },
   createForBooking: (
     bookingId: string,
     body: {
-      issue_type: 'cleaner_didnt_arrive' | 'client_no_show' | 'service_not_completed' | 'property_damage_safety' | 'other_issue'
+      issue_type: 'house_sitter_didnt_arrive' | 'house_sit_no_show' | 'service_not_completed' | 'property_damage_safety' | 'other_issue'
       explanation: string
       evidence?: string[]
     },

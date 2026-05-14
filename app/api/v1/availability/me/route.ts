@@ -6,9 +6,9 @@ import { ok, err } from '@/server/response'
 import { setScheduleSchema } from '@/server/schemas/availability.schema'
 
 export const GET = requireHouseSitter(async (_req, _ctx, user) => {
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) return err('Cleaner profile not found', 404)
-  const schedules = await availabilityRepo.getSchedule(cleaner.id)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) return err('HouseSitter profile not found', 404)
+  const schedules = await availabilityRepo.getSchedule(houseSitter.id)
   return ok(schedules)
 })
 
@@ -17,11 +17,11 @@ export const PUT = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
   const parsed = setScheduleSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) return err('Cleaner profile not found', 404)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) return err('HouseSitter profile not found', 404)
 
   const schedules = await availabilityRepo.replaceSchedule(
-    cleaner.id,
+    houseSitter.id,
     parsed.data.schedules.map((s) => ({
       dayOfWeek: s.day_of_week,
       startTime: s.start_time,

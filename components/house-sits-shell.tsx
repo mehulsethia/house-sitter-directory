@@ -90,7 +90,7 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <SidebarProfile profileHref="/house-sits/profile" role="client" />
+          <SidebarProfile profileHref="/house-sits/profile" role="house_sit" />
         </aside>
 
         <div className="min-w-0">

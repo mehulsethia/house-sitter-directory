@@ -307,7 +307,7 @@ export default function HomePage() {
               Find a Sitter
             </Link>
             <Link
-              href="/signup?role=cleaner"
+              href="/signup?role=house_sitter"
               className="inline-flex h-9 items-center rounded-[4px] border border-white bg-black px-4 text-[12px] text-white"
             >
               Become a Sitter

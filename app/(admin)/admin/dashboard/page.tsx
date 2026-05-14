@@ -140,7 +140,7 @@ export default function AdminDashboard() {
         <KpiCard
           label="Pending booking requests"
           value={queues?.pending_booking_requests.count ?? 0}
-          sub="Awaiting cleaner acceptance"
+          sub="Awaiting houseSitter acceptance"
           icon={Clock}
           href="/admin/bookings?filter=pending"
         />
@@ -173,33 +173,33 @@ export default function AdminDashboard() {
           href="/admin/house-sitters"
         >
           {queues?.pending_cleaner_approvals.items.length ? (
-            queues.pending_cleaner_approvals.items.map((cleaner) => (
-              <div key={cleaner.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            queues.pending_cleaner_approvals.items.map((houseSitter) => (
+              <div key={houseSitter.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
                 <div className="flex items-start gap-3">
                   <UserAvatar
-                    name={cleaner.full_name}
-                    imageUrl={cleaner.profile_photo ?? undefined}
+                    name={houseSitter.full_name}
+                    imageUrl={houseSitter.profile_photo ?? undefined}
                     className="h-10 w-10"
                     textClassName="text-xs"
                     fallbackClassName="bg-primary/10 text-primary"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-900">{cleaner.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{cleaner.years_experience}y experience</p>
+                    <p className="truncate text-sm font-semibold text-slate-900">{houseSitter.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{houseSitter.years_experience}y experience</p>
                   </div>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
-                  <p>Transport: <span className="font-medium">{cleaner.transport_method || 'Not set'}</span></p>
-                  <p>Supplies: <span className="font-medium">{cleaner.supplies_status || 'Not set'}</span></p>
-                  <p className="flex items-center gap-1">Standards: {yesNoBadge(cleaner.cleaning_standards_completed)}</p>
-                  <p className="flex items-center gap-1">Quiz passed: {yesNoBadge(cleaner.quiz_passed)}</p>
-                  <p className="flex items-center gap-1">Trial flag: {yesNoBadge(cleaner.trial_period_flag)}</p>
-                  <p>Submitted: <span className="font-medium">{formatDate(cleaner.submitted_at)}</span></p>
+                  <p>Transport: <span className="font-medium">{houseSitter.transport_method || 'Not set'}</span></p>
+                  <p>Supplies: <span className="font-medium">{houseSitter.supplies_status || 'Not set'}</span></p>
+                  <p className="flex items-center gap-1">Standards: {yesNoBadge(houseSitter.cleaning_standards_completed)}</p>
+                  <p className="flex items-center gap-1">Quiz passed: {yesNoBadge(houseSitter.quiz_passed)}</p>
+                  <p className="flex items-center gap-1">Trial flag: {yesNoBadge(houseSitter.trial_period_flag)}</p>
+                  <p>Submitted: <span className="font-medium">{formatDate(houseSitter.submitted_at)}</span></p>
                 </div>
               </div>
             ))
           ) : (
-            <p className="py-6 text-center text-sm text-muted-foreground">No cleaners pending review.</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">No house_sitters pending review.</p>
           )}
         </WidgetShell>
 
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-slate-900">{booking.city}</p>
                   <Badge variant="outline">{booking.status}</Badge>
                 </div>
-                <p className="mt-1 text-xs text-slate-600">{booking.client_name} → {booking.cleaner_name}</p>
+                <p className="mt-1 text-xs text-slate-600">{booking.house_sit_name} → {booking.house_sitter_name}</p>
                 <p className="text-xs text-muted-foreground">{formatDate(booking.scheduled_start)}</p>
               </div>
             ))
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-slate-900">{job.city}</p>
                   <Badge variant="outline">{job.status}</Badge>
                 </div>
-                <p className="mt-1 text-xs text-slate-600">{job.client_name} → {job.cleaner_name}</p>
+                <p className="mt-1 text-xs text-slate-600">{job.house_sit_name} → {job.house_sitter_name}</p>
                 <p className="text-xs text-muted-foreground">{formatDate(job.scheduled_start)}</p>
               </div>
             ))
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-slate-900">{job.city}</p>
                     <Badge variant="outline">{job.status}</Badge>
                   </div>
-                  <p className="mt-1 text-xs text-slate-600">{job.client_name} → {job.cleaner_name}</p>
+                  <p className="mt-1 text-xs text-slate-600">{job.house_sit_name} → {job.house_sitter_name}</p>
                   <p className="text-xs text-muted-foreground">{formatDate(job.scheduled_start)}</p>
                 </div>
               ))}
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
                   <p className="text-xs font-mono text-muted-foreground">Booking #{issue.booking_id.slice(0, 8)}</p>
                   <Badge variant="warning">{issue.payment_status}</Badge>
                 </div>
-                <p className="mt-1 text-sm text-slate-800">Homeowner: {issue.client_name}</p>
+                <p className="mt-1 text-sm text-slate-800">Homeowner: {issue.house_sit_name}</p>
                 <p className="text-xs text-muted-foreground">Re-authorize by {issue.failed_at ? formatDate(issue.failed_at) : 'soon'}</p>
               </div>
             ))
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
                   <p className="text-xs font-mono text-muted-foreground">Booking #{issue.booking_id.slice(0, 8)}</p>
                   <Badge variant="destructive">{issue.payment_status}</Badge>
                 </div>
-                <p className="mt-1 text-sm text-slate-800">Homeowner: {issue.client_name}</p>
+                <p className="mt-1 text-sm text-slate-800">Homeowner: {issue.house_sit_name}</p>
                 <p className="text-xs text-muted-foreground">Failed {issue.failed_at ? formatDate(issue.failed_at) : 'recently'}</p>
               </div>
             ))

@@ -8,11 +8,11 @@ function isMissingColumnError(error: unknown) {
 export const houseSitRepo = {
   findById: async (id: string) => {
     try {
-      return await db.client.findUnique({ where: { id }, include: { user: true } })
+      return await db.houseSit.findUnique({ where: { id }, include: { user: true } })
     } catch (error) {
       if (!isMissingColumnError(error)) throw error
       // Backward-compatible fallback when additive columns are missing in DB.
-      return db.client.findUnique({
+      return db.houseSit.findUnique({
         where: { id },
         select: {
           id: true,
@@ -32,11 +32,11 @@ export const houseSitRepo = {
 
   findByUserId: async (userId: string) => {
     try {
-      return await db.client.findUnique({ where: { userId }, include: { user: true } })
+      return await db.houseSit.findUnique({ where: { userId }, include: { user: true } })
     } catch (error) {
       if (!isMissingColumnError(error)) throw error
       // Backward-compatible fallback when additive columns are missing in DB.
-      return db.client.findUnique({
+      return db.houseSit.findUnique({
         where: { userId },
         select: {
           id: true,
@@ -55,7 +55,7 @@ export const houseSitRepo = {
   },
 
   create: (userId: string) =>
-    db.client.create({ data: { userId }, include: { user: true } }),
+    db.houseSit.create({ data: { userId }, include: { user: true } }),
 
   update: (id: string, data: Partial<{
     stripeCustomerId: string
@@ -67,5 +67,5 @@ export const houseSitRepo = {
     idFileUrl: string | null
     idSubmittedAt: Date | null
   }>) =>
-    db.client.update({ where: { id }, data }),
+    db.houseSit.update({ where: { id }, data }),
 }

@@ -107,13 +107,13 @@ function firstName(fullName: string) {
 }
 
 export const loopsEmailService = {
-  async sendAdminNewCleanerApplication(args: { cleanerName: string; cleanerEmail: string }) {
+  async sendAdminNewCleanerApplication(args: { houseSitterName: string; houseSitterEmail: string }) {
     return sendTransactionalEmail({
       transactionalId: ADMIN_NEW_CLEANER_APPLICATION_TRANSACTIONAL_ID,
       email: ADMIN_EMAIL,
       dataVariables: {
-        cleaner_name: args.cleanerName,
-        cleaner_email: args.cleanerEmail,
+        house_sitter_name: args.houseSitterName,
+        house_sitter_email: args.houseSitterEmail,
         admin_link: `${appUrl()}/admin/house-sitters`,
       },
     })
@@ -121,8 +121,8 @@ export const loopsEmailService = {
 
   async sendAdminDisputeRaised(args: {
     bookingId: string
-    clientName: string
-    cleanerName: string
+    houseSitName: string
+    houseSitterName: string
     date: string
   }) {
     return sendTransactionalEmail({
@@ -130,8 +130,8 @@ export const loopsEmailService = {
       email: ADMIN_EMAIL,
       dataVariables: {
         booking_id: args.bookingId,
-        client_name: args.clientName,
-        cleaner_name: args.cleanerName,
+        house_sit_name: args.houseSitName,
+        house_sitter_name: args.houseSitterName,
         date: args.date,
         admin_link: `${appUrl()}/admin/disputes`,
       },
@@ -152,7 +152,7 @@ export const loopsEmailService = {
   async sendClientBookingConfirmed(args: {
     email: string
     fullName: string
-    cleanerName: string
+    houseSitterName: string
     scheduledStart: Date
     durationHours: number
     bookingId: string
@@ -162,7 +162,7 @@ export const loopsEmailService = {
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        cleaner_name: args.cleanerName,
+        house_sitter_name: args.houseSitterName,
         booking_date: formatBookingDate(args.scheduledStart),
         booking_time: formatBookingTime(args.scheduledStart),
         booking_duration: `${args.durationHours} hour${args.durationHours === 1 ? '' : 's'}`,
@@ -174,14 +174,14 @@ export const loopsEmailService = {
   async sendClientBookingCreatedPending(args: {
     email: string
     fullName: string
-    cleanerName: string
+    houseSitterName: string
   }) {
     return sendTransactionalEmail({
       transactionalId: CLIENT_BOOKING_CREATED_PENDING_TRANSACTIONAL_ID,
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        cleaner_name: args.cleanerName,
+        house_sitter_name: args.houseSitterName,
       },
     })
   },
@@ -189,14 +189,14 @@ export const loopsEmailService = {
   async sendClientBookingRejectedOrExpired(args: {
     email: string
     fullName: string
-    cleanerName: string
+    houseSitterName: string
   }) {
     return sendTransactionalEmail({
       transactionalId: CLIENT_BOOKING_REJECTED_OR_EXPIRED_TRANSACTIONAL_ID,
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        cleaner_name: args.cleanerName,
+        house_sitter_name: args.houseSitterName,
         all_cleaners_link: `${appUrl()}/house-sits/house-sitters`,
       },
     })
@@ -206,7 +206,7 @@ export const loopsEmailService = {
     email: string
     fullName: string
     amount: number
-    cleanerName: string
+    houseSitterName: string
     date: Date
   }) {
     return sendTransactionalEmail({
@@ -215,7 +215,7 @@ export const loopsEmailService = {
       dataVariables: {
         first_name: firstName(args.fullName),
         amount: formatEuro(args.amount),
-        cleaner_name: args.cleanerName,
+        house_sitter_name: args.houseSitterName,
         date: formatBookingDate(args.date),
       },
     })
@@ -224,7 +224,7 @@ export const loopsEmailService = {
   async sendClientReviewRequest(args: {
     email: string
     fullName: string
-    cleanerName: string
+    houseSitterName: string
     bookingId: string
   }) {
     return sendTransactionalEmail({
@@ -232,7 +232,7 @@ export const loopsEmailService = {
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        cleaner_name: args.cleanerName,
+        house_sitter_name: args.houseSitterName,
         review_link: `${appUrl()}/house-sits/bookings/${args.bookingId}`,
       },
     })
@@ -241,21 +241,21 @@ export const loopsEmailService = {
   async sendClientBookingCompleted(args: {
     email: string
     fullName: string
-    cleanerName: string
+    houseSitterName: string
     bookingId: string
-    completedBy: 'cleaner' | 'system'
+    completedBy: 'house_sitter' | 'system'
   }) {
     const message =
       args.completedBy === 'system'
         ? 'Your booking has been marked as completed. If there was an issue, please report it within 24 hours.'
-        : 'Cleaner marked this booking as completed. If there was an issue, please report it within 24 hours.'
+        : 'HouseSitter marked this booking as completed. If there was an issue, please report it within 24 hours.'
 
     return sendTransactionalEmail({
       transactionalId: CLIENT_BOOKING_COMPLETED_TRANSACTIONAL_ID,
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        cleaner_name: args.cleanerName,
+        house_sitter_name: args.houseSitterName,
         message,
         report_link: `${appUrl()}/house-sits/report?booking=${args.bookingId}`,
         booking_link: `${appUrl()}/house-sits/bookings/${args.bookingId}`,
@@ -267,7 +267,7 @@ export const loopsEmailService = {
     email: string
     fullName: string
     date: Date
-    cleanerName?: string
+    houseSitterName?: string
     durationHours?: number
   }) {
     return sendTransactionalEmail({
@@ -277,7 +277,7 @@ export const loopsEmailService = {
         first_name: firstName(args.fullName),
         date: formatBookingDate(args.date),
         time: formatBookingTime(args.date),
-        cleaner_name: args.cleanerName ?? 'Cleaner',
+        house_sitter_name: args.houseSitterName ?? 'HouseSitter',
         booking_duration: args.durationHours
           ? `${args.durationHours} hour${args.durationHours === 1 ? '' : 's'}`
           : '',
@@ -325,7 +325,7 @@ export const loopsEmailService = {
   async sendCleanerNewBookingRequest(args: {
     email: string
     fullName: string
-    clientName: string
+    houseSitName: string
     date: Date
     durationHours: number
     bookingId: string
@@ -335,7 +335,7 @@ export const loopsEmailService = {
       email: args.email,
       dataVariables: {
         first_name: firstName(args.fullName),
-        client_name: args.clientName,
+        house_sit_name: args.houseSitName,
         date: formatBookingDate(args.date),
         time: formatBookingTime(args.date),
         duration: `${args.durationHours} hour${args.durationHours === 1 ? '' : 's'}`,
@@ -396,8 +396,8 @@ export const loopsEmailService = {
 
   async sendClientAlternateTimeProposed(args: {
     email: string
-    clientName: string
-    cleanerName: string
+    houseSitName: string
+    houseSitterName: string
     originalStart: Date
     proposedStart: Date
   }) {
@@ -405,8 +405,8 @@ export const loopsEmailService = {
       transactionalId: CLIENT_ALT_TIME_PROPOSED_TRANSACTIONAL_ID,
       email: args.email,
       dataVariables: {
-        clientName: args.clientName,
-        cleanerName: args.cleanerName,
+        houseSitName: args.houseSitName,
+        houseSitterName: args.houseSitterName,
         originalDate: formatBookingDate(args.originalStart),
         originalTime: formatBookingTime(args.originalStart),
         proposedDate: formatBookingDate(args.proposedStart),
@@ -417,8 +417,8 @@ export const loopsEmailService = {
 
   async sendCleanerClientAlternateTimeProposed(args: {
     email: string
-    cleanerName: string
-    clientName: string
+    houseSitterName: string
+    houseSitName: string
     originalStart: Date
     proposedStart: Date
   }) {
@@ -426,8 +426,8 @@ export const loopsEmailService = {
       transactionalId: CLEANER_CLIENT_ALT_TIME_PROPOSED_TRANSACTIONAL_ID,
       email: args.email,
       dataVariables: {
-        cleanerName: args.cleanerName,
-        clientName: args.clientName,
+        houseSitterName: args.houseSitterName,
+        houseSitName: args.houseSitName,
         originalDate: formatBookingDate(args.originalStart),
         originalTime: formatBookingTime(args.originalStart),
         proposedDate: formatBookingDate(args.proposedStart),
@@ -438,31 +438,31 @@ export const loopsEmailService = {
 
   async sendClientProposalDeclinedClosed(args: {
     email: string
-    clientName: string
-    cleanerName: string
+    houseSitName: string
+    houseSitterName: string
   }) {
     return sendTransactionalEmail({
       transactionalId: CLIENT_PROPOSAL_DECLINED_CLOSED_TRANSACTIONAL_ID,
       email: args.email,
       dataVariables: {
-        clientName: args.clientName,
-        cleanerName: args.cleanerName,
+        houseSitName: args.houseSitName,
+        houseSitterName: args.houseSitterName,
       },
     })
   },
 
   async sendCleanerClientDeclinedProposal(args: {
     email: string
-    cleanerName: string
-    clientName: string
+    houseSitterName: string
+    houseSitName: string
     proposedStart: Date
   }) {
     return sendTransactionalEmail({
       transactionalId: CLEANER_CLIENT_DECLINED_PROPOSAL_TRANSACTIONAL_ID,
       email: args.email,
       dataVariables: {
-        cleanerName: args.cleanerName,
-        clientName: args.clientName,
+        houseSitterName: args.houseSitterName,
+        houseSitName: args.houseSitName,
         proposedDate: formatBookingDate(args.proposedStart),
         proposedTime: formatBookingTime(args.proposedStart),
       },

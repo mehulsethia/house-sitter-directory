@@ -2,19 +2,19 @@ import { db } from '../db'
 
 export const houseSitterRepo = {
   findById: (id: string) =>
-    db.cleaner.findUnique({
+    db.houseSitter.findUnique({
       where: { id },
       include: { user: true, serviceAreas: true },
     }),
 
   findByUserId: (userId: string) =>
-    db.cleaner.findUnique({
+    db.houseSitter.findUnique({
       where: { userId },
       include: { user: true, serviceAreas: true },
     }),
 
   create: (userId: string) =>
-    db.cleaner.create({
+    db.houseSitter.create({
       data: { userId, hourlyRate: 15 },
       include: { user: true, serviceAreas: true },
     }),
@@ -55,7 +55,7 @@ export const houseSitterRepo = {
     approvedAt: Date | null
     approvedBy: string | null
   }>) =>
-    db.cleaner.update({
+    db.houseSitter.update({
       where: { id },
       data,
       include: { user: true, serviceAreas: true },
@@ -65,7 +65,7 @@ export const houseSitterRepo = {
     city?: string
     availability?: 'any' | 'next_7_days'
     transportMode?: 'own_car' | 'bus_walk' | 'requires_pickup'
-    cleaningSupplies?: 'own_supplies' | 'client_supplies'
+    cleaningSupplies?: 'own_supplies' | 'house_sit_supplies'
     servicesOffered?: string[]
     minRating?: number
     minPrice?: number
@@ -93,19 +93,19 @@ export const houseSitterRepo = {
         : {}),
     }
     return Promise.all([
-      db.cleaner.findMany({
+      db.houseSitter.findMany({
         where,
         include: { user: true, serviceAreas: true },
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
         orderBy: { averageRating: 'desc' },
       }),
-      db.cleaner.count({ where }),
+      db.houseSitter.count({ where }),
     ])
   },
 
   listPending: () =>
-    db.cleaner.findMany({
+    db.houseSitter.findMany({
       where: { status: 'pending' },
       include: { user: true },
       orderBy: { createdAt: 'asc' },
@@ -123,28 +123,28 @@ export const houseSitterRepo = {
               ? { status: 'approved', stripeOnboardingComplete: false }
               : { status: params.status }
     return Promise.all([
-      db.cleaner.findMany({
+      db.houseSitter.findMany({
         where,
         include: { user: true },
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
         orderBy: { createdAt: 'desc' },
       }),
-      db.cleaner.count({ where }),
+      db.houseSitter.count({ where }),
     ])
   },
 
-  addServiceArea: (cleanerId: string, data: { city: string; postcodePrefix?: string; radiusKm?: number }) =>
-    db.serviceArea.create({ data: { cleanerId, ...data } }),
+  addServiceArea: (houseSitterId: string, data: { city: string; postcodePrefix?: string; radiusKm?: number }) =>
+    db.serviceArea.create({ data: { houseSitterId, ...data } }),
 
-  removeServiceArea: (id: string, cleanerId: string) =>
-    db.serviceArea.deleteMany({ where: { id, cleanerId } }),
+  removeServiceArea: (id: string, houseSitterId: string) =>
+    db.serviceArea.deleteMany({ where: { id, houseSitterId } }),
 
-  countStrikes: (cleanerId: string) =>
-    db.cleanerStrike.count({ where: { cleanerId } }),
+  countStrikes: (houseSitterId: string) =>
+    db.houseSitterStrike.count({ where: { houseSitterId } }),
 
   suspend: (id: string, suspended: boolean) =>
-    db.cleaner.update({
+    db.houseSitter.update({
       where: { id },
       data: { status: suspended ? 'suspended' : 'approved' },
     }),

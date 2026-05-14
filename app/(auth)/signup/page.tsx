@@ -14,9 +14,9 @@ function SignupForm() {
   const router = useRouter()
   const params = useSearchParams()
   const supabase = createClient()
-  const defaultRole = (params.get('role') ?? 'client') as 'client' | 'cleaner'
+  const defaultRole = (params.get('role') ?? 'house_sit') as 'house_sit' | 'house_sitter'
 
-  const [role, setRole] = useState<'client' | 'cleaner'>(defaultRole)
+  const [role, setRole] = useState<'house_sit' | 'house_sitter'>(defaultRole)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
@@ -38,7 +38,7 @@ function SignupForm() {
       password,
       options: {
         emailRedirectTo: `${appUrl}/auth/callback`,
-        data: { name, role, phone, experience: role === 'cleaner' ? experience : undefined },
+        data: { name, role, phone, experience: role === 'house_sitter' ? experience : undefined },
       },
     })
 
@@ -61,13 +61,13 @@ function SignupForm() {
           name,
           role,
           phone,
-          ...(role === 'cleaner' && experience !== '' ? { experience: Number(experience) } : {}),
+          ...(role === 'house_sitter' && experience !== '' ? { experience: Number(experience) } : {}),
         })
       } catch {
         // Non-fatal — the DB trigger already created the row
       }
 
-      if (role === 'cleaner') {
+      if (role === 'house_sitter') {
         try {
           router.push('/house-sitter/dashboard')
         } catch {
@@ -105,7 +105,7 @@ function SignupForm() {
       <div className="flex flex-col justify-center p-5 sm:p-6 lg:p-10">
         {/* Role toggle */}
         <div className="grid grid-cols-2 gap-1 bg-gray-100 rounded-xl p-1 mb-5">
-          {(['client', 'cleaner'] as const).map((r) => (
+          {(['house_sit', 'house_sitter'] as const).map((r) => (
             <button
               key={r}
               type="button"
@@ -116,7 +116,7 @@ function SignupForm() {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {r === 'client' ? "I'm posting a House Sit" : "I'm a House Sitter"}
+              {r === 'house_sit' ? "I'm posting a House Sit" : "I'm a House Sitter"}
             </button>
           ))}
         </div>
@@ -161,7 +161,7 @@ function SignupForm() {
           </div>
 
           {/* Role-specific field */}
-          {role === 'cleaner' ? (
+          {role === 'house_sitter' ? (
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                 Years of House Sitting Experience <span className="text-red-500">*</span>

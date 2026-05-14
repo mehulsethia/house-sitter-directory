@@ -45,17 +45,17 @@ export async function POST(req: NextRequest) {
               reauthorizationGraceExpiresAt: graceEndsAt,
             })
             await pushInAppNotification({
-              userId: booking.client.userId,
+              userId: booking.houseSit.userId,
               type: 'booking_payment_required',
               title: 'Re-authorization failed',
               body: 'Please fix your payment method within 24 hours to keep this rescheduled booking active.',
               data: { booking_id: booking.id },
             })
             await pushInAppNotification({
-              userId: booking.cleaner.userId,
+              userId: booking.houseSitter.userId,
               type: 'booking_payment_required',
-              title: 'Waiting for client re-authorization',
-              body: 'Client has up to 24 hours to resolve payment for this rescheduled booking.',
+              title: 'Waiting for houseSit re-authorization',
+              body: 'HouseSit has up to 24 hours to resolve payment for this rescheduled booking.',
               data: { booking_id: booking.id },
             })
           }
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
               const booking = await bookingRepo.findById(payment.bookingId)
               if (booking) {
                 await pushInAppNotification({
-                  userId: booking.client.userId,
+                  userId: booking.houseSit.userId,
                   type: 'payment_captured',
                   title: 'Payment captured',
                   body: 'Payment was captured successfully after booking completion.',
@@ -88,14 +88,14 @@ export async function POST(req: NextRequest) {
                 })
                 try {
                   await loopsEmailService.sendClientPaymentReceipt({
-                    email: booking.client.user.email,
-                    fullName: booking.client.user.name ?? 'Client',
+                    email: booking.houseSit.user.email,
+                    fullName: booking.houseSit.user.name ?? 'HouseSit',
                     amount: Number(payment.amount),
-                    cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+                    houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
                     date: new Date(),
                   })
                 } catch (emailError) {
-                  console.error('Failed to send client payment receipt email via Loops:', emailError)
+                  console.error('Failed to send houseSit payment receipt email via Loops:', emailError)
                 }
               }
             }
@@ -106,8 +106,8 @@ export async function POST(req: NextRequest) {
 
       case 'account.updated': {
         const account = event.data.object as Stripe.Account
-        const cleaner = await houseSitterRepo.findById(account.metadata?.cleaner_id ?? '')
-        if (cleaner) {
+        const houseSitter = await houseSitterRepo.findById(account.metadata?.house_sitter_id ?? '')
+        if (houseSitter) {
           const restrictedOrIncomplete =
             (account.requirements?.currently_due?.length ?? 0) > 0 ||
             (account.requirements?.past_due?.length ?? 0) > 0 ||
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
             account.payouts_enabled &&
             !restrictedOrIncomplete
 
-          await houseSitterRepo.update(cleaner.id, {
+          await houseSitterRepo.update(houseSitter.id, {
             stripeOnboardingComplete: connected,
           })
         }
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
               const booking = await bookingRepo.findById(payment.bookingId)
               if (booking) {
                 await pushInAppNotification({
-                  userId: booking.cleaner.userId,
+                  userId: booking.houseSitter.userId,
                   type: 'payout_released',
                   title: 'Payout released',
                   body: 'Payout was released to your connected Stripe account.',
@@ -150,12 +150,12 @@ export async function POST(req: NextRequest) {
                 })
                 try {
                   await loopsEmailService.sendCleanerPayoutNotification({
-                    email: booking.cleaner.user.email,
-                    fullName: booking.cleaner.user.name ?? 'Cleaner',
-                    amount: Number(payment.cleanerPayout),
+                    email: booking.houseSitter.user.email,
+                    fullName: booking.houseSitter.user.name ?? 'HouseSitter',
+                    amount: Number(payment.houseSitterPayout),
                   })
                 } catch (emailError) {
-                  console.error('Failed to send cleaner payout notification email via Loops:', emailError)
+                  console.error('Failed to send houseSitter payout notification email via Loops:', emailError)
                 }
               }
             }

@@ -23,7 +23,7 @@ const SERVICE_LABELS: Record<string, string> = {
   move_in: 'Move-in Clean',
 }
 
-function ClientChatsPageContent() {
+function HouseSitChatsPageContent() {
   const searchParams = useSearchParams()
   const bookingFromQuery = searchParams.get('booking')
 
@@ -71,11 +71,11 @@ function ClientChatsPageContent() {
     if (!query.trim()) return true
     const q = query.toLowerCase()
     const service = (SERVICE_LABELS[booking.service_type] ?? booking.service_type).toLowerCase()
-    const cleanerName = (booking.cleaner?.user?.name ?? '').toLowerCase()
+    const houseSitterName = (booking.houseSitter?.user?.name ?? '').toLowerCase()
 
     return (
       service.includes(q) ||
-      cleanerName.includes(q) ||
+      houseSitterName.includes(q) ||
       booking.city.toLowerCase().includes(q) ||
       booking.postcode.toLowerCase().includes(q)
     )
@@ -95,10 +95,10 @@ function ClientChatsPageContent() {
 
   return (
     <>
-      <div className="client-chats-revamp internal-page space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-chats-revamp internal-page space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -109,7 +109,7 @@ function ClientChatsPageContent() {
                 Messages
               </h1>
               <p className="max-w-xl text-sm text-slate-100/90 sm:text-base">
-                Keep every cleaner conversation in one continuous workspace tied directly to each booking.
+                Keep every houseSitter conversation in one continuous workspace tied directly to each booking.
               </p>
             </div>
 
@@ -156,8 +156,8 @@ function ClientChatsPageContent() {
               <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
                 {filtered.map((booking, index) => {
                   const active = booking.id === selectedBookingId
-                  const cleanerName = booking.cleaner?.user?.name ?? 'House Sitter'
-                  const cleanerImage = booking.cleaner?.profile_image_url
+                  const houseSitterName = booking.houseSitter?.user?.name ?? 'House Sitter'
+                  const houseSitterImage = booking.houseSitter?.profile_image_url
                   return (
                     <button
                       key={booking.id}
@@ -171,15 +171,15 @@ function ClientChatsPageContent() {
                     >
                       <div className="flex items-center gap-3">
                         <UserAvatar
-                          name={cleanerName}
-                          imageUrl={cleanerImage}
+                          name={houseSitterName}
+                          imageUrl={houseSitterImage}
                           className="h-10 w-10 shrink-0"
                           textClassName="text-sm font-bold text-[#5a4a3b]"
                           fallbackClassName="bg-[#5a4a3b]/10 text-[#5a4a3b]"
                           fallback="C"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-slate-900">{cleanerName}</p>
+                          <p className="truncate text-sm font-semibold text-slate-900">{houseSitterName}</p>
                           <p className={`truncate text-[0.7rem] tracking-wide text-slate-500`}>
                             {formatDate(booking.scheduled_start)}
                           </p>
@@ -204,7 +204,7 @@ function ClientChatsPageContent() {
                   <p className={`text-base font-semibold tracking-[-0.01em] text-slate-900`}>
                     {SERVICE_LABELS[selected.service_type] ?? selected.service_type}
                   </p>
-                  <p className="text-xs text-slate-600">{selected.cleaner?.user?.name ?? 'House Sitter'}</p>
+                  <p className="text-xs text-slate-600">{selected.houseSitter?.user?.name ?? 'House Sitter'}</p>
                   <p className={`text-[0.7rem] tracking-wide text-slate-500`}>
                     {selected.city}, {selected.postcode} · {formatDate(selected.scheduled_start)}
                   </p>
@@ -228,13 +228,13 @@ function ClientChatsPageContent() {
       </div>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -247,7 +247,7 @@ function ClientChatsPageContent() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:
@@ -308,10 +308,10 @@ function ClientChatsPageContent() {
   )
 }
 
-export default function ClientChatsPage() {
+export default function HouseSitChatsPage() {
   return (
     <Suspense fallback={<SplitChatPageSkeleton />}>
-      <ClientChatsPageContent />
+      <HouseSitChatsPageContent />
     </Suspense>
   )
 }

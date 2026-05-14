@@ -141,22 +141,22 @@ async function createAuthUser({ email, password, name, role }) {
 }
 
 async function ensureClientProfile(userId) {
-  const existing = await admin.from('clients').select('id').eq('user_id', userId).maybeSingle()
+  const existing = await admin.from('house_sits').select('id').eq('user_id', userId).maybeSingle()
   if (existing.error) throw new Error(existing.error.message)
   if (existing.data?.id) return existing.data.id
 
-  const inserted = await admin.from('clients').insert({ user_id: userId }).select('id').single()
+  const inserted = await admin.from('house_sits').insert({ user_id: userId }).select('id').single()
   if (inserted.error) throw new Error(inserted.error.message)
   return inserted.data.id
 }
 
 async function ensureCleanerProfile(userId) {
-  const existing = await admin.from('cleaners').select('*').eq('user_id', userId).maybeSingle()
+  const existing = await admin.from('house_sitters').select('*').eq('user_id', userId).maybeSingle()
   if (existing.error) throw new Error(existing.error.message)
   if (existing.data?.id) return existing.data
 
   const inserted = await admin
-    .from('cleaners')
+    .from('house_sitters')
     .insert({ user_id: userId, hourly_rate: 15 })
     .select('*')
     .single()
@@ -167,19 +167,19 @@ async function ensureCleanerProfile(userId) {
 async function getBookingFinance(bookingId) {
   const row = await admin
     .from('bookings')
-    .select('id,total_amount,platform_fee,cleaner_payout')
+    .select('id,total_amount,platform_fee,house_sitter_payout')
     .eq('id', bookingId)
     .single()
   if (row.error) throw new Error(row.error.message)
   return row.data
 }
 
-async function createPendingAuthorizedBooking({ clientToken, cleanerId, label, startIso, duration = 2 }) {
+async function createPendingAuthorizedBooking({ houseSitToken, houseSitterId, label, startIso, duration = 2 }) {
   const created = await api('/api/v1/bookings', {
     method: 'POST',
-    token: clientToken,
+    token: houseSitToken,
     body: {
-      cleaner_id: cleanerId,
+      house_sitter_id: houseSitterId,
       service_type: 'standard',
       special_instructions: `${label} - QA booking instructions`,
       address: '123 QA Street',
@@ -206,7 +206,7 @@ async function createPendingAuthorizedBooking({ clientToken, cleanerId, label, s
       stripe_payment_intent_id: `pi_qa_${bookingId.replace(/-/g, '').slice(0, 20)}`,
       amount: amounts.total_amount,
       platform_fee: amounts.platform_fee,
-      cleaner_payout: amounts.cleaner_payout,
+      house_sitter_payout: amounts.house_sitter_payout,
       currency: 'eur',
       status: 'authorized',
       authorized_at: nowIso(),
@@ -234,35 +234,35 @@ async function main() {
     const ts = Date.now()
     const password = 'QaTest!23456'
 
-    const client = await createAuthUser({
-      email: `qa-client-${ts}@testmail.com`,
+    const houseSit = await createAuthUser({
+      email: `qa-houseSit-${ts}@testmail.com`,
       password,
-      name: 'QA Client',
-      role: 'client',
+      name: 'QA HouseSit',
+      role: 'house_sit',
     })
     const sitter = await createAuthUser({
       email: `qa-sitter-${ts}@testmail.com`,
       password,
       name: 'QA House Sitter',
-      role: 'cleaner',
+      role: 'house_sitter',
     })
 
     artifacts.users = {
-      client: { id: client.id, email: client.email },
+      houseSit: { id: houseSit.id, email: houseSit.email },
       sitter: { id: sitter.id, email: sitter.email },
     }
 
     pass('Login/signup/onboarding', 'Account creation', 'Created test auth users via Supabase Admin')
 
-    const meClient = await api('/api/v1/auth/me', { token: client.token })
+    const meClient = await api('/api/v1/auth/me', { token: houseSit.token })
     const meSitter = await api('/api/v1/auth/me', { token: sitter.token })
     if (meClient.ok && meSitter.ok) pass('Login/signup/onboarding', 'Login + auth session', 'Bearer auth works for both roles')
-    else fail('Login/signup/onboarding', 'Login + auth session', `client=${meClient.status}, sitter=${meSitter.status}`)
+    else fail('Login/signup/onboarding', 'Login + auth session', `houseSit=${meClient.status}, sitter=${meSitter.status}`)
 
     const syncClient = await api('/api/v1/auth/sync', {
       method: 'POST',
-      token: client.token,
-      body: { name: 'QA Client', phone: '+35799111222' },
+      token: houseSit.token,
+      body: { name: 'QA HouseSit', phone: '+35799111222' },
     })
     const syncSitter = await api('/api/v1/auth/sync', {
       method: 'POST',
@@ -271,16 +271,16 @@ async function main() {
     })
 
     if (syncClient.ok && syncSitter.ok) pass('Login/signup/onboarding', 'Auth sync bootstrap', 'Sync endpoints responded 2xx')
-    else fail('Login/signup/onboarding', 'Auth sync bootstrap', `client=${syncClient.status}, sitter=${syncSitter.status}`)
+    else fail('Login/signup/onboarding', 'Auth sync bootstrap', `houseSit=${syncClient.status}, sitter=${syncSitter.status}`)
 
-    await ensureClientProfile(client.id)
+    await ensureClientProfile(houseSit.id)
     const sitterProfile = await ensureCleanerProfile(sitter.id)
 
-    const clientOnboarding = await api('/api/v1/house-sits/me', {
+    const houseSitOnboarding = await api('/api/v1/house-sits/me', {
       method: 'PATCH',
-      token: client.token,
+      token: houseSit.token,
       body: {
-        name: 'QA Client',
+        name: 'QA HouseSit',
         phone: '+35799111222',
         default_address: '123 QA Street',
         default_city: 'Larnaca',
@@ -331,14 +331,14 @@ async function main() {
 
     const submit = await api('/api/v1/house-sitters/me/submit', { method: 'POST', token: sitter.token, body: {} })
 
-    if (clientOnboarding.ok && sitterOnboarding.ok && availabilitySet.ok && submit.ok) {
-      pass('Login/signup/onboarding', 'Onboarding completion', 'Client/sitter onboarding + sitter submit all succeeded')
+    if (houseSitOnboarding.ok && sitterOnboarding.ok && availabilitySet.ok && submit.ok) {
+      pass('Login/signup/onboarding', 'Onboarding completion', 'HouseSit/sitter onboarding + sitter submit all succeeded')
     } else {
-      fail('Login/signup/onboarding', 'Onboarding completion', `client=${clientOnboarding.status}, sitter=${sitterOnboarding.status}, avail=${availabilitySet.status}, submit=${submit.status}`)
+      fail('Login/signup/onboarding', 'Onboarding completion', `houseSit=${houseSitOnboarding.status}, sitter=${sitterOnboarding.status}, avail=${availabilitySet.status}, submit=${submit.status}`)
     }
 
     const approve = await admin
-      .from('cleaners')
+      .from('house_sitters')
       .update({
         status: 'approved',
         profile_complete: true,
@@ -348,7 +348,7 @@ async function main() {
       })
       .eq('id', sitterProfile.id)
 
-    if (approve.error) throw new Error(`Cleaner approval prep failed: ${approve.error.message}`)
+    if (approve.error) throw new Error(`HouseSitter approval prep failed: ${approve.error.message}`)
 
     await api('/api/v1/house-sitters/me/areas', {
       method: 'POST',
@@ -357,9 +357,9 @@ async function main() {
     })
 
     const search = await api('/api/v1/house-sitters?city=Larnaca&transport_mode=own_car&page=1&page_size=20')
-    const cleaners = search.json?.data?.cleaners || []
-    const found = cleaners.some((c) => c.id === sitterProfile.id)
-    if (search.ok && found) pass('Sitter search/filter + profile/book flow', 'Search + filters', `Cleaner found in filtered results (${sitterProfile.id})`)
+    const house_sitters = search.json?.data?.house_sitters || []
+    const found = house_sitters.some((c) => c.id === sitterProfile.id)
+    if (search.ok && found) pass('Sitter search/filter + profile/book flow', 'Search + filters', `HouseSitter found in filtered results (${sitterProfile.id})`)
     else fail('Sitter search/filter + profile/book flow', 'Search + filters', `status=${search.status}, found=${found}`)
 
     const profile = await api(`/api/v1/house-sitters/${sitterProfile.id}`)
@@ -367,8 +367,8 @@ async function main() {
     else fail('Sitter search/filter + profile/book flow', 'Profile endpoint', `status=${profile.status}`)
 
     const bookingAccept = await createPendingAuthorizedBooking({
-      clientToken: client.token,
-      cleanerId: sitterProfile.id,
+      houseSitToken: houseSit.token,
+      houseSitterId: sitterProfile.id,
       label: 'accept-flow',
       startIso: futureIso({ days: 2, hours: 2 }),
     })
@@ -393,8 +393,8 @@ async function main() {
       else fail('Booking state transitions', 'Pending -> Confirmed (accept)', `status=${accept.status}`)
 
       const bookingDecline = await createPendingAuthorizedBooking({
-        clientToken: client.token,
-        cleanerId: sitterProfile.id,
+        houseSitToken: houseSit.token,
+        houseSitterId: sitterProfile.id,
         label: 'decline-flow',
         startIso: futureIso({ days: 3, hours: 2 }),
       })
@@ -411,8 +411,8 @@ async function main() {
       }
 
       const bookingProposal = await createPendingAuthorizedBooking({
-        clientToken: client.token,
-        cleanerId: sitterProfile.id,
+        houseSitToken: houseSit.token,
+        houseSitterId: sitterProfile.id,
         label: 'proposal-flow',
         startIso: futureIso({ days: 4, hours: 2 }),
       })
@@ -426,7 +426,7 @@ async function main() {
         })
         const p2 = await api(`/api/v1/bookings/${bookingProposal.bookingId}/action`, {
           method: 'POST',
-          token: client.token,
+          token: houseSit.token,
           body: { action: 'counter_proposal', proposed_start: futureIso({ days: 4, hours: 5 }) },
         })
         const p3 = await api(`/api/v1/bookings/${bookingProposal.bookingId}/action`, {
@@ -440,7 +440,7 @@ async function main() {
 
       const msgSend = await api(`/api/v1/messages/${bookingAccept.bookingId}`, {
         method: 'POST',
-        token: client.token,
+        token: houseSit.token,
         body: { content: `QA ping ${nowIso()}` },
       })
       const msgList = await api(`/api/v1/messages/${bookingAccept.bookingId}`, {
@@ -453,18 +453,18 @@ async function main() {
         fail('Messaging', 'Send + fetch booking chat', `send=${msgSend.status}, list=${msgList.status}`)
       }
 
-      const payment = await api(`/api/v1/payments/${bookingAccept.bookingId}`, { token: client.token })
+      const payment = await api(`/api/v1/payments/${bookingAccept.bookingId}`, { token: houseSit.token })
       if (payment.ok && payment.json?.data?.status === 'authorized') pass('Notifications/payments statuses', 'Payment status endpoint', `booking=${bookingAccept.bookingId}`)
       else fail('Notifications/payments statuses', 'Payment status endpoint', `status=${payment.status}`)
 
-      const nClient = await api('/api/v1/notifications?page=1&page_size=20', { token: client.token })
+      const nClient = await api('/api/v1/notifications?page=1&page_size=20', { token: houseSit.token })
       const nSitter = await api('/api/v1/notifications?page=1&page_size=20', { token: sitter.token })
       const countClient = Array.isArray(nClient.json?.data?.notifications) ? nClient.json.data.notifications.length : 0
       const countSitter = Array.isArray(nSitter.json?.data?.notifications) ? nSitter.json.data.notifications.length : 0
       if (nClient.ok && nSitter.ok && countClient > 0 && countSitter > 0) {
-        pass('Notifications/payments statuses', 'In-app notifications', `client=${countClient}, sitter=${countSitter}`)
+        pass('Notifications/payments statuses', 'In-app notifications', `houseSit=${countClient}, sitter=${countSitter}`)
       } else {
-        fail('Notifications/payments statuses', 'In-app notifications', `client=${nClient.status}/${countClient}, sitter=${nSitter.status}/${countSitter}`)
+        fail('Notifications/payments statuses', 'In-app notifications', `houseSit=${nClient.status}/${countClient}, sitter=${nSitter.status}/${countSitter}`)
       }
 
       artifacts.bookings.booking_accept = bookingAccept.bookingId

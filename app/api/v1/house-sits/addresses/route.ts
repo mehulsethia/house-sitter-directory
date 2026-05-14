@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { requireHouseSit } from '@/server/auth'
 import { db } from '@/server/db'
 import { houseSitRepo } from '@/server/repositories/house-sit.repo'
-import { clientAddressRepo } from '@/server/repositories/house-sit-address.repo'
+import { houseSitAddressRepo } from '@/server/repositories/house-sit-address.repo'
 import { createClientAddressSchema } from '@/server/schemas/house-sit-address.schema'
 import { ok, err } from '@/server/response'
 import {
@@ -13,9 +13,9 @@ import {
 } from '@/lib/location-policy'
 
 export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
-  let client = await houseSitRepo.findByUserId(user.id)
-  if (!client) client = await houseSitRepo.create(user.id)
-  const addresses = await clientAddressRepo.listByClientId(client.id)
+  let houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) houseSit = await houseSitRepo.create(user.id)
+  const addresses = await houseSitAddressRepo.listByHouseSitId(houseSit.id)
   return ok(addresses)
 })
 
@@ -25,29 +25,29 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     const parsed = createClientAddressSchema.safeParse(body)
     if (!parsed.success) return err(parsed.error.message, 422)
 
-    let client = await houseSitRepo.findByUserId(user.id)
-    if (!client) {
+    let houseSit = await houseSitRepo.findByUserId(user.id)
+    if (!houseSit) {
       try {
-        client = await houseSitRepo.create(user.id)
+        houseSit = await houseSitRepo.create(user.id)
       } catch {
-        client = await houseSitRepo.findByUserId(user.id)
+        houseSit = await houseSitRepo.findByUserId(user.id)
       }
     }
-    if (!client) return err('Unable to load your profile right now. Please try again.', 503)
-    const existing = await clientAddressRepo.listByClientId(client.id)
+    if (!houseSit) return err('Unable to load your profile right now. Please try again.', 503)
+    const existing = await houseSitAddressRepo.listByHouseSitId(houseSit.id)
     if (existing.length >= MAX_SAVED_ADDRESSES) {
       return err("You've reached the maximum number of saved addresses. Please remove an existing address to add a new one.", 422)
     }
 
     const shouldBeDefault = existing.length === 0 || Boolean(parsed.data.is_default)
     if (shouldBeDefault) {
-      await clientAddressRepo.clearDefaultForClient(client.id)
+      await houseSitAddressRepo.clearDefaultForClient(houseSit.id)
     }
 
     let created
     try {
-      created = await clientAddressRepo.create({
-        clientId: client.id,
+      created = await houseSitAddressRepo.create({
+        houseSitId: houseSit.id,
         label: parsed.data.label,
         addressLine1: parsed.data.address_line1,
         city: MVP_CITY,
@@ -61,9 +61,9 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
       })
     } catch (repoError) {
       // Last-resort write path via Prisma model API with only required fields.
-      created = await db.clientAddress.create({
+      created = await db.houseSitAddress.create({
         data: {
-          clientId: client.id,
+          houseSitId: houseSit.id,
           label: parsed.data.label,
           addressLine1: parsed.data.address_line1,
           city: MVP_CITY,
@@ -74,7 +74,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
           isDefault: shouldBeDefault,
         },
       })
-      console.error('[clients/addresses][POST] repo create failed; Prisma fallback succeeded', {
+      console.error('[house_sits/addresses][POST] repo create failed; Prisma fallback succeeded', {
         userId: user.id,
         message: String((repoError as any)?.message ?? ''),
       })
@@ -84,7 +84,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   } catch (e: any) {
     const message = String(e?.message ?? '')
     const debugMessage = message ? message.slice(0, 260) : 'unknown_error'
-    console.error('[clients/addresses][POST] save failed', {
+    console.error('[house_sits/addresses][POST] save failed', {
       userId: user.id,
       message: debugMessage,
       stack: e?.stack ? String(e.stack).slice(0, 800) : undefined,
@@ -92,7 +92,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     if (message.includes('duplicate key')) {
       return err('This address is already saved.', 409)
     }
-    if (message.includes('column') && message.includes('client_addresses')) {
+    if (message.includes('column') && message.includes('house_sit_addresses')) {
       return err('Address saving is temporarily unavailable while setup completes. Please try again in 1 minute.', 503)
     }
     if (message.includes('violates not-null constraint')) {
@@ -101,7 +101,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     if (message.includes('violates check constraint')) {
       return err('Address does not match MVP location rules. Please use a Larnaca, Cyprus address with a 4-digit postcode.', 422)
     }
-    if (message.includes('relation') && message.includes('client_addresses') && message.includes('does not exist')) {
+    if (message.includes('relation') && message.includes('house_sit_addresses') && message.includes('does not exist')) {
       return err('Address setup is incomplete. Please try again in 1 minute.', 503)
     }
     return err(`Unable to save this address right now. Please try again. [${debugMessage}]`, 500)

@@ -57,7 +57,7 @@ function isImageDocumentRef(url: string, fileName?: string) {
   return IMAGE_FILE_EXT_REGEX.test(url) || Boolean(fileName && IMAGE_FILE_EXT_REGEX.test(fileName))
 }
 
-function CleanerProfilePageContent() {
+function HouseSitterProfilePageContent() {
   const params = useSearchParams()
   const initialTab = (params.get('tab') as TabKey) || 'overview'
   const [tab, setTab] = useState<TabKey>(
@@ -66,7 +66,7 @@ function CleanerProfilePageContent() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const [cleanerId, setCleanerId] = useState('')
+  const [houseSitterId, setCleanerId] = useState('')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -138,7 +138,7 @@ function CleanerProfilePageContent() {
         createClient().auth.getUser().catch(() => null),
       ])
 
-      const c = (meRes.data?.cleaner ?? {}) as any
+      const c = (meRes.data?.houseSitter ?? {}) as any
       const onboarding = meRes.data?.onboarding
       const user = c.user ?? {}
 
@@ -239,7 +239,7 @@ function CleanerProfilePageContent() {
     const completionRate = totalJobs > 0 ? Math.round((completed / totalJobs) * 100) : 0
     const totalEarnings = bookings
       .filter((b) => b.status === 'completed' || b.status === 'disputed')
-      .reduce((sum, b) => sum + b.cleaner_payout, 0)
+      .reduce((sum, b) => sum + b.house_sitter_payout, 0)
     return {
       totalJobs,
       completionRate,
@@ -601,7 +601,7 @@ function CleanerProfilePageContent() {
         </div>
       ) : lifecycleStatus === 'live' ? (
         <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
-          <p className="text-sm font-semibold text-emerald-900">Live — your profile is approved and visible to clients.</p>
+          <p className="text-sm font-semibold text-emerald-900">Live — your profile is approved and visible to house_sits.</p>
         </div>
       ) : null}
 
@@ -702,7 +702,7 @@ function CleanerProfilePageContent() {
                       <Select value={cleaningSupplies} onChange={(e) => setCleaningSupplies(e.target.value)} className="mt-1">
                         <option value="">Choose an option...</option>
                         <option value="own_supplies">I bring home-care supplies</option>
-                        <option value="client_supplies">Homeowner must provide home-care supplies</option>
+                        <option value="house_sit_supplies">Homeowner must provide home-care supplies</option>
                       </Select>
                     </div>
                     <div>
@@ -730,7 +730,7 @@ function CleanerProfilePageContent() {
                         <p className="mt-1 text-xs text-slate-500">{pickupMeetNotes.length}/120</p>
                       </div>
                       <p className="text-xs text-slate-500">Pick-up/drop-off locations must be within Larnaca.</p>
-                      <p className="text-xs text-slate-500">Choose a safe nearby public location where clients can pick you up and drop you off for bookings. You can confirm exact details in chat after the booking is confirmed.</p>
+                      <p className="text-xs text-slate-500">Choose a safe nearby public location where house_sits can pick you up and drop you off for bookings. You can confirm exact details in chat after the booking is confirmed.</p>
                     </div>
                   )}
                   <div className="mt-3">
@@ -807,7 +807,7 @@ function CleanerProfilePageContent() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <p className="text-sm font-semibold text-slate-900">ID Document</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Your ID document is used to review your cleaner application.
+                    Your ID document is used to review your houseSitter application.
                   </p>
                   {!canEditKyc && (
                     <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
@@ -900,13 +900,13 @@ function CleanerProfilePageContent() {
                       </div>
                       <p className="text-xs text-slate-500">{new Date(r.created_at).toLocaleDateString('en-IE', { timeZone: 'Europe/Nicosia' })}</p>
                       <p className="mt-2 text-sm text-slate-700">{r.comment || 'No written comment provided.'}</p>
-                      {r.cleaner_reply ? (
+                      {r.house_sitter_reply ? (
                         <div className="mt-3 rounded-lg border border-blue-100 bg-[#f8f3ee] px-3 py-2">
                           <p className="text-xs font-semibold text-[#3f3429]">Your public reply</p>
-                          <p className="mt-1 text-sm text-[#3f3429]">{r.cleaner_reply}</p>
-                          {r.cleaner_reply_at && (
+                          <p className="mt-1 text-sm text-[#3f3429]">{r.house_sitter_reply}</p>
+                          {r.house_sitter_reply_at && (
                             <p className="mt-1 text-xs text-[#5a4a3b]">
-                              Posted {new Date(r.cleaner_reply_at).toLocaleDateString('en-IE', { timeZone: 'Europe/Nicosia' })}
+                              Posted {new Date(r.house_sitter_reply_at).toLocaleDateString('en-IE', { timeZone: 'Europe/Nicosia' })}
                             </p>
                           )}
                         </div>
@@ -919,7 +919,7 @@ function CleanerProfilePageContent() {
                               setReviewReplyDrafts((prev) => ({ ...prev, [r.id]: event.target.value }))
                             }
                             rows={3}
-                            placeholder="Thank the client and provide a short professional response."
+                            placeholder="Thank the houseSit and provide a short professional response."
                           />
                           <div className="flex justify-end">
                             <Button
@@ -1013,7 +1013,7 @@ function CleanerProfilePageContent() {
                             </p>
                           </div>
                         <div className="w-full text-left sm:w-auto sm:text-right">
-                            <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
+                            <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.house_sitter_payout)}</p>
                             <p className="text-xs text-slate-500">
                               Payment: {String(b.payment?.status ?? 'pending').replace(/_/g, ' ')}
                             </p>
@@ -1115,10 +1115,10 @@ function CleanerProfilePageContent() {
   )
 }
 
-export default function CleanerProfilePage() {
+export default function HouseSitterProfilePage() {
   return (
     <Suspense fallback={<ProfilePageSkeleton />}>
-      <CleanerProfilePageContent />
+      <HouseSitterProfilePageContent />
     </Suspense>
   )
 }

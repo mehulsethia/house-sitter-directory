@@ -7,7 +7,7 @@ const MS_PER_HOUR = 60 * 60 * 1000
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 const APP_TIMEZONE = 'Europe/Nicosia'
 
-export type CleanerProposalEligibility = {
+export type HouseSitterProposalEligibility = {
   isPending: boolean
   hasProposal: boolean
   isHouseSitterProposal: boolean
@@ -19,12 +19,12 @@ export type CleanerProposalEligibility = {
   proposeAlternativeDisabledReason: string | null
 }
 
-export function getCleanerProposalEligibility(booking: BookingRead): CleanerProposalEligibility {
+export function getCleanerProposalEligibility(booking: BookingRead): HouseSitterProposalEligibility {
   const isPending = booking.status === 'pending'
   const hasProposal = Boolean(booking.proposed_start && booking.proposal_by)
-  const isHouseSitterProposal = booking.proposal_by === 'cleaner'
-  const isHouseSitCounter = booking.proposal_by === 'client'
-  const cleanerProposals = booking.cleaner_proposals ?? 0
+  const isHouseSitterProposal = booking.proposal_by === 'house_sitter'
+  const isHouseSitCounter = booking.proposal_by === 'house_sit'
+  const houseSitterProposals = booking.house_sitter_proposals ?? 0
 
   const scheduledStart = new Date(booking.scheduled_start)
   const scheduledStartMs = scheduledStart.getTime()
@@ -34,15 +34,15 @@ export function getCleanerProposalEligibility(booking: BookingRead): CleanerProp
 
   const canAcceptPending = isPending && !isHouseSitCounter
   const canRespondToCounter = isPending && isHouseSitCounter
-  const canProposeAlternative = isPending && moreThanCutoffHoursAway && !hasProposal && cleanerProposals < 1
+  const canProposeAlternative = isPending && moreThanCutoffHoursAway && !hasProposal && houseSitterProposals < 1
 
   const proposeAlternativeDisabledReason = !isPending
     ? null
     : hasProposal
       ? isHouseSitterProposal
-        ? 'Alternative time already sent. Waiting for client response.'
-        : 'Client already sent a counter-offer. You can accept or decline it.'
-      : cleanerProposals >= 1
+        ? 'Alternative time already sent. Waiting for houseSit response.'
+        : 'HouseSit already sent a counter-offer. You can accept or decline it.'
+      : houseSitterProposals >= 1
         ? 'You can only suggest one alternate time per booking.'
         : !validScheduledStart
           ? 'Unable to validate booking start time. Open details and try again.'

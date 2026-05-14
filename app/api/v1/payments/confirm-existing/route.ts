@@ -24,15 +24,15 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     return err('Booking cannot be authorized in its current state', 400)
   }
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
-  if (!client.stripeCustomerId) return err('No saved payment method found', 400)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit || booking.houseSitId !== houseSit.id) return err('Forbidden', 403)
+  if (!houseSit.stripeCustomerId) return err('No saved payment method found', 400)
 
   const payment = await paymentRepo.findByBookingId(booking.id)
   if (!payment) return err('Payment intent not initialized', 400)
 
   const method = await stripe.paymentMethods.retrieve(parsed.data.payment_method_id)
-  if (typeof method.customer !== 'string' || method.customer !== client.stripeCustomerId) {
+  if (typeof method.customer !== 'string' || method.customer !== houseSit.stripeCustomerId) {
     return err('Selected card is not available for this account', 403)
   }
 

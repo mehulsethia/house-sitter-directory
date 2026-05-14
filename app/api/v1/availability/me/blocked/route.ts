@@ -11,8 +11,8 @@ export const POST = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
   const parsed = addBlockedTimeSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) return err('Cleaner profile not found', 404)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) return err('HouseSitter profile not found', 404)
 
   const startDateOnly = toUtcDateOnly(parsed.data.start_datetime)
   const endDateOnly = toUtcDateOnly(parsed.data.end_datetime)
@@ -23,10 +23,10 @@ export const POST = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
   if (start < todayStart) return err('Cannot block past dates', 422)
   if (end <= start) return err('Blocked end must be after blocked start', 422)
 
-  const overlap = await availabilityRepo.getBlockedTimesInRange(cleaner.id, start, end)
+  const overlap = await availabilityRepo.getBlockedTimesInRange(houseSitter.id, start, end)
   if (overlap.length > 0) return err('Blocked date overlaps with an existing blocked period', 409)
 
-  const block = await availabilityRepo.addBlockedTime(cleaner.id, {
+  const block = await availabilityRepo.addBlockedTime(houseSitter.id, {
     startDatetime: start,
     endDatetime: end,
     reason: parsed.data.reason,

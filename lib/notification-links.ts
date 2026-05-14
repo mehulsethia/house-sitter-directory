@@ -1,9 +1,9 @@
 import type { NotificationRead } from '@/types'
 
-type UserRole = 'client' | 'cleaner' | 'admin'
+type UserRole = 'house_sit' | 'house_sitter' | 'admin'
 
 function bookingDetailBase(role: UserRole) {
-  if (role === 'cleaner') return '/house-sitters/bookings'
+  if (role === 'house_sitter') return '/house-sitters/bookings'
   if (role === 'admin') return '/admin/bookings'
   return '/house-sits/bookings'
 }
@@ -32,23 +32,23 @@ export function getNotificationHref(role: UserRole, notification: NotificationRe
     case 'dispute_under_review':
     case 'dispute_resolved':
       if (role === 'admin') return '/admin/disputes'
-      if (role === 'cleaner') return disputeId ? `/house-sitters/bookings/${bookingId ?? ''}` : '/house-sitters/bookings'
+      if (role === 'house_sitter') return disputeId ? `/house-sitters/bookings/${bookingId ?? ''}` : '/house-sitters/bookings'
       return disputeId ? `/house-sits/bookings/${bookingId ?? ''}` : '/house-sits/bookings'
-    case 'cleaner_application_submitted':
-    case 'cleaner_application_approved':
-    case 'cleaner_application_rejected':
+    case 'house_sitter_application_submitted':
+    case 'house_sitter_application_approved':
+    case 'house_sitter_application_rejected':
       if (role === 'admin') return '/admin/house-sitters'
-      if (role === 'cleaner') {
-        return notification.type === 'cleaner_application_approved'
+      if (role === 'house_sitter') {
+        return notification.type === 'house_sitter_application_approved'
           ? '/house-sitters/profile?tab=payments'
           : '/house-sitters/profile'
       }
       return '/house-sitters/profile'
     case 'account_created':
-      return role === 'admin' ? '/admin/users' : role === 'cleaner' ? '/house-sitters/profile' : '/house-sits/house-sitters'
+      return role === 'admin' ? '/admin/users' : role === 'house_sitter' ? '/house-sitters/profile' : '/house-sits/house-sitters'
     default:
       if (role === 'admin') return '/admin/dashboard'
-      if (role === 'cleaner') return '/house-sitters/dashboard'
+      if (role === 'house_sitter') return '/house-sitters/dashboard'
       return '/house-sits/dashboard'
   }
 }

@@ -13,8 +13,8 @@ import { UserAvatar } from '@/components/ui/user-avatar'
 interface SidebarProfileProps {
   /** e.g. '/house-sitters/profile' or '/house-sits/profile' */
   profileHref: string
-  /** 'cleaner' | 'client' */
-  role: 'cleaner' | 'client'
+  /** 'house_sitter' | 'house_sit' */
+  role: 'house_sitter' | 'house_sit'
 }
 
 export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
@@ -30,13 +30,13 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
       try {
         const [{ data: authData }, profileRes] = await Promise.all([
           supabase.auth.getUser(),
-          (role === 'cleaner' ? houseSittersApi.me() : houseSitsApi.me()).catch(() => null),
+          (role === 'house_sitter' ? houseSittersApi.me() : houseSitsApi.me()).catch(() => null),
         ])
 
         const authUser = authData.user
         const profileData = (profileRes?.data ?? null) as any
-        const profileUser = role === 'cleaner'
-          ? profileData?.cleaner?.user
+        const profileUser = role === 'house_sitter'
+          ? profileData?.houseSitter?.user
           : profileData?.user
         const dbName = String(profileUser?.name ?? '').trim()
         const metaName = String(authUser?.user_metadata?.name ?? '').trim()
@@ -45,7 +45,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
         setUser({
           name: dbName || metaName || fallbackName,
           email: profileUser?.email ?? authUser?.email ?? '',
-          avatarUrl: profileUser?.avatar_url ?? profileData?.cleaner?.profile_image_url ?? null,
+          avatarUrl: profileUser?.avatar_url ?? profileData?.houseSitter?.profile_image_url ?? null,
         })
       } finally {
         setLoading(false)
@@ -75,7 +75,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
     router.refresh()
   }
 
-  const roleLabel = role === 'cleaner' ? 'House Sitter' : 'Homeowner'
+  const roleLabel = role === 'house_sitter' ? 'House Sitter' : 'Homeowner'
   return (
     <div ref={ref} className="relative mt-auto border-t border-slate-200 pt-2">
       {/* Popover — rises up above trigger */}

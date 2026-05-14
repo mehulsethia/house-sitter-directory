@@ -29,7 +29,7 @@ function resolveJobTypeTitle(booking: BookingRead) {
   return SERVICE_LABELS[booking.service_type] ?? booking.service_type
 }
 
-export default function CleanerChatsPage() {
+export default function HouseSitterChatsPage() {
   const [loading, setLoading] = useState(true)
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
@@ -73,10 +73,10 @@ export default function CleanerChatsPage() {
     const q = query.toLowerCase()
     return bookings.filter((b) => {
       const service = resolveJobTypeTitle(b)
-      const clientName = ((b as any)?.client?.user?.name ?? '').toLowerCase()
+      const houseSitName = ((b as any)?.houseSit?.user?.name ?? '').toLowerCase()
       return (
         service.toLowerCase().includes(q) ||
-        clientName.includes(q) ||
+        houseSitName.includes(q) ||
         b.city.toLowerCase().includes(q) ||
         b.postcode.toLowerCase().includes(q)
       )
@@ -123,8 +123,8 @@ export default function CleanerChatsPage() {
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
               {filtered.map((b) => {
                 const active = b.id === selectedBookingId
-                const clientName = (b as any)?.client?.user?.name ?? 'Homeowner'
-                const clientImage = (b as any)?.client?.user?.avatar_url as string | undefined
+                const houseSitName = (b as any)?.houseSit?.user?.name ?? 'Homeowner'
+                const houseSitImage = (b as any)?.houseSit?.user?.avatar_url as string | undefined
                 return (
                   <button
                     key={b.id}
@@ -137,15 +137,15 @@ export default function CleanerChatsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <UserAvatar
-                        name={clientName}
-                        imageUrl={clientImage}
+                        name={houseSitName}
+                        imageUrl={houseSitImage}
                         className="h-10 w-10 shrink-0"
                         textClassName="text-sm font-bold"
                         fallbackClassName="bg-primary/10 text-primary"
                         fallback="C"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-900 truncate">{clientName}</p>
+                        <p className="text-sm font-semibold text-slate-900 truncate">{houseSitName}</p>
                         <p className="text-xs text-slate-500 truncate">{formatDate(b.scheduled_start)}</p>
                       </div>
                     </div>

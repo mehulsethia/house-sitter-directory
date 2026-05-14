@@ -10,8 +10,8 @@ const DISPUTE_WINDOW_MS = 24 * 60 * 60 * 1000
 
 export const DELETE = requireHouseSit(async (req: NextRequest, ctx, user) => {
   const { paymentMethodId } = await ctx.params
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client?.stripeCustomerId) return err('No saved payment methods found', 404)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit?.stripeCustomerId) return err('No saved payment methods found', 404)
 
   let method
   try {
@@ -19,7 +19,7 @@ export const DELETE = requireHouseSit(async (req: NextRequest, ctx, user) => {
   } catch {
     return err('Card not found for this account', 404)
   }
-  if (typeof method.customer !== 'string' || method.customer !== client.stripeCustomerId) {
+  if (typeof method.customer !== 'string' || method.customer !== houseSit.stripeCustomerId) {
     return err('Card not found for this account', 404)
   }
 
@@ -36,7 +36,7 @@ export const DELETE = requireHouseSit(async (req: NextRequest, ctx, user) => {
     } catch {
       return err('Replacement card is not available for this account', 404)
     }
-    if (typeof replacement.customer !== 'string' || replacement.customer !== client.stripeCustomerId) {
+    if (typeof replacement.customer !== 'string' || replacement.customer !== houseSit.stripeCustomerId) {
       return err('Replacement card is not available for this account', 403)
     }
     if (replacementPaymentMethodId === paymentMethodId) {
@@ -47,7 +47,7 @@ export const DELETE = requireHouseSit(async (req: NextRequest, ctx, user) => {
 
   const bookings = await db.booking.findMany({
     where: {
-      clientId: client.id,
+      houseSitId: houseSit.id,
       OR: [
         { status: { in: ['pending', 'accepted', 'confirmed', 'in_progress', 'disputed'] } },
         { status: 'completed' },

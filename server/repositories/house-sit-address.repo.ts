@@ -1,8 +1,8 @@
 import { db } from '../db'
 
-type ClientAddressRow = {
+type HouseSitAddressRow = {
   id: string
-  client_id: string
+  house_sit_id: string
   label: string | null
   address_line1: string
   city: string
@@ -17,14 +17,14 @@ type ClientAddressRow = {
   updated_at: Date
 }
 
-export const clientAddressRepo = {
-  listByClientId: async (clientId: string) => {
+export const houseSitAddressRepo = {
+  listByHouseSitId: async (houseSitId: string) => {
     try {
-      return await db.$queryRawUnsafe<ClientAddressRow[]>(
+      return await db.$queryRawUnsafe<HouseSitAddressRow[]>(
         `
         SELECT
           id,
-          client_id,
+          house_sit_id,
           label,
           address_line1,
           city,
@@ -37,25 +37,25 @@ export const clientAddressRepo = {
           is_default,
           created_at,
           updated_at
-        FROM public.client_addresses
-        WHERE client_id = $1::uuid
+        FROM public.house_sit_addresses
+        WHERE house_sit_id = $1::uuid
         ORDER BY is_default DESC, updated_at DESC
         `,
-        clientId,
+        houseSitId,
       )
     } catch {
       const rows = await db.$queryRawUnsafe<any[]>(
         `
         SELECT *
-        FROM public.client_addresses
-        WHERE client_id = $1::uuid
+        FROM public.house_sit_addresses
+        WHERE house_sit_id = $1::uuid
         ORDER BY id DESC
         `,
-        clientId,
+        houseSitId,
       )
       return rows.map((row) => ({
         id: row.id,
-        client_id: row.client_id,
+        house_sit_id: row.house_sit_id,
         label: row.label ?? null,
         address_line1: row.address_line1,
         city: row.city,
@@ -73,7 +73,7 @@ export const clientAddressRepo = {
   },
 
   create: async (data: {
-    clientId: string
+    houseSitId: string
     label?: string
     addressLine1: string
     city: string
@@ -86,10 +86,10 @@ export const clientAddressRepo = {
     isDefault?: boolean
   }) => {
     try {
-      const rows = await db.$queryRawUnsafe<ClientAddressRow[]>(
+      const rows = await db.$queryRawUnsafe<HouseSitAddressRow[]>(
         `
-      INSERT INTO public.client_addresses (
-        client_id,
+      INSERT INTO public.house_sit_addresses (
+        house_sit_id,
           label,
           address_line1,
           city,
@@ -105,7 +105,7 @@ export const clientAddressRepo = {
       )
         RETURNING
           id,
-          client_id,
+          house_sit_id,
           label,
           address_line1,
           city,
@@ -119,7 +119,7 @@ export const clientAddressRepo = {
           created_at,
           updated_at
         `,
-        data.clientId,
+        data.houseSitId,
         data.label ?? null,
         data.addressLine1,
         data.city,
@@ -135,8 +135,8 @@ export const clientAddressRepo = {
     } catch {
       const insertedRows = await db.$queryRawUnsafe<any[]>(
         `
-        INSERT INTO public.client_addresses (
-          client_id,
+        INSERT INTO public.house_sit_addresses (
+          house_sit_id,
           address_line1,
           city,
           postcode,
@@ -148,7 +148,7 @@ export const clientAddressRepo = {
         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
         `,
-        data.clientId,
+        data.houseSitId,
         data.addressLine1,
         data.city,
         data.postcode,
@@ -160,7 +160,7 @@ export const clientAddressRepo = {
       const row = insertedRows[0]
       return {
         id: row.id,
-        client_id: row.client_id,
+        house_sit_id: row.house_sit_id,
         label: row.label ?? null,
         address_line1: row.address_line1,
         city: row.city,
@@ -173,27 +173,27 @@ export const clientAddressRepo = {
         is_default: Boolean(row.is_default),
         created_at: row.created_at ?? new Date(),
         updated_at: row.updated_at ?? new Date(),
-      } as ClientAddressRow
+      } as HouseSitAddressRow
     }
   },
 
-  clearDefaultForClient: (clientId: string) =>
+  clearDefaultForClient: (houseSitId: string) =>
     db.$executeRawUnsafe(
       `
-      UPDATE public.client_addresses
+      UPDATE public.house_sit_addresses
       SET is_default = FALSE
-      WHERE client_id = $1::uuid
+      WHERE house_sit_id = $1::uuid
         AND is_default = TRUE
       `,
-      clientId,
+      houseSitId,
     ),
 
   findById: (id: string) =>
-    db.$queryRawUnsafe<ClientAddressRow[]>(
+    db.$queryRawUnsafe<HouseSitAddressRow[]>(
       `
       SELECT
         id,
-        client_id,
+        house_sit_id,
         label,
         address_line1,
         city,
@@ -206,7 +206,7 @@ export const clientAddressRepo = {
         is_default,
         created_at,
         updated_at
-      FROM public.client_addresses
+      FROM public.house_sit_addresses
       WHERE id = $1::uuid
       LIMIT 1
       `,
@@ -228,9 +228,9 @@ export const clientAddressRepo = {
       isDefault?: boolean
     },
   ) =>
-    db.$queryRawUnsafe<ClientAddressRow[]>(
+    db.$queryRawUnsafe<HouseSitAddressRow[]>(
       `
-      UPDATE public.client_addresses
+      UPDATE public.house_sit_addresses
       SET
         label = COALESCE($2, label),
         address_line1 = COALESCE($3, address_line1),
@@ -246,7 +246,7 @@ export const clientAddressRepo = {
       WHERE id = $1::uuid
       RETURNING
         id,
-        client_id,
+        house_sit_id,
         label,
         address_line1,
         city,
@@ -276,7 +276,7 @@ export const clientAddressRepo = {
   deleteById: (id: string) =>
     db.$executeRawUnsafe(
       `
-      DELETE FROM public.client_addresses
+      DELETE FROM public.house_sit_addresses
       WHERE id = $1::uuid
       `,
       id,

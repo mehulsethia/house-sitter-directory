@@ -12,14 +12,14 @@ export const GET = requireAuth(async (_req, ctx, user) => {
   const booking = await bookingRepo.findById(id)
   if (!booking) return err('Booking not found', 404)
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
   const isParty =
-    (client && booking.clientId === client.id) ||
-    (cleaner && booking.cleanerId === cleaner.id) ||
+    (houseSit && booking.houseSitId === houseSit.id) ||
+    (houseSitter && booking.houseSitterId === houseSitter.id) ||
     user.role === 'admin'
 
   if (!isParty) return err('Forbidden', 403)
 
-  return ok(sanitizeBookingForRole(booking as any, user.role as 'client' | 'cleaner' | 'admin'))
+  return ok(sanitizeBookingForRole(booking as any, user.role as 'house_sit' | 'house_sitter' | 'admin'))
 })

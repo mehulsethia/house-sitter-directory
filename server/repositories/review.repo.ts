@@ -3,12 +3,12 @@ import { db } from '../db'
 const reviewSelect = {
   id: true,
   bookingId: true,
-  cleanerId: true,
-  clientId: true,
+  houseSitterId: true,
+  houseSitId: true,
   rating: true,
   comment: true,
-  cleanerReply: true,
-  cleanerReplyAt: true,
+  houseSitterReply: true,
+  houseSitterReplyAt: true,
   isPublic: true,
   createdAt: true,
   updatedAt: true,
@@ -18,25 +18,25 @@ export const reviewRepo = {
   findByBookingId: (bookingId: string) =>
     db.review.findUnique({ where: { bookingId }, select: reviewSelect }),
 
-  findByCleanerId: (cleanerId: string, page: number, pageSize: number) =>
+  findByCleanerId: (houseSitterId: string, page: number, pageSize: number) =>
     Promise.all([
       db.review.findMany({
-        where: { cleanerId, isPublic: true },
+        where: { houseSitterId, isPublic: true },
         select: {
           ...reviewSelect,
-          client: { include: { user: true } },
+          houseSit: { include: { user: true } },
         },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
       }),
-      db.review.count({ where: { cleanerId, isPublic: true } }),
+      db.review.count({ where: { houseSitterId, isPublic: true } }),
     ]),
 
   create: (data: {
     bookingId: string
-    cleanerId: string
-    clientId: string
+    houseSitterId: string
+    houseSitId: string
     rating: number
     comment?: string
     isPublic?: boolean
@@ -51,7 +51,7 @@ export const reviewRepo = {
       where: { id },
       select: {
         ...reviewSelect,
-        cleaner: { select: { id: true, userId: true } },
+        houseSitter: { select: { id: true, userId: true } },
       },
     }),
 }

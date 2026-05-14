@@ -110,12 +110,12 @@ export const googleCalendarService = {
   },
 
   async syncCleanerUpcomingConfirmedBookings(userId: string) {
-    const cleaner = await houseSitterRepo.findByUserId(userId)
-    if (!cleaner) return { synced: 0 }
+    const houseSitter = await houseSitterRepo.findByUserId(userId)
+    if (!houseSitter) return { synced: 0 }
 
     const bookings = await db.booking.findMany({
       where: {
-        cleanerId: cleaner.id,
+        houseSitterId: houseSitter.id,
         status: { in: [...CALENDAR_SYNC_STATUSES] },
         scheduledEnd: { gte: new Date() },
       },
@@ -135,8 +135,8 @@ export const googleCalendarService = {
     const booking = await db.booking.findUnique({
       where: { id: bookingId },
       include: {
-        cleaner: { include: { user: true } },
-        client: { include: { user: true } },
+        houseSitter: { include: { user: true } },
+        houseSit: { include: { user: true } },
       },
     })
     if (!booking) return false
@@ -145,14 +145,14 @@ export const googleCalendarService = {
     }
     if (booking.scheduledEnd.getTime() < Date.now()) return false
 
-    const token = await db.googleCalendarToken.findUnique({ where: { userId: booking.cleaner.userId } })
+    const token = await db.googleCalendarToken.findUnique({ where: { userId: booking.houseSitter.userId } })
     if (!token) return false
 
     const eventPayload = {
       summary: `MaidHive Booking: ${formatServiceType(booking.serviceType)}`,
       description: [
         `Booking ID: ${booking.id}`,
-        `Client: ${booking.client.user.name ?? booking.client.user.email}`,
+        `HouseSit: ${booking.houseSit.user.name ?? booking.houseSit.user.email}`,
         `Address: ${booking.address}, ${booking.city}, ${booking.postcode}`,
         booking.specialInstructions ? `Notes: ${booking.specialInstructions}` : null,
       ]
@@ -176,11 +176,11 @@ export const googleCalendarService = {
     }
 
     const calendarId = encodeURIComponent(token.calendarId || GOOGLE_DEFAULT_CALENDAR_ID)
-    const existingEventId = booking.cleanerGcalEventId
+    const existingEventId = booking.houseSitterGcalEventId
 
     if (existingEventId) {
       const updateUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${encodeURIComponent(existingEventId)}`
-      const updated = await requestCalendarJsonWithFallback(booking.cleaner.userId, updateUrl, {
+      const updated = await requestCalendarJsonWithFallback(booking.houseSitter.userId, updateUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventPayload),
@@ -191,7 +191,7 @@ export const googleCalendarService = {
     }
 
     const createUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`
-    const created = await requestCalendarJsonWithFallback(booking.cleaner.userId, createUrl, {
+    const created = await requestCalendarJsonWithFallback(booking.houseSitter.userId, createUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventPayload),
@@ -201,7 +201,7 @@ export const googleCalendarService = {
 
     await db.booking.update({
       where: { id: booking.id },
-      data: { cleanerGcalEventId: String(created.json.id) },
+      data: { houseSitterGcalEventId: String(created.json.id) },
     })
 
     return true
@@ -212,28 +212,28 @@ export const googleCalendarService = {
       where: { id: bookingId },
       select: {
         id: true,
-        cleanerGcalEventId: true,
-        cleaner: { select: { userId: true } },
+        houseSitterGcalEventId: true,
+        houseSitter: { select: { userId: true } },
       },
     })
-    if (!booking?.cleanerGcalEventId) return
+    if (!booking?.houseSitterGcalEventId) return
 
-    const token = await db.googleCalendarToken.findUnique({ where: { userId: booking.cleaner.userId } })
+    const token = await db.googleCalendarToken.findUnique({ where: { userId: booking.houseSitter.userId } })
     if (!token) {
       await db.booking.update({
         where: { id: booking.id },
-        data: { cleanerGcalEventId: null },
+        data: { houseSitterGcalEventId: null },
       })
       return
     }
 
     const calendarId = encodeURIComponent(token.calendarId || GOOGLE_DEFAULT_CALENDAR_ID)
-    const deleteUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${encodeURIComponent(booking.cleanerGcalEventId)}`
-    await requestCalendarJsonWithFallback(booking.cleaner.userId, deleteUrl, { method: 'DELETE' })
+    const deleteUrl = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${encodeURIComponent(booking.houseSitterGcalEventId)}`
+    await requestCalendarJsonWithFallback(booking.houseSitter.userId, deleteUrl, { method: 'DELETE' })
 
     await db.booking.update({
       where: { id: booking.id },
-      data: { cleanerGcalEventId: null },
+      data: { houseSitterGcalEventId: null },
     })
   },
 }

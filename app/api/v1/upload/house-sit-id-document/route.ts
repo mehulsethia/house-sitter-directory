@@ -13,7 +13,7 @@ const supabaseAdmin = createClient(
 const HOUSE_SIT_ID_BUCKET = (
   process.env.SUPABASE_HOUSE_SIT_ID_BUCKET ??
   process.env.SUPABASE_CLIENT_ID_BUCKET ??
-  'client-ids'
+  'houseSit-ids'
 ).trim()
 const ALLOWED_MIME = new Set(DOCUMENT_MIME_TYPES)
 const EXT_BY_MIME: Record<string, string> = {
@@ -44,9 +44,9 @@ async function ensureBucketExists() {
 }
 
 export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client) {
-    return NextResponse.json({ success: false, message: 'Client profile not found' }, { status: 404 })
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) {
+    return NextResponse.json({ success: false, message: 'HouseSit profile not found' }, { status: 404 })
   }
 
   const formData = await req.formData()
@@ -70,7 +70,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     await ensureBucketExists()
   } catch (bucketError: any) {
     return NextResponse.json(
-      { success: false, message: bucketError?.message ?? 'Failed to initialize client ID storage bucket' },
+      { success: false, message: bucketError?.message ?? 'Failed to initialize houseSit ID storage bucket' },
       { status: 500 },
     )
   }
@@ -86,7 +86,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   const { data: urlData } = supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).getPublicUrl(path)
   const publicUrl = urlData.publicUrl
 
-  await houseSitRepo.update(client.id, {
+  await houseSitRepo.update(houseSit.id, {
     idFileName: file.name,
     idFileUrl: publicUrl,
     idSubmittedAt: new Date(),

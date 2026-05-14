@@ -2,11 +2,11 @@ import { NextRequest } from 'next/server'
 import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { db } from '@/server/db'
 import { ok, err } from '@/server/response'
-import { cleanerSearchSchema } from '@/server/schemas/house-sitter.schema'
+import { houseSitterSearchSchema } from '@/server/schemas/house-sitter.schema'
 
 export async function GET(req: NextRequest) {
   const params = Object.fromEntries(req.nextUrl.searchParams)
-  const parsed = cleanerSearchSchema.safeParse(params)
+  const parsed = houseSitterSearchSchema.safeParse(params)
   if (!parsed.success) return err(parsed.error.message, 422)
 
   const {
@@ -28,11 +28,11 @@ export async function GET(req: NextRequest) {
         .filter(Boolean)
     : undefined
 
-  const [cleaners, total] = await houseSitterRepo.search({
+  const [house_sitters, total] = await houseSitterRepo.search({
     city,
     availability,
     transportMode: transport_mode,
-    cleaningSupplies: brings_own_supplies === 'yes' ? 'own_supplies' : brings_own_supplies === 'no' ? 'client_supplies' : undefined,
+    cleaningSupplies: brings_own_supplies === 'yes' ? 'own_supplies' : brings_own_supplies === 'no' ? 'house_sit_supplies' : undefined,
     servicesOffered,
     minRating: min_rating,
     minPrice: min_price,
@@ -40,56 +40,56 @@ export async function GET(req: NextRequest) {
     page,
     pageSize: page_size,
   })
-  const cleanerIds = cleaners.map((cleaner) => cleaner.id)
-  const completedJobsAgg = cleanerIds.length
+  const houseSitterIds = house_sitters.map((houseSitter) => houseSitter.id)
+  const completedJobsAgg = houseSitterIds.length
     ? await db.booking.groupBy({
-      by: ['cleanerId'],
+      by: ['houseSitterId'],
       where: {
-        cleanerId: { in: cleanerIds },
+        houseSitterId: { in: houseSitterIds },
         status: { in: ['completed', 'disputed'] },
       },
       _count: { _all: true },
     })
     : []
-  const reviewsAgg = cleanerIds.length
+  const reviewsAgg = houseSitterIds.length
     ? await db.review.groupBy({
-      by: ['cleanerId'],
-      where: { cleanerId: { in: cleanerIds } },
+      by: ['houseSitterId'],
+      where: { houseSitterId: { in: houseSitterIds } },
       _avg: { rating: true },
     })
     : []
   const completedJobsByCleanerId = new Map<string, number>(
-    completedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+    completedJobsAgg.map((entry) => [entry.houseSitterId, entry._count._all]),
   )
   const avgRatingByCleanerId = new Map<string, number | null>(
-    reviewsAgg.map((entry) => [entry.cleanerId, entry._avg.rating ?? null]),
+    reviewsAgg.map((entry) => [entry.houseSitterId, entry._avg.rating ?? null]),
   )
 
-  const mapped = cleaners.map((cleaner) => ({
-    id: cleaner.id,
-    user_id: cleaner.userId,
-    hourly_rate: Number(cleaner.hourlyRate),
-    total_jobs: completedJobsByCleanerId.get(cleaner.id) ?? 0,
-    average_rating: avgRatingByCleanerId.get(cleaner.id) ?? null,
-    years_experience: cleaner.yearsExperience,
-    transport_mode: cleaner.transportMode,
-    cleaning_supplies: cleaner.cleaningSupplies,
-    created_at: cleaner.createdAt,
-    bio: cleaner.bio,
-    skills: cleaner.skills,
-    profile_image_url: cleaner.profileImageUrl,
-    user: cleaner.user
+  const mapped = house_sitters.map((houseSitter) => ({
+    id: houseSitter.id,
+    user_id: houseSitter.userId,
+    hourly_rate: Number(houseSitter.hourlyRate),
+    total_jobs: completedJobsByCleanerId.get(houseSitter.id) ?? 0,
+    average_rating: avgRatingByCleanerId.get(houseSitter.id) ?? null,
+    years_experience: houseSitter.yearsExperience,
+    transport_mode: houseSitter.transportMode,
+    cleaning_supplies: houseSitter.cleaningSupplies,
+    created_at: houseSitter.createdAt,
+    bio: houseSitter.bio,
+    skills: houseSitter.skills,
+    profile_image_url: houseSitter.profileImageUrl,
+    user: houseSitter.user
       ? {
-          id: cleaner.user.id,
-          name: cleaner.user.name,
-          avatar_url: cleaner.user.avatarUrl,
+          id: houseSitter.user.id,
+          name: houseSitter.user.name,
+          avatar_url: houseSitter.user.avatarUrl,
         }
       : undefined,
-    service_areas: cleaner.serviceAreas.map((area) => ({
+    service_areas: houseSitter.serviceAreas.map((area) => ({
       city: area.city,
       postcode_prefix: area.postcodePrefix,
       radius_km: area.radiusKm ? Number(area.radiusKm) : undefined,
     })),
   }))
-  return ok({ cleaners: mapped, total, page, page_size })
+  return ok({ house_sitters: mapped, total, page, page_size })
 }

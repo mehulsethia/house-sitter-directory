@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { formatDate } from '@/lib/utils'
-import type { BookingRead, ClientDispute } from '@/types'
+import type { BookingRead, HouseSitDispute } from '@/types'
 import { toast } from 'sonner'
 
 type ReportStatus = 'open' | 'under_review' | 'resolved' | 'closed'
@@ -22,7 +22,7 @@ const DISPUTE_WINDOW_HOURS = Number(process.env.NEXT_PUBLIC_DISPUTE_WINDOW_HOURS
 const DISPUTE_WINDOW_MS = DISPUTE_WINDOW_HOURS * 60 * 60 * 1000
 
 const ISSUE_OPTIONS = [
-  { value: 'cleaner_didnt_arrive', label: "House Sitter didn't arrive" },
+  { value: 'house_sitter_didnt_arrive', label: "House Sitter didn't arrive" },
   { value: 'service_not_completed', label: 'Service not completed as expected' },
   { value: 'property_damage_safety', label: 'Property damage or safety issue' },
   { value: 'other_issue', label: 'Other issue' },
@@ -55,14 +55,14 @@ function getDisputeResolutionNote(dispute: any) {
   return dispute?.resolution_note ?? dispute?.resolutionNote ?? ''
 }
 
-function ClientReportPageContent() {
+function HouseSitReportPageContent() {
   const searchParams = useSearchParams()
   const bookingFromQuery = searchParams.get('booking') ?? ''
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [bookings, setBookings] = useState<BookingRead[]>([])
-  const [disputes, setDisputes] = useState<ClientDispute[]>([])
+  const [disputes, setDisputes] = useState<HouseSitDispute[]>([])
 
   const [bookingId, setBookingId] = useState('')
   const [issueType, setIssueType] = useState<(typeof ISSUE_OPTIONS)[number]['value']>('service_not_completed')
@@ -80,7 +80,7 @@ function ClientReportPageContent() {
     try {
       const [bookingRes, disputeRes] = await Promise.all([bookingsApi.my(), disputesApi.listMine()])
       const bookingItems = bookingRes.data?.items ?? []
-      const disputeItems = (disputeRes.data?.items ?? []) as ClientDispute[]
+      const disputeItems = (disputeRes.data?.items ?? []) as HouseSitDispute[]
 
       startTransition(() => {
         setBookings(bookingItems)
@@ -152,7 +152,7 @@ function ClientReportPageContent() {
     }
     if (!issueType) return toast.error('Select a report reason.')
     if (!selectedBooking) return toast.error('Invalid booking selection.')
-    if (issueType === 'cleaner_didnt_arrive') {
+    if (issueType === 'house_sitter_didnt_arrive') {
       const canReportNoShowAt = new Date(selectedBooking.scheduled_start).getTime() + 30 * 60 * 1000
       if (Date.now() < canReportNoShowAt) {
         return toast.error('House Sitter no-show can be reported 30 minutes after the scheduled start time.')
@@ -241,10 +241,10 @@ function ClientReportPageContent() {
 
   return (
     <>
-      <div className="client-report-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-report-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -294,7 +294,7 @@ function ClientReportPageContent() {
                   <Select value={bookingId} onChange={(event) => setBookingId(event.target.value)} className="mt-1">
                     {eligibleBookings.map((booking) => (
                       <option key={booking.id} value={booking.id}>
-                        {booking.cleaner?.user?.name ?? 'House Sitter'} · {formatDate(booking.scheduled_start)} · {booking.city}
+                        {booking.houseSitter?.user?.name ?? 'House Sitter'} · {formatDate(booking.scheduled_start)} · {booking.city}
                       </option>
                     ))}
                   </Select>
@@ -304,7 +304,7 @@ function ClientReportPageContent() {
                   <Label>Report reason</Label>
                   <Select value={issueType} onChange={(event) => setIssueType(event.target.value as (typeof ISSUE_OPTIONS)[number]['value'])} className="mt-1">
                     {ISSUE_OPTIONS.filter((option) =>
-                      option.value === 'cleaner_didnt_arrive' ? canUseCleanerNoShowOption : true,
+                      option.value === 'house_sitter_didnt_arrive' ? canUseCleanerNoShowOption : true,
                     ).map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -464,13 +464,13 @@ function ClientReportPageContent() {
       </Dialog>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -483,7 +483,7 @@ function ClientReportPageContent() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:
@@ -571,10 +571,10 @@ function StatTile({
   )
 }
 
-export default function ClientReportPage() {
+export default function HouseSitReportPage() {
   return (
     <Suspense fallback={<ReportPageSkeleton />}>
-      <ClientReportPageContent />
+      <HouseSitReportPageContent />
     </Suspense>
   )
 }

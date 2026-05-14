@@ -17,9 +17,9 @@ import type { BookingRead, BookingStatus } from '@/types'
 import { toast } from 'sonner'
 
 
-type ClientStatusFilter = 'all' | BookingStatus | 'awaiting_client_response'
+type HouseSitStatusFilter = 'all' | BookingStatus | 'awaiting_client_response'
 
-const STATUS_FILTERS: Array<{ key: ClientStatusFilter; label: string }> = [
+const STATUS_FILTERS: Array<{ key: HouseSitStatusFilter; label: string }> = [
   { key: 'all', label: 'All' },
   { key: 'awaiting_client_response', label: 'Awaiting Homeowner Response' },
   { key: 'pending', label: 'Pending Response / Payment Required' },
@@ -60,13 +60,13 @@ function isOverdueUnpaid(booking: BookingRead) {
   return new Date(booking.scheduled_start).getTime() <= Date.now()
 }
 
-export default function ClientBookingsPage() {
+export default function HouseSitBookingsPage() {
   const [loading, setLoading] = useState(true)
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [bookingDisputeStatus, setBookingDisputeStatus] = useState<Map<string, string>>(new Map())
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<ClientStatusFilter>('all')
+  const [filter, setFilter] = useState<HouseSitStatusFilter>('all')
   const [dashboardFilter, setDashboardFilter] = useState<DashboardStatusFilter | null>(null)
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
   const [cancelTargetBookingId, setCancelTargetBookingId] = useState<string | null>(null)
@@ -101,11 +101,11 @@ export default function ClientBookingsPage() {
       await bookingsApi.cancel(
         bookingId,
         isDraftLike
-          ? 'Cancelled by client while in draft payment-required state'
-          : 'Cancelled by client while pending house sitter acceptance',
+          ? 'Cancelled by houseSit while in draft payment-required state'
+          : 'Cancelled by houseSit while pending house sitter acceptance',
       )
-      if (booking?.cleaner_id) {
-        await bookingsApi.clearFlowDraft(booking.cleaner_id).catch(() => null)
+      if (booking?.house_sitter_id) {
+        await bookingsApi.clearFlowDraft(booking.house_sitter_id).catch(() => null)
       }
       toast.success(isDraftLike ? 'Draft booking cancelled.' : 'Booking request cancelled.')
       await loadBookings()
@@ -145,7 +145,7 @@ export default function ClientBookingsPage() {
     if (dashboardFilter === 'closed' && !['cancelled', 'declined', 'expired'].includes(booking.status)) return false
     if (filter !== 'all') {
       if (filter === 'awaiting_client_response') {
-        const awaitingClient = booking.status === 'pending' && booking.proposal_by === 'cleaner'
+        const awaitingClient = booking.status === 'pending' && booking.proposal_by === 'house_sitter'
         if (!awaitingClient) return false
       } else if (filter === 'pending') {
         const isPendingOrPaymentRequired = booking.status === 'draft' || booking.status === 'pending'
@@ -157,10 +157,10 @@ export default function ClientBookingsPage() {
     if (!query.trim()) return true
 
     const q = query.toLowerCase()
-    const cleanerName = (booking.cleaner?.user?.name ?? '').toLowerCase()
+    const houseSitterName = (booking.houseSitter?.user?.name ?? '').toLowerCase()
 
     return (
-      cleanerName.includes(q) ||
+      houseSitterName.includes(q) ||
       getBookingDisplayTitle(booking).toLowerCase().includes(q) ||
       booking.city.toLowerCase().includes(q) ||
       booking.postcode.toLowerCase().includes(q)
@@ -181,10 +181,10 @@ export default function ClientBookingsPage() {
 
   return (
     <>
-      <div className="client-bookings-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-bookings-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -231,7 +231,7 @@ export default function ClientBookingsPage() {
                 value={filter}
                 onChange={(event) => {
                   setDashboardFilter(null)
-                  setFilter(event.target.value as ClientStatusFilter)
+                  setFilter(event.target.value as HouseSitStatusFilter)
                 }}
                 className="h-11 w-full rounded-full border-slate-300 bg-white px-4 sm:w-[220px] sm:shrink-0"
                 aria-label="Filter bookings by status"
@@ -286,14 +286,14 @@ export default function ClientBookingsPage() {
                           <p className={`text-lg font-semibold tracking-[-0.01em] text-slate-900`}>
                             {getBookingDisplayTitle(booking)}
                           </p>
-                          <p className="text-sm text-slate-600">{booking.cleaner?.user?.name ?? 'House Sitter'}</p>
+                          <p className="text-sm text-slate-600">{booking.houseSitter?.user?.name ?? 'House Sitter'}</p>
                           <p className={`mt-1 text-[0.72rem] tracking-wide text-slate-500`}>
                             {formatDate(booking.scheduled_start)}
                           </p>
                           <p className="text-xs text-slate-500">{booking.address}, {booking.city}, {booking.postcode}</p>
                           {booking.status === 'pending' && booking.proposed_start && booking.proposal_by && (
                             <p className="mt-1 rounded-lg border border-[#e1d4c6] bg-[#f8f3ee] px-2 py-1 text-xs text-[#5a4a3b]">
-                              {booking.proposal_by === 'cleaner'
+                              {booking.proposal_by === 'house_sitter'
                                 ? `House Sitter proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}.`
                                 : `You proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start)}. Waiting for house sitter response.`}
                             </p>
@@ -317,7 +317,7 @@ export default function ClientBookingsPage() {
                         </Link>
                         {canContinuePayment && (
                           <Link
-                            href={`/house-sits/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`}
+                            href={`/house-sits/book/${booking.house_sitter_id}?continue=1&bookingId=${booking.id}&step=3`}
                             className="inline-flex h-8 items-center rounded-full bg-[#5a4a3b] px-3 text-xs font-semibold text-white transition hover:bg-[#4b3d31]"
                           >
                             Continue payment
@@ -372,7 +372,7 @@ export default function ClientBookingsPage() {
                         {(booking.status === 'expired' || booking.status === 'cancelled' || booking.status === 'declined' || isOverdueDraftState) && (
                           <>
                             <Link
-                              href={`/house-sits/book/${booking.cleaner_id}?reset=1&step=1`}
+                              href={`/house-sits/book/${booking.house_sitter_id}?reset=1&step=1`}
                               className="inline-flex h-8 items-center rounded-full bg-[#5a4a3b] px-3 text-xs font-semibold text-white transition hover:bg-[#4b3d31]"
                             >
                               Book again
@@ -435,13 +435,13 @@ export default function ClientBookingsPage() {
       </Dialog>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -454,7 +454,7 @@ export default function ClientBookingsPage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:

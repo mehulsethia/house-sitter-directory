@@ -1,20 +1,20 @@
 import { db } from '../db'
 
-export const clientFavoriteRepo = {
-  listCleanerIdsByClientId: async (clientId: string): Promise<string[]> => {
-    const rows = await db.clientFavorite.findMany({
-      where: { clientId },
-      select: { cleanerId: true },
+export const houseSitFavoriteRepo = {
+  listHouseSitterIdsByHouseSitId: async (houseSitId: string): Promise<string[]> => {
+    const rows = await db.houseSitFavorite.findMany({
+      where: { houseSitId },
+      select: { houseSitterId: true },
       orderBy: { createdAt: 'desc' },
     })
-    return rows.map((row) => row.cleanerId)
+    return rows.map((row) => row.houseSitterId)
   },
 
-  listByClientId: (clientId: string) =>
-    db.clientFavorite.findMany({
-      where: { clientId },
+  listByHouseSitId: (houseSitId: string) =>
+    db.houseSitFavorite.findMany({
+      where: { houseSitId },
       include: {
-        cleaner: {
+        houseSitter: {
           include: {
             user: true,
             serviceAreas: true,
@@ -24,21 +24,20 @@ export const clientFavoriteRepo = {
       orderBy: { createdAt: 'desc' },
     }),
 
-  add: (clientId: string, cleanerId: string) =>
-    db.clientFavorite.upsert({
+  add: (houseSitId: string, houseSitterId: string) =>
+    db.houseSitFavorite.upsert({
       where: {
-        clientId_cleanerId: {
-          clientId,
-          cleanerId,
+        houseSitId_houseSitterId: {
+          houseSitId,
+          houseSitterId,
         },
       },
       update: {},
-      create: { clientId, cleanerId },
+      create: { houseSitId, houseSitterId },
     }),
 
-  remove: (clientId: string, cleanerId: string) =>
-    db.clientFavorite.deleteMany({
-      where: { clientId, cleanerId },
+  remove: (houseSitId: string, houseSitterId: string) =>
+    db.houseSitFavorite.deleteMany({
+      where: { houseSitId, houseSitterId },
     }),
 }
-

@@ -3,6 +3,6 @@ import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { ok } from '@/server/response'
 
 export const GET = requireAdmin(async () => {
-  const cleaners = await houseSitterRepo.listPending()
-  return ok(cleaners)
+  const house_sitters = await houseSitterRepo.listPending()
+  return ok(house_sitters)
 })

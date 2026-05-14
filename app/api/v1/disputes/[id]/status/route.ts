@@ -21,14 +21,14 @@ export const PATCH = requireAdmin(async (req: NextRequest, ctx) => {
     const booking = await bookingRepo.findById(dispute.bookingId)
     if (booking) {
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'dispute_under_review',
         title: 'Dispute under review',
         body: 'MaidHive is actively reviewing this dispute.',
         data: { booking_id: booking.id, dispute_id: updated.id },
       })
       await pushInAppNotification({
-        userId: booking.cleaner.userId,
+        userId: booking.houseSitter.userId,
         type: 'dispute_under_review',
         title: 'Dispute under review',
         body: 'MaidHive is actively reviewing this dispute.',

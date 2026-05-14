@@ -11,28 +11,28 @@ datasource db {
 }
 
 model User {
-  id        String    @id @db.Uuid
-  email     String    @unique
-  name      String
-  phone     String?
+  id              String    @id @db.Uuid
+  email           String    @unique
+  name            String
+  phone           String?
   phoneVerifiedAt DateTime? @map("phone_verified_at") @db.Timestamptz(6)
-  role      String    // 'client' | 'cleaner' | 'admin'
-  avatarUrl String?   @map("avatar_url")
-  isActive  Boolean   @default(true) @map("is_active")
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  role            String // 'house_sit' | 'house_sitter' | 'admin'
+  avatarUrl       String?   @map("avatar_url")
+  isActive        Boolean   @default(true) @map("is_active")
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  cleaner             Cleaner?
-  client              Client?
-  sentMessages        Message[]          @relation("MessageSender")
-  notifications       Notification[]
-  googleCalendarToken GoogleCalendarToken?
-  cancelledBookings   Booking[]          @relation("BookingCancelledBy")
-  raisedDisputes      Dispute[]          @relation("DisputeRaisedBy")
-  resolvedDisputes    Dispute[]          @relation("DisputeResolvedBy")
-  approvedCleaners    Cleaner[]          @relation("CleanerApprovedBy")
-  issuedStrikes       CleanerStrike[]    @relation("StrikeIssuedBy")
+  houseSitter             HouseSitter?
+  houseSit                HouseSit?
+  sentMessages            Message[]                @relation("MessageSender")
+  notifications           Notification[]
+  googleCalendarToken     GoogleCalendarToken?
+  cancelledBookings       Booking[]                @relation("BookingCancelledBy")
+  raisedDisputes          Dispute[]                @relation("DisputeRaisedBy")
+  resolvedDisputes        Dispute[]                @relation("DisputeResolvedBy")
+  approvedHouseSitters    HouseSitter[]            @relation("HouseSitterApprovedBy")
+  issuedStrikes           HouseSitterStrike[]      @relation("StrikeIssuedBy")
   phoneVerificationEvents PhoneVerificationEvent[]
 
   @@map("users")
@@ -55,64 +55,64 @@ model PhoneVerificationEvent {
   @@schema("public")
 }
 
-model Cleaner {
-  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                   String    @unique @map("user_id") @db.Uuid
-  bio                      String?
-  profileImageUrl          String?   @map("profile_image_url")
-  skills                   String[]  @default([])
-  cleaningSupplies         String?   @map("cleaning_supplies") // own_supplies|client_supplies
-  yearsExperience          Int       @default(0) @map("years_experience")
-  hourlyRate               Decimal   @map("hourly_rate") @db.Decimal(10, 2)
-  transportMode            String?   @map("transport_mode")
-  transportPickupLocation  String?   @map("transport_pickup_location")
-  idType                   String?   @map("id_type")
-  idFileName               String?   @map("id_file_name")
-  idFileUrl                String?   @map("id_file_url")
-  petAcceptance            Boolean   @default(false) @map("pet_acceptance")
-  petComfortable           Boolean?  @map("pet_comfortable")
-  workEligibilityAnswer    Boolean?  @map("work_eligibility_answer")
-  workEligibilityConfirmed Boolean   @default(false) @map("work_eligibility_confirmed")
-  termsAccepted            Boolean   @default(false) @map("terms_accepted")
-  cleaningStandardsAccepted Boolean  @default(false) @map("cleaning_standards_accepted")
-  cleaningQuizScore        Int?      @map("cleaning_quiz_score")
-  cleaningQuizPassedAt     DateTime? @map("cleaning_quiz_passed_at") @db.Timestamptz(6)
-  standardsCompleted       Boolean   @default(false) @map("standards_completed")
-  quizPassed               Boolean   @default(false) @map("quiz_passed")
-  quizScore                Int?      @map("quiz_score")
-  onboardingStep           Int       @default(1) @map("onboarding_step")
-  onboardingSkippedStep3   Boolean   @default(false) @map("onboarding_skipped_step3")
-  onboardingSkippedStep4   Boolean   @default(false) @map("onboarding_skipped_step4")
-  onboardingCompletedAt    DateTime? @map("onboarding_completed_at") @db.Timestamptz(6)
-  status                   String    @default("pending") // pending|approved|rejected|suspended
-  rejectionReason          String?   @map("rejection_reason")
-  approvedAt               DateTime? @map("approved_at") @db.Timestamptz(6)
-  approvedBy               String?   @map("approved_by") @db.Uuid
-  profileComplete          Boolean   @default(false) @map("profile_complete")
-  identityVerified         Boolean   @default(false) @map("identity_verified")
-  stripeOnboardingComplete Boolean   @default(false) @map("stripe_onboarding_complete")
-  stripeAccountId          String?   @unique @map("stripe_account_id")
-  totalJobs                Int       @default(0) @map("total_jobs")
-  averageRating            Decimal?  @map("average_rating") @db.Decimal(3, 2)
-  createdAt                DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+model HouseSitter {
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                    String    @unique @map("user_id") @db.Uuid
+  bio                       String?
+  profileImageUrl           String?   @map("profile_image_url")
+  skills                    String[]  @default([])
+  cleaningSupplies          String?   @map("cleaning_supplies") // own_supplies|house_sit_supplies
+  yearsExperience           Int       @default(0) @map("years_experience")
+  hourlyRate                Decimal   @map("hourly_rate") @db.Decimal(10, 2)
+  transportMode             String?   @map("transport_mode")
+  transportPickupLocation   String?   @map("transport_pickup_location")
+  idType                    String?   @map("id_type")
+  idFileName                String?   @map("id_file_name")
+  idFileUrl                 String?   @map("id_file_url")
+  petAcceptance             Boolean   @default(false) @map("pet_acceptance")
+  petComfortable            Boolean?  @map("pet_comfortable")
+  workEligibilityAnswer     Boolean?  @map("work_eligibility_answer")
+  workEligibilityConfirmed  Boolean   @default(false) @map("work_eligibility_confirmed")
+  termsAccepted             Boolean   @default(false) @map("terms_accepted")
+  cleaningStandardsAccepted Boolean   @default(false) @map("cleaning_standards_accepted")
+  cleaningQuizScore         Int?      @map("cleaning_quiz_score")
+  cleaningQuizPassedAt      DateTime? @map("cleaning_quiz_passed_at") @db.Timestamptz(6)
+  standardsCompleted        Boolean   @default(false) @map("standards_completed")
+  quizPassed                Boolean   @default(false) @map("quiz_passed")
+  quizScore                 Int?      @map("quiz_score")
+  onboardingStep            Int       @default(1) @map("onboarding_step")
+  onboardingSkippedStep3    Boolean   @default(false) @map("onboarding_skipped_step3")
+  onboardingSkippedStep4    Boolean   @default(false) @map("onboarding_skipped_step4")
+  onboardingCompletedAt     DateTime? @map("onboarding_completed_at") @db.Timestamptz(6)
+  status                    String    @default("pending") // pending|approved|rejected|suspended
+  rejectionReason           String?   @map("rejection_reason")
+  approvedAt                DateTime? @map("approved_at") @db.Timestamptz(6)
+  approvedBy                String?   @map("approved_by") @db.Uuid
+  profileComplete           Boolean   @default(false) @map("profile_complete")
+  identityVerified          Boolean   @default(false) @map("identity_verified")
+  stripeOnboardingComplete  Boolean   @default(false) @map("stripe_onboarding_complete")
+  stripeAccountId           String?   @unique @map("stripe_account_id")
+  totalJobs                 Int       @default(0) @map("total_jobs")
+  averageRating             Decimal?  @map("average_rating") @db.Decimal(3, 2)
+  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  approvedByUser        User?                  @relation("CleanerApprovedBy", fields: [approvedBy], references: [id])
+  approvedByUser        User?                  @relation("HouseSitterApprovedBy", fields: [approvedBy], references: [id])
   serviceAreas          ServiceArea[]
   availabilitySchedules AvailabilitySchedule[]
   blockedTimes          BlockedTime[]
-  bookingsAsClean       Booking[]              @relation("BookingCleaner")
+  bookingsAsHouseSitter Booking[]              @relation("BookingHouseSitter")
   reviews               Review[]
-  strikes               CleanerStrike[]
-  favoritedByClients    ClientFavorite[]
+  strikes               HouseSitterStrike[]
+  favoritedByHouseSits  HouseSitFavorite[]
   bookingFlowDrafts     BookingFlowDraft[]
 
-  @@map("cleaners")
+  @@map("house_sitters")
   @@schema("public")
 }
 
-model Client {
+model HouseSit {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId           String    @unique @map("user_id") @db.Uuid
   stripeCustomerId String?   @unique @map("stripe_customer_id")
@@ -126,64 +126,64 @@ model Client {
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings Booking[] @relation("BookingClient")
-  reviews  Review[]
-  addresses ClientAddress[]
-  favorites ClientFavorite[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings          Booking[]          @relation("BookingHouseSit")
+  reviews           Review[]
+  addresses         HouseSitAddress[]
+  favorites         HouseSitFavorite[]
   bookingFlowDrafts BookingFlowDraft[]
 
-  @@map("clients")
+  @@map("house_sits")
   @@schema("public")
 }
 
-model ClientAddress {
-  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  clientId         String    @map("client_id") @db.Uuid
+model HouseSitAddress {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  houseSitId       String   @map("house_sit_id") @db.Uuid
   label            String?
-  addressLine1     String    @map("address_line1")
+  addressLine1     String   @map("address_line1")
   city             String
   postcode         String
-  country          String    @default("IE")
-  apartmentDetails String?   @map("apartment_details")
-  accessNotes      String    @map("access_notes")
-  latitude         Decimal?  @db.Decimal(9, 6)
-  longitude        Decimal?  @db.Decimal(9, 6)
-  isDefault        Boolean   @default(false) @map("is_default")
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  country          String   @default("IE")
+  apartmentDetails String?  @map("apartment_details")
+  accessNotes      String   @map("access_notes")
+  latitude         Decimal? @db.Decimal(9, 6)
+  longitude        Decimal? @db.Decimal(9, 6)
+  isDefault        Boolean  @default(false) @map("is_default")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  houseSit HouseSit @relation(fields: [houseSitId], references: [id], onDelete: Cascade)
 
-  @@map("client_addresses")
+  @@map("house_sit_addresses")
   @@schema("public")
 }
 
-model ClientFavorite {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  clientId  String   @map("client_id") @db.Uuid
-  cleanerId String   @map("cleaner_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+model HouseSitFavorite {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  houseSitId    String   @map("house_sit_id") @db.Uuid
+  houseSitterId String   @map("house_sitter_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  houseSit    HouseSit    @relation(fields: [houseSitId], references: [id], onDelete: Cascade)
+  houseSitter HouseSitter @relation(fields: [houseSitterId], references: [id], onDelete: Cascade)
 
-  @@unique([clientId, cleanerId])
-  @@index([clientId])
-  @@index([cleanerId])
-  @@map("client_favorites")
+  @@unique([houseSitId, houseSitterId])
+  @@index([houseSitId])
+  @@index([houseSitterId])
+  @@map("house_sit_favorites")
   @@schema("public")
 }
 
 model ServiceArea {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cleanerId      String   @map("cleaner_id") @db.Uuid
+  houseSitterId  String   @map("house_sitter_id") @db.Uuid
   city           String
   postcodePrefix String?  @map("postcode_prefix")
   radiusKm       Decimal? @map("radius_km") @db.Decimal(5, 2)
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  houseSitter HouseSitter @relation(fields: [houseSitterId], references: [id], onDelete: Cascade)
 
   @@map("service_areas")
   @@schema("public")
@@ -191,7 +191,7 @@ model ServiceArea {
 
 model AvailabilitySchedule {
   id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cleanerId     String   @map("cleaner_id") @db.Uuid
+  houseSitterId String   @map("house_sitter_id") @db.Uuid
   dayOfWeek     Int      @map("day_of_week") // 1=Mon ... 7=Sun
   startTime     DateTime @map("start_time") @db.Time(6)
   endTime       DateTime @map("end_time") @db.Time(6)
@@ -200,86 +200,86 @@ model AvailabilitySchedule {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  houseSitter HouseSitter @relation(fields: [houseSitterId], references: [id], onDelete: Cascade)
 
-  @@unique([cleanerId, dayOfWeek, startTime, endTime])
+  @@unique([houseSitterId, dayOfWeek, startTime, endTime])
   @@map("availability_schedules")
   @@schema("public")
 }
 
 model BlockedTime {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cleanerId     String    @map("cleaner_id") @db.Uuid
-  startDatetime DateTime  @map("start_datetime") @db.Timestamptz(6)
-  endDatetime   DateTime  @map("end_datetime") @db.Timestamptz(6)
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  houseSitterId String   @map("house_sitter_id") @db.Uuid
+  startDatetime DateTime @map("start_datetime") @db.Timestamptz(6)
+  endDatetime   DateTime @map("end_datetime") @db.Timestamptz(6)
   reason        String?
-  bookingId     String?   @map("booking_id") @db.Uuid
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  bookingId     String?  @map("booking_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  cleaner Cleaner  @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
-  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  houseSitter HouseSitter @relation(fields: [houseSitterId], references: [id], onDelete: Cascade)
+  booking     Booking?    @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
   @@map("blocked_times")
   @@schema("public")
 }
 
 model Booking {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  clientId            String    @map("client_id") @db.Uuid
-  cleanerId           String    @map("cleaner_id") @db.Uuid
-  status              String    @default("pending")
-  serviceType         String    @map("service_type")
-  specialInstructions String?   @map("special_instructions")
-  address             String
-  city                String
-  postcode            String
-  country             String    @default("IE")
-  apartmentDetails    String?   @map("apartment_details")
-  accessNotes         String    @default("") @map("access_notes")
-  scheduledStart      DateTime  @map("scheduled_start") @db.Timestamptz(6)
-  scheduledEnd        DateTime  @map("scheduled_end") @db.Timestamptz(6)
-  durationHours       Decimal   @map("duration_hours") @db.Decimal(4, 2)
-  hourlyRate          Decimal   @map("hourly_rate") @db.Decimal(10, 2)
-  subtotal            Decimal   @db.Decimal(10, 2)
-  platformFeePct      Decimal   @default(10.00) @map("platform_fee_pct") @db.Decimal(5, 2)
-  platformFee         Decimal   @map("platform_fee") @db.Decimal(10, 2)
-  cleanerPayout       Decimal   @map("cleaner_payout") @db.Decimal(10, 2)
-  totalAmount         Decimal   @map("total_amount") @db.Decimal(10, 2)
-  cancellationReason  String?   @map("cancellation_reason")
-  cancelledBy         String?   @map("cancelled_by") @db.Uuid
-  cancelledAt         DateTime? @map("cancelled_at") @db.Timestamptz(6)
-  acceptedAt          DateTime? @map("accepted_at") @db.Timestamptz(6)
-  confirmedAt         DateTime? @map("confirmed_at") @db.Timestamptz(6)
-  startedAt           DateTime? @map("started_at") @db.Timestamptz(6)
-  completedAt         DateTime? @map("completed_at") @db.Timestamptz(6)
-  acceptBy            DateTime? @map("accept_by") @db.Timestamptz(6)
-  payBy               DateTime? @map("pay_by") @db.Timestamptz(6)
-  proposedStart       DateTime? @map("proposed_start") @db.Timestamptz(6)
-  proposedEnd         DateTime? @map("proposed_end") @db.Timestamptz(6)
-  proposalBy          String?   @map("proposal_by")
-  proposalContext     String?   @map("proposal_context")
-  proposalExpiresAt   DateTime? @map("proposal_expires_at") @db.Timestamptz(6)
-  cleanerProposals    Int       @default(0) @map("cleaner_proposals")
-  clientProposals     Int       @default(0) @map("client_proposals")
-  postCleanerProposals Int      @default(0) @map("post_cleaner_proposals")
-  postClientProposals Int       @default(0) @map("post_client_proposals")
-  originalScheduledStart DateTime? @map("original_scheduled_start") @db.Timestamptz(6)
-  reauthorizationRequired Boolean @default(false) @map("reauthorization_required")
+  id                            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  houseSitId                    String    @map("house_sit_id") @db.Uuid
+  houseSitterId                 String    @map("house_sitter_id") @db.Uuid
+  status                        String    @default("pending")
+  serviceType                   String    @map("service_type")
+  specialInstructions           String?   @map("special_instructions")
+  address                       String
+  city                          String
+  postcode                      String
+  country                       String    @default("IE")
+  apartmentDetails              String?   @map("apartment_details")
+  accessNotes                   String    @default("") @map("access_notes")
+  scheduledStart                DateTime  @map("scheduled_start") @db.Timestamptz(6)
+  scheduledEnd                  DateTime  @map("scheduled_end") @db.Timestamptz(6)
+  durationHours                 Decimal   @map("duration_hours") @db.Decimal(4, 2)
+  hourlyRate                    Decimal   @map("hourly_rate") @db.Decimal(10, 2)
+  subtotal                      Decimal   @db.Decimal(10, 2)
+  platformFeePct                Decimal   @default(10.00) @map("platform_fee_pct") @db.Decimal(5, 2)
+  platformFee                   Decimal   @map("platform_fee") @db.Decimal(10, 2)
+  houseSitterPayout             Decimal   @map("house_sitter_payout") @db.Decimal(10, 2)
+  totalAmount                   Decimal   @map("total_amount") @db.Decimal(10, 2)
+  cancellationReason            String?   @map("cancellation_reason")
+  cancelledBy                   String?   @map("cancelled_by") @db.Uuid
+  cancelledAt                   DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  acceptedAt                    DateTime? @map("accepted_at") @db.Timestamptz(6)
+  confirmedAt                   DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  startedAt                     DateTime? @map("started_at") @db.Timestamptz(6)
+  completedAt                   DateTime? @map("completed_at") @db.Timestamptz(6)
+  acceptBy                      DateTime? @map("accept_by") @db.Timestamptz(6)
+  payBy                         DateTime? @map("pay_by") @db.Timestamptz(6)
+  proposedStart                 DateTime? @map("proposed_start") @db.Timestamptz(6)
+  proposedEnd                   DateTime? @map("proposed_end") @db.Timestamptz(6)
+  proposalBy                    String?   @map("proposal_by")
+  proposalContext               String?   @map("proposal_context")
+  proposalExpiresAt             DateTime? @map("proposal_expires_at") @db.Timestamptz(6)
+  houseSitterProposals          Int       @default(0) @map("house_sitter_proposals")
+  houseSitProposals             Int       @default(0) @map("house_sit_proposals")
+  postHouseSitterProposals      Int       @default(0) @map("post_house_sitter_proposals")
+  postHouseSitProposals         Int       @default(0) @map("post_house_sit_proposals")
+  originalScheduledStart        DateTime? @map("original_scheduled_start") @db.Timestamptz(6)
+  reauthorizationRequired       Boolean   @default(false) @map("reauthorization_required")
   reauthorizationGraceExpiresAt DateTime? @map("reauthorization_grace_expires_at") @db.Timestamptz(6)
-  clientGcalEventId   String?   @map("client_gcal_event_id")
-  cleanerGcalEventId  String?   @map("cleaner_gcal_event_id")
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  houseSitGcalEventId           String?   @map("house_sit_gcal_event_id")
+  houseSitterGcalEventId        String?   @map("house_sitter_gcal_event_id")
+  createdAt                     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  client           Client          @relation("BookingClient", fields: [clientId], references: [id])
-  cleaner          Cleaner         @relation("BookingCleaner", fields: [cleanerId], references: [id])
-  cancelledByUser  User?           @relation("BookingCancelledBy", fields: [cancelledBy], references: [id])
+  houseSit         HouseSit            @relation("BookingHouseSit", fields: [houseSitId], references: [id])
+  houseSitter      HouseSitter         @relation("BookingHouseSitter", fields: [houseSitterId], references: [id])
+  cancelledByUser  User?               @relation("BookingCancelledBy", fields: [cancelledBy], references: [id])
   payment          Payment?
   review           Review?
   dispute          Dispute?
   messages         Message[]
   blockedTimes     BlockedTime[]
-  strikes          CleanerStrike[]
+  strikes          HouseSitterStrike[]
   bookingFlowDraft BookingFlowDraft?
 
   @@map("bookings")
@@ -287,25 +287,25 @@ model Booking {
 }
 
 model BookingFlowDraft {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  clientId         String   @map("client_id") @db.Uuid
-  cleanerId        String   @map("cleaner_id") @db.Uuid
-  bookingId        String?  @unique @map("booking_id") @db.Uuid
-  lastStep         Int      @default(1) @map("last_step")
-  durationHours    Decimal? @map("duration_hours") @db.Decimal(4, 2)
-  selectedDate     String?  @map("selected_date")
-  selectedSlot     DateTime? @map("selected_slot") @db.Timestamptz(6)
-  payload          Json?    @map("payload")
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  houseSitId    String    @map("house_sit_id") @db.Uuid
+  houseSitterId String    @map("house_sitter_id") @db.Uuid
+  bookingId     String?   @unique @map("booking_id") @db.Uuid
+  lastStep      Int       @default(1) @map("last_step")
+  durationHours Decimal?  @map("duration_hours") @db.Decimal(4, 2)
+  selectedDate  String?   @map("selected_date")
+  selectedSlot  DateTime? @map("selected_slot") @db.Timestamptz(6)
+  payload       Json?     @map("payload")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  client  Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  cleaner Cleaner  @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
-  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  houseSit    HouseSit    @relation(fields: [houseSitId], references: [id], onDelete: Cascade)
+  houseSitter HouseSitter @relation(fields: [houseSitterId], references: [id], onDelete: Cascade)
+  booking     Booking?    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  @@unique([clientId, cleanerId])
-  @@index([clientId, updatedAt])
-  @@index([cleanerId, updatedAt])
+  @@unique([houseSitId, houseSitterId])
+  @@index([houseSitId, updatedAt])
+  @@index([houseSitterId, updatedAt])
   @@map("booking_flow_drafts")
   @@schema("public")
 }
@@ -319,7 +319,7 @@ model Payment {
   stripeRefundId        String?   @map("stripe_refund_id")
   amount                Decimal   @db.Decimal(10, 2)
   platformFee           Decimal   @map("platform_fee") @db.Decimal(10, 2)
-  cleanerPayout         Decimal   @map("cleaner_payout") @db.Decimal(10, 2)
+  houseSitterPayout     Decimal   @map("house_sitter_payout") @db.Decimal(10, 2)
   currency              String    @default("eur")
   status                String    @default("pending")
   refundAmount          Decimal?  @map("refund_amount") @db.Decimal(10, 2)
@@ -340,21 +340,21 @@ model Payment {
 }
 
 model Review {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  bookingId String   @unique @map("booking_id") @db.Uuid
-  cleanerId String   @map("cleaner_id") @db.Uuid
-  clientId  String   @map("client_id") @db.Uuid
-  rating    Int
-  comment   String?
-  cleanerReply   String?   @map("cleaner_reply")
-  cleanerReplyAt DateTime? @map("cleaner_reply_at") @db.Timestamptz(6)
-  isPublic  Boolean  @default(true) @map("is_public")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bookingId          String    @unique @map("booking_id") @db.Uuid
+  houseSitterId      String    @map("house_sitter_id") @db.Uuid
+  houseSitId         String    @map("house_sit_id") @db.Uuid
+  rating             Int
+  comment            String?
+  houseSitterReply   String?   @map("house_sitter_reply")
+  houseSitterReplyAt DateTime? @map("house_sitter_reply_at") @db.Timestamptz(6)
+  isPublic           Boolean   @default(true) @map("is_public")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  booking Booking @relation(fields: [bookingId], references: [id])
-  cleaner Cleaner @relation(fields: [cleanerId], references: [id])
-  client  Client  @relation(fields: [clientId], references: [id])
+  booking     Booking     @relation(fields: [bookingId], references: [id])
+  houseSitter HouseSitter @relation(fields: [houseSitterId], references: [id])
+  houseSit    HouseSit    @relation(fields: [houseSitId], references: [id])
 
   @@map("reviews")
   @@schema("public")
@@ -385,20 +385,20 @@ model Dispute {
   @@schema("public")
 }
 
-model CleanerStrike {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  cleanerId  String   @map("cleaner_id") @db.Uuid
-  bookingId  String?  @map("booking_id") @db.Uuid
-  strikeType String   @map("strike_type")
-  reason     String
-  issuedBy   String?  @map("issued_by") @db.Uuid
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+model HouseSitterStrike {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  houseSitterId String   @map("house_sitter_id") @db.Uuid
+  bookingId     String?  @map("booking_id") @db.Uuid
+  strikeType    String   @map("strike_type")
+  reason        String
+  issuedBy      String?  @map("issued_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  cleaner      Cleaner  @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
-  booking      Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  issuedByUser User?    @relation("StrikeIssuedBy", fields: [issuedBy], references: [id])
+  houseSitter  HouseSitter @relation(fields: [houseSitterId], references: [id], onDelete: Cascade)
+  booking      Booking?    @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  issuedByUser User?       @relation("StrikeIssuedBy", fields: [issuedBy], references: [id])
 
-  @@map("cleaner_strikes")
+  @@map("house_sitter_strikes")
   @@schema("public")
 }
 

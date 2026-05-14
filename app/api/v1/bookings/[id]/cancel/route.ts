@@ -13,7 +13,7 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
 
   try {
     const booking = await bookingService.cancel(id, user, parsed.data.reason)
-    return ok(sanitizeBookingForRole(booking as any, user.role as 'client' | 'cleaner' | 'admin'))
+    return ok(sanitizeBookingForRole(booking as any, user.role as 'house_sit' | 'house_sitter' | 'admin'))
   } catch (e) {
     if (e instanceof ServiceError) return err(e.message, e.status)
     throw e

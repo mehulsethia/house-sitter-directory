@@ -46,45 +46,45 @@ export const paymentAuthorizationService = {
 
       if (!wasAuthorized) {
         await pushInAppNotification({
-          userId: booking.cleaner.userId,
+          userId: booking.houseSitter.userId,
           type: 'booking_request',
           title: 'New Request',
-          body: `You have a new request from ${booking.client.user?.name ?? 'a client'}. Status: Pending Cleaner Acceptance.`,
+          body: `You have a new request from ${booking.houseSit.user?.name ?? 'a houseSit'}. Status: Pending HouseSitter Acceptance.`,
           data: { booking_id: booking.id },
         })
 
         if (movedToPending) {
           await pushInAppNotification({
-            userId: booking.client.userId,
+            userId: booking.houseSit.userId,
             type: 'booking_created_pending',
             title: 'Booking request created',
-            body: 'Your booking request was created and sent to the cleaner.',
+            body: 'Your booking request was created and sent to the houseSitter.',
             data: { booking_id: booking.id },
           })
         }
 
         try {
           await loopsEmailService.sendCleanerNewBookingRequest({
-            email: booking.cleaner.user.email,
-            fullName: booking.cleaner.user.name ?? 'Cleaner',
-            clientName: booking.client.user.name ?? 'Client',
+            email: booking.houseSitter.user.email,
+            fullName: booking.houseSitter.user.name ?? 'HouseSitter',
+            houseSitName: booking.houseSit.user.name ?? 'HouseSit',
             date: booking.scheduledStart,
             durationHours: Number(booking.durationHours),
             bookingId: booking.id,
           })
         } catch (emailError) {
-          console.error('Failed to send cleaner new booking request email via Loops:', emailError)
+          console.error('Failed to send houseSitter new booking request email via Loops:', emailError)
         }
 
         if (movedToPending) {
           try {
             await loopsEmailService.sendClientBookingCreatedPending({
-              email: booking.client.user.email,
-              fullName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              fullName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             })
           } catch (emailError) {
-            console.error('Failed to send client booking created pending email via Loops:', emailError)
+            console.error('Failed to send houseSit booking created pending email via Loops:', emailError)
           }
         }
       }
@@ -101,10 +101,10 @@ export const paymentAuthorizationService = {
         reauthorizationGraceExpiresAt: null,
       })
       void googleCalendarService.upsertCleanerBookingEvent(booking.id).catch((e) => {
-        console.error('Failed to sync cleaner Google Calendar event:', e)
+        console.error('Failed to sync houseSitter Google Calendar event:', e)
       })
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'booking_confirmed',
         title: 'Booking confirmed',
         body: 'Payment authorization is complete and your booking is now confirmed.',
@@ -112,15 +112,15 @@ export const paymentAuthorizationService = {
       })
       try {
         await loopsEmailService.sendClientBookingConfirmed({
-          email: booking.client.user.email,
-          fullName: booking.client.user.name ?? 'Client',
-          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSit.user.email,
+          fullName: booking.houseSit.user.name ?? 'HouseSit',
+          houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
           scheduledStart: booking.scheduledStart,
           durationHours: Number(booking.durationHours),
           bookingId: booking.id,
         })
       } catch (emailError) {
-        console.error('Failed to send client booking confirmed email via Loops:', emailError)
+        console.error('Failed to send houseSit booking confirmed email via Loops:', emailError)
       }
       return { updated: true, reason: 'authorized_accepted_confirmed' as const }
     }

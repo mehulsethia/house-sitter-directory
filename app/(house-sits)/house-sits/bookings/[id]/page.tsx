@@ -56,7 +56,7 @@ function isOverdueUnpaidDraftLike(booking: BookingRead) {
 
 function pendingValidityLabel(booking: BookingRead) {
   if (!booking.accept_by) {
-    return 'This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.'
+    return 'This request expires 24 hours after card authorisation. If the houseSitter does not respond, the booking request will expire automatically and your card authorisation will be released.'
   }
   const validUntilText = new Date(booking.accept_by).toLocaleString('en-IE', {
     hour: 'numeric',
@@ -66,10 +66,10 @@ function pendingValidityLabel(booking: BookingRead) {
     month: 'short',
     year: 'numeric',
   })
-  return `This request expires on ${validUntilText}. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.`
+  return `This request expires on ${validUntilText}. If the houseSitter does not respond, the booking request will expire automatically and your card authorisation will be released.`
 }
 
-export default function ClientBookingDetailPage() {
+export default function HouseSitBookingDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -136,7 +136,7 @@ export default function ClientBookingDetailPage() {
     }
 
     availabilityApi
-      .getSlots(booking.cleaner_id, counterDate, booking.duration_hours)
+      .getSlots(booking.house_sitter_id, counterDate, booking.duration_hours)
       .then((res) => {
         const options = (res.data ?? [])
           .filter((slot) => !slot.disabled)
@@ -164,7 +164,7 @@ export default function ClientBookingDetailPage() {
     }
 
     availabilityApi
-      .getSlots(booking.cleaner_id, proposalDate, booking.duration_hours)
+      .getSlots(booking.house_sitter_id, proposalDate, booking.duration_hours)
       .then((res) => {
         const options = (res.data ?? [])
           .filter((slot) => !slot.disabled)
@@ -187,7 +187,7 @@ export default function ClientBookingDetailPage() {
 
   useEffect(() => {
     setPhoneRevealed(false)
-  }, [booking?.id, booking?.status, booking?.cleaner?.user?.phone])
+  }, [booking?.id, booking?.status, booking?.houseSitter?.user?.phone])
 
   useEffect(() => {
     const timer = setInterval(() => setNowTick(Date.now()), 60_000)
@@ -220,9 +220,9 @@ export default function ClientBookingDetailPage() {
         decline_proposal: isLiveScheduleRequest
           ? 'Request declined. Original booking time kept.'
           : 'Proposal declined. Request closed.',
-        counter_proposal: 'Counter-offer sent to cleaner.',
-        propose_alternative: 'Reschedule proposal sent to cleaner.',
-        amend_start_time: 'Amend Start Time request sent to cleaner.',
+        counter_proposal: 'Counter-offer sent to houseSitter.',
+        propose_alternative: 'Reschedule proposal sent to houseSitter.',
+        amend_start_time: 'Amend Start Time request sent to houseSitter.',
       }
       toast.success(labels[action])
       if (action === 'counter_proposal') {
@@ -252,15 +252,15 @@ export default function ClientBookingDetailPage() {
     setActionLoading('cancel_request')
     try {
       const reason = canCancelDraft
-        ? 'Cancelled by client while in draft payment-required state'
+        ? 'Cancelled by houseSit while in draft payment-required state'
         : canCancelBookingRequest
-          ? 'Cancelled by client while pending cleaner acceptance'
+          ? 'Cancelled by houseSit while pending houseSitter acceptance'
           : moreThan24HoursAway
-            ? 'Cancelled by client more than 24 hours before scheduled start'
-            : 'Cancelled by client within 24 hours of scheduled start'
+            ? 'Cancelled by houseSit more than 24 hours before scheduled start'
+            : 'Cancelled by houseSit within 24 hours of scheduled start'
       await bookingsApi.cancel(id, reason)
-      if (booking?.cleaner_id && (canCancelDraft || canCancelBookingRequest)) {
-        await bookingsApi.clearFlowDraft(booking.cleaner_id).catch(() => null)
+      if (booking?.house_sitter_id && (canCancelDraft || canCancelBookingRequest)) {
+        await bookingsApi.clearFlowDraft(booking.house_sitter_id).catch(() => null)
       }
       toast.success(
         canCancelDraft
@@ -292,37 +292,37 @@ export default function ClientBookingDetailPage() {
   const canReview = Boolean(booking.completed_at) && ['completed', 'disputed'].includes(booking.status) && !booking.review
   const isPending = booking.status === 'pending'
   const hasProposal = Boolean(booking.proposed_start && booking.proposal_by)
-  const cleanerProposed = booking.proposal_by === 'cleaner'
-  const clientProposed = booking.proposal_by === 'client'
+  const houseSitterProposed = booking.proposal_by === 'house_sitter'
+  const houseSitProposed = booking.proposal_by === 'house_sit'
   const scheduledStartMs = new Date(booking.scheduled_start).getTime()
   const millisUntilStart = scheduledStartMs - Date.now()
   const hasStarted = Number.isFinite(scheduledStartMs) && millisUntilStart <= 0
   const moreThan24HoursAway = Number.isFinite(scheduledStartMs) && millisUntilStart > RESCHEDULE_CUTOFF_MS
   const within24HoursBeforeStart = Number.isFinite(scheduledStartMs) && millisUntilStart > 0 && millisUntilStart <= RESCHEDULE_CUTOFF_MS
-  const hasAlreadyRescheduled = (booking.post_cleaner_proposals ?? 0) >= 1 && (booking.post_client_proposals ?? 0) >= 1
+  const hasAlreadyRescheduled = (booking.post_house_sitter_proposals ?? 0) >= 1 && (booking.post_house_sit_proposals ?? 0) >= 1
   const canRescheduleBooking = booking.status === 'confirmed' && moreThan24HoursAway && !hasStarted && !hasProposal && !hasAlreadyRescheduled
   const canAmendStartTime = booking.status === 'confirmed' && within24HoursBeforeStart && !hasProposal
   const canCancelConfirmedBooking = booking.status === 'confirmed' && !hasStarted
   const proposalContext =
     booking.proposal_context ??
     (booking.status === 'pending' ? 'pre_confirmation' : booking.status === 'accepted' || booking.status === 'confirmed' ? 'post_confirmation' : null)
-  const canCounterProposal = cleanerProposed
+  const canCounterProposal = houseSitterProposed
     && hasProposal
     && (
       proposalContext === 'pre_confirmation'
-        ? moreThan24HoursAway && (booking.client_proposals ?? 0) < 1
+        ? moreThan24HoursAway && (booking.house_sit_proposals ?? 0) < 1
         : proposalContext === 'post_confirmation'
-          ? moreThan24HoursAway && (booking.post_client_proposals ?? 0) < 1
+          ? moreThan24HoursAway && (booking.post_house_sit_proposals ?? 0) < 1
           : proposalContext === 'amend_start'
-            ? (booking.client_proposals ?? 0) < 1
+            ? (booking.house_sit_proposals ?? 0) < 1
             : false
     )
   const hasOpenProposalFlow = hasProposal && ['pending', 'accepted', 'confirmed'].includes(booking.status)
-  const canRespondToCleanerProposal = hasOpenProposalFlow && cleanerProposed
+  const canRespondToCleanerProposal = hasOpenProposalFlow && houseSitterProposed
   const canReportInProgress = booking.status === 'in_progress'
   const isCompletedAwaitingRelease = booking.status === 'completed' && paymentStatus !== 'transferred'
   const isCompletedReleased = booking.status === 'completed' && paymentStatus === 'transferred'
-  const isPostConfirmationRescheduleDecline = proposalContext === 'post_confirmation' && cleanerProposed && ['accepted', 'confirmed'].includes(booking.status)
+  const isPostConfirmationRescheduleDecline = proposalContext === 'post_confirmation' && houseSitterProposed && ['accepted', 'confirmed'].includes(booking.status)
   const isAmendProposal = proposalContext === 'amend_start'
   const counterMinDate = isAmendProposal ? toDateInputValueCyprus(booking.scheduled_start) : toDateInputValueCyprus(new Date())
   const counterMaxDate = isAmendProposal
@@ -342,7 +342,7 @@ export default function ClientBookingDetailPage() {
   const canRevealCleanerPhone =
     ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status) &&
     sixHoursBeforeStart
-  const cleanerPhone = booking.cleaner?.user?.phone ?? ''
+  const houseSitterPhone = booking.houseSitter?.user?.phone ?? ''
   const completedAtMs = booking.completed_at ? new Date(booking.completed_at).getTime() : 0
   const reportDeadlineMs = completedAtMs ? completedAtMs + DISPUTE_WINDOW_MS : 0
   const reportWindowActive = Boolean(completedAtMs && Date.now() <= reportDeadlineMs)
@@ -354,10 +354,10 @@ export default function ClientBookingDetailPage() {
 
   return (
     <>
-      <div className="client-booking-detail-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-booking-detail-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -432,7 +432,7 @@ export default function ClientBookingDetailPage() {
                 subtotal: booking.subtotal ?? booking.total_amount - booking.platform_fee,
                 platform_fee_pct: 10,
                 platform_fee: booking.platform_fee,
-                cleaner_payout: booking.cleaner_payout,
+                house_sitter_payout: booking.house_sitter_payout,
                 total_amount: booking.total_amount,
               }}
             />
@@ -446,9 +446,9 @@ export default function ClientBookingDetailPage() {
                   House Sitter contact
                 </h2>
                 {canRevealCleanerPhone ? (
-                  cleanerPhone ? (
+                  houseSitterPhone ? (
                     phoneRevealed ? (
-                      <p className="text-sm text-slate-600">{cleanerPhone}</p>
+                      <p className="text-sm text-slate-600">{houseSitterPhone}</p>
                     ) : (
                       <Button size="sm" variant="outline" className="h-8 px-3 text-xs" onClick={() => setPhoneRevealed(true)}>
                         Reveal number
@@ -465,13 +465,13 @@ export default function ClientBookingDetailPage() {
 
             {hasOpenProposalFlow && (
               <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
-                {cleanerProposed
+                {houseSitterProposed
                   ? isAmendProposal
                     ? `House Sitter requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
                     : `House Sitter proposed ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Accept, decline, or counter once before expiry.`
-                  : clientProposed && isAmendProposal
-                    ? `You requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Waiting for cleaner response.`
-                    : `You proposed a reschedule: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Waiting for cleaner response before the 24-hour cutoff.`}
+                  : houseSitProposed && isAmendProposal
+                    ? `You requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Waiting for houseSitter response.`
+                    : `You proposed a reschedule: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start!)}. Waiting for houseSitter response before the 24-hour cutoff.`}
               </p>
             )}
             {hasOpenProposalFlow && proposalCountdownLabel && (
@@ -482,7 +482,7 @@ export default function ClientBookingDetailPage() {
             {booking.status === 'pending' && booking.accept_by && (
               <p className="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-700">
                 {canAuthorize
-                  ? 'Authorise your card to send this booking request to the cleaner.'
+                  ? 'Authorise your card to send this booking request to the houseSitter.'
                   : pendingValidityLabel(booking)}
               </p>
             )}
@@ -554,7 +554,7 @@ export default function ClientBookingDetailPage() {
                   )}
                   {canContinuePayment && (
                     <>
-                      <Button variant="outline" className="w-full sm:w-auto" onClick={() => router.push(`/house-sits/book/${booking.cleaner_id}?continue=1&bookingId=${booking.id}&step=3`)}>
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={() => router.push(`/house-sits/book/${booking.house_sitter_id}?continue=1&bookingId=${booking.id}&step=3`)}>
                         Continue payment
                       </Button>
                       <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
@@ -626,11 +626,11 @@ export default function ClientBookingDetailPage() {
                   )}
                   {(booking.status === 'expired' || booking.status === 'cancelled' || booking.status === 'declined' || overdueUnpaidDraftLike) && (
                     <>
-                      <Button className="w-full sm:w-auto" onClick={() => router.push(`/house-sits/book/${booking.cleaner_id}?reset=1&step=1`)}>
+                      <Button className="w-full sm:w-auto" onClick={() => router.push(`/house-sits/book/${booking.house_sitter_id}?reset=1&step=1`)}>
                         Book again
                       </Button>
                       <Button variant="outline" className="w-full sm:w-auto" onClick={() => router.push('/house-sits/house-sitters')}>
-                        Choose another cleaner
+                        Choose another houseSitter
                       </Button>
                     </>
                   )}
@@ -645,7 +645,7 @@ export default function ClientBookingDetailPage() {
                     </Button>
                   )}
                   {isCompletedReleased && (
-                    <Button className="w-full sm:w-auto" onClick={() => router.push(`/house-sits/book/${booking.cleaner_id}?reset=1&step=1`)}>
+                    <Button className="w-full sm:w-auto" onClick={() => router.push(`/house-sits/book/${booking.house_sitter_id}?reset=1&step=1`)}>
                       Book again
                     </Button>
                   )}
@@ -774,7 +774,7 @@ export default function ClientBookingDetailPage() {
             <ul className="list-disc space-y-1 pl-5 text-xs text-slate-600">
               <li>Only available more than 24h before booking start</li>
               <li>New time must be within 14 days of original booking date</li>
-              <li>Must fit cleaner availability, booking duration, and buffer rules</li>
+              <li>Must fit houseSitter availability, booking duration, and buffer rules</li>
               <li>Other party can accept, decline, or counter once</li>
               <li>If no agreement before 24h cutoff, original booking remains</li>
               <li>No penalty applies if reschedule fails</li>
@@ -938,13 +938,13 @@ export default function ClientBookingDetailPage() {
       </Dialog>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -957,7 +957,7 @@ export default function ClientBookingDetailPage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:

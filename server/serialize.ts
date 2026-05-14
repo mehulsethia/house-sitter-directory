@@ -1,8 +1,8 @@
 /**
  * Generic Prisma → API serializer.
  *
- * Prisma returns camelCase field names (e.g. `serviceType`, `cleanerPayout`).
- * The frontend expects snake_case (e.g. `service_type`, `cleaner_payout`).
+ * Prisma returns camelCase field names (e.g. `serviceType`, `houseSitterPayout`).
+ * The frontend expects snake_case (e.g. `service_type`, `house_sitter_payout`).
  * This module bridges the two by recursively converting keys and coercing
  * Prisma Decimal / Date types to JSON-friendly primitives.
  */

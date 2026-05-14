@@ -5,11 +5,11 @@ import { stripe } from '@/server/stripe'
 import { ok } from '@/server/response'
 
 export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client?.stripeCustomerId) return ok([])
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit?.stripeCustomerId) return ok([])
 
   const paymentMethods = await stripe.paymentMethods.list({
-    customer: client.stripeCustomerId,
+    customer: houseSit.stripeCustomerId,
     type: 'card',
   })
 

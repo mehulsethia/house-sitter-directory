@@ -4,39 +4,39 @@ import { requireHouseSit } from '@/server/auth'
 import { db } from '@/server/db'
 import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
-import { clientFavoriteRepo } from '@/server/repositories/house-sit-favorite.repo'
+import { houseSitFavoriteRepo } from '@/server/repositories/house-sit-favorite.repo'
 import { ok, err } from '@/server/response'
 
 const addFavoriteSchema = z.object({
-  cleaner_id: z.string().uuid(),
+  house_sitter_id: z.string().uuid(),
 })
 
 export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
-  let client = await houseSitRepo.findByUserId(user.id)
-  if (!client) client = await houseSitRepo.create(user.id)
+  let houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) houseSit = await houseSitRepo.create(user.id)
 
-  const favorites = await clientFavoriteRepo.listByClientId(client.id)
+  const favorites = await houseSitFavoriteRepo.listByHouseSitId(houseSit.id)
   const visibleFavorites = favorites
     .filter((favorite) => {
-      const cleaner = favorite.cleaner
-      return cleaner.status === 'approved' && cleaner.profileComplete && cleaner.stripeOnboardingComplete
+      const houseSitter = favorite.houseSitter
+      return houseSitter.status === 'approved' && houseSitter.profileComplete && houseSitter.stripeOnboardingComplete
     })
-  const cleanerIds = visibleFavorites.map((favorite) => favorite.cleaner.id)
+  const houseSitterIds = visibleFavorites.map((favorite) => favorite.houseSitter.id)
 
-  const [completedJobsAgg, reviewsAgg] = cleanerIds.length
+  const [completedJobsAgg, reviewsAgg] = houseSitterIds.length
     ? await Promise.all([
         db.booking.groupBy({
-          by: ['cleanerId'],
+          by: ['houseSitterId'],
           where: {
-            cleanerId: { in: cleanerIds },
+            houseSitterId: { in: houseSitterIds },
             status: { in: ['completed', 'disputed'] },
           },
           _count: { _all: true },
         }),
         db.review.groupBy({
-          by: ['cleanerId'],
+          by: ['houseSitterId'],
           where: {
-            cleanerId: { in: cleanerIds },
+            houseSitterId: { in: houseSitterIds },
           },
           _count: { _all: true },
           _avg: { rating: true },
@@ -45,11 +45,11 @@ export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
     : [[], []]
 
   const completedJobsByCleanerId = new Map<string, number>(
-    completedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+    completedJobsAgg.map((entry) => [entry.houseSitterId, entry._count._all]),
   )
   const reviewsByCleanerId = new Map<string, { count: number; avg: number | null }>(
     reviewsAgg.map((entry) => [
-      entry.cleanerId,
+      entry.houseSitterId,
       {
         count: entry._count._all,
         avg: entry._avg.rating ?? null,
@@ -58,30 +58,30 @@ export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
   )
 
   const mapped = visibleFavorites.map((favorite) => {
-      const cleaner = favorite.cleaner
-      const jobsCount = completedJobsByCleanerId.get(cleaner.id) ?? 0
-      const reviewMetrics = reviewsByCleanerId.get(cleaner.id)
+      const houseSitter = favorite.houseSitter
+      const jobsCount = completedJobsByCleanerId.get(houseSitter.id) ?? 0
+      const reviewMetrics = reviewsByCleanerId.get(houseSitter.id)
       return {
-        cleaner_id: cleaner.id,
-        user_id: cleaner.userId,
-        hourly_rate: Number(cleaner.hourlyRate),
+        house_sitter_id: houseSitter.id,
+        user_id: houseSitter.userId,
+        hourly_rate: Number(houseSitter.hourlyRate),
         total_jobs: jobsCount,
         average_rating: reviewMetrics?.avg ?? null,
         review_count: reviewMetrics?.count ?? 0,
-        years_experience: cleaner.yearsExperience,
-        transport_mode: cleaner.transportMode,
-        cleaning_supplies: cleaner.cleaningSupplies,
-        bio: cleaner.bio,
-        profile_image_url: cleaner.profileImageUrl,
-        created_at: cleaner.createdAt,
-        user: cleaner.user
+        years_experience: houseSitter.yearsExperience,
+        transport_mode: houseSitter.transportMode,
+        cleaning_supplies: houseSitter.cleaningSupplies,
+        bio: houseSitter.bio,
+        profile_image_url: houseSitter.profileImageUrl,
+        created_at: houseSitter.createdAt,
+        user: houseSitter.user
           ? {
-              id: cleaner.user.id,
-              name: cleaner.user.name,
-              avatar_url: cleaner.user.avatarUrl,
+              id: houseSitter.user.id,
+              name: houseSitter.user.name,
+              avatar_url: houseSitter.user.avatarUrl,
             }
           : undefined,
-        service_areas: cleaner.serviceAreas.map((area) => ({
+        service_areas: houseSitter.serviceAreas.map((area) => ({
           city: area.city,
           postcode_prefix: area.postcodePrefix,
           radius_km: area.radiusKm ? Number(area.radiusKm) : undefined,
@@ -95,16 +95,16 @@ export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
 export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   const body = await req.json().catch(() => ({}))
   const parsed = addFavoriteSchema.safeParse(body)
-  if (!parsed.success) return err('Invalid cleaner selection', 422)
+  if (!parsed.success) return err('Invalid houseSitter selection', 422)
 
-  let client = await houseSitRepo.findByUserId(user.id)
-  if (!client) client = await houseSitRepo.create(user.id)
+  let houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) houseSit = await houseSitRepo.create(user.id)
 
-  const cleaner = await houseSitterRepo.findById(parsed.data.cleaner_id)
-  if (!cleaner || cleaner.status !== 'approved' || !cleaner.profileComplete || !cleaner.stripeOnboardingComplete) {
-    return err('Cleaner not found', 404)
+  const houseSitter = await houseSitterRepo.findById(parsed.data.house_sitter_id)
+  if (!houseSitter || houseSitter.status !== 'approved' || !houseSitter.profileComplete || !houseSitter.stripeOnboardingComplete) {
+    return err('HouseSitter not found', 404)
   }
 
-  await clientFavoriteRepo.add(client.id, cleaner.id)
+  await houseSitFavoriteRepo.add(houseSit.id, houseSitter.id)
   return ok({ favorite: true }, 201)
 })

@@ -16,10 +16,10 @@ export const GET = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   const parsed = bookingFlowDraftQuerySchema.safeParse(params)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client) return err('Client profile not found', 404)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) return err('HouseSit profile not found', 404)
 
-  const draft = await bookingFlowDraftRepo.findByClientAndCleaner(client.id, parsed.data.cleaner_id)
+  const draft = await bookingFlowDraftRepo.findByHouseSitAndHouseSitter(houseSit.id, parsed.data.house_sitter_id)
   return ok(draft)
 })
 
@@ -28,18 +28,18 @@ export const PUT = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   const parsed = saveBookingFlowDraftSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client) return err('Client profile not found', 404)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) return err('HouseSit profile not found', 404)
 
-  const cleaner = await houseSitterRepo.findById(parsed.data.cleaner_id)
-  if (!cleaner) return err('Cleaner not found', 404)
+  const houseSitter = await houseSitterRepo.findById(parsed.data.house_sitter_id)
+  if (!houseSitter) return err('HouseSitter not found', 404)
 
-  const existing = await bookingFlowDraftRepo.findByClientAndCleaner(client.id, cleaner.id)
+  const existing = await bookingFlowDraftRepo.findByHouseSitAndHouseSitter(houseSit.id, houseSitter.id)
 
   if (parsed.data.booking_id) {
     const booking = await bookingRepo.findById(parsed.data.booking_id)
     if (!booking) return err('Booking not found', 404)
-    if (booking.clientId !== client.id || booking.cleanerId !== cleaner.id) return err('Forbidden', 403)
+    if (booking.houseSitId !== houseSit.id || booking.houseSitterId !== houseSitter.id) return err('Forbidden', 403)
 
     const lockedPaymentRequired =
       ['draft', 'pending'].includes(String(booking.status ?? '')) &&
@@ -69,9 +69,9 @@ export const PUT = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     mergedPayload.duration = Number(existing.durationHours)
   }
 
-  const draft = await bookingFlowDraftRepo.upsertByClientAndCleaner({
-    clientId: client.id,
-    cleanerId: cleaner.id,
+  const draft = await bookingFlowDraftRepo.upsertByHouseSitAndHouseSitter({
+    houseSitId: houseSit.id,
+    houseSitterId: houseSitter.id,
     bookingId: parsed.data.booking_id ?? null,
     lastStep: parsed.data.last_step,
     durationHours: parsed.data.duration_hours ?? (Number(mergedPayload.duration || existing?.durationHours || 0) || null),
@@ -94,9 +94,9 @@ export const DELETE = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   const parsed = bookingFlowDraftQuerySchema.safeParse(params)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  if (!client) return err('Client profile not found', 404)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) return err('HouseSit profile not found', 404)
 
-  await bookingFlowDraftRepo.clearByClientAndCleaner(client.id, parsed.data.cleaner_id)
+  await bookingFlowDraftRepo.clearByHouseSitAndHouseSitter(houseSit.id, parsed.data.house_sitter_id)
   return ok({ removed: true })
 })

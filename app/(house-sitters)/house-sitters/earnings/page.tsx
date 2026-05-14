@@ -24,7 +24,7 @@ export default function EarningsPage() {
 
   const settledStatuses = new Set(['captured', 'transferred'])
   const settled = bookings.filter((b) => settledStatuses.has(String(b.payment?.status ?? '')))
-  const totalEarned = settled.reduce((sum, b) => sum + b.cleaner_payout, 0)
+  const totalEarned = settled.reduce((sum, b) => sum + b.house_sitter_payout, 0)
   const totalHours = settled.reduce((sum, b) => sum + b.duration_hours, 0)
 
   const unsettled = bookings.filter((b) => !settledStatuses.has(String(b.payment?.status ?? '')))
@@ -103,7 +103,7 @@ export default function EarningsPage() {
                       <p className="text-xs text-muted-foreground">{formatDate(b.scheduled_start)} · {b.duration_hours}h · {b.city}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-green-700">+{formatCurrency(b.cleaner_payout)}</p>
+                      <p className="font-semibold text-green-700">+{formatCurrency(b.house_sitter_payout)}</p>
                       <p className="text-xs text-muted-foreground">{formatCurrency(b.hourly_rate)}/hr</p>
                     </div>
                   </div>

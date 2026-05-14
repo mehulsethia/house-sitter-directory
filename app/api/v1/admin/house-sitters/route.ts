@@ -10,74 +10,74 @@ export const GET = requireAdmin(async (req: NextRequest) => {
   const page = Number(req.nextUrl.searchParams.get('page') ?? 1)
   const pageSize = Number(req.nextUrl.searchParams.get('page_size') ?? 20)
 
-  const [cleaners, total] = await houseSitterRepo.listAll({ status, page, pageSize })
-  const cleanerIds = cleaners.map((cleaner) => cleaner.id)
-  const completedJobsAgg = cleanerIds.length
+  const [house_sitters, total] = await houseSitterRepo.listAll({ status, page, pageSize })
+  const houseSitterIds = house_sitters.map((houseSitter) => houseSitter.id)
+  const completedJobsAgg = houseSitterIds.length
     ? await db.booking.groupBy({
-        by: ['cleanerId'],
+        by: ['houseSitterId'],
         where: {
-          cleanerId: { in: cleanerIds },
+          houseSitterId: { in: houseSitterIds },
           status: { in: ['completed', 'disputed'] },
         },
         _count: { _all: true },
       })
     : []
-  const reviewsAgg = cleanerIds.length
+  const reviewsAgg = houseSitterIds.length
     ? await db.review.groupBy({
-        by: ['cleanerId'],
-        where: { cleanerId: { in: cleanerIds } },
+        by: ['houseSitterId'],
+        where: { houseSitterId: { in: houseSitterIds } },
         _avg: { rating: true },
       })
     : []
   const completedJobsByCleanerId = new Map<string, number>(
-    completedJobsAgg.map((entry) => [entry.cleanerId, entry._count._all]),
+    completedJobsAgg.map((entry) => [entry.houseSitterId, entry._count._all]),
   )
   const avgRatingByCleanerId = new Map<string, number | null>(
-    reviewsAgg.map((entry) => [entry.cleanerId, entry._avg.rating ?? null]),
+    reviewsAgg.map((entry) => [entry.houseSitterId, entry._avg.rating ?? null]),
   )
 
-  const formatted = cleaners.map((cleaner) => {
-    const fullName = cleaner.user?.name?.trim()
+  const formatted = house_sitters.map((houseSitter) => {
+    const fullName = houseSitter.user?.name?.trim()
     const fallbackName =
       fullName && fullName.length > 0
         ? fullName
-        : cleaner.user?.email?.split('@')[0] || 'Cleaner'
+        : houseSitter.user?.email?.split('@')[0] || 'HouseSitter'
     const lifecycleStatus = deriveCleanerLifecycleStatus({
-      status: cleaner.status,
-      stripeOnboardingComplete: cleaner.stripeOnboardingComplete,
+      status: houseSitter.status,
+      stripeOnboardingComplete: houseSitter.stripeOnboardingComplete,
     })
-    const completedJobs = completedJobsByCleanerId.get(cleaner.id) ?? 0
+    const completedJobs = completedJobsByCleanerId.get(houseSitter.id) ?? 0
     return {
-      id: cleaner.id,
-      user_id: cleaner.userId,
+      id: houseSitter.id,
+      user_id: houseSitter.userId,
       user_name: fallbackName,
-      user_email: cleaner.user?.email ?? '',
-      user_phone: cleaner.user?.phone ?? undefined,
-      bio: cleaner.bio,
-      skills: cleaner.skills,
-      cleaning_supplies: cleaner.cleaningSupplies,
-      years_experience: cleaner.yearsExperience,
-      hourly_rate: cleaner.hourlyRate,
-      transport_mode: cleaner.transportMode,
-      id_type: cleaner.idType,
-      id_file_name: cleaner.idFileName,
-      id_file_url: cleaner.idFileUrl,
-      profile_image_url: cleaner.profileImageUrl,
-      status: cleaner.status,
+      user_email: houseSitter.user?.email ?? '',
+      user_phone: houseSitter.user?.phone ?? undefined,
+      bio: houseSitter.bio,
+      skills: houseSitter.skills,
+      cleaning_supplies: houseSitter.cleaningSupplies,
+      years_experience: houseSitter.yearsExperience,
+      hourly_rate: houseSitter.hourlyRate,
+      transport_mode: houseSitter.transportMode,
+      id_type: houseSitter.idType,
+      id_file_name: houseSitter.idFileName,
+      id_file_url: houseSitter.idFileUrl,
+      profile_image_url: houseSitter.profileImageUrl,
+      status: houseSitter.status,
       lifecycle_status: lifecycleStatus,
-      rejection_reason: cleaner.rejectionReason,
-      profile_complete: cleaner.profileComplete,
-      identity_verified: cleaner.identityVerified,
-      cleaning_standards_accepted: cleaner.cleaningStandardsAccepted,
-      standards_completed: cleaner.standardsCompleted,
-      quiz_passed: cleaner.quizPassed,
-      quiz_score: cleaner.quizScore,
-      stripe_onboarding_complete: cleaner.stripeOnboardingComplete,
+      rejection_reason: houseSitter.rejectionReason,
+      profile_complete: houseSitter.profileComplete,
+      identity_verified: houseSitter.identityVerified,
+      cleaning_standards_accepted: houseSitter.cleaningStandardsAccepted,
+      standards_completed: houseSitter.standardsCompleted,
+      quiz_passed: houseSitter.quizPassed,
+      quiz_score: houseSitter.quizScore,
+      stripe_onboarding_complete: houseSitter.stripeOnboardingComplete,
       trial_period_flag: completedJobs < 10,
       total_jobs: completedJobs,
-      average_rating: avgRatingByCleanerId.get(cleaner.id) ?? null,
-      created_at: cleaner.createdAt,
+      average_rating: avgRatingByCleanerId.get(houseSitter.id) ?? null,
+      created_at: houseSitter.createdAt,
     }
   })
-  return ok({ cleaners: formatted, total, page, page_size: pageSize })
+  return ok({ house_sitters: formatted, total, page, page_size: pageSize })
 })

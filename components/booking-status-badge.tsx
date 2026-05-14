@@ -18,9 +18,9 @@ function isPaymentAuthorized(paymentStatus?: string | null) {
   return ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
 }
 
-function pendingLabel(proposalBy?: 'client' | 'cleaner' | null) {
-  if (proposalBy === 'cleaner') return 'Awaiting Homeowner Response'
-  if (proposalBy === 'client') return 'Awaiting House Sitter Response'
+function pendingLabel(proposalBy?: 'house_sit' | 'house_sitter' | null) {
+  if (proposalBy === 'house_sitter') return 'Awaiting Homeowner Response'
+  if (proposalBy === 'house_sit') return 'Awaiting House Sitter Response'
   return STATUS_CONFIG.pending.label
 }
 
@@ -32,7 +32,7 @@ export function BookingStatusBadge({
 }: {
   status: BookingStatus
   paymentStatus?: string | null
-  proposalBy?: 'client' | 'cleaner' | null
+  proposalBy?: 'house_sit' | 'house_sitter' | null
   showPaymentRequiredForUnpaid?: boolean
 }) {
   const config = (showPaymentRequiredForUnpaid && (status === 'draft' || (status === 'pending' && !isPaymentAuthorized(paymentStatus))))

@@ -13,14 +13,14 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { formatDate } from '@/lib/utils'
-import type { BookingRead, ClientDispute } from '@/types'
+import type { BookingRead, HouseSitDispute } from '@/types'
 import { toast } from 'sonner'
 
 type ReportStatus = 'open' | 'under_review' | 'resolved' | 'closed'
 const CLEANER_WINDOW_MS = 24 * 60 * 60 * 1000
 
 const ISSUE_OPTIONS = [
-  { value: 'client_no_show', label: 'Homeowner no-show' },
+  { value: 'house_sit_no_show', label: 'Homeowner no-show' },
   { value: 'other_issue', label: 'Access issue' },
   { value: 'property_damage_safety', label: 'Safety concern' },
   { value: 'service_not_completed', label: 'Service dispute' },
@@ -45,14 +45,14 @@ function getDisputeBookingId(dispute: any) {
   return dispute?.booking_id ?? dispute?.bookingId ?? ''
 }
 
-function CleanerReportPageContent() {
+function HouseSitterReportPageContent() {
   const searchParams = useSearchParams()
   const bookingFromQuery = searchParams.get('booking') ?? ''
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [bookings, setBookings] = useState<BookingRead[]>([])
-  const [disputes, setDisputes] = useState<ClientDispute[]>([])
+  const [disputes, setDisputes] = useState<HouseSitDispute[]>([])
   const [bookingId, setBookingId] = useState('')
   const [issueType, setIssueType] = useState<(typeof ISSUE_OPTIONS)[number]['value']>('other_issue')
   const [explanation, setExplanation] = useState('')
@@ -65,7 +65,7 @@ function CleanerReportPageContent() {
     try {
       const [bookingRes, disputeRes] = await Promise.all([bookingsApi.my(), disputesApi.listMine()])
       const bookingItems = bookingRes.data?.items ?? []
-      const disputeItems = (disputeRes.data?.items ?? []) as ClientDispute[]
+      const disputeItems = (disputeRes.data?.items ?? []) as HouseSitDispute[]
       startTransition(() => {
         setBookings(bookingItems)
         setDisputes(disputeItems)
@@ -150,10 +150,10 @@ function CleanerReportPageContent() {
 
   return (
     <>
-    <div className="client-report-revamp space-y-7 md:space-y-9">
-      <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-        <div className="client-stage__media" aria-hidden="true" />
-        <div className="client-stage__grain" aria-hidden="true" />
+    <div className="houseSit-report-revamp space-y-7 md:space-y-9">
+      <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+        <div className="houseSit-stage__media" aria-hidden="true" />
+        <div className="houseSit-stage__grain" aria-hidden="true" />
         <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
           <div className="animate-stage-up space-y-4">
             <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
@@ -190,7 +190,7 @@ function CleanerReportPageContent() {
                 <Select value={bookingId} onChange={(event) => setBookingId(event.target.value)} className="mt-1">
                   {eligibleBookings.map((booking) => (
                     <option key={booking.id} value={booking.id}>
-                      {booking.client?.user?.name ?? 'Homeowner'} · {formatDate(booking.scheduled_start)} · {booking.city}
+                      {booking.houseSit?.user?.name ?? 'Homeowner'} · {formatDate(booking.scheduled_start)} · {booking.city}
                     </option>
                   ))}
                 </Select>
@@ -276,13 +276,13 @@ function CleanerReportPageContent() {
     </div>
 
     <style jsx>{`
-      .client-stage {
+      .houseSit-stage {
         position: relative;
         isolation: isolate;
         background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
       }
 
-      .client-stage__media {
+      .houseSit-stage__media {
         position: absolute;
         inset: 0;
         background-image:
@@ -295,7 +295,7 @@ function CleanerReportPageContent() {
         opacity: 0.9;
       }
 
-      .client-stage__grain {
+      .houseSit-stage__grain {
         position: absolute;
         inset: 0;
         background-image:
@@ -360,10 +360,10 @@ function StatTile({
   )
 }
 
-export default function CleanerReportPage() {
+export default function HouseSitterReportPage() {
   return (
     <Suspense fallback={<ReportPageSkeleton />}>
-      <CleanerReportPageContent />
+      <HouseSitterReportPageContent />
     </Suspense>
   )
 }

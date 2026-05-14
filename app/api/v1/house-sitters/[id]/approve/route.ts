@@ -4,7 +4,7 @@ import { houseSitterService } from '@/server/services/house-sitter.service'
 import { ok, err } from '@/server/response'
 import { approveCleanerSchema } from '@/server/schemas/house-sitter.schema'
 import { ServiceError } from '@/server/services/booking.service'
-import type { CleanerRejectionReasonCode } from '@/lib/house-sitter-status'
+import type { HouseSitterRejectionReasonCode } from '@/lib/house-sitter-status'
 
 export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
@@ -13,15 +13,15 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
   if (!parsed.success) return err(parsed.error.message, 422)
 
   try {
-    const cleaner = await houseSitterService.approve(
+    const houseSitter = await houseSitterService.approve(
       id,
       user,
       parsed.data.action,
       parsed.data.rejection_reason,
-      parsed.data.rejection_reason_code as CleanerRejectionReasonCode | undefined,
+      parsed.data.rejection_reason_code as HouseSitterRejectionReasonCode | undefined,
       parsed.data.rejection_custom_message,
     )
-    return ok(cleaner)
+    return ok(houseSitter)
   } catch (e) {
     if (e instanceof ServiceError) return err(e.message, e.status)
     throw e

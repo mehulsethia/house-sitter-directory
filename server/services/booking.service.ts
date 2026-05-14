@@ -34,7 +34,7 @@ export const bookingService = {
   previewPrice(hourlyRate: number, durationHours: number, platformFeePct = PLATFORM_FEE_PCT) {
     const subtotal = hourlyRate * durationHours
     const platformFee = (subtotal * platformFeePct) / 100
-    const cleanerPayout = subtotal
+    const houseSitterPayout = subtotal
     const totalAmount = subtotal + platformFee
     return {
       hourly_rate: hourlyRate,
@@ -42,7 +42,7 @@ export const bookingService = {
       subtotal: round2(subtotal),
       platform_fee_pct: platformFeePct,
       platform_fee: round2(platformFee),
-      cleaner_payout: round2(cleanerPayout),
+      house_sitter_payout: round2(houseSitterPayout),
       total_amount: round2(totalAmount),
     }
   },
@@ -131,7 +131,7 @@ export const bookingService = {
   },
 
   async create(user: User, data: {
-    cleaner_id: string
+    house_sitter_id: string
     service_type: string
     special_instructions: string
     address: string
@@ -143,32 +143,32 @@ export const bookingService = {
     scheduled_start: string
     duration_hours: number
   }) {
-    const client = await houseSitRepo.findByUserId(user.id)
-    if (!client) throw new ServiceError('Client profile not found', 404)
+    const houseSit = await houseSitRepo.findByUserId(user.id)
+    if (!houseSit) throw new ServiceError('HouseSit profile not found', 404)
 
-    const cleaner = await houseSitterRepo.findById(data.cleaner_id)
-    if (!cleaner) throw new ServiceError('Cleaner not found', 404)
-    if (cleaner.status !== 'approved' || !cleaner.profileComplete || !cleaner.stripeOnboardingComplete) {
-      throw new ServiceError('Cleaner is not available', 400)
+    const houseSitter = await houseSitterRepo.findById(data.house_sitter_id)
+    if (!houseSitter) throw new ServiceError('HouseSitter not found', 404)
+    if (houseSitter.status !== 'approved' || !houseSitter.profileComplete || !houseSitter.stripeOnboardingComplete) {
+      throw new ServiceError('HouseSitter is not available', 400)
     }
 
     const scheduledStart = new Date(data.scheduled_start)
     const scheduledEnd = new Date(scheduledStart.getTime() + data.duration_hours * 60 * 60 * 1000)
 
-    await validateBookingWindow(cleaner.id, scheduledStart, scheduledEnd)
+    await validateBookingWindow(houseSitter.id, scheduledStart, scheduledEnd)
 
     const requestWindowEndsAt = new Date(Date.now() + BOOKING_ACCEPT_TTL_MINUTES * 60 * 1000)
     const acceptBy = new Date(Math.min(requestWindowEndsAt.getTime(), scheduledStart.getTime()))
 
     const pricing = bookingService.previewPrice(
-      Number(cleaner.hourlyRate),
+      Number(houseSitter.hourlyRate),
       data.duration_hours,
     )
 
-    const requiresPickup = cleaner.transportMode === 'requires_pickup'
-    const pickupSnapshot = cleaner.transportPickupLocation?.trim() ?? ''
+    const requiresPickup = houseSitter.transportMode === 'requires_pickup'
+    const pickupSnapshot = houseSitter.transportPickupLocation?.trim() ?? ''
     if (requiresPickup && !pickupSnapshot) {
-      throw new ServiceError('Cleaner pickup location is not configured. Please choose another cleaner or try again later.', 400)
+      throw new ServiceError('HouseSitter pickup location is not configured. Please choose another houseSitter or try again later.', 400)
     }
 
     const specialInstructionsWithSnapshot =
@@ -177,8 +177,8 @@ export const bookingService = {
         : data.special_instructions
 
     const baseCreatePayload = {
-      clientId: client.id,
-      cleanerId: cleaner.id,
+      houseSitId: houseSit.id,
+      houseSitterId: houseSitter.id,
       serviceType: data.service_type,
       specialInstructions: specialInstructionsWithSnapshot,
       address: data.address,
@@ -194,15 +194,15 @@ export const bookingService = {
       subtotal: pricing.subtotal,
       platformFeePct: pricing.platform_fee_pct,
       platformFee: pricing.platform_fee,
-      cleanerPayout: pricing.cleaner_payout,
+      houseSitterPayout: pricing.house_sitter_payout,
       totalAmount: pricing.total_amount,
       acceptBy,
       originalScheduledStart: scheduledStart,
     }
 
     const overlappingDraft = await bookingRepo.findOverlappingDraftForClient({
-      clientId: client.id,
-      cleanerId: cleaner.id,
+      houseSitId: houseSit.id,
+      houseSitterId: houseSitter.id,
       start: scheduledStart,
       end: scheduledEnd,
     })
@@ -224,7 +224,7 @@ export const bookingService = {
         subtotal: baseCreatePayload.subtotal,
         platformFeePct: baseCreatePayload.platformFeePct,
         platformFee: baseCreatePayload.platformFee,
-        cleanerPayout: baseCreatePayload.cleanerPayout,
+        houseSitterPayout: baseCreatePayload.houseSitterPayout,
         totalAmount: baseCreatePayload.totalAmount,
         acceptBy: baseCreatePayload.acceptBy,
       })
@@ -260,10 +260,10 @@ export const bookingService = {
     let booking = await bookingRepo.findById(bookingId)
     if (!booking) throw new ServiceError('Booking not found', 404)
 
-    const cleaner = await houseSitterRepo.findByUserId(user.id)
-    const client = await houseSitRepo.findByUserId(user.id)
-    const isHouseSitter = Boolean(cleaner && booking.cleanerId === cleaner.id)
-    const isHouseSit = Boolean(client && booking.clientId === client.id)
+    const houseSitter = await houseSitterRepo.findByUserId(user.id)
+    const houseSit = await houseSitRepo.findByUserId(user.id)
+    const isHouseSitter = Boolean(houseSitter && booking.houseSitterId === houseSitter.id)
+    const isHouseSit = Boolean(houseSit && booking.houseSitId === houseSit.id)
     if (!isHouseSitter && !isHouseSit) throw new ServiceError('Forbidden', 403)
 
     const reconciled = await bookingService.reconcileSingleBookingDeadline(bookingId)
@@ -273,7 +273,7 @@ export const bookingService = {
     const requestAcceptBy = resolveRequestAcceptBy(booking)
 
     if (action === 'start') {
-      if (!isHouseSitter) throw new ServiceError('Only cleaner can start a booking', 403)
+      if (!isHouseSitter) throw new ServiceError('Only houseSitter can start a booking', 403)
       if (!['accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot start a booking in status '${booking.status}'`, 400)
       }
@@ -289,8 +289,8 @@ export const bookingService = {
     }
 
     if (action === 'accept') {
-      if (!isHouseSitter) throw new ServiceError('Only cleaner can accept a booking', 403)
-      assertCleanerStripeReady(cleaner)
+      if (!isHouseSitter) throw new ServiceError('Only houseSitter can accept a booking', 403)
+      assertCleanerStripeReady(houseSitter)
       if (booking.status !== 'pending') {
         throw new ServiceError(`Cannot accept a booking in status '${booking.status}'`, 400)
       }
@@ -305,43 +305,43 @@ export const bookingService = {
         ...clearedProposalState(),
       })
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'booking_accepted',
         title: 'Booking accepted',
-        body: 'Cleaner accepted your booking request.',
+        body: 'HouseSitter accepted your booking request.',
         data: { booking_id: bookingId },
       })
       try {
         await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
-          email: booking.cleaner.user.email,
-          fullName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSitter.user.email,
+          fullName: booking.houseSitter.user.name ?? 'HouseSitter',
           bookingId: booking.id,
         })
       } catch (emailError) {
-        console.error('Failed to send cleaner booking accepted confirmation email via Loops:', emailError)
+        console.error('Failed to send houseSitter booking accepted confirmation email via Loops:', emailError)
       }
       if (isPaymentAuthorized) {
         try {
           await loopsEmailService.sendClientBookingConfirmed({
-            email: booking.client.user.email,
-            fullName: booking.client.user.name ?? 'Client',
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+            email: booking.houseSit.user.email,
+            fullName: booking.houseSit.user.name ?? 'HouseSit',
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             scheduledStart: booking.scheduledStart,
             durationHours: Number(booking.durationHours),
             bookingId: booking.id,
           })
         } catch (emailError) {
-          console.error('Failed to send client booking accepted confirmation email via Loops:', emailError)
+          console.error('Failed to send houseSit booking accepted confirmation email via Loops:', emailError)
         }
       }
       void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
-        console.error('Failed to sync cleaner Google Calendar event:', e)
+        console.error('Failed to sync houseSitter Google Calendar event:', e)
       })
       return updated
     }
 
     if (action === 'decline') {
-      if (!isHouseSitter) throw new ServiceError('Only cleaner can decline a booking request', 403)
+      if (!isHouseSitter) throw new ServiceError('Only houseSitter can decline a booking request', 403)
       if (booking.status !== 'pending') {
         throw new ServiceError(`Cannot decline a booking in status '${booking.status}'`, 400)
       }
@@ -356,23 +356,23 @@ export const bookingService = {
         booking.payment?.status,
       )
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'booking_request_declined',
         title: 'Booking request declined',
-        body: 'Cleaner declined this booking request.',
+        body: 'HouseSitter declined this booking request.',
         data: { booking_id: bookingId },
       })
       void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
-        console.error('Failed to remove cleaner Google Calendar event:', e)
+        console.error('Failed to remove houseSitter Google Calendar event:', e)
       })
       try {
         await loopsEmailService.sendClientBookingRejectedOrExpired({
-          email: booking.client.user.email,
-          fullName: booking.client.user.name ?? 'Client',
-          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSit.user.email,
+          fullName: booking.houseSit.user.name ?? 'HouseSit',
+          houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
         })
       } catch (emailError) {
-        console.error('Failed to send client booking declined email via Loops:', emailError)
+        console.error('Failed to send houseSit booking declined email via Loops:', emailError)
       }
       return updated
     }
@@ -386,7 +386,7 @@ export const bookingService = {
         throw new ServiceError(`Cannot propose a new time in status '${booking.status}'`, 400)
       }
 
-      const actor = isHouseSitter ? 'cleaner' : 'client'
+      const actor = isHouseSitter ? 'house_sitter' : 'house_sit'
       const proposedStart = parseProposedStart(payload.proposed_start)
       assertHalfHourBoundary(proposedStart)
       if (proposedStart.getTime() === booking.scheduledStart.getTime()) {
@@ -394,7 +394,7 @@ export const bookingService = {
       }
       const proposedEnd = new Date(proposedStart.getTime() + Number(booking.durationHours) * 60 * 60 * 1000)
       await validateBookingWindow(
-        booking.cleanerId,
+        booking.houseSitterId,
         proposedStart,
         proposedEnd,
         { enforceMaxAdvanceWindow: isPreConfirmation },
@@ -406,11 +406,11 @@ export const bookingService = {
         if (booking.proposalBy) {
           throw new ServiceError('A proposal is already active for this booking', 400)
         }
-        if (actor === 'cleaner' && booking.cleanerProposals >= 1) {
-          throw new ServiceError('Cleaner can only propose an alternative time once', 400)
+        if (actor === 'house_sitter' && booking.houseSitterProposals >= 1) {
+          throw new ServiceError('HouseSitter can only propose an alternative time once', 400)
         }
-        if (actor === 'client' && booking.clientProposals >= 1) {
-          throw new ServiceError('Client can only propose an alternative time once', 400)
+        if (actor === 'house_sit' && booking.houseSitProposals >= 1) {
+          throw new ServiceError('HouseSit can only propose an alternative time once', 400)
         }
 
         const updated = await bookingRepo.update(bookingId, {
@@ -419,30 +419,30 @@ export const bookingService = {
           proposalBy: actor,
           proposalContext: 'pre_confirmation',
           proposalExpiresAt: requestAcceptBy,
-          cleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
-          clientProposals: actor === 'client' ? { increment: 1 } : undefined,
+          houseSitterProposals: actor === 'house_sitter' ? { increment: 1 } : undefined,
+          houseSitProposals: actor === 'house_sit' ? { increment: 1 } : undefined,
         })
         await pushInAppNotification({
-          userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+          userId: actor === 'house_sitter' ? booking.houseSit.userId : booking.houseSitter.userId,
           type: 'booking_proposed_new_time',
-          title: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed a new time`,
-          body: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} requested ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Review and respond before request expiry.`,
+          title: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} proposed a new time`,
+          body: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} requested ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Review and respond before request expiry.`,
           data: { booking_id: bookingId },
         })
         try {
-          if (actor === 'cleaner') {
+          if (actor === 'house_sitter') {
             await loopsEmailService.sendClientAlternateTimeProposed({
-              email: booking.client.user.email,
-              clientName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
               originalStart: booking.scheduledStart,
               proposedStart,
             })
           } else {
             await loopsEmailService.sendCleanerClientAlternateTimeProposed({
-              email: booking.cleaner.user.email,
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-              clientName: booking.client.user.name ?? 'Client',
+              email: booking.houseSitter.user.email,
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
               originalStart: booking.scheduledStart,
               proposedStart,
             })
@@ -460,11 +460,11 @@ export const bookingService = {
       if (booking.proposalBy) {
         throw new ServiceError('A proposal is already active for this booking', 400)
       }
-      if (actor === 'cleaner' && booking.postCleanerProposals >= 1) {
-        throw new ServiceError('Cleaner can only make one counter-proposal in post-confirmation rescheduling', 400)
+      if (actor === 'house_sitter' && booking.postHouseSitterProposals >= 1) {
+        throw new ServiceError('HouseSitter can only make one counter-proposal in post-confirmation rescheduling', 400)
       }
-      if (actor === 'client' && booking.postClientProposals >= 1) {
-        throw new ServiceError('Client can only make one counter-proposal in post-confirmation rescheduling', 400)
+      if (actor === 'house_sit' && booking.postHouseSitProposals >= 1) {
+        throw new ServiceError('HouseSit can only make one counter-proposal in post-confirmation rescheduling', 400)
       }
 
       const proposalExpiresAt = new Date(booking.scheduledStart.getTime() - RESCHEDULE_CUTOFF_HOURS * 60 * 60 * 1000)
@@ -474,30 +474,30 @@ export const bookingService = {
         proposalBy: actor,
         proposalContext: 'post_confirmation',
         proposalExpiresAt,
-        postCleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
-        postClientProposals: actor === 'client' ? { increment: 1 } : undefined,
+        postHouseSitterProposals: actor === 'house_sitter' ? { increment: 1 } : undefined,
+        postHouseSitProposals: actor === 'house_sit' ? { increment: 1 } : undefined,
       })
       await pushInAppNotification({
-        userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+        userId: actor === 'house_sitter' ? booking.houseSit.userId : booking.houseSitter.userId,
         type: 'booking_proposed_new_time',
-        title: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed a reschedule`,
-        body: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} requested ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Accept, decline, or counter once before cutoff.`,
+        title: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} proposed a reschedule`,
+        body: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} requested ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Accept, decline, or counter once before cutoff.`,
         data: { booking_id: bookingId },
       })
       try {
-        if (actor === 'cleaner') {
+        if (actor === 'house_sitter') {
           await loopsEmailService.sendClientAlternateTimeProposed({
-            email: booking.client.user.email,
-            clientName: booking.client.user.name ?? 'Client',
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+            email: booking.houseSit.user.email,
+            houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             originalStart: booking.scheduledStart,
             proposedStart,
           })
         } else {
           await loopsEmailService.sendCleanerClientAlternateTimeProposed({
-            email: booking.cleaner.user.email,
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-            clientName: booking.client.user.name ?? 'Client',
+            email: booking.houseSitter.user.email,
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
+            houseSitName: booking.houseSit.user.name ?? 'HouseSit',
             originalStart: booking.scheduledStart,
             proposedStart,
           })
@@ -510,7 +510,7 @@ export const bookingService = {
 
     if (action === 'counter_proposal') {
       if (!isHouseSitter && !isHouseSit) throw new ServiceError('Forbidden', 403)
-      const actor = isHouseSitter ? 'cleaner' : 'client'
+      const actor = isHouseSitter ? 'house_sitter' : 'house_sit'
       if (!['pending', 'accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot counter a proposal in status '${booking.status}'`, 400)
       }
@@ -526,7 +526,7 @@ export const bookingService = {
       const proposedEnd = new Date(proposedStart.getTime() + Number(booking.durationHours) * 60 * 60 * 1000)
       const isPreConfirmation = booking.status === 'pending' && booking.proposalContext !== 'post_confirmation'
       await validateBookingWindow(
-        booking.cleanerId,
+        booking.houseSitterId,
         proposedStart,
         proposedEnd,
         { enforceMaxAdvanceWindow: isPreConfirmation },
@@ -535,11 +535,11 @@ export const bookingService = {
       if (isPreConfirmation) {
         assertWithinRequestWindow(requestAcceptBy)
         assertRescheduleWindow(booking.scheduledStart)
-        if (actor === 'client' && booking.clientProposals >= 1) {
-          throw new ServiceError('Client can only counter once', 400)
+        if (actor === 'house_sit' && booking.houseSitProposals >= 1) {
+          throw new ServiceError('HouseSit can only counter once', 400)
         }
-        if (actor === 'cleaner' && booking.cleanerProposals >= 1) {
-          throw new ServiceError('Cleaner can only counter once', 400)
+        if (actor === 'house_sitter' && booking.houseSitterProposals >= 1) {
+          throw new ServiceError('HouseSitter can only counter once', 400)
         }
 
         const updated = await bookingRepo.update(bookingId, {
@@ -548,30 +548,30 @@ export const bookingService = {
           proposalBy: actor,
           proposalContext: 'pre_confirmation',
           proposalExpiresAt: requestAcceptBy,
-          cleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
-          clientProposals: actor === 'client' ? { increment: 1 } : undefined,
+          houseSitterProposals: actor === 'house_sitter' ? { increment: 1 } : undefined,
+          houseSitProposals: actor === 'house_sit' ? { increment: 1 } : undefined,
         })
         await pushInAppNotification({
-          userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+          userId: actor === 'house_sitter' ? booking.houseSit.userId : booking.houseSitter.userId,
           type: 'booking_counter_proposal',
-          title: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} sent a counter-offer`,
-          body: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Accept, decline, or counter once before expiry.`,
+          title: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} sent a counter-offer`,
+          body: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} proposed ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Accept, decline, or counter once before expiry.`,
           data: { booking_id: bookingId },
         })
         try {
-          if (actor === 'cleaner') {
+          if (actor === 'house_sitter') {
             await loopsEmailService.sendClientAlternateTimeProposed({
-              email: booking.client.user.email,
-              clientName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
               originalStart: booking.scheduledStart,
               proposedStart,
             })
           } else {
             await loopsEmailService.sendCleanerClientAlternateTimeProposed({
-              email: booking.cleaner.user.email,
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-              clientName: booking.client.user.name ?? 'Client',
+              email: booking.houseSitter.user.email,
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
               originalStart: booking.scheduledStart,
               proposedStart,
             })
@@ -586,11 +586,11 @@ export const bookingService = {
       if (isAmendRequest) {
         assertAmendRequestStillValid(booking)
         assertAmendWindow(booking.scheduledStart, proposedStart)
-        if (actor === 'client' && booking.clientProposals >= 1) {
-          throw new ServiceError('Client can only counter once for this amendment', 400)
+        if (actor === 'house_sit' && booking.houseSitProposals >= 1) {
+          throw new ServiceError('HouseSit can only counter once for this amendment', 400)
         }
-        if (actor === 'cleaner' && booking.cleanerProposals >= 1) {
-          throw new ServiceError('Cleaner can only counter once for this amendment', 400)
+        if (actor === 'house_sitter' && booking.houseSitterProposals >= 1) {
+          throw new ServiceError('HouseSitter can only counter once for this amendment', 400)
         }
         const updated = await bookingRepo.update(bookingId, {
           proposedStart,
@@ -598,30 +598,30 @@ export const bookingService = {
           proposalBy: actor,
           proposalContext: 'amend_start',
           proposalExpiresAt: booking.proposalExpiresAt,
-          cleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
-          clientProposals: actor === 'client' ? { increment: 1 } : undefined,
+          houseSitterProposals: actor === 'house_sitter' ? { increment: 1 } : undefined,
+          houseSitProposals: actor === 'house_sit' ? { increment: 1 } : undefined,
         })
         await pushInAppNotification({
-          userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+          userId: actor === 'house_sitter' ? booking.houseSit.userId : booking.houseSitter.userId,
           type: 'booking_counter_proposal',
           title: 'Amend Start Time counter-offer received',
-          body: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed ${formatBookingTimeForMessage(proposedStart)} instead of ${formatBookingTimeForMessage(booking.scheduledStart)}.`,
+          body: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} proposed ${formatBookingTimeForMessage(proposedStart)} instead of ${formatBookingTimeForMessage(booking.scheduledStart)}.`,
           data: { booking_id: bookingId },
         })
         try {
-          if (actor === 'cleaner') {
+          if (actor === 'house_sitter') {
             await loopsEmailService.sendClientAlternateTimeProposed({
-              email: booking.client.user.email,
-              clientName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
               originalStart: booking.scheduledStart,
               proposedStart,
             })
           } else {
             await loopsEmailService.sendCleanerClientAlternateTimeProposed({
-              email: booking.cleaner.user.email,
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-              clientName: booking.client.user.name ?? 'Client',
+              email: booking.houseSitter.user.email,
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
               originalStart: booking.scheduledStart,
               proposedStart,
             })
@@ -636,11 +636,11 @@ export const bookingService = {
       assertPostConfirmationRescheduleWindow(booking.scheduledStart)
       const originalStart = booking.originalScheduledStart ?? booking.scheduledStart
       assertPostConfirmationDateLimit(originalStart, proposedStart)
-      if (actor === 'client' && booking.postClientProposals >= 1) {
-        throw new ServiceError('Client has already used the single allowed counter-proposal', 400)
+      if (actor === 'house_sit' && booking.postHouseSitProposals >= 1) {
+        throw new ServiceError('HouseSit has already used the single allowed counter-proposal', 400)
       }
-      if (actor === 'cleaner' && booking.postCleanerProposals >= 1) {
-        throw new ServiceError('Cleaner has already used the single allowed counter-proposal', 400)
+      if (actor === 'house_sitter' && booking.postHouseSitterProposals >= 1) {
+        throw new ServiceError('HouseSitter has already used the single allowed counter-proposal', 400)
       }
       const proposalExpiresAt = booking.proposalExpiresAt ??
         new Date(booking.scheduledStart.getTime() - RESCHEDULE_CUTOFF_HOURS * 60 * 60 * 1000)
@@ -651,30 +651,30 @@ export const bookingService = {
         proposalBy: actor,
         proposalContext: 'post_confirmation',
         proposalExpiresAt,
-        postCleanerProposals: actor === 'cleaner' ? { increment: 1 } : undefined,
-        postClientProposals: actor === 'client' ? { increment: 1 } : undefined,
+        postHouseSitterProposals: actor === 'house_sitter' ? { increment: 1 } : undefined,
+        postHouseSitProposals: actor === 'house_sit' ? { increment: 1 } : undefined,
       })
       await pushInAppNotification({
-        userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+        userId: actor === 'house_sitter' ? booking.houseSit.userId : booking.houseSitter.userId,
         type: 'booking_counter_proposal',
         title: 'Reschedule counter-offer received',
-        body: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}).`,
+        body: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} proposed ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}).`,
         data: { booking_id: bookingId },
       })
       try {
-        if (actor === 'cleaner') {
+        if (actor === 'house_sitter') {
           await loopsEmailService.sendClientAlternateTimeProposed({
-            email: booking.client.user.email,
-            clientName: booking.client.user.name ?? 'Client',
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+            email: booking.houseSit.user.email,
+            houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             originalStart: booking.scheduledStart,
             proposedStart,
           })
         } else {
           await loopsEmailService.sendCleanerClientAlternateTimeProposed({
-            email: booking.cleaner.user.email,
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-            clientName: booking.client.user.name ?? 'Client',
+            email: booking.houseSitter.user.email,
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
+            houseSitName: booking.houseSit.user.name ?? 'HouseSit',
             originalStart: booking.scheduledStart,
             proposedStart,
           })
@@ -694,14 +694,14 @@ export const bookingService = {
       }
       const proposalContext = booking.proposalContext ?? (booking.status === 'pending' ? 'pre_confirmation' : 'post_confirmation')
 
-      if (booking.proposalBy === 'cleaner' && !isHouseSit) {
-        throw new ServiceError('Only client can accept cleaner proposal', 403)
+      if (booking.proposalBy === 'house_sitter' && !isHouseSit) {
+        throw new ServiceError('Only houseSit can accept houseSitter proposal', 403)
       }
-      if (booking.proposalBy === 'client' && !isHouseSitter) {
-        throw new ServiceError('Only cleaner can accept client proposal', 403)
+      if (booking.proposalBy === 'house_sit' && !isHouseSitter) {
+        throw new ServiceError('Only houseSitter can accept houseSit proposal', 403)
       }
-      if (booking.proposalBy === 'client') {
-        assertCleanerStripeReady(cleaner)
+      if (booking.proposalBy === 'house_sit') {
+        assertCleanerStripeReady(houseSitter)
       }
 
       if (proposalContext === 'pre_confirmation') {
@@ -718,7 +718,7 @@ export const bookingService = {
           ...clearedProposalState(),
         })
         await pushInAppNotification({
-          userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
+          userId: isHouseSit ? booking.houseSitter.userId : booking.houseSit.userId,
           type: 'booking_time_agreed',
           title: 'Booking time confirmed',
           body: 'The proposed booking time has been accepted and confirmed.',
@@ -726,35 +726,35 @@ export const bookingService = {
         })
         try {
           await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
-            email: booking.cleaner.user.email,
-            fullName: booking.cleaner.user.name ?? 'Cleaner',
+            email: booking.houseSitter.user.email,
+            fullName: booking.houseSitter.user.name ?? 'HouseSitter',
             bookingId: booking.id,
           })
         } catch (emailError) {
-          console.error('Failed to send cleaner accepted confirmation email via Loops:', emailError)
+          console.error('Failed to send houseSitter accepted confirmation email via Loops:', emailError)
         }
         try {
           if (isPaymentAuthorized) {
             await loopsEmailService.sendClientBookingConfirmed({
-              email: booking.client.user.email,
-              fullName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              fullName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
               scheduledStart: booking.proposedStart,
               durationHours: Number(booking.durationHours),
               bookingId: booking.id,
             })
           } else {
             await loopsEmailService.sendClientBookingCreatedPending({
-              email: booking.client.user.email,
-              fullName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              fullName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             })
           }
         } catch (emailError) {
-          console.error('Failed to send client proposal-accepted email via Loops:', emailError)
+          console.error('Failed to send houseSit proposal-accepted email via Loops:', emailError)
         }
         void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
-          console.error('Failed to sync cleaner Google Calendar event:', e)
+          console.error('Failed to sync houseSitter Google Calendar event:', e)
         })
         return updated
       }
@@ -767,7 +767,7 @@ export const bookingService = {
           ...clearedProposalState({ preserveRescheduleUsage: true }),
         })
         await pushInAppNotification({
-          userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
+          userId: isHouseSit ? booking.houseSitter.userId : booking.houseSit.userId,
           type: 'booking_time_agreed',
           title: 'Start time amended',
           body: 'The amended start time was accepted.',
@@ -775,24 +775,24 @@ export const bookingService = {
         })
         try {
           await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
-            email: booking.cleaner.user.email,
-            fullName: booking.cleaner.user.name ?? 'Cleaner',
+            email: booking.houseSitter.user.email,
+            fullName: booking.houseSitter.user.name ?? 'HouseSitter',
             bookingId: booking.id,
           })
         } catch (emailError) {
-          console.error('Failed to send cleaner amended-time acceptance email via Loops:', emailError)
+          console.error('Failed to send houseSitter amended-time acceptance email via Loops:', emailError)
         }
         try {
           await loopsEmailService.sendClientBookingCreatedPending({
-            email: booking.client.user.email,
-            fullName: booking.client.user.name ?? 'Client',
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+            email: booking.houseSit.user.email,
+            fullName: booking.houseSit.user.name ?? 'HouseSit',
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
           })
         } catch (emailError) {
-          console.error('Failed to send client amended-time acceptance email via Loops:', emailError)
+          console.error('Failed to send houseSit amended-time acceptance email via Loops:', emailError)
         }
         void googleCalendarService.upsertCleanerBookingEvent(updated.id).catch((e) => {
-          console.error('Failed to sync cleaner Google Calendar event:', e)
+          console.error('Failed to sync houseSitter Google Calendar event:', e)
         })
         return updated
       }
@@ -807,29 +807,29 @@ export const bookingService = {
       })
       await resetAuthorizationAfterReschedule(updated.id)
       await pushInAppNotification({
-        userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
+        userId: isHouseSit ? booking.houseSitter.userId : booking.houseSit.userId,
         type: 'booking_time_agreed',
         title: 'Reschedule accepted',
-        body: 'Booking time updated. Client re-authorization is now required.',
+        body: 'Booking time updated. HouseSit re-authorization is now required.',
         data: { booking_id: bookingId },
       })
       try {
         await loopsEmailService.sendCleanerBookingAcceptedConfirmation({
-          email: booking.cleaner.user.email,
-          fullName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSitter.user.email,
+          fullName: booking.houseSitter.user.name ?? 'HouseSitter',
           bookingId: booking.id,
         })
       } catch (emailError) {
-        console.error('Failed to send cleaner reschedule accepted email via Loops:', emailError)
+        console.error('Failed to send houseSitter reschedule accepted email via Loops:', emailError)
       }
       try {
         await loopsEmailService.sendClientBookingCreatedPending({
-          email: booking.client.user.email,
-          fullName: booking.client.user.name ?? 'Client',
-          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSit.user.email,
+          fullName: booking.houseSit.user.name ?? 'HouseSit',
+          houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
         })
       } catch (emailError) {
-        console.error('Failed to send client reschedule accepted email via Loops:', emailError)
+        console.error('Failed to send houseSit reschedule accepted email via Loops:', emailError)
       }
       const refreshed = await bookingRepo.findById(updated.id)
       if (!refreshed) throw new ServiceError('Booking not found after reschedule update', 404)
@@ -841,16 +841,16 @@ export const bookingService = {
         throw new ServiceError(`Cannot decline a proposal in status '${booking.status}'`, 400)
       }
       if (!booking.proposalBy) throw new ServiceError('No active proposal to decline', 400)
-      if (booking.proposalBy === 'cleaner' && !isHouseSit) {
-        throw new ServiceError('Only client can decline cleaner proposal', 403)
+      if (booking.proposalBy === 'house_sitter' && !isHouseSit) {
+        throw new ServiceError('Only houseSit can decline houseSitter proposal', 403)
       }
-      if (booking.proposalBy === 'client' && !isHouseSitter) {
-        throw new ServiceError('Only cleaner can decline client proposal', 403)
+      if (booking.proposalBy === 'house_sit' && !isHouseSitter) {
+        throw new ServiceError('Only houseSitter can decline houseSit proposal', 403)
       }
 
       const proposalContext = booking.proposalContext ?? (booking.status === 'pending' ? 'pre_confirmation' : 'post_confirmation')
       if (proposalContext === 'pre_confirmation') {
-        const declinedByClientFromCleanerProposal = isHouseSit && booking.proposalBy === 'cleaner'
+        const declinedByClientFromCleanerProposal = isHouseSit && booking.proposalBy === 'house_sitter'
         const proposedStartLabel = (booking.proposedStart ?? booking.scheduledStart).toLocaleString('en-IE', {
           day: 'numeric',
           month: 'short',
@@ -866,39 +866,39 @@ export const bookingService = {
         })
         await releasePaymentAuthorization(booking.payment?.id, booking.payment?.stripePaymentIntentId, booking.payment?.status)
         await pushInAppNotification({
-          userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
+          userId: isHouseSit ? booking.houseSitter.userId : booking.houseSit.userId,
           type: 'booking_request_declined',
-          title: declinedByClientFromCleanerProposal ? 'Client declined your proposed time' : 'Booking request declined',
+          title: declinedByClientFromCleanerProposal ? 'HouseSit declined your proposed time' : 'Booking request declined',
           body: declinedByClientFromCleanerProposal
-            ? `Client declined your proposed time for ${proposedStartLabel}. The booking request has been closed.`
+            ? `HouseSit declined your proposed time for ${proposedStartLabel}. The booking request has been closed.`
             : 'This booking request was declined.',
           data: { booking_id: bookingId },
         })
         try {
           if (declinedByClientFromCleanerProposal) {
             await loopsEmailService.sendClientProposalDeclinedClosed({
-              email: booking.client.user.email,
-              clientName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             })
             await loopsEmailService.sendCleanerClientDeclinedProposal({
-              email: booking.cleaner.user.email,
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-              clientName: booking.client.user.name ?? 'Client',
+              email: booking.houseSitter.user.email,
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
+              houseSitName: booking.houseSit.user.name ?? 'HouseSit',
               proposedStart: booking.proposedStart ?? booking.scheduledStart,
             })
           } else {
             await loopsEmailService.sendClientBookingRejectedOrExpired({
-              email: booking.client.user.email,
-              fullName: booking.client.user.name ?? 'Client',
-              cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+              email: booking.houseSit.user.email,
+              fullName: booking.houseSit.user.name ?? 'HouseSit',
+              houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             })
           }
         } catch (emailError) {
-          console.error('Failed to send client proposal-declined email via Loops:', emailError)
+          console.error('Failed to send houseSit proposal-declined email via Loops:', emailError)
         }
         void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
-          console.error('Failed to remove cleaner Google Calendar event:', e)
+          console.error('Failed to remove houseSitter Google Calendar event:', e)
         })
         return updated
       }
@@ -907,7 +907,7 @@ export const bookingService = {
         ...clearedProposalState({ preserveRescheduleUsage: proposalContext === 'amend_start' }),
       })
       await pushInAppNotification({
-        userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
+        userId: isHouseSit ? booking.houseSitter.userId : booking.houseSit.userId,
         type: 'booking_request_declined',
         title: proposalContext === 'amend_start' ? 'Amendment declined' : 'Reschedule declined',
         body: proposalContext === 'amend_start'
@@ -917,12 +917,12 @@ export const bookingService = {
       })
       try {
         await loopsEmailService.sendClientBookingRejectedOrExpired({
-          email: booking.client.user.email,
-          fullName: booking.client.user.name ?? 'Client',
-          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSit.user.email,
+          fullName: booking.houseSit.user.name ?? 'HouseSit',
+          houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
         })
       } catch (emailError) {
-        console.error('Failed to send client reschedule-declined email via Loops:', emailError)
+        console.error('Failed to send houseSit reschedule-declined email via Loops:', emailError)
       }
       return updated
     }
@@ -939,42 +939,42 @@ export const bookingService = {
       assertHalfHourBoundary(proposedStart)
       assertAmendWindow(booking.scheduledStart, proposedStart)
       const proposedEnd = new Date(proposedStart.getTime() + Number(booking.durationHours) * 60 * 60 * 1000)
-      await validateBookingWindow(booking.cleanerId, proposedStart, proposedEnd)
+      await validateBookingWindow(booking.houseSitterId, proposedStart, proposedEnd)
 
       const hoursUntilBooking = (booking.scheduledStart.getTime() - Date.now()) / (60 * 60 * 1000)
       const ttlMinutes = hoursUntilBooking < 2 ? AMEND_FAST_RESPONSE_MINUTES : AMEND_STANDARD_RESPONSE_MINUTES
       const proposalExpiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000)
-      const actor = isHouseSitter ? 'cleaner' : 'client'
+      const actor = isHouseSitter ? 'house_sitter' : 'house_sit'
       const updated = await bookingRepo.update(bookingId, {
         proposedStart,
         proposedEnd,
         proposalBy: actor,
         proposalContext: 'amend_start',
         proposalExpiresAt,
-        cleanerProposals: actor === 'cleaner' ? 1 : 0,
-        clientProposals: actor === 'client' ? 1 : 0,
+        houseSitterProposals: actor === 'house_sitter' ? 1 : 0,
+        houseSitProposals: actor === 'house_sit' ? 1 : 0,
       })
       await pushInAppNotification({
-        userId: actor === 'cleaner' ? booking.client.userId : booking.cleaner.userId,
+        userId: actor === 'house_sitter' ? booking.houseSit.userId : booking.houseSitter.userId,
         type: 'booking_proposed_new_time',
         title: 'Start time amendment requested',
-        body: `${actor === 'cleaner' ? 'Cleaner' : 'Client'} proposed ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Respond within ${ttlMinutes} minutes.`,
+        body: `${actor === 'house_sitter' ? 'HouseSitter' : 'HouseSit'} proposed ${formatBookingTimeForMessage(proposedStart)} (original ${formatBookingTimeForMessage(booking.scheduledStart)}). Respond within ${ttlMinutes} minutes.`,
         data: { booking_id: bookingId },
       })
       try {
-        if (actor === 'cleaner') {
+        if (actor === 'house_sitter') {
           await loopsEmailService.sendClientAlternateTimeProposed({
-            email: booking.client.user.email,
-            clientName: booking.client.user.name ?? 'Client',
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+            email: booking.houseSit.user.email,
+            houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
             originalStart: booking.scheduledStart,
             proposedStart,
           })
         } else {
           await loopsEmailService.sendCleanerClientAlternateTimeProposed({
-            email: booking.cleaner.user.email,
-            cleanerName: booking.cleaner.user.name ?? 'Cleaner',
-            clientName: booking.client.user.name ?? 'Client',
+            email: booking.houseSitter.user.email,
+            houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
+            houseSitName: booking.houseSit.user.name ?? 'HouseSit',
             originalStart: booking.scheduledStart,
             proposedStart,
           })
@@ -992,9 +992,9 @@ export const bookingService = {
     const booking = await bookingRepo.findById(bookingId)
     if (!booking) throw new ServiceError('Booking not found', 404)
 
-    const cleaner = await houseSitterRepo.findByUserId(user.id)
-    if (!cleaner || booking.cleanerId !== cleaner.id) {
-      throw new ServiceError('Only assigned cleaner can complete this booking', 403)
+    const houseSitter = await houseSitterRepo.findByUserId(user.id)
+    if (!houseSitter || booking.houseSitterId !== houseSitter.id) {
+      throw new ServiceError('Only assigned houseSitter can complete this booking', 403)
     }
 
     if (!['in_progress', 'disputed'].includes(booking.status)) {
@@ -1005,7 +1005,7 @@ export const bookingService = {
     return completeBookingFlow(bookingId, {
       completedAt: new Date(),
       initiatedByUserId: user.id,
-      initiatedByRole: 'cleaner',
+      initiatedByRole: 'house_sitter',
     })
   },
 
@@ -1026,11 +1026,11 @@ export const bookingService = {
     }
 
     // Verify user is a party on this booking
-    const client = await houseSitRepo.findByUserId(user.id)
-    const cleaner = await houseSitterRepo.findByUserId(user.id)
+    const houseSit = await houseSitRepo.findByUserId(user.id)
+    const houseSitter = await houseSitterRepo.findByUserId(user.id)
     const isParty =
-      (client && booking.clientId === client.id) ||
-      (cleaner && booking.cleanerId === cleaner.id)
+      (houseSit && booking.houseSitId === houseSit.id) ||
+      (houseSitter && booking.houseSitterId === houseSitter.id)
 
     if (!isParty && user.role !== 'admin') throw new ServiceError('Forbidden', 403)
 
@@ -1043,60 +1043,60 @@ export const bookingService = {
       cancelledAt: new Date(),
     })
 
-    if (cleaner && booking.cleanerId === cleaner.id) {
+    if (houseSitter && booking.houseSitterId === houseSitter.id) {
       await maybeApplyCleanerCancellationStrike({
         booking,
-        cleanerId: cleaner.id,
+        houseSitterId: houseSitter.id,
         cancelledByUserId: user.id,
         cancellationReason: reason,
       })
     }
 
-    const isHouseSitCancelling = Boolean(client && booking.clientId === client.id)
+    const isHouseSitCancelling = Boolean(houseSit && booking.houseSitId === houseSit.id)
     const isDraftLikePreAuthorisation =
       isHouseSitCancelling &&
       (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorizedStatus(booking.payment?.status)))
 
     if (!isDraftLikePreAuthorisation) {
       const notifyUserId =
-        client && booking.clientId === client.id
-          ? booking.cleaner.userId
-          : booking.client.userId
+        houseSit && booking.houseSitId === houseSit.id
+          ? booking.houseSitter.userId
+          : booking.houseSit.userId
 
       await pushInAppNotification({
         userId: notifyUserId,
         type: 'booking_cancelled',
-        title: isHouseSitCancelling ? 'Client cancelled booking request' : 'Booking cancelled',
+        title: isHouseSitCancelling ? 'HouseSit cancelled booking request' : 'Booking cancelled',
         body: isHouseSitCancelling
-          ? 'The client cancelled this booking request before confirmation.'
+          ? 'The houseSit cancelled this booking request before confirmation.'
           : 'A booking has been cancelled',
         data: { booking_id: bookingId },
       })
       void googleCalendarService.removeCleanerBookingEvent(updated.id).catch((e) => {
-        console.error('Failed to remove cleaner Google Calendar event:', e)
+        console.error('Failed to remove houseSitter Google Calendar event:', e)
       })
     }
 
     try {
       await loopsEmailService.sendClientCancellationConfirmation({
-        email: booking.client.user.email,
-        fullName: booking.client.user.name ?? 'Client',
+        email: booking.houseSit.user.email,
+        fullName: booking.houseSit.user.name ?? 'HouseSit',
         date: booking.scheduledStart,
-        cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+        houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
         durationHours: Number(booking.durationHours),
       })
     } catch (emailError) {
-      console.error('Failed to send client cancellation confirmation email via Loops:', emailError)
+      console.error('Failed to send houseSit cancellation confirmation email via Loops:', emailError)
     }
 
-    if (cleaner && booking.cleanerId === cleaner.id) {
+    if (houseSitter && booking.houseSitterId === houseSitter.id) {
       try {
         await loopsEmailService.sendCleanerCancellationWarningOrStrike({
-          email: booking.cleaner.user.email,
-          fullName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSitter.user.email,
+          fullName: booking.houseSitter.user.name ?? 'HouseSitter',
         })
       } catch (emailError) {
-        console.error('Failed to send cleaner cancellation warning/strike email via Loops:', emailError)
+        console.error('Failed to send houseSitter cancellation warning/strike email via Loops:', emailError)
       }
     }
 
@@ -1189,8 +1189,8 @@ function assertPostConfirmationProposalOpen(proposalExpiresAt: Date | null) {
 function assertPostConfirmationRescheduleNotUsed(booking: BookingWithRelations) {
   if (
     !booking.proposalBy &&
-    booking.postCleanerProposals >= 1 &&
-    booking.postClientProposals >= 1
+    booking.postHouseSitterProposals >= 1 &&
+    booking.postHouseSitProposals >= 1
   ) {
     throw new ServiceError('This booking has already been rescheduled once. No further reschedules are allowed for this booking.', 400)
   }
@@ -1244,17 +1244,17 @@ function clearedProposalState(options?: { preserveRescheduleUsage?: boolean }) {
     proposalBy: null,
     proposalContext: null,
     proposalExpiresAt: null,
-    cleanerProposals: 0,
-    clientProposals: 0,
-    postCleanerProposals: preserveRescheduleUsage ? undefined : 0,
-    postClientProposals: preserveRescheduleUsage ? undefined : 0,
+    houseSitterProposals: 0,
+    houseSitProposals: 0,
+    postHouseSitterProposals: preserveRescheduleUsage ? undefined : 0,
+    postHouseSitProposals: preserveRescheduleUsage ? undefined : 0,
   }
 }
 
 function appliedRescheduleUsageMarker() {
   return {
-    postCleanerProposals: 1,
-    postClientProposals: 1,
+    postHouseSitterProposals: 1,
+    postHouseSitProposals: 1,
   }
 }
 
@@ -1296,7 +1296,7 @@ async function resetAuthorizationAfterReschedule(bookingId: string) {
   })
 
   await pushInAppNotification({
-    userId: booking.client.userId,
+    userId: booking.houseSit.userId,
     type: 'booking_payment_required',
     title: 'Card re-authorization required',
     body: requiresImmediateReauth
@@ -1310,7 +1310,7 @@ function assertPaymentAuthorized(paymentStatus: string | null | undefined, actio
   const isPaymentAuthorized = ['authorized', 'captured', 'transferred'].includes(String(paymentStatus ?? ''))
   if (!isPaymentAuthorized) {
     throw new ServiceError(
-      `Cannot ${action} booking before client card authorization is completed`,
+      `Cannot ${action} booking before houseSit card authorization is completed`,
       400,
     )
   }
@@ -1337,41 +1337,41 @@ async function releasePaymentAuthorization(
 }
 
 async function notifyPendingRequestExpired(booking: BookingWithRelations) {
-  const isHouseSitterProposal = booking.proposalBy === 'cleaner'
-  const isClientProposal = booking.proposalBy === 'client'
-  const cleanerBody = isHouseSitterProposal
-    ? 'Client did not respond before expiry. The request expired and availability is released.'
+  const isHouseSitterProposal = booking.proposalBy === 'house_sitter'
+  const isClientProposal = booking.proposalBy === 'house_sit'
+  const houseSitterBody = isHouseSitterProposal
+    ? 'HouseSit did not respond before expiry. The request expired and availability is released.'
     : isClientProposal
       ? 'Your request expired because no agreement was reached in time.'
       : 'This request expired before confirmation.'
-  const clientBody = isHouseSitterProposal
+  const houseSitBody = isHouseSitterProposal
     ? 'You did not respond before expiry. The request expired and your card authorization was released.'
     : isClientProposal
-      ? 'Cleaner did not respond before expiry. The request expired and your card authorization was released.'
-      : 'This request expired because the cleaner did not accept in time.'
+      ? 'HouseSitter did not respond before expiry. The request expired and your card authorization was released.'
+      : 'This request expired because the houseSitter did not accept in time.'
 
   await pushInAppNotification({
-    userId: booking.client.userId,
+    userId: booking.houseSit.userId,
     type: 'booking_request_expired',
     title: 'Booking request expired',
-    body: clientBody,
+    body: houseSitBody,
     data: { booking_id: booking.id },
   })
   await pushInAppNotification({
-    userId: booking.cleaner.userId,
+    userId: booking.houseSitter.userId,
     type: 'booking_request_expired',
     title: 'Booking request expired',
-    body: cleanerBody,
+    body: houseSitterBody,
     data: { booking_id: booking.id },
   })
   try {
     await loopsEmailService.sendClientBookingRejectedOrExpired({
-      email: booking.client.user.email,
-      fullName: booking.client.user.name ?? 'Client',
-      cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+      email: booking.houseSit.user.email,
+      fullName: booking.houseSit.user.name ?? 'HouseSit',
+      houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
     })
   } catch (emailError) {
-    console.error('Failed to send client booking expired email via Loops:', emailError)
+    console.error('Failed to send houseSit booking expired email via Loops:', emailError)
   }
 }
 
@@ -1382,14 +1382,14 @@ async function notifyPostConfirmationProposalExpired(booking: BookingWithRelatio
   const body = 'No agreement was reached before the cutoff. Original booking remains active.'
 
   await pushInAppNotification({
-    userId: booking.client.userId,
+    userId: booking.houseSit.userId,
     type: 'booking_request_expired',
     title,
     body,
     data: { booking_id: booking.id },
   })
   await pushInAppNotification({
-    userId: booking.cleaner.userId,
+    userId: booking.houseSitter.userId,
     type: 'booking_request_expired',
     title,
     body,
@@ -1407,8 +1407,8 @@ function assertCompletionWindow(scheduledEnd: Date) {
   }
 }
 
-function assertCleanerStripeReady(cleaner: Awaited<ReturnType<typeof houseSitterRepo.findByUserId>> | null) {
-  if (!cleaner?.stripeOnboardingComplete) {
+function assertCleanerStripeReady(houseSitter: Awaited<ReturnType<typeof houseSitterRepo.findByUserId>> | null) {
+  if (!houseSitter?.stripeOnboardingComplete) {
     throw new ServiceError('You must connect Stripe to accept bookings and receive payouts', 403)
   }
 }
@@ -1417,7 +1417,7 @@ async function completeBookingFlow(
   bookingId: string,
   args: {
     completedAt: Date
-    initiatedByRole: 'cleaner' | 'system'
+    initiatedByRole: 'house_sitter' | 'system'
     initiatedByUserId?: string
   },
 ) {
@@ -1438,18 +1438,18 @@ async function completeBookingFlow(
   })
 
   await pushInAppNotification({
-    userId: booking.client.userId,
+    userId: booking.houseSit.userId,
     type: 'booking_completed',
     title: 'Booking completed',
     body:
       args.initiatedByRole === 'system'
         ? 'Your booking has been marked as completed. If there was an issue, please report it within 24 hours.'
-        : 'Cleaner marked this booking as completed. If there was an issue, please report it within 24 hours.',
+        : 'HouseSitter marked this booking as completed. If there was an issue, please report it within 24 hours.',
     data: { booking_id: bookingId },
   })
 
   await pushInAppNotification({
-    userId: booking.cleaner.userId,
+    userId: booking.houseSitter.userId,
     type: 'booking_completed',
     title: 'Completed - awaiting release',
     body:
@@ -1461,25 +1461,25 @@ async function completeBookingFlow(
 
   try {
     await loopsEmailService.sendClientBookingCompleted({
-      email: booking.client.user.email,
-      fullName: booking.client.user.name ?? 'Client',
-      cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+      email: booking.houseSit.user.email,
+      fullName: booking.houseSit.user.name ?? 'HouseSit',
+      houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
       bookingId: booking.id,
       completedBy: args.initiatedByRole,
     })
   } catch (completionEmailError) {
-    console.error('Failed to send client completion email via Loops:', completionEmailError)
+    console.error('Failed to send houseSit completion email via Loops:', completionEmailError)
   }
 
   try {
     await loopsEmailService.sendClientReviewRequest({
-      email: booking.client.user.email,
-      fullName: booking.client.user.name ?? 'Client',
-      cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+      email: booking.houseSit.user.email,
+      fullName: booking.houseSit.user.name ?? 'HouseSit',
+      houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
       bookingId: booking.id,
     })
   } catch (reviewEmailError) {
-    console.error('Failed to send client review request email via Loops:', reviewEmailError)
+    console.error('Failed to send houseSit review request email via Loops:', reviewEmailError)
   }
 
   return updated
@@ -1487,11 +1487,11 @@ async function completeBookingFlow(
 
 async function maybeApplyCleanerCancellationStrike(args: {
   booking: NonNullable<Awaited<ReturnType<typeof bookingRepo.findById>>>
-  cleanerId: string
+  houseSitterId: string
   cancelledByUserId: string
   cancellationReason?: string
 }) {
-  const { booking, cleanerId, cancelledByUserId, cancellationReason } = args
+  const { booking, houseSitterId, cancelledByUserId, cancellationReason } = args
   if (!['accepted', 'confirmed'].includes(booking.status)) return
 
   const now = new Date()
@@ -1501,35 +1501,35 @@ async function maybeApplyCleanerCancellationStrike(args: {
 
   const normalizedReason = normalizeCancellationReason(cancellationReason)
   const eventKey = `${bookingLocalDay}|${normalizedReason}`
-  const eventReason = `event_key=${eventKey}|Same-day cleaner cancellation event`
+  const eventReason = `event_key=${eventKey}|Same-day houseSitter cancellation event`
 
   const dayStart = startOfDayCyprus(now)
   const dayEnd = endOfDayCyprus(now)
-  const existingTodayEvent = await db.cleanerStrike.findFirst({
+  const existingTodayEvent = await db.houseSitterStrike.findFirst({
     where: {
-      cleanerId,
-      strikeType: 'cleaner_same_day_cancellation_event',
+      houseSitterId,
+      strikeType: 'house_sitter_same_day_cancellation_event',
       reason: { startsWith: `event_key=${eventKey}|` },
       createdAt: { gte: dayStart, lte: dayEnd },
     },
   })
   if (existingTodayEvent) return
 
-  await db.cleanerStrike.create({
+  await db.houseSitterStrike.create({
     data: {
-      cleanerId,
+      houseSitterId,
       bookingId: booking.id,
-      strikeType: 'cleaner_same_day_cancellation_event',
+      strikeType: 'house_sitter_same_day_cancellation_event',
       reason: eventReason,
       issuedBy: cancelledByUserId,
     },
   })
 
   const repeatWindowStart = new Date(now.getTime() - CLEANER_REPEAT_CANCELLATION_WINDOW_DAYS * 24 * 60 * 60 * 1000)
-  const previousEvents = await db.cleanerStrike.count({
+  const previousEvents = await db.houseSitterStrike.count({
     where: {
-      cleanerId,
-      strikeType: 'cleaner_same_day_cancellation_event',
+      houseSitterId,
+      strikeType: 'house_sitter_same_day_cancellation_event',
       reason: { contains: `|${normalizedReason}|` },
       createdAt: { gte: repeatWindowStart, lt: dayStart },
     },
@@ -1537,11 +1537,11 @@ async function maybeApplyCleanerCancellationStrike(args: {
 
   if (previousEvents < 1) return
 
-  await db.cleanerStrike.create({
+  await db.houseSitterStrike.create({
     data: {
-      cleanerId,
+      houseSitterId,
       bookingId: booking.id,
-      strikeType: 'cleaner_repeat_cancellation_strike',
+      strikeType: 'house_sitter_repeat_cancellation_strike',
       reason: `Repeat same-day cancellation event within ${CLEANER_REPEAT_CANCELLATION_WINDOW_DAYS} days (${normalizedReason})`,
       issuedBy: cancelledByUserId,
     },
@@ -1574,7 +1574,7 @@ async function applyCancellationPaymentPolicy(
 
   if (payment.status !== 'authorized') return
 
-  // Pending cleaner acceptance cancellations should always release auth in full.
+  // Pending houseSitter acceptance cancellations should always release auth in full.
   if (bookingStatus === 'pending') {
     await stripe.paymentIntents.cancel(payment.stripePaymentIntentId)
     await paymentRepo.update(payment.id, { status: 'failed', failedAt: new Date() })
@@ -1599,8 +1599,8 @@ async function applyCancellationPaymentPolicy(
     captureCents = Math.min(totalAmountCents, 500)
     applicationFeeCents = captureCents
   } else {
-    const cleanerShareCents = Math.round(subtotalCents * 0.5)
-    captureCents = Math.min(totalAmountCents, cleanerShareCents + platformFeeCents)
+    const houseSitterShareCents = Math.round(subtotalCents * 0.5)
+    captureCents = Math.min(totalAmountCents, houseSitterShareCents + platformFeeCents)
     applicationFeeCents = Math.min(captureCents, platformFeeCents)
   }
 
@@ -1663,7 +1663,7 @@ function endOfDayCyprus(date: Date): Date {
 }
 
 async function validateBookingWindow(
-  cleanerId: string,
+  houseSitterId: string,
   scheduledStart: Date,
   scheduledEnd: Date,
   options?: { enforceMaxAdvanceWindow?: boolean },
@@ -1699,9 +1699,9 @@ async function validateBookingWindow(
   const dateStr = cyprusDateStr(scheduledStart)
 
   const [schedules, blockedTimes, existingBookings] = await Promise.all([
-    availabilityRepo.getSchedule(cleanerId),
-    availabilityRepo.getBlockedTimesInRange(cleanerId, dayStart, dayEnd),
-    bookingRepo.findActiveForCleaner(cleanerId, dayStart, dayEnd),
+    availabilityRepo.getSchedule(houseSitterId),
+    availabilityRepo.getBlockedTimesInRange(houseSitterId, dayStart, dayEnd),
+    bookingRepo.findActiveForCleaner(houseSitterId, dayStart, dayEnd),
   ])
 
   const dayOfWeek = isoWeekday(new Date(dateStr + 'T00:00:00Z'))
@@ -1710,7 +1710,7 @@ async function validateBookingWindow(
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
 
   if (activeDaySchedules.length === 0) {
-    throw new ServiceError('Cleaner is unavailable on the selected day', 422)
+    throw new ServiceError('HouseSitter is unavailable on the selected day', 422)
   }
 
   const startMs = scheduledStart.getTime()
@@ -1735,7 +1735,7 @@ async function validateBookingWindow(
     (b) => b.startDatetime < scheduledEnd && b.endDatetime > scheduledStart,
   )
   if (hasBlockedConflict) {
-    throw new ServiceError('Selected time conflicts with cleaner blocked dates/times', 409)
+    throw new ServiceError('Selected time conflicts with houseSitter blocked dates/times', 409)
   }
 
   const hasBookingConflict = existingBookings.some(

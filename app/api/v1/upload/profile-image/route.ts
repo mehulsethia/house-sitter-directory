@@ -60,9 +60,9 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
     data: { avatarUrl: publicUrl },
   })
 
-  // If cleaner, also update profile_image_url on cleaner record
-  if (user.role === 'cleaner') {
-    await db.cleaner.updateMany({
+  // If houseSitter, also update profile_image_url on houseSitter record
+  if (user.role === 'house_sitter') {
+    await db.houseSitter.updateMany({
       where: { userId: user.id },
       data: { profileImageUrl: publicUrl },
     })

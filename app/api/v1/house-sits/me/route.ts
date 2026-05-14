@@ -17,17 +17,17 @@ const updateClientMeSchema = z.object({
 })
 
 export const GET = requireHouseSit(async (_req, _ctx, user) => {
-  let client = await houseSitRepo.findByUserId(user.id)
-  if (!client) {
-    client = await houseSitRepo.create(user.id)
+  let houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) {
+    houseSit = await houseSitRepo.create(user.id)
   }
-  return ok(client)
+  return ok(houseSit)
 })
 
 export const PATCH = requireHouseSit(async (req: NextRequest, _ctx, user) => {
-  let client = await houseSitRepo.findByUserId(user.id)
-  if (!client) {
-    client = await houseSitRepo.create(user.id)
+  let houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) {
+    houseSit = await houseSitRepo.create(user.id)
   }
 
   const body = await req.json()
@@ -48,7 +48,7 @@ export const PATCH = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     })
   }
 
-  const updated = await houseSitRepo.update(client.id, {
+  const updated = await houseSitRepo.update(houseSit.id, {
     ...(data.default_address !== undefined ? { defaultAddress: data.default_address } : {}),
     ...(data.default_city !== undefined ? { defaultCity: data.default_city } : {}),
     ...(data.default_postcode !== undefined ? { defaultPostcode: data.default_postcode } : {}),

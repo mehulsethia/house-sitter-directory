@@ -4,20 +4,20 @@ import { ok, err } from '@/server/response'
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
-  const cleaner = await houseSitterRepo.findById(id)
+  const houseSitter = await houseSitterRepo.findById(id)
   if (
-    !cleaner ||
-    cleaner.status !== 'approved' ||
-    !cleaner.profileComplete ||
-    !cleaner.stripeOnboardingComplete
+    !houseSitter ||
+    houseSitter.status !== 'approved' ||
+    !houseSitter.profileComplete ||
+    !houseSitter.stripeOnboardingComplete
   ) {
-    return err('Cleaner not found', 404)
+    return err('HouseSitter not found', 404)
   }
 
   const [completedBookings, respondedBookings] = await Promise.all([
     db.booking.findMany({
       where: {
-        cleanerId: cleaner.id,
+        houseSitterId: houseSitter.id,
         status: { in: ['completed', 'disputed'] },
       },
       select: {
@@ -27,7 +27,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     }),
     db.booking.findMany({
       where: {
-        cleanerId: cleaner.id,
+        houseSitterId: houseSitter.id,
         acceptedAt: { not: null },
       },
       select: {
@@ -37,7 +37,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     }),
   ])
   const reviewAgg = await db.review.aggregate({
-    where: { cleanerId: cleaner.id },
+    where: { houseSitterId: houseSitter.id },
     _avg: { rating: true },
   })
 
@@ -57,18 +57,18 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const avgResponseMinutes =
     respondedBookings.length > 0 ? Math.round(totalResponseMinutes / respondedBookings.length) : 0
 
-  const sanitizedUser = cleaner.user
+  const sanitizedUser = houseSitter.user
     ? {
-        id: cleaner.user.id,
-        name: cleaner.user.name,
-        avatarUrl: cleaner.user.avatarUrl,
+        id: houseSitter.user.id,
+        name: houseSitter.user.name,
+        avatarUrl: houseSitter.user.avatarUrl,
         phone: null,
         email: null,
       }
-    : cleaner.user
+    : houseSitter.user
 
   return ok({
-    ...cleaner,
+    ...houseSitter,
     totalJobs: completedBookings.length,
     averageRating: reviewAgg._avg.rating ?? null,
     user: sanitizedUser,

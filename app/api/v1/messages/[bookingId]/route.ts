@@ -18,13 +18,13 @@ function isWithinChatWindow(booking: { scheduledEnd?: Date | null }) {
 async function isParty(bookingId: string, userId: string, role: string) {
   const booking = await bookingRepo.findById(bookingId)
   if (!booking) return null
-  if (role === 'client') {
-    const client = await houseSitRepo.findByUserId(userId)
-    return client && booking.clientId === client.id ? booking : null
+  if (role === 'house_sit') {
+    const houseSit = await houseSitRepo.findByUserId(userId)
+    return houseSit && booking.houseSitId === houseSit.id ? booking : null
   }
-  if (role === 'cleaner') {
-    const cleaner = await houseSitterRepo.findByUserId(userId)
-    return cleaner && booking.cleanerId === cleaner.id ? booking : null
+  if (role === 'house_sitter') {
+    const houseSitter = await houseSitterRepo.findByUserId(userId)
+    return houseSitter && booking.houseSitterId === houseSitter.id ? booking : null
   }
   return booking // admin
 }

@@ -193,7 +193,7 @@ function FindHouseSitsContent() {
         <div className="max-site-width">
           <h2 className="text-[34px] leading-tight text-white sm:text-[44px]">Ready to Start Your House Sitting Journey?</h2>
           <p className="mx-auto mt-3 max-w-2xl text-[14px] text-white/85">Create your sitter profile and start applying to house sitting opportunities today</p>
-          <Link href="/signup?role=cleaner" className="mt-7 inline-flex h-10 items-center rounded-[4px] bg-white px-6 text-[13px] text-[#5a4a3b]">
+          <Link href="/signup?role=house_sitter" className="mt-7 inline-flex h-10 items-center rounded-[4px] bg-white px-6 text-[13px] text-[#5a4a3b]">
             Create Your Profile
           </Link>
         </div>

@@ -4,8 +4,8 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 function getPostLoginPath(user: { user_metadata?: Record<string, unknown> }) {
-  const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'client'
-  if (role === 'cleaner') return '/house-sitter/dashboard'
+  const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'house_sit'
+  if (role === 'house_sitter') return '/house-sitter/dashboard'
   if (role === 'admin') return '/admin/dashboard'
   return '/house-sit/dashboard'
 }

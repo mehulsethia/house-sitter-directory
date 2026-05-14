@@ -6,7 +6,7 @@ export const updateCleanerSchema = z.object({
   bio: z.string().max(1000).optional().nullable(),
   profile_image_url: z.string().min(1).optional().nullable(),
   skills: z.array(z.string().min(1)).max(12).optional(),
-  cleaning_supplies: z.enum(['own_supplies', 'client_supplies', 'cleaner_brings', 'client_provides']).optional().nullable(),
+  cleaning_supplies: z.enum(['own_supplies', 'house_sit_supplies', 'house_sitter_brings', 'house_sit_provides']).optional().nullable(),
   years_experience: z.number().int().min(0).optional(),
   hourly_rate: z.number().min(6).max(25).optional(),
   transport_mode: z.enum(['own_car', 'bus_walk', 'requires_pickup']).optional().nullable(),
@@ -94,12 +94,12 @@ export const approveCleanerSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['rejection_reason'],
-      message: 'Rejection reason is required when rejecting a cleaner.',
+      message: 'Rejection reason is required when rejecting a houseSitter.',
     })
   }
 })
 
-export const cleanerSearchSchema = z.object({
+export const houseSitterSearchSchema = z.object({
   city: z.string().optional(),
   availability: z.enum(['any', 'next_7_days']).optional().default('any'),
   transport_mode: z.enum(['own_car', 'bus_walk', 'requires_pickup']).optional(),

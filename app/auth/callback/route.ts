@@ -66,10 +66,10 @@ export async function GET(request: NextRequest) {
               })
             }
 
-            if (dbUser.role === 'client') {
-              const existing = await db.client.findFirst({ where: { userId: user.id } })
+            if (dbUser.role === 'house_sit') {
+              const existing = await db.houseSit.findFirst({ where: { userId: user.id } })
               if (!existing) {
-                await db.client.create({ data: { userId: user.id } })
+                await db.houseSit.create({ data: { userId: user.id } })
                 await pushInAppNotification({
                   userId: user.id,
                   type: 'account_created',
@@ -82,13 +82,13 @@ export async function GET(request: NextRequest) {
                     fullName: dbUser.name ?? 'Homeowner',
                   })
                 } catch (emailError) {
-                  console.error('Failed to send client account created email via Loops:', emailError)
+                  console.error('Failed to send houseSit account created email via Loops:', emailError)
                 }
               }
-            } else if (dbUser.role === 'cleaner') {
-              let existing = await db.cleaner.findFirst({ where: { userId: user.id } })
+            } else if (dbUser.role === 'house_sitter') {
+              let existing = await db.houseSitter.findFirst({ where: { userId: user.id } })
               if (!existing) {
-                existing = await db.cleaner.create({ data: { userId: user.id, hourlyRate: 15 } })
+                existing = await db.houseSitter.create({ data: { userId: user.id, hourlyRate: 15 } })
                 await pushInAppNotification({
                   userId: user.id,
                   type: 'account_created',
@@ -101,11 +101,11 @@ export async function GET(request: NextRequest) {
                     fullName: dbUser.name ?? 'House Sitter',
                   })
                 } catch (emailError) {
-                  console.error('Failed to send cleaner signup email via Loops:', emailError)
+                  console.error('Failed to send houseSitter signup email via Loops:', emailError)
                 }
               }
               if (existing && experience !== null && Number.isFinite(experience)) {
-                await db.cleaner.update({
+                await db.houseSitter.update({
                   where: { id: existing.id },
                   data: { yearsExperience: experience },
                 })
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
 
       let redirectTo = next
       if (redirectTo === '/') {
-        if (role === 'cleaner') {
+        if (role === 'house_sitter') {
           redirectTo = '/house-sitter/dashboard'
         } else {
           redirectTo = '/house-sit/dashboard'

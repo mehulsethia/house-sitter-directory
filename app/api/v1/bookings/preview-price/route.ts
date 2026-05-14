@@ -10,9 +10,9 @@ export const POST = requireAuth(async (req: NextRequest, _ctx) => {
   const parsed = previewPriceSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const cleaner = await houseSitterRepo.findById(parsed.data.cleaner_id)
-  if (!cleaner) return err('Cleaner not found', 404)
+  const houseSitter = await houseSitterRepo.findById(parsed.data.house_sitter_id)
+  if (!houseSitter) return err('HouseSitter not found', 404)
 
-  const pricing = bookingService.previewPrice(Number(cleaner.hourlyRate), parsed.data.duration_hours)
+  const pricing = bookingService.previewPrice(Number(houseSitter.hourlyRate), parsed.data.duration_hours)
   return ok(pricing)
 })

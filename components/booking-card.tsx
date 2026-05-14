@@ -15,11 +15,11 @@ const SERVICE_LABELS: Record<string, string> = {
 
 interface BookingCardProps {
   booking: BookingRead
-  viewAs?: 'client' | 'cleaner'
+  viewAs?: 'house_sit' | 'house_sitter'
 }
 
-export function BookingCard({ booking, viewAs = 'client' }: BookingCardProps) {
-  const basePath = viewAs === 'client' ? '/house-sits' : '/house-sitters'
+export function BookingCard({ booking, viewAs = 'house_sit' }: BookingCardProps) {
+  const basePath = viewAs === 'house_sit' ? '/house-sits' : '/house-sitters'
 
   return (
     <Card>
@@ -31,7 +31,7 @@ export function BookingCard({ booking, viewAs = 'client' }: BookingCardProps) {
               <BookingStatusBadge
                 status={booking.status}
                 proposalBy={booking.proposal_by}
-                showPaymentRequiredForUnpaid={viewAs !== 'cleaner'}
+                showPaymentRequiredForUnpaid={viewAs !== 'house_sitter'}
               />
             </div>
 
@@ -53,9 +53,9 @@ export function BookingCard({ booking, viewAs = 'client' }: BookingCardProps) {
 
           <div className="text-right shrink-0">
             <p className="font-bold text-lg">{formatCurrency(booking.total_amount)}</p>
-            {viewAs === 'cleaner' && (
+            {viewAs === 'house_sitter' && (
               <p className="text-xs text-muted-foreground">
-                You will earn {formatCurrency(booking.cleaner_payout)}
+                You will earn {formatCurrency(booking.house_sitter_payout)}
               </p>
             )}
           </div>

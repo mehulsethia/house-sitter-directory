@@ -170,19 +170,19 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
       const resolutionCopy = (() => {
         if (parsed.data.resolution_type === 'full_refund') return 'Resolution: full refund issued.'
         if (parsed.data.resolution_type === 'partial_refund') return 'Resolution: partial refund issued.'
-        if (parsed.data.resolution_type === 'payment_released') return 'Resolution: payment released to cleaner.'
-        return 'Resolution: no refund, payment released to cleaner.'
+        if (parsed.data.resolution_type === 'payment_released') return 'Resolution: payment released to houseSitter.'
+        return 'Resolution: no refund, payment released to houseSitter.'
       })()
 
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'dispute_resolved',
         title: 'Dispute resolved',
         body: resolutionCopy,
         data: { booking_id: booking.id, dispute_id: updated.id },
       })
       await pushInAppNotification({
-        userId: booking.cleaner.userId,
+        userId: booking.houseSitter.userId,
         type: 'dispute_resolved',
         title: 'Dispute resolved',
         body: resolutionCopy,

@@ -40,7 +40,7 @@ export default async function PublicHouseSitDetailPage({
   const signedInUser = await getSignedInUser()
   const isSignedIn = Boolean(signedInUser)
   const returnPath = `/find-house-sits/${sit.id}`
-  const applyHref = isSignedIn ? '/signup?role=cleaner' : `/login?next=${encodeURIComponent(returnPath)}`
+  const applyHref = isSignedIn ? '/signup?role=house_sitter' : `/login?next=${encodeURIComponent(returnPath)}`
   const messageHref = isSignedIn ? '/house-sitters/chats' : `/login?next=${encodeURIComponent(returnPath)}`
 
   return (

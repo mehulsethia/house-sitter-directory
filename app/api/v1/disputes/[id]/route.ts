@@ -12,8 +12,8 @@ import { pushInAppNotification } from '@/server/services/in-app-notification.ser
 import { db } from '@/server/db'
 
 const ISSUE_LABELS: Record<string, string> = {
-  cleaner_didnt_arrive: "Cleaner didn't arrive",
-  client_no_show: 'Client no-show',
+  house_sitter_didnt_arrive: "HouseSitter didn't arrive",
+  house_sit_no_show: 'HouseSit no-show',
   service_not_completed: 'Service not completed as expected',
   property_damage_safety: 'Property damage or safety issue',
   other_issue: 'Other issue',
@@ -26,10 +26,10 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
   const booking = await bookingRepo.findById(id)
   if (!booking) return err('Booking not found', 404)
 
-  const client = await houseSitRepo.findByUserId(user.id)
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  const isHouseSit = Boolean(client && booking.clientId === client.id)
-  const isHouseSitter = Boolean(cleaner && booking.cleanerId === cleaner.id)
+  const houseSit = await houseSitRepo.findByUserId(user.id)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  const isHouseSit = Boolean(houseSit && booking.houseSitId === houseSit.id)
+  const isHouseSitter = Boolean(houseSitter && booking.houseSitterId === houseSitter.id)
   if (!isHouseSit && !isHouseSitter && user.role !== 'admin') return err('Forbidden', 403)
 
   const existing = await disputeRepo.findByBookingId(id)
@@ -42,7 +42,7 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
   const parsed = createDisputeSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
   const issueType = parsed.data.issue_type
-  const isNoShowIssue = issueType === 'cleaner_didnt_arrive' || issueType === 'client_no_show'
+  const isNoShowIssue = issueType === 'house_sitter_didnt_arrive' || issueType === 'house_sit_no_show'
 
   if (isNoShowIssue) {
     const noShowAvailableAt = booking.scheduledStart.getTime() + NO_SHOW_DELAY_MINUTES * 60 * 1000
@@ -50,11 +50,11 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
       return err(`No-show reporting is available ${NO_SHOW_DELAY_MINUTES} minutes after scheduled start`, 400)
     }
 
-    if (issueType === 'cleaner_didnt_arrive' && !isHouseSit) {
-      return err('Only the client can report cleaner no-show', 403)
+    if (issueType === 'house_sitter_didnt_arrive' && !isHouseSit) {
+      return err('Only the houseSit can report houseSitter no-show', 403)
     }
-    if (issueType === 'client_no_show' && !isHouseSitter) {
-      return err('Only the cleaner can report client no-show', 403)
+    if (issueType === 'house_sit_no_show' && !isHouseSitter) {
+      return err('Only the houseSitter can report houseSit no-show', 403)
     }
 
     if (['cancelled', 'expired'].includes(booking.status)) {
@@ -62,7 +62,7 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
     }
   } else {
     if (!isHouseSit && !isHouseSitter) {
-      return err('Only the client or assigned cleaner can submit this report type', 403)
+      return err('Only the houseSit or assigned houseSitter can submit this report type', 403)
     }
 
     if (!['in_progress', 'completed', 'disputed'].includes(booking.status)) {
@@ -70,10 +70,10 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
     }
 
     if (isHouseSitter) {
-      const cleanerWindowMs = 24 * 60 * 60 * 1000
-      const cleanerDeadlineMs = booking.scheduledEnd.getTime() + cleanerWindowMs
-      if (Date.now() > cleanerDeadlineMs) {
-        return err('Cleaner reporting window has expired (24 hours after scheduled completion)', 400)
+      const houseSitterWindowMs = 24 * 60 * 60 * 1000
+      const houseSitterDeadlineMs = booking.scheduledEnd.getTime() + houseSitterWindowMs
+      if (Date.now() > houseSitterDeadlineMs) {
+        return err('HouseSitter reporting window has expired (24 hours after scheduled completion)', 400)
       }
     } else if (booking.status !== 'in_progress') {
       if (!booking.completedAt) return err('Completed timestamp missing for this booking', 400)
@@ -99,14 +99,14 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
   }
 
   await pushInAppNotification({
-    userId: booking.client.userId,
+    userId: booking.houseSit.userId,
     type: 'dispute_under_review',
     title: 'Dispute under review',
     body: 'Your dispute is now under review by MaidHive.',
     data: { booking_id: booking.id, dispute_id: dispute.id },
   })
   await pushInAppNotification({
-    userId: booking.cleaner.userId,
+    userId: booking.houseSitter.userId,
     type: 'dispute_under_review',
     title: 'Dispute under review',
     body: 'A dispute was raised for this booking and is under review.',
@@ -132,15 +132,15 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
   try {
     await loopsEmailService.sendAdminDisputeRaised({
       bookingId: booking.id,
-      clientName: booking.client.user.name ?? 'Client',
-      cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+      houseSitName: booking.houseSit.user.name ?? 'HouseSit',
+      houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
       date: booking.scheduledStart.toISOString(),
     })
   } catch (emailError) {
     console.error('Failed to send admin dispute raised email via Loops:', emailError)
   }
 
-  const recipient = issueType === 'client_no_show' ? booking.cleaner.user : booking.client.user
+  const recipient = issueType === 'house_sit_no_show' ? booking.houseSitter.user : booking.houseSit.user
   try {
     await loopsEmailService.sendClientIssueOrNoShowNotification({
       email: recipient.email,

@@ -15,14 +15,14 @@ export const POST = requireHouseSitter(async (_req, _ctx, user) => {
     return err('Phone verification is required before submitting for approval.', 400)
   }
 
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) return err('Cleaner profile not found.', 404)
-  const shouldNotifyAdmin = cleaner.status !== 'pending' || !cleaner.profileComplete
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) return err('HouseSitter profile not found.', 404)
+  const shouldNotifyAdmin = houseSitter.status !== 'pending' || !houseSitter.profileComplete
 
-  const schedules = await availabilityRepo.getSchedule(cleaner.id)
+  const schedules = await availabilityRepo.getSchedule(houseSitter.id)
   const hasAvailabilitySlots = schedules.some((s) => s.isActive)
-  const onboarding = computeCleanerOnboardingProgress({ cleaner, hasAvailabilitySlots })
-  const submissionValidation = validateCleanerSubmissionRequirements({ cleaner, hasAvailabilitySlots })
+  const onboarding = computeCleanerOnboardingProgress({ houseSitter, hasAvailabilitySlots })
+  const submissionValidation = validateCleanerSubmissionRequirements({ houseSitter, hasAvailabilitySlots })
 
   if (!submissionValidation.valid || onboarding.completion_pct < 100) {
     const missing = submissionValidation.missingFields
@@ -33,11 +33,11 @@ export const POST = requireHouseSitter(async (_req, _ctx, user) => {
     return err(`Profile is not yet complete. Please finish all onboarding requirements first.${guidance}`, 400)
   }
 
-  if (cleaner.status === 'approved') {
+  if (houseSitter.status === 'approved') {
     return err('Profile is already approved.', 400)
   }
 
-  const updated = await houseSitterRepo.update(cleaner.id, {
+  const updated = await houseSitterRepo.update(houseSitter.id, {
     profileComplete: true,
     status: 'pending',
     rejectionReason: null,
@@ -45,10 +45,10 @@ export const POST = requireHouseSitter(async (_req, _ctx, user) => {
 
   await pushInAppNotification({
     userId: user.id,
-    type: 'cleaner_application_submitted',
+    type: 'house_sitter_application_submitted',
     title: 'Application submitted',
-    body: 'Your cleaner profile has been submitted for admin review.',
-    data: { cleaner_id: cleaner.id },
+    body: 'Your houseSitter profile has been submitted for admin review.',
+    data: { house_sitter_id: houseSitter.id },
   })
 
   if (shouldNotifyAdmin) {
@@ -60,23 +60,23 @@ export const POST = requireHouseSitter(async (_req, _ctx, user) => {
       admins.map((admin) =>
         pushInAppNotification({
           userId: admin.id,
-          type: 'cleaner_application_submitted',
-          title: 'New cleaner application',
-          body: `${cleaner.user?.name ?? 'A cleaner'} submitted onboarding for approval.`,
-          data: { cleaner_id: cleaner.id },
+          type: 'house_sitter_application_submitted',
+          title: 'New houseSitter application',
+          body: `${houseSitter.user?.name ?? 'A houseSitter'} submitted onboarding for approval.`,
+          data: { house_sitter_id: houseSitter.id },
         }),
       ),
     )
 
     try {
       await loopsEmailService.sendAdminNewCleanerApplication({
-        cleanerName: cleaner.user?.name ?? 'Cleaner',
-        cleanerEmail: cleaner.user?.email ?? '',
+        houseSitterName: houseSitter.user?.name ?? 'HouseSitter',
+        houseSitterEmail: houseSitter.user?.email ?? '',
       })
     } catch (emailError) {
-      console.error('Failed to send admin cleaner application email via Loops:', emailError)
+      console.error('Failed to send admin houseSitter application email via Loops:', emailError)
     }
   }
 
-  return ok({ cleaner: updated, onboarding })
+  return ok({ houseSitter: updated, onboarding })
 })

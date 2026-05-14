@@ -3,13 +3,13 @@
 import { NotificationsCenter } from '@/components/notifications-center'
 
 
-export default function ClientNotificationsPage() {
+export default function HouseSitNotificationsPage() {
   return (
     <>
-      <div className="client-notifications-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-notifications-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -26,17 +26,17 @@ export default function ClientNotificationsPage() {
           </div>
         </section>
 
-        <NotificationsCenter role="client" />
+        <NotificationsCenter role="house_sit" />
       </div>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -49,18 +49,18 @@ export default function ClientNotificationsPage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:
             linear-gradient(90deg, rgba(255, 255, 255, 0.11) 0%, rgba(255, 255, 255, 0) 45%),
             radial-gradient(circle at 20% 28%, rgba(255, 240, 225, 0.14), transparent 28%),
             radial-gradient(circle at 82% 12%, rgba(244, 180, 0, 0.2), transparent 22%);
-          animation: client-sweep 11s ease-in-out infinite;
+          animation: houseSit-sweep 11s ease-in-out infinite;
           pointer-events: none;
         }
 
-        @keyframes client-sweep {
+        @keyframes houseSit-sweep {
           0%,
           100% {
             transform: translateX(0%);

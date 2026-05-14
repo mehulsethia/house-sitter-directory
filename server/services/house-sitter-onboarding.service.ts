@@ -1,4 +1,4 @@
-import type { Cleaner } from '@prisma/client'
+import type { HouseSitter } from '@prisma/client'
 
 export type HouseSitterOnboardingProgress = {
   completion_pct: number
@@ -17,45 +17,45 @@ function hasValue(v?: string | null) {
   return typeof v === 'string' && v.trim().length > 0
 }
 
-export type CleanerSubmissionValidation = {
+export type HouseSitterSubmissionValidation = {
   valid: boolean
   missingFields: string[]
 }
 
 export function computeCleanerOnboardingProgress(args: {
-  cleaner: Cleaner
+  houseSitter: HouseSitter
   hasAvailabilitySlots: boolean
 }): HouseSitterOnboardingProgress {
-  const { cleaner, hasAvailabilitySlots } = args
+  const { houseSitter, hasAvailabilitySlots } = args
 
   const step1BasicDetails =
-    hasValue(cleaner.profileImageUrl) &&
-    hasValue(cleaner.bio) &&
-    Number(cleaner.hourlyRate) >= 6 &&
-    cleaner.skills.length > 0 &&
-    hasValue(cleaner.cleaningSupplies)
+    hasValue(houseSitter.profileImageUrl) &&
+    hasValue(houseSitter.bio) &&
+    Number(houseSitter.hourlyRate) >= 6 &&
+    houseSitter.skills.length > 0 &&
+    hasValue(houseSitter.cleaningSupplies)
 
-  const needsPickupLocation = cleaner.transportMode === 'requires_pickup'
+  const needsPickupLocation = houseSitter.transportMode === 'requires_pickup'
   const step2Kyc =
-    hasValue(cleaner.transportMode) &&
-    (!needsPickupLocation || hasValue(cleaner.transportPickupLocation)) &&
-    hasValue(cleaner.idType) &&
-    hasValue(cleaner.idFileName) &&
-    cleaner.petComfortable !== null &&
-    cleaner.workEligibilityAnswer === true &&
-    cleaner.workEligibilityConfirmed &&
-    cleaner.termsAccepted
+    hasValue(houseSitter.transportMode) &&
+    (!needsPickupLocation || hasValue(houseSitter.transportPickupLocation)) &&
+    hasValue(houseSitter.idType) &&
+    hasValue(houseSitter.idFileName) &&
+    houseSitter.petComfortable !== null &&
+    houseSitter.workEligibilityAnswer === true &&
+    houseSitter.workEligibilityConfirmed &&
+    houseSitter.termsAccepted
 
   const step3Availability = hasAvailabilitySlots
   const step4StripeSetup =
-    cleaner.stripeOnboardingComplete ||
-    cleaner.onboardingSkippedStep4 ||
-    cleaner.onboardingStep >= 5
+    houseSitter.stripeOnboardingComplete ||
+    houseSitter.onboardingSkippedStep4 ||
+    houseSitter.onboardingStep >= 5
   const step5Training =
-    cleaner.standardsCompleted &&
-    cleaner.quizPassed &&
-    cleaner.quizScore !== null &&
-    cleaner.quizScore >= 80
+    houseSitter.standardsCompleted &&
+    houseSitter.quizPassed &&
+    houseSitter.quizScore !== null &&
+    houseSitter.quizScore >= 80
 
   const completedSteps = [
     step1BasicDetails,
@@ -70,7 +70,7 @@ export function computeCleanerOnboardingProgress(args: {
   let currentStep: 1 | 2 | 3 | 4 | 5 = 1
   if (!step1BasicDetails) currentStep = 1
   else if (!step2Kyc) currentStep = 2
-  else if (!step3Availability) currentStep = cleaner.onboardingSkippedStep3 ? 4 : 3
+  else if (!step3Availability) currentStep = houseSitter.onboardingSkippedStep3 ? 4 : 3
   else if (!step4StripeSetup) currentStep = 4
   else if (!step5Training) currentStep = 5
   else currentStep = 5
@@ -90,31 +90,31 @@ export function computeCleanerOnboardingProgress(args: {
 }
 
 export function validateCleanerSubmissionRequirements(args: {
-  cleaner: Cleaner
+  houseSitter: HouseSitter
   hasAvailabilitySlots: boolean
-}): CleanerSubmissionValidation {
-  const { cleaner, hasAvailabilitySlots } = args
+}): HouseSitterSubmissionValidation {
+  const { houseSitter, hasAvailabilitySlots } = args
   const missingFields: string[] = []
 
-  if (!hasValue(cleaner.bio)) missingFields.push('Professional bio')
-  if (!Array.isArray(cleaner.skills) || cleaner.skills.length === 0) missingFields.push('Services offered')
-  if (Number(cleaner.hourlyRate) < 6) missingFields.push('Hourly rate')
-  if (!hasValue(cleaner.cleaningSupplies)) missingFields.push('Supplies preference')
-  if (!hasValue(cleaner.transportMode)) missingFields.push('Transport mode')
-  if (cleaner.transportMode === 'requires_pickup' && !hasValue(cleaner.transportPickupLocation)) {
+  if (!hasValue(houseSitter.bio)) missingFields.push('Professional bio')
+  if (!Array.isArray(houseSitter.skills) || houseSitter.skills.length === 0) missingFields.push('Services offered')
+  if (Number(houseSitter.hourlyRate) < 6) missingFields.push('Hourly rate')
+  if (!hasValue(houseSitter.cleaningSupplies)) missingFields.push('Supplies preference')
+  if (!hasValue(houseSitter.transportMode)) missingFields.push('Transport mode')
+  if (houseSitter.transportMode === 'requires_pickup' && !hasValue(houseSitter.transportPickupLocation)) {
     missingFields.push('Pickup location')
   }
-  if (!hasValue(cleaner.idType)) missingFields.push('ID document type')
-  if (!hasValue(cleaner.idFileName) || !hasValue(cleaner.idFileUrl)) {
+  if (!hasValue(houseSitter.idType)) missingFields.push('ID document type')
+  if (!hasValue(houseSitter.idFileName) || !hasValue(houseSitter.idFileUrl)) {
     missingFields.push('Uploaded ID document')
   }
-  if (cleaner.workEligibilityAnswer !== true || !cleaner.workEligibilityConfirmed) {
+  if (houseSitter.workEligibilityAnswer !== true || !houseSitter.workEligibilityConfirmed) {
     missingFields.push('Work eligibility confirmation')
   }
-  if (!cleaner.termsAccepted) missingFields.push('Terms acceptance')
+  if (!houseSitter.termsAccepted) missingFields.push('Terms acceptance')
   if (!hasAvailabilitySlots) missingFields.push('Availability schedule')
-  if (!cleaner.standardsCompleted) missingFields.push('Cleaning standards confirmation')
-  if (!cleaner.quizPassed || (cleaner.quizScore ?? 0) < 80) {
+  if (!houseSitter.standardsCompleted) missingFields.push('Cleaning standards confirmation')
+  if (!houseSitter.quizPassed || (houseSitter.quizScore ?? 0) < 80) {
     missingFields.push('Quiz pass (80%+)')
   }
 

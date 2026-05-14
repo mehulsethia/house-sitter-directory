@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const syncUserSchema = z.object({
   name: z.string().min(1).optional(),
-  role: z.enum(['client', 'cleaner']).optional(),
+  role: z.enum(['house_sit', 'house_sitter']).optional(),
   phone: z.string().trim().min(3).max(40).optional(),
   experience: z.coerce.number().int().min(0).max(60).optional(),
 })

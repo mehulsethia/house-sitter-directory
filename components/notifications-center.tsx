@@ -11,7 +11,7 @@ import { triggerCountsRefresh } from '@/lib/counts-sync'
 import type { NotificationRead } from '@/types'
 import { toast } from 'sonner'
 
-type NotificationRole = 'client' | 'cleaner' | 'admin'
+type NotificationRole = 'house_sit' | 'house_sitter' | 'admin'
 type NotificationFilter = 'all' | 'unread'
 
 const FILTERS: { key: NotificationFilter; label: string }[] = [
@@ -123,7 +123,7 @@ export function NotificationsCenter({ role }: { role: NotificationRole }) {
   }
 
   function normalizeNotificationCopy(notification: NotificationRead): NotificationRead {
-    if (role !== 'cleaner') return notification
+    if (role !== 'house_sitter') return notification
     const nextTitle = String(notification.title ?? '')
       .replace(/Payment Required/gi, 'Awaiting payment authorisation')
       .replace(/New Booking Request/gi, 'New Request')

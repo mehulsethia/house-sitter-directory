@@ -13,7 +13,7 @@ const supabaseAdmin = createClient(
 const HOUSE_SITTER_KYC_BUCKET = (
   process.env.SUPABASE_HOUSE_SITTER_KYC_BUCKET ??
   process.env.SUPABASE_KYC_BUCKET ??
-  'cleaner-kyc'
+  'houseSitter-kyc'
 ).trim()
 const ALLOWED_MIME = new Set(DOCUMENT_MIME_TYPES)
 const EXT_BY_MIME: Record<string, string> = {
@@ -48,11 +48,11 @@ async function ensureKycBucketExists() {
 }
 
 export const POST = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) {
-    return NextResponse.json({ success: false, message: 'Cleaner profile not found' }, { status: 404 })
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) {
+    return NextResponse.json({ success: false, message: 'HouseSitter profile not found' }, { status: 404 })
   }
-  if (cleaner.profileComplete && cleaner.status !== 'rejected') {
+  if (houseSitter.profileComplete && houseSitter.status !== 'rejected') {
     return NextResponse.json(
       {
         success: false,
@@ -111,7 +111,7 @@ export const POST = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
 
   const publicUrl = urlData.publicUrl
 
-  await houseSitterRepo.update(cleaner.id, {
+  await houseSitterRepo.update(houseSitter.id, {
     idFileName: file.name,
     idFileUrl: publicUrl,
   })

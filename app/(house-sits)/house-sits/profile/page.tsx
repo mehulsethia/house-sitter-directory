@@ -23,7 +23,7 @@ import { MAX_SAVED_ADDRESSES, MVP_CITY, MVP_COUNTRY_CODE, normalizeCyprusPostcod
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
-export default function ClientProfilePage() {
+export default function HouseSitProfilePage() {
   const [tab, setTab] = useState<'overview' | 'address' | 'payments'>('overview')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -90,8 +90,8 @@ export default function ClientProfilePage() {
           createClient().auth.getUser(),
           houseSitsApi.listAddresses().catch(() => ({ data: [] as HouseSitAddressRead[] })),
         ])
-        const client = houseSitRes.data as any
-        const user = client?.user ?? {}
+        const houseSit = houseSitRes.data as any
+        const user = houseSit?.user ?? {}
         const fullName = String(user?.name ?? '').trim()
         const parts = fullName.split(' ').filter(Boolean)
         const loadedAddresses = ((addressesRes as any)?.data ?? []) as HouseSitAddressRead[]
@@ -103,14 +103,14 @@ export default function ClientProfilePage() {
           setEmail(user?.email ?? '')
           setPhone(user?.phone ?? '')
           setPersistedPhone(user?.phone ?? '')
-          setDefaultAddress(defaultEntry?.address_line1 ?? client?.default_address ?? '')
-          setDefaultCity(defaultEntry?.city ?? client?.default_city ?? '')
-          setDefaultPostcode(defaultEntry?.postcode ?? client?.default_postcode ?? '')
-          setIdFileName(client?.id_file_name ?? '')
-          setIdFileUrl(client?.id_file_url ?? '')
+          setDefaultAddress(defaultEntry?.address_line1 ?? houseSit?.default_address ?? '')
+          setDefaultCity(defaultEntry?.city ?? houseSit?.default_city ?? '')
+          setDefaultPostcode(defaultEntry?.postcode ?? houseSit?.default_postcode ?? '')
+          setIdFileName(houseSit?.id_file_name ?? '')
+          setIdFileUrl(houseSit?.id_file_url ?? '')
           setMemberSince(
-            client?.created_at
-              ? new Date(client.created_at).toLocaleDateString('en-IE', { month: 'short', year: 'numeric', timeZone: 'Europe/Nicosia' })
+            houseSit?.created_at
+              ? new Date(houseSit.created_at).toLocaleDateString('en-IE', { month: 'short', year: 'numeric', timeZone: 'Europe/Nicosia' })
               : '',
           )
           setBio('')
@@ -533,10 +533,10 @@ export default function ClientProfilePage() {
 
   return (
     <>
-      <div className="client-profile-revamp space-y-7 md:space-y-9">
-        <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-          <div className="client-stage__media" aria-hidden="true" />
-          <div className="client-stage__grain" aria-hidden="true" />
+      <div className="houseSit-profile-revamp space-y-7 md:space-y-9">
+        <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+          <div className="houseSit-stage__media" aria-hidden="true" />
+          <div className="houseSit-stage__grain" aria-hidden="true" />
 
           <div className="relative z-10 grid gap-3 px-5 py-3 sm:px-6 sm:py-3 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-4">
             <div className="animate-stage-up space-y-4">
@@ -628,7 +628,7 @@ export default function ClientProfilePage() {
                   <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
                     <p className="text-sm font-semibold text-amber-900">Complete trust signals</p>
                     <p className="mt-1 text-xs text-amber-800">
-                      Add a profile photo and optional ID to improve cleaner acceptance rates.
+                      Add a profile photo and optional ID to improve houseSitter acceptance rates.
                     </p>
                   </div>
                 )}
@@ -701,7 +701,7 @@ export default function ClientProfilePage() {
 
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-semibold text-slate-900">Trust Signals</p>
-                  <p className="mt-1 text-xs text-slate-600">Complete this to improve cleaner acceptance rates.</p>
+                  <p className="mt-1 text-xs text-slate-600">Complete this to improve houseSitter acceptance rates.</p>
                   <ul className="mt-2 space-y-1 text-xs text-slate-600">
                     <li>- Profile photo: {hasAvatar ? 'Added' : 'Pending'}</li>
                     <li>- Optional ID: {hasIdSubmitted ? 'Submitted' : 'Pending'}</li>
@@ -1084,13 +1084,13 @@ export default function ClientProfilePage() {
       </Dialog>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -1103,7 +1103,7 @@ export default function ClientProfilePage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:

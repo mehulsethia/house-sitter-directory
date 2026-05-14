@@ -6,6 +6,6 @@ export const createReviewSchema = z.object({
   is_public: z.boolean().default(true),
 })
 
-export const cleanerReviewResponseSchema = z.object({
+export const houseSitterReviewResponseSchema = z.object({
   response: z.string().trim().min(10).max(2000),
 })

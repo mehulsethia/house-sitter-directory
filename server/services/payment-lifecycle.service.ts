@@ -156,10 +156,10 @@ export const paymentLifecycleService = {
           proposalBy: null,
           proposalContext: null,
           proposalExpiresAt: null,
-          cleanerProposals: 0,
-          clientProposals: 0,
-          postCleanerProposals: 0,
-          postClientProposals: 0,
+          houseSitterProposals: 0,
+          houseSitProposals: 0,
+          postHouseSitterProposals: 0,
+          postHouseSitProposals: 0,
         },
       })
       expiredUnpaidDraftCount += 1
@@ -193,8 +193,8 @@ export const paymentLifecycleService = {
       },
       include: {
         payment: true,
-        client: { include: { user: true } },
-        cleaner: { include: { user: true } },
+        houseSit: { include: { user: true } },
+        houseSitter: { include: { user: true } },
       },
     })
 
@@ -211,10 +211,10 @@ export const paymentLifecycleService = {
           proposalBy: null,
           proposalContext: null,
           proposalExpiresAt: null,
-          cleanerProposals: 0,
-          clientProposals: 0,
-          postCleanerProposals: 0,
-          postClientProposals: 0,
+          houseSitterProposals: 0,
+          houseSitProposals: 0,
+          postHouseSitterProposals: 0,
+          postHouseSitProposals: 0,
         },
       })
       expiredPendingCount += 1
@@ -238,14 +238,14 @@ export const paymentLifecycleService = {
 
     for (const booking of expiredPendingBookings) {
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'booking_request_expired',
         title: 'Booking request expired',
-        body: 'This request expired because the cleaner did not accept in time.',
+        body: 'This request expired because the houseSitter did not accept in time.',
         data: { booking_id: booking.id },
       })
       await pushInAppNotification({
-        userId: booking.cleaner.userId,
+        userId: booking.houseSitter.userId,
         type: 'booking_request_expired',
         title: 'Booking request expired',
         body: 'This request expired before confirmation.',
@@ -253,12 +253,12 @@ export const paymentLifecycleService = {
       })
       try {
         await loopsEmailService.sendClientBookingRejectedOrExpired({
-          email: booking.client.user.email,
-          fullName: booking.client.user.name ?? 'Client',
-          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSit.user.email,
+          fullName: booking.houseSit.user.name ?? 'HouseSit',
+          houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
         })
       } catch (emailError) {
-        console.error('Failed to send client booking expired email via Loops:', emailError)
+        console.error('Failed to send houseSit booking expired email via Loops:', emailError)
       }
     }
 
@@ -269,8 +269,8 @@ export const paymentLifecycleService = {
       },
       include: {
         payment: true,
-        client: { include: { user: true } },
-        cleaner: { include: { user: true } },
+        houseSit: { include: { user: true } },
+        houseSitter: { include: { user: true } },
       },
     })
 
@@ -292,7 +292,7 @@ export const paymentLifecycleService = {
       accepted += 1
 
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: isReauthFlow ? 'booking_cancelled' : 'booking_request_expired',
         title: isReauthFlow ? 'Booking cancelled after unresolved re-authorization' : 'Booking payment window expired',
         body: isReauthFlow
@@ -301,23 +301,23 @@ export const paymentLifecycleService = {
         data: { booking_id: booking.id },
       })
       await pushInAppNotification({
-        userId: booking.cleaner.userId,
+        userId: booking.houseSitter.userId,
         type: isReauthFlow ? 'booking_cancelled' : 'booking_request_expired',
         title: isReauthFlow ? 'Booking cancelled after unresolved re-authorization' : 'Booking payment window expired',
         body: isReauthFlow
-          ? 'Client did not complete re-authorization during the grace period. Booking was auto-cancelled with no penalties.'
-          : 'This booking was closed because client authorization did not complete in time.',
+          ? 'HouseSit did not complete re-authorization during the grace period. Booking was auto-cancelled with no penalties.'
+          : 'This booking was closed because houseSit authorization did not complete in time.',
         data: { booking_id: booking.id },
       })
 
       try {
         await loopsEmailService.sendClientBookingRejectedOrExpired({
-          email: booking.client.user.email,
-          fullName: booking.client.user.name ?? 'Client',
-          cleanerName: booking.cleaner.user.name ?? 'Cleaner',
+          email: booking.houseSit.user.email,
+          fullName: booking.houseSit.user.name ?? 'HouseSit',
+          houseSitterName: booking.houseSitter.user.name ?? 'HouseSitter',
         })
       } catch (emailError) {
-        console.error('Failed to send client booking expired email via Loops:', emailError)
+        console.error('Failed to send houseSit booking expired email via Loops:', emailError)
       }
 
       if (booking.payment && booking.payment.status === 'pending') {
@@ -344,8 +344,8 @@ export const paymentLifecycleService = {
         proposalExpiresAt: { lt: now },
       },
       include: {
-        client: { include: { user: true } },
-        cleaner: { include: { user: true } },
+        houseSit: { include: { user: true } },
+        houseSitter: { include: { user: true } },
       },
     })
 
@@ -359,21 +359,21 @@ export const paymentLifecycleService = {
           proposalBy: null,
           proposalContext: null,
           proposalExpiresAt: null,
-          cleanerProposals: 0,
-          clientProposals: 0,
-          postCleanerProposals: preserveRescheduleUsage ? undefined : 0,
-          postClientProposals: preserveRescheduleUsage ? undefined : 0,
+          houseSitterProposals: 0,
+          houseSitProposals: 0,
+          postHouseSitterProposals: preserveRescheduleUsage ? undefined : 0,
+          postHouseSitProposals: preserveRescheduleUsage ? undefined : 0,
         },
       })
       await pushInAppNotification({
-        userId: booking.client.userId,
+        userId: booking.houseSit.userId,
         type: 'booking_request_expired',
         title: booking.proposalContext === 'amend_start' ? 'Amend Start Time expired' : 'Reschedule request expired',
         body: 'No agreement was reached before the cutoff. Original booking remains active.',
         data: { booking_id: booking.id },
       })
       await pushInAppNotification({
-        userId: booking.cleaner.userId,
+        userId: booking.houseSitter.userId,
         type: 'booking_request_expired',
         title: booking.proposalContext === 'amend_start' ? 'Amend Start Time expired' : 'Reschedule request expired',
         body: 'No agreement was reached before the cutoff. Original booking remains active.',

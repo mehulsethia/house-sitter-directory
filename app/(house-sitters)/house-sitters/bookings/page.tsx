@@ -48,7 +48,7 @@ const SERVICE_LABELS: Record<string, string> = {
   move_in: 'Move-in Clean',
 }
 
-export default function CleanerBookingsPage() {
+export default function HouseSitterBookingsPage() {
   const searchParams = useSearchParams()
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [stripeConnected, setStripeConnected] = useState(false)
@@ -80,8 +80,8 @@ export default function CleanerBookingsPage() {
     try {
       try {
         const houseSitterRes = await houseSittersApi.me()
-        const cleaner = houseSitterRes.data?.cleaner as any
-        setStripeConnected(Boolean(cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete))
+        const houseSitter = houseSitterRes.data?.houseSitter as any
+        setStripeConnected(Boolean(houseSitter?.stripe_onboarding_complete ?? houseSitter?.stripeOnboardingComplete))
       } catch {
         // no-op: page can still load bookings
       }
@@ -133,7 +133,7 @@ export default function CleanerBookingsPage() {
     }
 
     availabilityApi
-      .getSlots(proposalBooking.cleaner_id, proposalDate, proposalBooking.duration_hours)
+      .getSlots(proposalBooking.house_sitter_id, proposalDate, proposalBooking.duration_hours)
       .then((res) => {
         const options = (res.data ?? [])
           .filter((slot) => !slot.disabled)
@@ -165,7 +165,7 @@ export default function CleanerBookingsPage() {
       if (type === 'accept') toast.success('Booking accepted.')
       if (type === 'decline') toast.success('Booking request declined.')
       if (type === 'start') toast.success('Job started.')
-      if (type === 'propose_alternative') toast.success('Alternative time sent to client.')
+      if (type === 'propose_alternative') toast.success('Alternative time sent to houseSit.')
       await refresh()
     } catch (err: any) {
       toast.error(err.message ?? 'Action failed.')
@@ -257,7 +257,7 @@ export default function CleanerBookingsPage() {
 
   function pendingValidityLabel(bookingStart?: string, acceptBy?: string) {
     if (!acceptBy) {
-      return 'This request expires 24 hours after card authorisation. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.'
+      return 'This request expires 24 hours after card authorisation. If the houseSitter does not respond, the booking request will expire automatically and your card authorisation will be released.'
     }
     const validUntilText = new Date(acceptBy).toLocaleString('en-IE', {
       hour: 'numeric',
@@ -267,7 +267,7 @@ export default function CleanerBookingsPage() {
       month: 'short',
       year: 'numeric',
     })
-    return `This request expires on ${validUntilText}. If the cleaner does not respond, the booking request will expire automatically and your card authorisation will be released.`
+    return `This request expires on ${validUntilText}. If the houseSitter does not respond, the booking request will expire automatically and your card authorisation will be released.`
   }
 
   return (
@@ -343,15 +343,15 @@ export default function CleanerBookingsPage() {
             <div className="space-y-4">
               {filtered.map((b) => {
                 const eligibility = getCleanerProposalEligibility(b)
-                const trust = (b.client as any)?.trust as { memberSince?: string | null; completedBookingsCount?: number } | undefined
-                const memberSinceRaw = trust?.memberSince ?? (b.client as any)?.created_at ?? (b.client as any)?.createdAt
+                const trust = (b.houseSit as any)?.trust as { memberSince?: string | null; completedBookingsCount?: number } | undefined
+                const memberSinceRaw = trust?.memberSince ?? (b.houseSit as any)?.created_at ?? (b.houseSit as any)?.createdAt
                 const memberSinceLabel = memberSinceRaw
                   ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
                   : null
                 const completedBookingsCount = Number(trust?.completedBookingsCount ?? 0)
                 const startJobState = getStartJobAvailability(b.scheduled_start)
-                const clientName = b.client?.user?.name?.trim() || 'Homeowner'
-                const clientAvatarUrl = b.client?.user?.avatar_url ?? null
+                const houseSitName = b.houseSit?.user?.name?.trim() || 'Homeowner'
+                const houseSitAvatarUrl = b.houseSit?.user?.avatar_url ?? null
                 return (
                   <div key={b.id} className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)] sm:p-5">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -359,13 +359,13 @@ export default function CleanerBookingsPage() {
                       <p className="text-base font-semibold text-slate-900">{resolveJobTypeTitle(b)}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <UserAvatar
-                          name={clientName}
-                          imageUrl={clientAvatarUrl}
+                          name={houseSitName}
+                          imageUrl={houseSitAvatarUrl}
                           className="h-7 w-7 border border-white object-cover shadow-sm"
                           textClassName="text-[10px]"
                           fallback="C"
                         />
-                        <p className="text-sm text-slate-600">Homeowner: {clientName}</p>
+                        <p className="text-sm text-slate-600">Homeowner: {houseSitName}</p>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {memberSinceLabel && (
@@ -377,25 +377,25 @@ export default function CleanerBookingsPage() {
                           {completedBookingsCount} completed bookings
                         </span>
                       </div>
-                      {((b.client as any)?.idFileUrl || (b.client as any)?.id_file_url) && (
+                      {((b.houseSit as any)?.idFileUrl || (b.houseSit as any)?.id_file_url) && (
                         <p className="text-xs font-medium text-emerald-700">ID provided</p>
                       )}
                       <p className="text-sm text-slate-500">{formatDate(b.scheduled_start)}</p>
                       <p className="text-sm text-slate-500">{b.address}, {b.city}, {b.postcode}</p>
                       {b.status === 'pending' && (
-                        <p className="mt-1 text-xs text-slate-500">Only approximate location details are shown before acceptance to protect client privacy.</p>
+                        <p className="mt-1 text-xs text-slate-500">Only approximate location details are shown before acceptance to protect houseSit privacy.</p>
                       )}
                       {b.status === 'pending' && b.proposed_start && b.proposal_by && (
                         <p className="mt-1 rounded-lg border border-[#e1d4c6] bg-[#f8f3ee] px-2 py-1 text-xs text-[#5a4a3b]">
-                          {b.proposal_by === 'cleaner'
-                            ? `You proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Waiting for client response.`
+                          {b.proposal_by === 'house_sitter'
+                            ? `You proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Waiting for houseSit response.`
                             : `Homeowner proposed ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start)}. Review and respond before expiry.`}
                         </p>
                       )}
                     </div>
                     <div className="text-left sm:text-right">
                       <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} showPaymentRequiredForUnpaid={false} />
-                      <p className="mt-2 text-sm font-semibold text-emerald-700">You will earn {formatCurrency(b.cleaner_payout)}</p>
+                      <p className="mt-2 text-sm font-semibold text-emerald-700">You will earn {formatCurrency(b.house_sitter_payout)}</p>
                     </div>
                   </div>
 
@@ -415,7 +415,7 @@ export default function CleanerBookingsPage() {
                       <>
                         {eligibility.isHouseSitterProposal ? (
                           <Button size="sm" variant="outline" disabled>
-                            Waiting for client
+                            Waiting for houseSit
                           </Button>
                         ) : (
                           <Button
@@ -472,7 +472,7 @@ export default function CleanerBookingsPage() {
 
                     {b.status === 'in_progress' && (
                       <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                        Waiting for client completion
+                        Waiting for houseSit completion
                       </span>
                     )}
                     {['in_progress', 'completed', 'disputed'].includes(b.status) && (
@@ -513,7 +513,7 @@ export default function CleanerBookingsPage() {
         <DialogTitle>Propose alternative time</DialogTitle>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            You can propose one alternative time for bookings scheduled more than 24 hours away, within cleaner availability and up to {PLATFORM_BOOKING_WINDOW_DAYS} days from today.
+            You can propose one alternative time for bookings scheduled more than 24 hours away, within houseSitter availability and up to {PLATFORM_BOOKING_WINDOW_DAYS} days from today.
           </p>
           {proposalBooking && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
@@ -570,7 +570,7 @@ export default function CleanerBookingsPage() {
             Are you sure you want to decline this booking request?
           </p>
           <p className="text-sm text-muted-foreground">
-            This will close the booking request and notify the client. This booking request will close without cancellation penalties.
+            This will close the booking request and notify the houseSit. This booking request will close without cancellation penalties.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button

@@ -24,7 +24,7 @@ export default function SitterInfoPage() {
               Join The House Sitter Directory and connect with homeowners looking for reliable, caring support.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/signup?role=cleaner" className="inline-flex h-11 items-center rounded-[4px] bg-[#5a4a3b] px-5 text-white">
+              <Link href="/signup?role=house_sitter" className="inline-flex h-11 items-center rounded-[4px] bg-[#5a4a3b] px-5 text-white">
                 Become a Sitter
               </Link>
               <Link href="/find-house-sitters" className="inline-flex h-11 items-center rounded-[4px] border border-[#5a4a3b] px-5 text-[#5a4a3b]">

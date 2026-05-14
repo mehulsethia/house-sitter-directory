@@ -35,7 +35,7 @@ export default function Footer() {
             title="Platform"
             links={[
               ['Find Sitters', '/find-house-sitters'],
-              ['Become a Sitter', '/signup?role=cleaner'],
+              ['Become a Sitter', '/signup?role=house_sitter'],
               ['How It Works', '/#how-it-works'],
               ['Pricing', '/pricing'],
             ]}

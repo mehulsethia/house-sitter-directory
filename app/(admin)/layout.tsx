@@ -43,7 +43,7 @@ function adminStageCopy(pathname: string) {
     return {
       tag: 'The House Sitter Directory Admin Console',
       title: 'House Sitter Operations',
-      desc: 'Review onboarding quality, approvals, and cleaner account status.',
+      desc: 'Review onboarding quality, approvals, and houseSitter account status.',
       image: '/images/stage/admin-cleaners.jpg',
     }
   }

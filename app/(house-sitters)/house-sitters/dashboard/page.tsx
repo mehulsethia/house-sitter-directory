@@ -35,7 +35,7 @@ function resolveJobTypeTitle(booking: BookingRead) {
   return SERVICE_LABELS[booking.service_type] ?? booking.service_type
 }
 
-export default function CleanerDashboardPage() {
+export default function HouseSitterDashboardPage() {
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [completionPct, setCompletionPct] = useState<number>(0)
   const [onboardingSteps, setOnboardingSteps] = useState<HouseSitterOnboardingProgress['steps'] | null>(null)
@@ -53,24 +53,24 @@ export default function CleanerDashboardPage() {
 
   async function refresh() {
     try {
-      // Call cleaners/me first — it auto-creates the house sitter profile if missing.
-      // Bookings endpoint needs the cleaner row to exist, so this must complete first.
+      // Call house_sitters/me first — it auto-creates the house sitter profile if missing.
+      // Bookings endpoint needs the houseSitter row to exist, so this must complete first.
       try {
         const houseSitterRes = await houseSittersApi.me()
         setCompletionPct(houseSitterRes.data?.onboarding?.completion_pct ?? 0)
         setOnboardingSteps(houseSitterRes.data?.onboarding?.steps ?? null)
-        const cleaner = houseSitterRes.data?.cleaner as any
+        const houseSitter = houseSitterRes.data?.houseSitter as any
         setLifecycleStatus(
-          (cleaner?.lifecycle_status as any) ??
+          (houseSitter?.lifecycle_status as any) ??
             deriveCleanerLifecycleStatus({
-              status: cleaner?.status,
-              stripeOnboardingComplete: cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete,
+              status: houseSitter?.status,
+              stripeOnboardingComplete: houseSitter?.stripe_onboarding_complete ?? houseSitter?.stripeOnboardingComplete,
             }),
         )
-        setStripeConnected(Boolean(cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete))
-        setRejectionReason(cleaner?.rejection_reason ?? '')
-        setProfileComplete(cleaner?.profile_complete ?? false)
-        setAvgRating(cleaner?.average_rating ?? null)
+        setStripeConnected(Boolean(houseSitter?.stripe_onboarding_complete ?? houseSitter?.stripeOnboardingComplete))
+        setRejectionReason(houseSitter?.rejection_reason ?? '')
+        setProfileComplete(houseSitter?.profile_complete ?? false)
+        setAvgRating(houseSitter?.average_rating ?? null)
       } catch {
         toast.error('Failed to load profile data.')
       }
@@ -163,7 +163,7 @@ export default function CleanerDashboardPage() {
       upcoming,
       activeJobs,
       completed,
-      totalRevenue: completed.reduce((sum, b) => sum + b.cleaner_payout, 0),
+      totalRevenue: completed.reduce((sum, b) => sum + b.house_sitter_payout, 0),
     }
   }, [bookings])
 
@@ -190,9 +190,9 @@ export default function CleanerDashboardPage() {
 
   return (
     <div className="internal-page space-y-6">
-      <section className="client-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
-        <div className="client-stage__media" aria-hidden="true" />
-        <div className="client-stage__grain" aria-hidden="true" />
+      <section className="houseSit-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
+        <div className="houseSit-stage__media" aria-hidden="true" />
+        <div className="houseSit-stage__grain" aria-hidden="true" />
 
         <div className="relative z-10 grid gap-3 px-5 py-4 sm:px-6 sm:py-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-end lg:px-8 lg:py-6">
           <div className="animate-stage-up space-y-4">
@@ -203,7 +203,7 @@ export default function CleanerDashboardPage() {
               House Sitter Dashboard
             </h1>
             <p className="max-w-xl text-base text-slate-100/90 sm:text-lg">
-              Track jobs, manage requests, and run your cleaner business from one focused workspace.
+              Track jobs, manage requests, and run your houseSitter business from one focused workspace.
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
               <Link
@@ -324,7 +324,7 @@ export default function CleanerDashboardPage() {
         <div className="rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3">
           <div className="flex items-center gap-2">
             <CircleCheck className="h-5 w-5 text-emerald-600 shrink-0" />
-            <p className="text-sm font-semibold text-emerald-900">Live — your profile is approved and visible to clients.</p>
+            <p className="text-sm font-semibold text-emerald-900">Live — your profile is approved and visible to house_sits.</p>
           </div>
         </div>
       ) : null}
@@ -346,15 +346,15 @@ export default function CleanerDashboardPage() {
               <EmptyState title="No new requests" description="You're all caught up for now." />
             ) : (
               stats.requests.slice(0, 4).map((b) => {
-                  const trust = (b.client as any)?.trust as { memberSince?: string | null; completedBookingsCount?: number } | undefined
-                  const memberSinceRaw = trust?.memberSince ?? (b.client as any)?.created_at ?? (b.client as any)?.createdAt
+                  const trust = (b.houseSit as any)?.trust as { memberSince?: string | null; completedBookingsCount?: number } | undefined
+                  const memberSinceRaw = trust?.memberSince ?? (b.houseSit as any)?.created_at ?? (b.houseSit as any)?.createdAt
                   const memberSinceLabel = memberSinceRaw
                     ? new Date(memberSinceRaw).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })
                     : null
                   const completedBookingsCount = Number(trust?.completedBookingsCount ?? 0)
-                  const clientName = b.client?.user?.name?.trim() || 'Homeowner'
-                  const clientAvatarUrl = b.client?.user?.avatar_url ?? null
-                  const waitingForClientResponse = b.proposal_by === 'cleaner'
+                  const houseSitName = b.houseSit?.user?.name?.trim() || 'Homeowner'
+                  const houseSitAvatarUrl = b.houseSit?.user?.avatar_url ?? null
+                  const waitingForClientResponse = b.proposal_by === 'house_sitter'
                   return (
                 <div key={b.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -363,13 +363,13 @@ export default function CleanerDashboardPage() {
                       <p className="text-xs text-slate-500">{formatDate(b.scheduled_start)}</p>
                       <div className="mt-1 flex items-center gap-2">
                         <UserAvatar
-                          name={clientName}
-                          imageUrl={clientAvatarUrl}
+                          name={houseSitName}
+                          imageUrl={houseSitAvatarUrl}
                           className="h-7 w-7 border border-white object-cover shadow-sm"
                           textClassName="text-[10px]"
                           fallback="C"
                         />
-                        <p className="text-sm text-slate-600">Homeowner: {clientName}</p>
+                        <p className="text-sm text-slate-600">Homeowner: {houseSitName}</p>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {memberSinceLabel && (
@@ -389,7 +389,7 @@ export default function CleanerDashboardPage() {
                     <p className="mt-2 line-clamp-2 rounded-md bg-white px-2 py-1 text-xs text-slate-500">{b.special_instructions}</p>
                   )}
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
+                    <p className="text-sm font-semibold text-emerald-700">{formatCurrency(b.house_sitter_payout)}</p>
                     <div className="w-full sm:w-auto sm:text-right">
                       {!stripeConnected && (
                         <p className="text-xs font-medium text-amber-700">Connect Stripe to accept bookings and receive payouts. Go to: Profile → Payments to complete setup.</p>
@@ -415,7 +415,7 @@ export default function CleanerDashboardPage() {
                             variant="outline"
                             disabled
                           >
-                            Waiting for client
+                            Waiting for houseSit
                           </Button>
                         ) : (
                           <Button
@@ -478,7 +478,7 @@ export default function CleanerDashboardPage() {
                   const hasProposal = Boolean(b.proposed_start && b.proposal_by)
                   const isActiveProposal = hasProposal && ['pending', 'accepted', 'confirmed'].includes(b.status)
                   const isAmendProposal = b.proposal_context === 'amend_start'
-                  const proposalActor = b.proposal_by === 'client' ? 'Homeowner' : 'You'
+                  const proposalActor = b.proposal_by === 'house_sit' ? 'Homeowner' : 'You'
                   const proposalSummary = isAmendProposal
                     ? `${proposalActor} requested Amend Start Time: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`
                     : `${proposalActor} proposed: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`
@@ -492,7 +492,7 @@ export default function CleanerDashboardPage() {
                       {isActiveProposal && (
                         <p className="mt-1 text-xs font-semibold text-[#5a4a3b]">{proposalSummary}</p>
                       )}
-                      <p className="mt-1 text-sm font-semibold text-emerald-700">{formatCurrency(b.cleaner_payout)}</p>
+                      <p className="mt-1 text-sm font-semibold text-emerald-700">{formatCurrency(b.house_sitter_payout)}</p>
                     </Link>
                   )
                 })
@@ -513,14 +513,14 @@ export default function CleanerDashboardPage() {
         </CardHeader>
         <CardContent>
           {bookings.length === 0 ? (
-            <EmptyState title="No bookings yet" description="Your jobs will appear here as clients book services." />
+            <EmptyState title="No bookings yet" description="Your jobs will appear here as house_sits book services." />
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {bookings.slice(0, 6).map((b) => {
                 const hasProposal = Boolean(b.proposed_start && b.proposal_by)
                 const isActiveProposal = hasProposal && ['pending', 'accepted', 'confirmed'].includes(b.status)
                 const isAmendProposal = b.proposal_context === 'amend_start'
-                const proposalActor = b.proposal_by === 'client' ? 'Homeowner' : 'You'
+                const proposalActor = b.proposal_by === 'house_sit' ? 'Homeowner' : 'You'
                 const proposalSummary = isAmendProposal
                   ? `${proposalActor} requested Amend Start Time: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`
                   : `${proposalActor} proposed: ${formatDate(b.scheduled_start)} → ${formatDate(b.proposed_start ?? b.scheduled_start)}`
@@ -534,7 +534,7 @@ export default function CleanerDashboardPage() {
                     )}
                     <div className="mt-2 flex items-center justify-between">
                       <BookingStatusBadge status={b.status} proposalBy={b.proposal_by} showPaymentRequiredForUnpaid={false} />
-                      <p className="text-sm font-semibold text-slate-900">{formatCurrency(b.cleaner_payout)}</p>
+                      <p className="text-sm font-semibold text-slate-900">{formatCurrency(b.house_sitter_payout)}</p>
                     </div>
                   </Link>
                 )
@@ -557,7 +557,7 @@ export default function CleanerDashboardPage() {
             Are you sure you want to decline this booking request?
           </p>
           <p className="text-sm text-muted-foreground">
-            This will close the booking request and notify the client. This booking request will close without cancellation penalties.
+            This will close the booking request and notify the houseSit. This booking request will close without cancellation penalties.
           </p>
           <div className="flex gap-2">
             <Button
@@ -582,13 +582,13 @@ export default function CleanerDashboardPage() {
       </Dialog>
 
       <style jsx>{`
-        .client-stage {
+        .houseSit-stage {
           position: relative;
           isolation: isolate;
           background: linear-gradient(125deg, #3f3429 8%, #5a4a3b 58%, #6c5947);
         }
 
-        .client-stage__media {
+        .houseSit-stage__media {
           position: absolute;
           inset: 0;
           background-image:
@@ -601,7 +601,7 @@ export default function CleanerDashboardPage() {
           opacity: 0.9;
         }
 
-        .client-stage__grain {
+        .houseSit-stage__grain {
           position: absolute;
           inset: 0;
           background-image:

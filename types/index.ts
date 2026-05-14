@@ -25,7 +25,7 @@ export interface UserRead {
   phone?: string
   phone_verified_at?: string | null
   avatar_url?: string
-  role: 'client' | 'cleaner' | 'admin'
+  role: 'house_sit' | 'house_sitter' | 'admin'
   is_active: boolean
   created_at: string
 }
@@ -60,7 +60,7 @@ export interface HouseSitterRead {
   bio?: string
   profile_image_url?: string
   skills?: string[]
-  cleaning_supplies?: 'own_supplies' | 'client_supplies'
+  cleaning_supplies?: 'own_supplies' | 'house_sit_supplies'
   years_experience: number
   hourly_rate: number
   transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
@@ -104,7 +104,7 @@ export interface HouseSitterSummary {
   average_rating?: number
   years_experience?: number
   transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
-  cleaning_supplies?: 'own_supplies' | 'client_supplies'
+  cleaning_supplies?: 'own_supplies' | 'house_sit_supplies'
   on_time_percentage?: number
   avg_response_minutes?: number
   created_at?: string
@@ -156,7 +156,7 @@ export type BookingStatus =
 export type ServiceType = 'standard' | 'deep_clean' | 'end_of_tenancy' | 'move_in'
 
 export interface BookingCreate {
-  cleaner_id: string
+  house_sitter_id: string
   service_type: ServiceType
   address: string
   city: string
@@ -171,8 +171,8 @@ export interface BookingCreate {
 
 export interface BookingRead {
   id: string
-  client_id: string
-  cleaner_id: string
+  house_sit_id: string
+  house_sitter_id: string
   status: BookingStatus
   service_type: ServiceType
   address: string
@@ -187,20 +187,20 @@ export interface BookingRead {
   subtotal?: number
   platform_fee_pct?: number
   total_amount: number
-  cleaner_payout: number
+  house_sitter_payout: number
   platform_fee: number
   special_instructions?: string
   accept_by?: string
   pay_by?: string
   proposed_start?: string
   proposed_end?: string
-  proposal_by?: 'client' | 'cleaner' | null
+  proposal_by?: 'house_sit' | 'house_sitter' | null
   proposal_context?: 'pre_confirmation' | 'post_confirmation' | 'amend_start' | null
   proposal_expires_at?: string | null
-  cleaner_proposals?: number
-  client_proposals?: number
-  post_cleaner_proposals?: number
-  post_client_proposals?: number
+  house_sitter_proposals?: number
+  house_sit_proposals?: number
+  post_house_sitter_proposals?: number
+  post_house_sit_proposals?: number
   original_scheduled_start?: string | null
   reauthorization_required?: boolean
   reauthorization_grace_expires_at?: string | null
@@ -211,14 +211,14 @@ export interface BookingRead {
   cancelled_at?: string
   cancellation_reason?: string
   created_at: string
-  client?: {
+  houseSit?: {
     id: string
     id_file_url?: string | null
     id_file_name?: string | null
     id_submitted_at?: string | null
     user?: UserRead
   }
-  cleaner?: {
+  houseSitter?: {
     id: string
     user?: UserRead
     profile_image_url?: string
@@ -236,8 +236,8 @@ export interface BookingRead {
 
 export interface BookingFlowDraftRead {
   id: string
-  clientId: string
-  cleanerId: string
+  houseSitId: string
+  houseSitterId: string
   bookingId?: string | null
   lastStep: number
   durationHours?: number | null
@@ -255,7 +255,7 @@ export interface PriceBreakdown {
   subtotal: number
   platform_fee_pct: number
   platform_fee: number
-  cleaner_payout: number
+  house_sitter_payout: number
   total_amount: number
 }
 
@@ -302,7 +302,7 @@ export interface HouseSitAddressUpdate {
 }
 
 export interface FavoriteHouseSitter {
-  cleaner_id: string
+  house_sitter_id: string
   user_id: string
   hourly_rate: number
   total_jobs: number
@@ -310,7 +310,7 @@ export interface FavoriteHouseSitter {
   review_count?: number
   years_experience?: number
   transport_mode?: 'own_car' | 'bus_walk' | 'requires_pickup'
-  cleaning_supplies?: 'own_supplies' | 'client_supplies'
+  cleaning_supplies?: 'own_supplies' | 'house_sit_supplies'
   created_at?: string
   bio?: string
   profile_image_url?: string
@@ -347,15 +347,15 @@ export interface ReviewCreate {
 export interface ReviewRead {
   id: string
   booking_id: string
-  cleaner_id: string
-  client_id: string
+  house_sitter_id: string
+  house_sit_id: string
   rating: number
   comment?: string
-  cleaner_reply?: string | null
-  cleaner_reply_at?: string | null
+  house_sitter_reply?: string | null
+  house_sitter_reply_at?: string | null
   is_public: boolean
   created_at: string
-  client?: {
+  houseSit?: {
     id: string
     user?: UserRead
   }
@@ -414,7 +414,7 @@ export interface AdminUser {
   email: string
   name: string
   phone?: string
-  role: 'client' | 'cleaner' | 'admin'
+  role: 'house_sit' | 'house_sitter' | 'admin'
   is_active: boolean
   created_at: string
 }
@@ -439,7 +439,7 @@ export interface AdminHouseSitter {
   rejection_reason?: string
   profile_complete: boolean
   identity_verified: boolean
-  cleaning_supplies?: 'own_supplies' | 'client_supplies'
+  cleaning_supplies?: 'own_supplies' | 'house_sit_supplies'
   cleaning_standards_accepted?: boolean
   standards_completed?: boolean
   quiz_passed?: boolean
@@ -477,8 +477,8 @@ export interface AdminOpsQueueItemBooking {
   status: string
   city: string
   scheduled_start: string
-  cleaner_name: string
-  client_name: string
+  house_sitter_name: string
+  house_sit_name: string
 }
 
 export interface AdminOpsQueueItemPaymentIssue {
@@ -486,7 +486,7 @@ export interface AdminOpsQueueItemPaymentIssue {
   booking_id: string
   payment_status: string
   failed_at?: string | null
-  client_name: string
+  house_sit_name: string
 }
 
 export interface AdminOpsQueueItemCancellationNoShow {
@@ -552,7 +552,7 @@ export interface AdminDispute {
   created_at: string
 }
 
-export interface ClientDispute {
+export interface HouseSitDispute {
   id: string
   booking_id: string
   raised_by: string

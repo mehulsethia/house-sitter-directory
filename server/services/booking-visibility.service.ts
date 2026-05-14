@@ -1,4 +1,4 @@
-type Role = 'client' | 'cleaner' | 'admin'
+type Role = 'house_sit' | 'house_sitter' | 'admin'
 
 const ADDRESS_VISIBLE_STATUSES = new Set([
   'accepted',
@@ -10,12 +10,12 @@ const ADDRESS_VISIBLE_STATUSES = new Set([
 ])
 
 export function sanitizeBookingForRole<T extends Record<string, any>>(booking: T, role: Role): T {
-  if (role !== 'cleaner') return booking
+  if (role !== 'house_sitter') return booking
   return sanitizeBookingForCleaner(booking)
 }
 
 export function sanitizeBookingsForRole<T extends Record<string, any>>(bookings: T[], role: Role): T[] {
-  if (role !== 'cleaner') return bookings
+  if (role !== 'house_sitter') return bookings
   return bookings.map((booking) => sanitizeBookingForCleaner(booking))
 }
 
@@ -33,27 +33,27 @@ function sanitizeBookingForCleaner<T extends Record<string, any>>(booking: T): T
   const isAddressVisible = ADDRESS_VISIBLE_STATUSES.has(status) && !cancelledBeforeConfirmation
   const isPhoneVisible = isAddressVisible && Date.now() >= phoneVisibleAtMs && Date.now() <= phoneVisibleUntilMs
 
-  const fullClientName = String(copy?.client?.user?.name ?? '').trim()
-  const firstName = fullClientName ? fullClientName.split(/\s+/)[0] : 'Client'
+  const fullClientName = String(copy?.houseSit?.user?.name ?? '').trim()
+  const firstName = fullClientName ? fullClientName.split(/\s+/)[0] : 'HouseSit'
 
-  if (copy.client?.user) {
-    const completedBookingsCount = Number(copy?.client?._count?.bookings ?? 0)
-    const memberSince = copy?.client?.createdAt
-      ? new Date(copy.client.createdAt).toISOString()
+  if (copy.houseSit?.user) {
+    const completedBookingsCount = Number(copy?.houseSit?._count?.bookings ?? 0)
+    const memberSince = copy?.houseSit?.createdAt
+      ? new Date(copy.houseSit.createdAt).toISOString()
       : null
 
-    copy.client = {
-      ...copy.client,
+    copy.houseSit = {
+      ...copy.houseSit,
       _count: undefined,
       user: {
-        ...copy.client.user,
+        ...copy.houseSit.user,
         name: firstName,
-        phone: isPhoneVisible ? copy.client.user.phone : null,
+        phone: isPhoneVisible ? copy.houseSit.user.phone : null,
       },
       trust: {
         memberSince,
         completedBookingsCount,
-        idSubmitted: Boolean(copy.client.idFileUrl ?? copy.client.id_file_url),
+        idSubmitted: Boolean(copy.houseSit.idFileUrl ?? copy.houseSit.id_file_url),
       },
     }
   }

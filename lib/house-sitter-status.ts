@@ -1,4 +1,4 @@
-export type CleanerLifecycleStatus =
+export type HouseSitterLifecycleStatus =
   | 'pending_approval'
   | 'approved'
   | 'live'
@@ -8,7 +8,7 @@ export type CleanerLifecycleStatus =
 export function deriveCleanerLifecycleStatus(input: {
   status?: string | null
   stripeOnboardingComplete?: boolean | null
-}): CleanerLifecycleStatus {
+}): HouseSitterLifecycleStatus {
   const status = String(input.status ?? '').toLowerCase()
   if (status === 'rejected') return 'rejected'
   if (status === 'suspended') return 'suspended'
@@ -18,7 +18,7 @@ export function deriveCleanerLifecycleStatus(input: {
   return 'pending_approval'
 }
 
-export function cleanerLifecycleLabel(status: CleanerLifecycleStatus): string {
+export function houseSitterLifecycleLabel(status: HouseSitterLifecycleStatus): string {
   switch (status) {
     case 'pending_approval':
       return 'Pending approval'
@@ -42,16 +42,16 @@ export const CLEANER_REJECTION_REASON_OPTIONS = [
   { code: 'failed_standards_quiz', label: 'Failed standards/quiz' },
 ] as const
 
-export type CleanerRejectionReasonCode = (typeof CLEANER_REJECTION_REASON_OPTIONS)[number]['code']
+export type HouseSitterRejectionReasonCode = (typeof CLEANER_REJECTION_REASON_OPTIONS)[number]['code']
 
-export function getCleanerRejectionReasonLabel(code: CleanerRejectionReasonCode): string {
+export function getCleanerRejectionReasonLabel(code: HouseSitterRejectionReasonCode): string {
   return (
     CLEANER_REJECTION_REASON_OPTIONS.find((item) => item.code === code)?.label ?? 'Profile update required'
   )
 }
 
 export function composeCleanerRejectionMessage(input: {
-  reasonCode?: CleanerRejectionReasonCode | null
+  reasonCode?: HouseSitterRejectionReasonCode | null
   customMessage?: string | null
 }): string {
   const code = input.reasonCode ?? undefined
@@ -65,7 +65,7 @@ export function composeCleanerRejectionMessage(input: {
   return custom || 'Profile update required before resubmission.'
 }
 
-export function rejectionFixGuidance(code?: CleanerRejectionReasonCode | null): string {
+export function rejectionFixGuidance(code?: HouseSitterRejectionReasonCode | null): string {
   if (code === 'id_not_clear') return 'Upload a clear, readable government ID image.'
   if (code === 'profile_incomplete') return 'Complete every required profile field before resubmission.'
   if (code === 'low_quality_profile') return 'Improve profile quality: photo, bio, and service details.'

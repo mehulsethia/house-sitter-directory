@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { requireHouseSit } from '@/server/auth'
 import { houseSitRepo } from '@/server/repositories/house-sit.repo'
-import { clientAddressRepo } from '@/server/repositories/house-sit-address.repo'
+import { houseSitAddressRepo } from '@/server/repositories/house-sit-address.repo'
 import { updateClientAddressSchema } from '@/server/schemas/house-sit-address.schema'
 import { ok, err } from '@/server/response'
 import { MVP_CITY, MVP_COUNTRY_CODE, normalizeCyprusPostcode } from '@/lib/location-policy'
@@ -12,17 +12,17 @@ export const PATCH = requireHouseSit(async (req: NextRequest, ctx, user) => {
   const parsed = updateClientAddressSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  let client = await houseSitRepo.findByUserId(user.id)
-  if (!client) client = await houseSitRepo.create(user.id)
+  let houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) houseSit = await houseSitRepo.create(user.id)
 
-  const existing = await clientAddressRepo.findById(id)
-  if (!existing || existing.client_id !== client.id) return err('Address not found', 404)
+  const existing = await houseSitAddressRepo.findById(id)
+  if (!existing || existing.house_sit_id !== houseSit.id) return err('Address not found', 404)
 
   if (parsed.data.is_default) {
-    await clientAddressRepo.clearDefaultForClient(client.id)
+    await houseSitAddressRepo.clearDefaultForClient(houseSit.id)
   }
 
-  const updated = await clientAddressRepo.updateById(id, {
+  const updated = await houseSitAddressRepo.updateById(id, {
     label: parsed.data.label ?? null,
     addressLine1: parsed.data.address_line1,
     city: parsed.data.city ? MVP_CITY : undefined,
@@ -42,23 +42,23 @@ export const PATCH = requireHouseSit(async (req: NextRequest, ctx, user) => {
 export const DELETE = requireHouseSit(async (_req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
 
-  let client = await houseSitRepo.findByUserId(user.id)
-  if (!client) client = await houseSitRepo.create(user.id)
+  let houseSit = await houseSitRepo.findByUserId(user.id)
+  if (!houseSit) houseSit = await houseSitRepo.create(user.id)
 
-  const existing = await clientAddressRepo.findById(id)
-  if (!existing || existing.client_id !== client.id) return err('Address not found', 404)
+  const existing = await houseSitAddressRepo.findById(id)
+  if (!existing || existing.house_sit_id !== houseSit.id) return err('Address not found', 404)
 
-  const addresses = await clientAddressRepo.listByClientId(client.id)
+  const addresses = await houseSitAddressRepo.listByHouseSitId(houseSit.id)
   if (addresses.length <= 1) {
     return err('You must have at least one address saved', 422)
   }
 
   const fallbackDefault = addresses.find((entry) => entry.id !== id) ?? null
 
-  await clientAddressRepo.deleteById(id)
+  await houseSitAddressRepo.deleteById(id)
   if (existing.is_default && fallbackDefault) {
-    await clientAddressRepo.clearDefaultForClient(client.id)
-    await clientAddressRepo.updateById(fallbackDefault.id, { isDefault: true })
+    await houseSitAddressRepo.clearDefaultForClient(houseSit.id)
+    await houseSitAddressRepo.updateById(fallbackDefault.id, { isDefault: true })
   }
   return ok({ removed: true, default_address_id: existing.is_default ? fallbackDefault?.id ?? null : null })
 })

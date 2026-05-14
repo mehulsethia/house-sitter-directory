@@ -51,7 +51,7 @@ function isValidUpcomingBooking(booking: BookingRead, nowMs: number) {
   return scheduledStartMs >= nowMs
 }
 
-export default function ClientDashboardPage() {
+export default function HouseSitDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [bookings, setBookings] = useState<BookingRead[]>([])
   const [favorites, setFavorites] = useState<FavoriteHouseSitter[]>([])
@@ -198,7 +198,7 @@ export default function ClientDashboardPage() {
                         {SERVICE_LABELS[nextBooking.service_type] ?? nextBooking.service_type}
                       </p>
                       <p className="mt-1 text-xs text-white/75">{formatDate(nextBooking.scheduled_start)}</p>
-                      <p className="mt-1 text-sm text-white/90">{nextBooking.cleaner?.user?.name ?? 'House Sitter'}</p>
+                      <p className="mt-1 text-sm text-white/90">{nextBooking.houseSitter?.user?.name ?? 'House Sitter'}</p>
                       <p className="text-xs text-white/70">{nextBooking.city}, {nextBooking.postcode}</p>
                     </Link>
                   )}
@@ -243,7 +243,7 @@ export default function ClientDashboardPage() {
                   const hasProposal = Boolean(booking.proposed_start && booking.proposal_by)
                   const isActiveProposal = hasProposal && ['pending', 'accepted', 'confirmed'].includes(booking.status)
                   const isAmendProposal = booking.proposal_context === 'amend_start'
-                  const proposalActor = booking.proposal_by === 'cleaner' ? 'House Sitter' : 'You'
+                  const proposalActor = booking.proposal_by === 'house_sitter' ? 'House Sitter' : 'You'
                   const proposalSummary = isAmendProposal
                     ? `${proposalActor} requested Amend Start Time: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start ?? booking.scheduled_start)}`
                     : `${proposalActor} proposed: ${formatDate(booking.scheduled_start)} → ${formatDate(booking.proposed_start ?? booking.scheduled_start)}`
@@ -258,7 +258,7 @@ export default function ClientDashboardPage() {
                       <p className={`truncate text-base font-semibold tracking-[-0.01em] text-slate-900`}>
                         {SERVICE_LABELS[booking.service_type] ?? booking.service_type}
                       </p>
-                      <p className="text-sm text-slate-600">{booking.cleaner?.user?.name ?? 'House Sitter'}</p>
+                      <p className="text-sm text-slate-600">{booking.houseSitter?.user?.name ?? 'House Sitter'}</p>
                       <p className={`mt-1 text-[0.72rem] tracking-wide text-slate-500`}>
                         {formatDate(booking.scheduled_start)}
                       </p>
@@ -339,7 +339,7 @@ export default function ClientDashboardPage() {
               ) : (
                 <div className="mt-3 space-y-2">
                   {favorites.slice(0, 4).map((favorite) => (
-                    <div key={favorite.cleaner_id} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+                    <div key={favorite.house_sitter_id} className="rounded-xl border border-slate-200 bg-white px-3 py-2">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-2">
                           <UserAvatar
@@ -360,13 +360,13 @@ export default function ClientDashboardPage() {
                           <p className="text-xs font-semibold text-slate-700">{formatCurrency(favorite.hourly_rate)}/hr</p>
                           <div className="mt-1 flex items-center gap-2 sm:justify-end">
                             <Link
-                              href={`/house-sits/house-sitters/${favorite.cleaner_id}`}
+                              href={`/house-sits/house-sitters/${favorite.house_sitter_id}`}
                               className="inline-flex h-7 items-center rounded-full border border-slate-300 bg-white px-2.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
                             >
                               View profile
                             </Link>
                             <Link
-                              href={`/house-sits/book/${favorite.cleaner_id}?reset=1&step=1`}
+                              href={`/house-sits/book/${favorite.house_sitter_id}?reset=1&step=1`}
                               className="inline-flex h-7 items-center rounded-full bg-[#5a4a3b] px-2.5 text-[11px] font-semibold text-white hover:bg-[#4b3d31]"
                             >
                               Book

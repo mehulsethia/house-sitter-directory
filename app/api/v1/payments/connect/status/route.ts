@@ -5,10 +5,10 @@ import { ok, err } from '@/server/response'
 import { pushInAppNotification } from '@/server/services/in-app-notification.service'
 
 export const GET = requireHouseSitter(async (_req, _ctx, user) => {
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) return err('Cleaner profile not found', 404)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) return err('HouseSitter profile not found', 404)
 
-  if (!cleaner.stripeAccountId) {
+  if (!houseSitter.stripeAccountId) {
     return ok({
       connected: false,
       onboarded: false,
@@ -18,7 +18,7 @@ export const GET = requireHouseSitter(async (_req, _ctx, user) => {
     })
   }
 
-  const account = await stripe.accounts.retrieve(cleaner.stripeAccountId)
+  const account = await stripe.accounts.retrieve(houseSitter.stripeAccountId)
   const currentlyDue = account.requirements?.currently_due?.length ?? 0
   const pastDue = account.requirements?.past_due?.length ?? 0
   const hasDisabledReason = Boolean(account.requirements?.disabled_reason)
@@ -29,15 +29,15 @@ export const GET = requireHouseSitter(async (_req, _ctx, user) => {
     account.payouts_enabled &&
     !restrictedOrIncomplete
 
-  if (cleaner.stripeOnboardingComplete !== connected) {
-    await houseSitterRepo.update(cleaner.id, { stripeOnboardingComplete: connected })
+  if (houseSitter.stripeOnboardingComplete !== connected) {
+    await houseSitterRepo.update(houseSitter.id, { stripeOnboardingComplete: connected })
     if (connected) {
       await pushInAppNotification({
         userId: user.id,
         type: 'stripe_connected',
         title: 'Stripe connected',
-        body: 'Your payment setup is complete. Your profile is now live and visible to clients.',
-        data: { cleaner_id: cleaner.id },
+        body: 'Your payment setup is complete. Your profile is now live and visible to house_sits.',
+        data: { house_sitter_id: houseSitter.id },
       })
     }
   }

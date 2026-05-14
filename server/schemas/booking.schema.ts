@@ -23,7 +23,7 @@ export const BOOKING_ACTIONS = [
 ] as const
 
 export const previewPriceSchema = z.object({
-  cleaner_id: z.string().uuid(),
+  house_sitter_id: z.string().uuid(),
   duration_hours: z.number().min(1).max(8),
 })
 
@@ -40,7 +40,7 @@ const datetimeInputSchema = z.string().trim().min(1).transform((value, ctx) => {
 })
 
 export const createBookingSchema = z.object({
-  cleaner_id: z.string().uuid(),
+  house_sitter_id: z.string().uuid(),
   service_type: z.enum(SERVICE_TYPES),
   special_instructions: z.string().trim().min(12, 'Job description must be at least 12 characters').max(5000),
   address: z.string().min(1),
@@ -82,11 +82,11 @@ export const myBookingsQuerySchema = z.object({
 })
 
 export const bookingFlowDraftQuerySchema = z.object({
-  cleaner_id: z.string().uuid(),
+  house_sitter_id: z.string().uuid(),
 })
 
 export const saveBookingFlowDraftSchema = z.object({
-  cleaner_id: z.string().uuid(),
+  house_sitter_id: z.string().uuid(),
   booking_id: z.string().uuid().optional(),
   last_step: z.coerce.number().int().min(1).max(3),
   duration_hours: z.number().min(1).max(8).optional(),

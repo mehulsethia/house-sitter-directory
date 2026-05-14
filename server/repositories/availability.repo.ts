@@ -23,16 +23,16 @@ function normalizeSchedule(row: any) {
 }
 
 export const availabilityRepo = {
-  getSchedule: async (cleanerId: string) => {
+  getSchedule: async (houseSitterId: string) => {
     const rows = await db.availabilitySchedule.findMany({
-      where: { cleanerId },
+      where: { houseSitterId },
       orderBy: { dayOfWeek: 'asc' },
     })
     return rows.map(normalizeSchedule)
   },
 
   replaceSchedule: async (
-    cleanerId: string,
+    houseSitterId: string,
     schedules: Array<{
       dayOfWeek: number
       startTime: string
@@ -75,12 +75,12 @@ export const availabilityRepo = {
     }
 
     return db.$transaction(async (tx) => {
-      await tx.availabilitySchedule.deleteMany({ where: { cleanerId } })
+      await tx.availabilitySchedule.deleteMany({ where: { houseSitterId } })
       
       if (schedules.length > 0) {
         await tx.availabilitySchedule.createMany({
           data: schedules.map((s) => ({
-            cleanerId,
+            houseSitterId,
             dayOfWeek: s.dayOfWeek,
             startTime: timeStringToDate(s.startTime),
             endTime: timeStringToDate(s.endTime),
@@ -91,29 +91,29 @@ export const availabilityRepo = {
       }
 
       const rows = await tx.availabilitySchedule.findMany({
-        where: { cleanerId },
+        where: { houseSitterId },
         orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
       })
       return rows.map(normalizeSchedule)
     })
   },
 
-  getBlockedTimes: (cleanerId: string) =>
+  getBlockedTimes: (houseSitterId: string) =>
     db.blockedTime.findMany({
-      where: { cleanerId },
+      where: { houseSitterId },
       orderBy: { startDatetime: 'asc' },
     }),
 
-  addBlockedTime: (cleanerId: string, data: { startDatetime: Date; endDatetime: Date; reason?: string }) =>
-    db.blockedTime.create({ data: { cleanerId, ...data } }),
+  addBlockedTime: (houseSitterId: string, data: { startDatetime: Date; endDatetime: Date; reason?: string }) =>
+    db.blockedTime.create({ data: { houseSitterId, ...data } }),
 
-  deleteBlockedTime: (id: string, cleanerId: string) =>
-    db.blockedTime.deleteMany({ where: { id, cleanerId } }),
+  deleteBlockedTime: (id: string, houseSitterId: string) =>
+    db.blockedTime.deleteMany({ where: { id, houseSitterId } }),
 
-  getBlockedTimesInRange: (cleanerId: string, start: Date, end: Date) =>
+  getBlockedTimesInRange: (houseSitterId: string, start: Date, end: Date) =>
     db.blockedTime.findMany({
       where: {
-        cleanerId,
+        houseSitterId,
         startDatetime: { lt: end },
         endDatetime: { gt: start },
       },

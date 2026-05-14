@@ -10,10 +10,10 @@ export const POST = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
   const parsed = addServiceAreaSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const cleaner = await houseSitterRepo.findByUserId(user.id)
-  if (!cleaner) return err('Cleaner profile not found', 404)
+  const houseSitter = await houseSitterRepo.findByUserId(user.id)
+  if (!houseSitter) return err('HouseSitter profile not found', 404)
 
-  const area = await houseSitterRepo.addServiceArea(cleaner.id, {
+  const area = await houseSitterRepo.addServiceArea(houseSitter.id, {
     city: MVP_CITY,
     postcodePrefix: parsed.data.postcode_prefix,
     radiusKm: parsed.data.radius_km,
