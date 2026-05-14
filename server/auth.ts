@@ -8,6 +8,46 @@ export type RouteContext = { params: Promise<Record<string, string>> }
 type AuthedHandler = (req: NextRequest, ctx: RouteContext, user: User) => Promise<NextResponse>
 type Handler = (req: NextRequest, ctx: RouteContext) => Promise<NextResponse>
 
+function bootstrapRoleFromMetadata(role: unknown): 'house_sit' | 'house_sitter' {
+  return role === 'house_sitter' ? 'house_sitter' : 'house_sit'
+}
+
+function fallbackNameFromEmail(email: string) {
+  const local = email.split('@')[0]?.trim()
+  if (!local) return 'User'
+  return local.slice(0, 120)
+}
+
+async function bootstrapPublicUser(params: {
+  id: string
+  email: string
+  metadata?: Record<string, unknown> | null
+}) {
+  const email = params.email.trim().toLowerCase()
+  if (!email) return null
+
+  const metadata = params.metadata ?? {}
+  const metadataName = typeof metadata.name === 'string' ? metadata.name.trim() : ''
+  const metadataPhone = typeof metadata.phone === 'string' ? metadata.phone.trim() : ''
+  const role = bootstrapRoleFromMetadata(metadata.role)
+
+  return db.user.upsert({
+    where: { id: params.id },
+    update: {
+      email,
+      name: metadataName || fallbackNameFromEmail(email),
+      ...(metadataPhone ? { phone: metadataPhone } : {}),
+    },
+    create: {
+      id: params.id,
+      email,
+      name: metadataName || fallbackNameFromEmail(email),
+      role,
+      ...(metadataPhone ? { phone: metadataPhone } : {}),
+    },
+  })
+}
+
 export async function getAuthUser(req: NextRequest): Promise<User | null> {
   await ensureDbSchema()
 
@@ -19,9 +59,16 @@ export async function getAuthUser(req: NextRequest): Promise<User | null> {
     try {
       const payload = jwt.verify(token, process.env.SUPABASE_JWT_SECRET, {
         audience: 'authenticated',
-      }) as { sub: string }
+      }) as { sub: string; email?: string; user_metadata?: Record<string, unknown> }
 
-      const user = await db.user.findUnique({ where: { id: payload.sub } })
+      let user = await db.user.findUnique({ where: { id: payload.sub } })
+      if (!user && payload.email) {
+        user = await bootstrapPublicUser({
+          id: payload.sub,
+          email: payload.email,
+          metadata: payload.user_metadata ?? null,
+        })
+      }
       if (user) {
         if (!user.isActive || user.deletedAt) return null
         return user
@@ -53,7 +100,14 @@ export async function getAuthUser(req: NextRequest): Promise<User | null> {
     const { data, error } = await supabase.auth.getUser()
     if (error || !data.user) return null
 
-    const user = await db.user.findUnique({ where: { id: data.user.id } })
+    let user = await db.user.findUnique({ where: { id: data.user.id } })
+    if (!user && data.user.email) {
+      user = await bootstrapPublicUser({
+        id: data.user.id,
+        email: data.user.email,
+        metadata: (data.user.user_metadata as Record<string, unknown> | undefined) ?? null,
+      })
+    }
     if (!user || !user.isActive || user.deletedAt) return null
     return user
   } catch {

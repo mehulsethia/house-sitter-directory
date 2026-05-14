@@ -6,9 +6,16 @@ const PROTECTED_PREFIXES = ['/house-sit', '/house-sits', '/house-sitter', '/hous
 // Routes only for unauthenticated users
 const AUTH_ROUTES = ['/login', '/signup', '/verify-email']
 
+function normalizeRole(role: unknown): 'house_sit' | 'house_sitter' | 'admin' | null {
+  if (role === 'admin') return 'admin'
+  if (role === 'house_sitter' || role === 'house-sitter' || role === 'cleaner') return 'house_sitter'
+  if (role === 'house_sit' || role === 'house-sit' || role === 'client') return 'house_sit'
+  return null
+}
+
 function getPostLoginPath(user: { user_metadata?: Record<string, unknown> }) {
-  const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'house-sit'
-  if (role === 'cleaner' || role === 'house-sitter') return '/house-sitter/dashboard'
+  const role = normalizeRole(user.user_metadata?.role) ?? 'house_sit'
+  if (role === 'house_sitter') return '/house-sitter/dashboard'
   if (role === 'admin') return '/admin/dashboard'
   return '/house-sit/dashboard'
 }
@@ -52,7 +59,7 @@ export async function proxy(request: NextRequest) {
 
   // Prevent role mismatch: don't let users access another role's area
   if (isProtected && user) {
-    const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : null
+    const role = normalizeRole(user.user_metadata?.role)
     const isHouseSitRoute =
       pathname === '/house-sit' ||
       pathname.startsWith('/house-sit/') ||
@@ -64,8 +71,8 @@ export async function proxy(request: NextRequest) {
       pathname === '/house-sitters' ||
       pathname.startsWith('/house-sitters/')
     if (
-      (isHouseSitRoute && (role === 'cleaner' || role === 'house-sitter')) ||
-      (isHouseSitterRoute && (role === 'client' || role === 'house-sit'))
+      (isHouseSitRoute && role === 'house_sitter') ||
+      (isHouseSitterRoute && role === 'house_sit')
     ) {
       const url = request.nextUrl.clone()
       url.pathname = getPostLoginPath(user)
@@ -86,8 +93,8 @@ export async function proxy(request: NextRequest) {
   // Landing/legal/static pages remain visible only after logout.
   const isAdminRoute = pathname.startsWith('/admin')
   if (isAdminRoute && user) {
-    const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : null
-    if (role !== 'admin') {
+    const role = normalizeRole(user.user_metadata?.role)
+    if (role && role !== 'admin') {
       const url = request.nextUrl.clone()
       url.pathname = getPostLoginPath(user)
       return NextResponse.redirect(url)

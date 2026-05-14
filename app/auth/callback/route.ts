@@ -5,6 +5,15 @@ import { db } from '@/server/db'
 import { loopsEmailService } from '@/server/services/loops-email.service'
 import { pushInAppNotification } from '@/server/services/in-app-notification.service'
 
+function bootstrapRoleFromMetadata(role: unknown): 'house_sit' | 'house_sitter' {
+  return role === 'house_sitter' ? 'house_sitter' : 'house_sit'
+}
+
+function fallbackNameFromEmail(email: string) {
+  const local = email.split('@')[0]?.trim()
+  return local ? local.slice(0, 120) : 'User'
+}
+
 /**
  * Handles Supabase email confirmation redirects.
  * Supabase sends the user here with a `code` query param after they click
@@ -51,17 +60,32 @@ export async function GET(request: NextRequest) {
       // Ensure role-specific profile exists (same as authApi.sync)
       if (user) {
         try {
-          const dbUser = await db.user.findUnique({ where: { id: user.id } })
+          const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : ''
+          const metadataPhone = typeof user.user_metadata?.phone === 'string' ? user.user_metadata.phone.trim() : ''
+          const userEmail = String(user.email ?? '').trim().toLowerCase()
+          const bootstrapRole = bootstrapRoleFromMetadata(user.user_metadata?.role)
+
+          let dbUser = await db.user.findUnique({ where: { id: user.id } })
+          if (!dbUser && userEmail) {
+            dbUser = await db.user.create({
+              data: {
+                id: user.id,
+                email: userEmail,
+                name: metadataName || fallbackNameFromEmail(userEmail),
+                role: bootstrapRole,
+                ...(metadataPhone ? { phone: metadataPhone } : {}),
+              },
+            })
+          }
+
           if (dbUser) {
             // Keep profile fields synced from signup metadata.
-            if ((phone && phone !== dbUser.phone) || ((user.user_metadata?.name as string | undefined) && (user.user_metadata?.name as string) !== dbUser.name)) {
+            if ((phone && phone !== dbUser.phone) || (metadataName && metadataName !== dbUser.name)) {
               await db.user.update({
                 where: { id: user.id },
                 data: {
                   ...(phone ? { phone } : {}),
-                  ...(typeof user.user_metadata?.name === 'string' && user.user_metadata.name.trim()
-                    ? { name: user.user_metadata.name.trim() }
-                    : {}),
+                  ...(metadataName ? { name: metadataName } : {}),
                 },
               })
             }

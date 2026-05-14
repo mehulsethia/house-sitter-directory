@@ -51,18 +51,27 @@ function LoginForm() {
 
       const nextParam = params.get('next')
       const safeNext = nextParam && nextParam.startsWith('/') ? nextParam : null
-      const role = (data.user?.user_metadata?.role as string | undefined) ?? 'house_sit'
+      const metadataRole = (data.user?.user_metadata?.role as string | undefined) ?? 'house_sit'
+      let resolvedRole = metadataRole
+      try {
+        const me = await authApi.me()
+        if (typeof me?.data?.role === 'string' && me.data.role.length > 0) {
+          resolvedRole = me.data.role
+        }
+      } catch {
+        // Fallback to metadata role if profile lookup fails.
+      }
 
       let next = safeNext
       if (!next) {
-        if (role === 'house_sitter') {
+        if (resolvedRole === 'house_sitter') {
           try {
             const houseSitterRes = await houseSittersApi.me()
             next = houseSitterRes.data?.onboarding?.completion_pct === 100 ? '/house-sitter/dashboard' : '/house-sitters/onboarding'
           } catch {
             next = '/house-sitters/onboarding'
           }
-        } else if (role === 'admin') {
+        } else if (resolvedRole === 'admin') {
           next = '/admin/dashboard'
         } else {
           next = '/house-sit/dashboard'
