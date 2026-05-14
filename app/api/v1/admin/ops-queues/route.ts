@@ -22,98 +22,86 @@ export const GET = requireAdmin(async () => {
   const tomorrowEnd = endOfUtcDate(tomorrow)
   const afterTomorrowStart = startOfUtcDate(dayAfterTomorrow)
 
-  const [
-    pendingCleaners,
-    activeDisputes,
-    pendingBookingRequests,
-    todayJobs,
-    tomorrowJobs,
-    paymentIssues,
-    failedPayments,
-    cancelledBookings,
-    noShowDisputes,
-  ] =
-    await Promise.all([
-      db.houseSitter.findMany({
-        where: { status: 'pending' },
-        include: { user: true },
-        orderBy: { createdAt: 'asc' },
-        take: 10,
-      }),
-      db.dispute.findMany({
-        where: { status: { in: ['open', 'under_review'] } },
-        orderBy: { createdAt: 'asc' },
-        take: 10,
-      }),
-      db.booking.findMany({
-        where: {
-          status: 'pending',
-          acceptBy: { gte: new Date() },
-        },
-        include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
-        orderBy: { acceptBy: 'asc' },
-        take: 20,
-      }),
-      db.booking.findMany({
-        where: {
-          status: { in: ['accepted', 'confirmed', 'in_progress'] },
-          scheduledStart: { gte: todayStart, lte: todayEnd },
-        },
-        include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
-        orderBy: { scheduledStart: 'asc' },
-        take: 20,
-      }),
-      db.booking.findMany({
-        where: {
-          status: { in: ['accepted', 'confirmed', 'in_progress'] },
-          scheduledStart: { gte: tomorrowStart, lte: tomorrowEnd },
-        },
-        include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
-        orderBy: { scheduledStart: 'asc' },
-        take: 20,
-      }),
-      db.booking.findMany({
-        where: {
-          status: 'accepted',
-          reauthorizationRequired: true,
-        },
-        include: {
-          houseSit: { include: { user: true } },
-        },
-        orderBy: { payBy: 'asc' },
-        take: 15,
-      }),
-      db.payment.findMany({
-        where: {
-          status: 'failed',
-          failedAt: { gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
-        },
-        include: {
-          booking: { include: { houseSit: { include: { user: true } } } },
-        },
-        orderBy: [{ failedAt: 'desc' }, { updatedAt: 'desc' }],
-        take: 15,
-      }),
-      db.booking.findMany({
-        where: {
-          status: 'cancelled',
-          cancelledAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-        },
-        orderBy: { cancelledAt: 'desc' },
-        take: 10,
-      }),
-      db.dispute.findMany({
-        where: {
-          OR: [
-            { issueType: { in: ['house_sitter_didnt_arrive', 'house_sit_no_show'] } },
-            { reason: { contains: 'no-show', mode: 'insensitive' } },
-          ],
-          createdAt: { gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      }),
-    ])
+  // Avoid large concurrent fan-out reads when Prisma pool size is constrained.
+  const pendingCleaners = await db.houseSitter.findMany({
+    where: { status: 'pending' },
+    include: { user: true },
+    orderBy: { createdAt: 'asc' },
+    take: 10,
+  })
+  const activeDisputes = await db.dispute.findMany({
+    where: { status: { in: ['open', 'under_review'] } },
+    orderBy: { createdAt: 'asc' },
+    take: 10,
+  })
+  const pendingBookingRequests = await db.booking.findMany({
+    where: {
+      status: 'pending',
+      acceptBy: { gte: new Date() },
+    },
+    include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
+    orderBy: { acceptBy: 'asc' },
+    take: 20,
+  })
+  const todayJobs = await db.booking.findMany({
+    where: {
+      status: { in: ['accepted', 'confirmed', 'in_progress'] },
+      scheduledStart: { gte: todayStart, lte: todayEnd },
+    },
+    include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
+    orderBy: { scheduledStart: 'asc' },
+    take: 20,
+  })
+  const tomorrowJobs = await db.booking.findMany({
+    where: {
+      status: { in: ['accepted', 'confirmed', 'in_progress'] },
+      scheduledStart: { gte: tomorrowStart, lte: tomorrowEnd },
+    },
+    include: { houseSitter: { include: { user: true } }, houseSit: { include: { user: true } } },
+    orderBy: { scheduledStart: 'asc' },
+    take: 20,
+  })
+  const paymentIssues = await db.booking.findMany({
+    where: {
+      status: 'accepted',
+      reauthorizationRequired: true,
+    },
+    include: {
+      houseSit: { include: { user: true } },
+    },
+    orderBy: { payBy: 'asc' },
+    take: 15,
+  })
+  const failedPayments = await db.payment.findMany({
+    where: {
+      status: 'failed',
+      failedAt: { gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
+    },
+    include: {
+      booking: { include: { houseSit: { include: { user: true } } } },
+    },
+    orderBy: [{ failedAt: 'desc' }, { updatedAt: 'desc' }],
+    take: 15,
+  })
+  const cancelledBookings = await db.booking.findMany({
+    where: {
+      status: 'cancelled',
+      cancelledAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+    },
+    orderBy: { cancelledAt: 'desc' },
+    take: 10,
+  })
+  const noShowDisputes = await db.dispute.findMany({
+    where: {
+      OR: [
+        { issueType: { in: ['house_sitter_didnt_arrive', 'house_sit_no_show'] } },
+        { reason: { contains: 'no-show', mode: 'insensitive' } },
+      ],
+      createdAt: { gte: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  })
 
   const cancellationNoShowItems = [
     ...cancelledBookings.map((booking) => ({

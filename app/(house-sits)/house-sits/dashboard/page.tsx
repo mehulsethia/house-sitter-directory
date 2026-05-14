@@ -61,21 +61,23 @@ export default function HouseSitDashboardPage() {
     let active = true
 
     ;(async () => {
-      try {
-        const [meRes, bookingRes, favoritesRes] = await Promise.all([authApi.me(), bookingsApi.my(), favoritesApi.list()])
-        if (!active) return
+      const [meResult, bookingsResult, favoritesResult] = await Promise.allSettled([
+        authApi.me(),
+        bookingsApi.my(),
+        favoritesApi.list(),
+      ])
+      if (!active) return
 
-        startTransition(() => {
-          setName((meRes.data?.name ?? '').trim())
-          setBookings(bookingRes.data?.items ?? [])
-          setFavorites(favoritesRes.data ?? [])
-          setLoading(false)
-        })
-      } catch {
-        if (!active) return
-        toast.error('Failed to load dashboard data.')
+      startTransition(() => {
+        setName(meResult.status === 'fulfilled' ? (meResult.value.data?.name ?? '').trim() : '')
+        setBookings(bookingsResult.status === 'fulfilled' ? (bookingsResult.value.data?.items ?? []) : [])
+        setFavorites(favoritesResult.status === 'fulfilled' ? (favoritesResult.value.data ?? []) : [])
         setLoading(false)
-      }
+      })
+
+      if (meResult.status === 'rejected') toast.error('Failed to load profile data.')
+      if (bookingsResult.status === 'rejected') toast.error('Failed to load bookings.')
+      if (favoritesResult.status === 'rejected') toast.error('Failed to load favourites.')
     })()
 
     return () => {

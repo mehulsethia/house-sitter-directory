@@ -100,15 +100,26 @@ export default function AdminDashboard() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try {
-      const [statsRes, queuesRes] = await Promise.all([adminApi.getStats(), adminApi.getOpsQueues()])
-      setStats(statsRes.data ?? null)
-      setQueues(queuesRes.data ?? null)
-    } catch {
-      toast.error('Failed to load dashboard data.')
-    } finally {
-      setLoading(false)
+    const [statsResult, queuesResult] = await Promise.allSettled([
+      adminApi.getStats(),
+      adminApi.getOpsQueues(),
+    ])
+
+    if (statsResult.status === 'fulfilled') {
+      setStats(statsResult.value.data ?? null)
+    } else {
+      setStats(null)
+      toast.error('Failed to load admin stats.')
     }
+
+    if (queuesResult.status === 'fulfilled') {
+      setQueues(queuesResult.value.data ?? null)
+    } else {
+      setQueues(null)
+      toast.error('Failed to load operational queues.')
+    }
+
+    setLoading(false)
   }, [])
 
   useEffect(() => {

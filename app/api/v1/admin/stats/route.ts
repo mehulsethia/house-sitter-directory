@@ -3,45 +3,52 @@ import { db } from '@/server/db'
 import { ok } from '@/server/response'
 
 export const GET = requireAdmin(async () => {
-  const [
-    totalUsers,
-    totalClients,
-    totalCleaners,
-    pendingCleaners,
-    approvedHouseSitters,
-    liveCleaners,
-    rejectedCleaners,
-    suspendedCleaners,
-    totalBookings,
-    activeBookings,
-    completedBookings,
-    releasedRevenueAgg,
-    openDisputes,
-  ] = await Promise.all([
-    db.user.count({ where: { deletedAt: null } }),
-    db.houseSit.count(),
-    db.houseSitter.count(),
-    db.houseSitter.count({ where: { status: 'pending' } }),
-    db.houseSitter.count({ where: { status: 'approved' } }),
-    db.houseSitter.count({ where: { status: 'approved', stripeOnboardingComplete: true } }),
-    db.houseSitter.count({ where: { status: 'rejected' } }),
-    db.houseSitter.count({ where: { status: 'suspended' } }),
-    db.booking.count(),
-    db.booking.count({
-      where: {
-        status: { in: ['pending', 'accepted', 'confirmed', 'in_progress', 'disputed'] },
-      },
-    }),
-    db.booking.count({ where: { status: 'completed' } }),
-    db.payment.aggregate({
-      _sum: { amount: true, platformFee: true },
-      where: {
-        status: 'transferred',
-        booking: { status: 'completed' },
-      },
-    }),
-    db.dispute.count({ where: { status: { in: ['open', 'under_review'] } } }),
-  ])
+  // Keep these reads connection-safe in serverless + PgBouncer environments
+  // where pool size may be set to 1.
+  const totalUsers = await db.user.count({ where: { deletedAt: null } })
+  const totalClients = await db.houseSit.count()
+
+  const houseSitterStatusAgg = await db.houseSitter.groupBy({
+    by: ['status'],
+    _count: { _all: true },
+  })
+  const houseSitterStatusCounts = new Map<string, number>(
+    houseSitterStatusAgg.map((row) => [row.status, row._count._all]),
+  )
+
+  const liveCleaners = await db.houseSitter.count({
+    where: { status: 'approved', stripeOnboardingComplete: true },
+  })
+
+  const bookingStatusAgg = await db.booking.groupBy({
+    by: ['status'],
+    _count: { _all: true },
+  })
+  const bookingStatusCounts = new Map<string, number>(
+    bookingStatusAgg.map((row) => [row.status, row._count._all]),
+  )
+
+  const releasedRevenueAgg = await db.payment.aggregate({
+    _sum: { amount: true, platformFee: true },
+    where: {
+      status: 'transferred',
+      booking: { status: 'completed' },
+    },
+  })
+  const openDisputes = await db.dispute.count({ where: { status: { in: ['open', 'under_review'] } } })
+
+  const totalCleaners = houseSitterStatusAgg.reduce((sum, row) => sum + row._count._all, 0)
+  const pendingCleaners = houseSitterStatusCounts.get('pending') ?? 0
+  const approvedHouseSitters = houseSitterStatusCounts.get('approved') ?? 0
+  const rejectedCleaners = houseSitterStatusCounts.get('rejected') ?? 0
+  const suspendedCleaners = houseSitterStatusCounts.get('suspended') ?? 0
+
+  const totalBookings = bookingStatusAgg.reduce((sum, row) => sum + row._count._all, 0)
+  const activeStatuses = new Set(['pending', 'accepted', 'confirmed', 'in_progress', 'disputed'])
+  const activeBookings = bookingStatusAgg
+    .filter((row) => activeStatuses.has(row.status))
+    .reduce((sum, row) => sum + row._count._all, 0)
+  const completedBookings = bookingStatusCounts.get('completed') ?? 0
 
   return ok({
     total_users: totalUsers,
