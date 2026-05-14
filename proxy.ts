@@ -15,9 +15,9 @@ function normalizeRole(role: unknown): 'house_sit' | 'house_sitter' | 'admin' | 
 
 function getPostLoginPath(user: { user_metadata?: Record<string, unknown> }) {
   const role = normalizeRole(user.user_metadata?.role) ?? 'house_sit'
-  if (role === 'house_sitter') return '/house-sitter/dashboard'
+  if (role === 'house_sitter') return '/house-sitters/dashboard'
   if (role === 'admin') return '/admin/dashboard'
-  return '/house-sit/dashboard'
+  return '/house-sits/dashboard'
 }
 
 export async function proxy(request: NextRequest) {
@@ -81,6 +81,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthRoute && user) {
+    const role = normalizeRole(user.user_metadata?.role)
+    if (!role) return response
     // Redirect logged-in users away from auth pages, preserving a safe `next` destination.
     const url = request.nextUrl.clone()
     const next = request.nextUrl.searchParams.get('next')
@@ -102,6 +104,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && !isProtected && !isApiRoute) {
+    const role = normalizeRole(user.user_metadata?.role)
+    if (!role) return response
     const url = request.nextUrl.clone()
     url.pathname = getPostLoginPath(user)
     return NextResponse.redirect(url)

@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { db } from '@/server/db'
 import { loopsEmailService } from '@/server/services/loops-email.service'
 import { pushInAppNotification } from '@/server/services/in-app-notification.service'
+import { computeCleanerOnboardingProgress } from '@/server/services/house-sitter-onboarding.service'
 
 function bootstrapRoleFromMetadata(role: unknown): 'house_sit' | 'house_sitter' {
   return role === 'house_sitter' ? 'house_sitter' : 'house_sit'
@@ -12,6 +13,13 @@ function bootstrapRoleFromMetadata(role: unknown): 'house_sit' | 'house_sitter' 
 function fallbackNameFromEmail(email: string) {
   const local = email.split('@')[0]?.trim()
   return local ? local.slice(0, 120) : 'User'
+}
+
+function sanitizeNextPath(next: string) {
+  return next
+    .replace('/house-sittter/', '/house-sitter/')
+    .replace('/house-sitter/dashboard', '/house-sitters/dashboard')
+    .replace('/house-sit/dashboard', '/house-sits/dashboard')
 }
 
 /**
@@ -141,12 +149,36 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      let redirectTo = next
-      if (redirectTo === '/') {
-        if (role === 'house_sitter') {
-          redirectTo = '/house-sitter/dashboard'
+      let redirectTo = sanitizeNextPath(next)
+      if (redirectTo === '/' && user) {
+        const dbUser = await db.user.findUnique({ where: { id: user.id } })
+        const resolvedRole = dbUser?.role ?? bootstrapRoleFromMetadata(role)
+
+        if (resolvedRole === 'admin') {
+          redirectTo = '/admin/dashboard'
+        } else if (resolvedRole === 'house_sitter') {
+          let houseSitter = await db.houseSitter.findUnique({ where: { userId: user.id } })
+          if (!houseSitter) {
+            houseSitter = await db.houseSitter.create({ data: { userId: user.id, hourlyRate: 15 } })
+          }
+
+          const availabilityCount = await db.availabilitySchedule.count({
+            where: { houseSitterId: houseSitter.id, isActive: true },
+          })
+          const onboarding = computeCleanerOnboardingProgress({
+            houseSitter,
+            hasAvailabilitySlots: availabilityCount > 0,
+          })
+
+          redirectTo = onboarding.completion_pct === 100
+            ? '/house-sitters/dashboard'
+            : '/house-sitters/onboarding'
         } else {
-          redirectTo = '/house-sit/dashboard'
+          let houseSit = await db.houseSit.findUnique({ where: { userId: user.id } })
+          if (!houseSit) {
+            houseSit = await db.houseSit.create({ data: { userId: user.id } })
+          }
+          redirectTo = '/house-sits/dashboard'
         }
       }
 

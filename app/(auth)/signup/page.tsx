@@ -69,12 +69,12 @@ function SignupForm() {
 
       if (role === 'house_sitter') {
         try {
-          router.push('/house-sitter/dashboard')
+          router.push('/house-sitters/onboarding')
         } catch {
-          router.push('/house-sitter/dashboard')
+          router.push('/house-sitters/onboarding')
         }
       } else {
-        router.push('/house-sit/dashboard')
+        router.push('/house-sits/dashboard')
       }
       toast.success('Account created successfully.')
     } else {

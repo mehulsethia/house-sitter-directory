@@ -67,14 +67,14 @@ function LoginForm() {
         if (resolvedRole === 'house_sitter') {
           try {
             const houseSitterRes = await houseSittersApi.me()
-            next = houseSitterRes.data?.onboarding?.completion_pct === 100 ? '/house-sitter/dashboard' : '/house-sitters/onboarding'
+            next = houseSitterRes.data?.onboarding?.completion_pct === 100 ? '/house-sitters/dashboard' : '/house-sitters/onboarding'
           } catch {
             next = '/house-sitters/onboarding'
           }
         } else if (resolvedRole === 'admin') {
           next = '/admin/dashboard'
         } else {
-          next = '/house-sit/dashboard'
+          next = '/house-sits/dashboard'
         }
       }
 

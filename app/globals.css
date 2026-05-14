@@ -197,6 +197,11 @@
   --internal-shadow: 0 14px 36px rgba(74, 56, 39, 0.1);
 }
 
+.internal-app-shell section {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .internal-page {
   display: flex;
   flex-direction: column;
