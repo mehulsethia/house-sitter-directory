@@ -58,14 +58,14 @@ function LoginForm() {
         if (role === 'cleaner') {
           try {
             const cleanerRes = await houseSittersApi.me()
-            next = cleanerRes.data?.onboarding?.completion_pct === 100 ? '/house-sitters/dashboard' : '/house-sitters/onboarding'
+            next = cleanerRes.data?.onboarding?.completion_pct === 100 ? '/house-sitter/dashboard' : '/house-sitters/onboarding'
           } catch {
             next = '/house-sitters/onboarding'
           }
         } else if (role === 'admin') {
           next = '/admin/dashboard'
         } else {
-          next = '/house-sits/dashboard'
+          next = '/house-sit/dashboard'
         }
       }
 
@@ -92,7 +92,7 @@ function LoginForm() {
 
       {/* Right — Form */}
       <div className="flex flex-col justify-center p-5 sm:p-8 lg:p-14">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-8">
+        <h2 className="mb-8 text-center text-2xl font-semibold text-gray-900">
           Log in to your account
         </h2>
 

@@ -4,9 +4,9 @@ import { Facebook, Instagram, Twitter } from 'lucide-react'
 
 export default function Footer() {
   return (
-    <footer className="mt-auto border-t border-[#e8e2dc] bg-[#f8f8f8] text-[#1a1a1a]">
+    <footer className="mt-6 border-t border-[#e8e2dc] bg-[#f8f8f8] text-[#1a1a1a]">
       <div className="max-site-width py-12">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+        <div className="grid gap-10 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div>
             <Link href="/" className="inline-flex items-center">
               <Image
@@ -19,14 +19,14 @@ export default function Footer() {
             </Link>
             <p className="mt-3 max-w-sm text-sm text-[#6b6b6b]">The most trusted platform for connecting homeowners with verified, reliable house sitters.</p>
             <div className="mt-4 flex items-center gap-3">
+              <Link href="#" aria-label="Facebook" className="text-[#6b6b6b] hover:text-[#5a4a3b]">
+                <Facebook className="h-4 w-4" />
+              </Link>
               <Link href="#" aria-label="Twitter" className="text-[#6b6b6b] hover:text-[#5a4a3b]">
                 <Twitter className="h-4 w-4" />
               </Link>
               <Link href="#" aria-label="Instagram" className="text-[#6b6b6b] hover:text-[#5a4a3b]">
                 <Instagram className="h-4 w-4" />
-              </Link>
-              <Link href="#" aria-label="Facebook" className="text-[#6b6b6b] hover:text-[#5a4a3b]">
-                <Facebook className="h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -35,27 +35,18 @@ export default function Footer() {
             title="Platform"
             links={[
               ['Find Sitters', '/find-house-sitters'],
-              ['Find House Sits', '/find-house-sits'],
+              ['Become a Sitter', '/signup?role=cleaner'],
               ['How It Works', '/#how-it-works'],
               ['Pricing', '/pricing'],
-            ]}
-          />
-          <FooterColumn
-            title="Sitters"
-            links={[
-              ['Create Profile', '/signup?role=cleaner'],
-              ['Browse Sits', '/find-house-sits'],
-              ['Sitter Resources', '/for-house-sitters'],
-              ['Success Stories', '/about-us'],
             ]}
           />
           <FooterColumn
             title="Support"
             links={[
               ['Help Center', '/terms-and-conditions'],
-              ['Contact Us', '/about-us'],
-              ['Safety', '/responsible-disclosure-policy'],
+              ['Safety & Trust', '/responsible-disclosure-policy'],
               ['Insurance', '/terms-and-conditions'],
+              ['Contact Us', '/about-us'],
             ]}
           />
           <FooterColumn
@@ -75,7 +66,7 @@ export default function Footer() {
             <Link href="/terms-and-conditions" className="hover:text-[#5a4a3b]">
               Terms of Service
             </Link>
-            <Link href="/privacy-policy" className="hover:text-[#5a4a3b]">
+            <Link href="/cookie-policy" className="hover:text-[#5a4a3b]">
               Cookie Policy
             </Link>
           </div>

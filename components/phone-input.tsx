@@ -37,7 +37,8 @@ const DEFAULT_COUNTRY_CODES: CountryCodeOption[] = [
  */
 export function parsePhone(full: string): { dialCode: string; number: string } {
   const trimmed = full.replace(/\s+/g, '').trim()
-  if (!trimmed.startsWith('+')) return { dialCode: '+357', number: trimmed }
+  if (trimmed === '') return { dialCode: '', number: '' }
+  if (!trimmed.startsWith('+')) return { dialCode: '', number: trimmed }
 
   // Sort by code length desc so longer codes match first
   const sorted = [...DEFAULT_COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length)
@@ -50,7 +51,7 @@ export function parsePhone(full: string): { dialCode: string; number: string } {
   if (genericMatch) {
     return { dialCode: genericMatch[1], number: genericMatch[2] ?? '' }
   }
-  return { dialCode: '+357', number: trimmed.replace(/^\+/, '') }
+  return { dialCode: '', number: trimmed.replace(/^\+/, '') }
 }
 
 /** Combine dial code and number into a full phone string */
@@ -117,9 +118,7 @@ export function PhoneInput({ value, onChange, className, placeholder }: PhoneInp
 
         if (options.length === 0 || !active) return
         options.sort((a, b) => a.label.localeCompare(b.label))
-        const cyprus = options.find((option) => option.country === 'CY' || option.code === '+357')
-        const withoutCyprus = options.filter((option) => option !== cyprus)
-        setCountryCodes(cyprus ? [cyprus, ...withoutCyprus] : [{ code: '+357', country: 'CY', flag: '🇨🇾', label: 'Cyprus' }, ...withoutCyprus])
+        setCountryCodes(options)
       } catch {
         // Keep static fallback list
       }
@@ -141,8 +140,8 @@ export function PhoneInput({ value, onChange, className, placeholder }: PhoneInp
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const selected = countryCodes.find(c => c.code === dialCode) ?? { code: dialCode, country: 'ZZ', flag: '🌐', label: 'Custom' }
-  const selectedLabel = countryCodes.find(c => c.code === dialCode)?.label ?? 'Custom'
+  const selected = countryCodes.find(c => c.code === dialCode) ?? { code: dialCode, country: 'ZZ', flag: '🌐', label: 'Choose' }
+  const selectedLabel = countryCodes.find(c => c.code === dialCode)?.label ?? 'Choose'
 
   const filtered = search.trim()
     ? countryCodes.filter(c =>
@@ -165,9 +164,10 @@ export function PhoneInput({ value, onChange, className, placeholder }: PhoneInp
   }
 
   function handleDialCodeInput(val: string) {
-    const sanitized = `+${val.replace(/[^\d]/g, '').slice(0, 4)}`
-    setDialCode(sanitized === '+' ? '+357' : sanitized)
-    onChange(formatFullPhone(sanitized === '+' ? '+357' : sanitized, number))
+    const digits = val.replace(/[^\d]/g, '').slice(0, 4)
+    const sanitized = digits ? `+${digits}` : ''
+    setDialCode(sanitized)
+    onChange(formatFullPhone(sanitized, number))
   }
 
   return (
@@ -189,7 +189,7 @@ export function PhoneInput({ value, onChange, className, placeholder }: PhoneInp
           onChange={(e) => handleDialCodeInput(e.target.value)}
           className="w-[64px] bg-transparent text-sm font-medium text-slate-700 outline-none"
           aria-label="Dial code"
-          placeholder="+357"
+          placeholder="+Code"
         />
       </div>
 

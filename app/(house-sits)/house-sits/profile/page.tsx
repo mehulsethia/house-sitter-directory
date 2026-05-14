@@ -19,7 +19,7 @@ import { toApiV1Url } from '@/lib/api-base'
 import { createClient } from '@/lib/supabase'
 import type { BookingRead, HouseSitAddressRead } from '@/types'
 import { toast } from 'sonner'
-import { MAX_SAVED_ADDRESSES, MVP_CITY, MVP_COUNTRY_CODE, MVP_COUNTRY_NAME, normalizeCyprusPostcode } from '@/lib/location-policy'
+import { MAX_SAVED_ADDRESSES, MVP_CITY, MVP_COUNTRY_CODE, normalizeCyprusPostcode } from '@/lib/location-policy'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -35,16 +35,14 @@ export default function ClientProfilePage() {
   const [phone, setPhone] = useState('')
   const [persistedPhone, setPersistedPhone] = useState('')
   const [defaultAddress, setDefaultAddress] = useState('')
-  const [defaultCity, setDefaultCity] = useState(MVP_CITY)
+  const [defaultCity, setDefaultCity] = useState('')
   const [defaultPostcode, setDefaultPostcode] = useState('')
   const [memberSince, setMemberSince] = useState('')
   const [savedAddresses, setSavedAddresses] = useState<HouseSitAddressRead[]>([])
   const [addingAddress, setAddingAddress] = useState(false)
   const [newAddressLabel, setNewAddressLabel] = useState('')
   const [newAddressLine1, setNewAddressLine1] = useState('')
-  const [newAddressCity, setNewAddressCity] = useState(MVP_CITY)
   const [newAddressPostcode, setNewAddressPostcode] = useState('')
-  const [newAddressCountry, setNewAddressCountry] = useState(MVP_COUNTRY_CODE)
   const [newApartmentDetails, setNewApartmentDetails] = useState('')
   const [newAccessNotes, setNewAccessNotes] = useState('')
   const [newAddressDefault, setNewAddressDefault] = useState(false)
@@ -106,7 +104,7 @@ export default function ClientProfilePage() {
           setPhone(user?.phone ?? '')
           setPersistedPhone(user?.phone ?? '')
           setDefaultAddress(defaultEntry?.address_line1 ?? client?.default_address ?? '')
-          setDefaultCity(client?.default_city ?? MVP_CITY)
+          setDefaultCity(defaultEntry?.city ?? client?.default_city ?? '')
           setDefaultPostcode(defaultEntry?.postcode ?? client?.default_postcode ?? '')
           setIdFileName(client?.id_file_name ?? '')
           setIdFileUrl(client?.id_file_url ?? '')
@@ -255,7 +253,7 @@ export default function ClientProfilePage() {
 
   async function createSavedAddress() {
     if (!newAddressLine1.trim() || !newAddressPostcode.trim()) {
-      toast.error('Address, city and postcode are required.')
+      toast.error('Address and postcode are required.')
       return
     }
     if (!/^\d{4}$/.test(normalizeCyprusPostcode(newAddressPostcode))) {
@@ -289,20 +287,18 @@ export default function ClientProfilePage() {
       }
       if (created?.is_default || !defaultAddress) {
         setDefaultAddress(created?.address_line1 ?? newAddressLine1.trim())
-        setDefaultCity(MVP_CITY)
+        setDefaultCity(created?.city ?? '')
         setDefaultPostcode(created?.postcode ?? normalizeCyprusPostcode(newAddressPostcode))
         await houseSitsApi.updateMe({
           default_address: created?.address_line1 ?? newAddressLine1.trim(),
-          default_city: MVP_CITY,
+          default_city: created?.city ?? null,
           default_postcode: created?.postcode ?? normalizeCyprusPostcode(newAddressPostcode),
           default_country: MVP_COUNTRY_CODE,
         })
       }
       setNewAddressLabel('')
       setNewAddressLine1('')
-      setNewAddressCity(MVP_CITY)
       setNewAddressPostcode('')
-      setNewAddressCountry(MVP_COUNTRY_CODE)
       setNewApartmentDetails('')
       setNewAccessNotes('')
       setNewAddressDefault(false)
@@ -336,11 +332,11 @@ export default function ClientProfilePage() {
 
   async function persistDefaultAddressFromEntry(entry: HouseSitAddressRead) {
     setDefaultAddress(entry.address_line1)
-    setDefaultCity(MVP_CITY)
+    setDefaultCity(entry.city ?? '')
     setDefaultPostcode(entry.postcode)
     await houseSitsApi.updateMe({
       default_address: entry.address_line1,
-      default_city: MVP_CITY,
+      default_city: entry.city ?? null,
       default_postcode: entry.postcode,
       default_country: MVP_COUNTRY_CODE,
     })
@@ -748,7 +744,7 @@ export default function ClientProfilePage() {
                 <p className="mt-1 text-sm text-slate-500">Saved/default addresses used to prefill booking flow.</p>
                 <div className="mt-5 grid gap-3 md:grid-cols-2">
                   <Field label="Default Address"><Input value={defaultAddress} readOnly className="mt-1 bg-slate-50" /></Field>
-                  <Field label="Default City"><Input value={MVP_CITY} readOnly className="mt-1 bg-slate-50" /></Field>
+                  <Field label="Default City"><Input value={defaultCity} readOnly className="mt-1 bg-slate-50" /></Field>
                   <Field label="Default Postcode"><Input value={defaultPostcode} readOnly className="mt-1 bg-slate-50" placeholder="6010" maxLength={4} inputMode="numeric" /></Field>
                 </div>
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -843,14 +839,8 @@ export default function ClientProfilePage() {
                     <Field label="Label (optional)">
                       <Input value={newAddressLabel} onChange={(event) => setNewAddressLabel(event.target.value)} className="mt-1" placeholder="Home, Office, etc." />
                     </Field>
-                    <Field label="Country">
-                      <Input value={MVP_COUNTRY_NAME} readOnly className="mt-1 bg-slate-50" />
-                    </Field>
                     <Field label="Address">
                       <Input value={newAddressLine1} onChange={(event) => setNewAddressLine1(event.target.value)} className="mt-1" placeholder="Street address" />
-                    </Field>
-                    <Field label="City">
-                      <Input value={MVP_CITY} readOnly className="mt-1 bg-slate-50" />
                     </Field>
                     <Field label="Postcode">
                       <Input value={newAddressPostcode} onChange={(event) => setNewAddressPostcode(normalizeCyprusPostcode(event.target.value))} className="mt-1" placeholder="6010" maxLength={4} inputMode="numeric" />
@@ -1024,11 +1014,11 @@ export default function ClientProfilePage() {
                 const defaultEntry = normalized.find((entry) => entry.is_default) ?? normalized[0]
                 if (defaultEntry) {
                   setDefaultAddress(defaultEntry.address_line1)
-                  setDefaultCity(MVP_CITY)
+                  setDefaultCity(defaultEntry.city ?? '')
                   setDefaultPostcode(defaultEntry.postcode)
                   await houseSitsApi.updateMe({
                     default_address: defaultEntry.address_line1,
-                    default_city: MVP_CITY,
+                    default_city: defaultEntry.city ?? null,
                     default_postcode: defaultEntry.postcode,
                     default_country: MVP_COUNTRY_CODE,
                   })

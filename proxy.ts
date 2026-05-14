@@ -2,15 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Routes that require a logged-in user
-const PROTECTED_PREFIXES = ['/client', '/cleaner', '/admin']
+const PROTECTED_PREFIXES = ['/house-sit', '/house-sits', '/house-sitter', '/house-sitters', '/admin']
 // Routes only for unauthenticated users
 const AUTH_ROUTES = ['/login', '/signup', '/verify-email']
 
 function getPostLoginPath(user: { user_metadata?: Record<string, unknown> }) {
   const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'client'
-  if (role === 'cleaner') return '/cleaner/dashboard'
+  if (role === 'cleaner') return '/house-sitter/dashboard'
   if (role === 'admin') return '/admin/dashboard'
-  return '/client/dashboard'
+  return '/house-sit/dashboard'
 }
 
 export async function proxy(request: NextRequest) {
@@ -53,8 +53,16 @@ export async function proxy(request: NextRequest) {
   // Prevent role mismatch: don't let users access another role's area
   if (isProtected && user) {
     const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : null
-    const isClientRoute = pathname.startsWith('/client')
-    const isCleanerRoute = pathname.startsWith('/cleaner')
+    const isClientRoute =
+      pathname === '/house-sit' ||
+      pathname.startsWith('/house-sit/') ||
+      pathname === '/house-sits' ||
+      pathname.startsWith('/house-sits/')
+    const isCleanerRoute =
+      pathname === '/house-sitter' ||
+      pathname.startsWith('/house-sitter/') ||
+      pathname === '/house-sitters' ||
+      pathname.startsWith('/house-sitters/')
     if ((isClientRoute && role === 'cleaner') || (isCleanerRoute && role === 'client')) {
       const url = request.nextUrl.clone()
       url.pathname = getPostLoginPath(user)

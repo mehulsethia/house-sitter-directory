@@ -120,9 +120,9 @@ export async function GET(request: NextRequest) {
       let redirectTo = next
       if (redirectTo === '/') {
         if (role === 'cleaner') {
-          redirectTo = '/house-sitters/onboarding'
+          redirectTo = '/house-sitter/dashboard'
         } else {
-          redirectTo = '/house-sits/dashboard'
+          redirectTo = '/house-sit/dashboard'
         }
       }
 
