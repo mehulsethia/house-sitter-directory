@@ -10,7 +10,11 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-const CLIENT_ID_BUCKET = (process.env.SUPABASE_CLIENT_ID_BUCKET ?? 'client-ids').trim()
+const HOUSE_SIT_ID_BUCKET = (
+  process.env.SUPABASE_HOUSE_SIT_ID_BUCKET ??
+  process.env.SUPABASE_CLIENT_ID_BUCKET ??
+  'client-ids'
+).trim()
 const ALLOWED_MIME = new Set(DOCUMENT_MIME_TYPES)
 const EXT_BY_MIME: Record<string, string> = {
   'application/pdf': 'pdf',
@@ -23,12 +27,12 @@ let bucketEnsured = false
 
 async function ensureBucketExists() {
   if (bucketEnsured) return
-  const { data: existing, error: fetchError } = await supabaseAdmin.storage.getBucket(CLIENT_ID_BUCKET)
+  const { data: existing, error: fetchError } = await supabaseAdmin.storage.getBucket(HOUSE_SIT_ID_BUCKET)
   if (!fetchError && existing) {
     bucketEnsured = true
     return
   }
-  const { error: createError } = await supabaseAdmin.storage.createBucket(CLIENT_ID_BUCKET, {
+  const { error: createError } = await supabaseAdmin.storage.createBucket(HOUSE_SIT_ID_BUCKET, {
     public: true,
     fileSizeLimit: 10 * 1024 * 1024,
     allowedMimeTypes: Array.from(ALLOWED_MIME),
@@ -71,7 +75,7 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     )
   }
 
-  const { error: uploadError } = await supabaseAdmin.storage.from(CLIENT_ID_BUCKET).upload(path, arrayBuffer, {
+  const { error: uploadError } = await supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).upload(path, arrayBuffer, {
     contentType: file.type,
     upsert: true,
   })
@@ -79,7 +83,7 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     return NextResponse.json({ success: false, message: uploadError.message }, { status: 500 })
   }
 
-  const { data: urlData } = supabaseAdmin.storage.from(CLIENT_ID_BUCKET).getPublicUrl(path)
+  const { data: urlData } = supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).getPublicUrl(path)
   const publicUrl = urlData.publicUrl
 
   await clientRepo.update(client.id, {

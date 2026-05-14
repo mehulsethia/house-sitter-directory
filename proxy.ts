@@ -7,8 +7,8 @@ const PROTECTED_PREFIXES = ['/house-sit', '/house-sits', '/house-sitter', '/hous
 const AUTH_ROUTES = ['/login', '/signup', '/verify-email']
 
 function getPostLoginPath(user: { user_metadata?: Record<string, unknown> }) {
-  const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'client'
-  if (role === 'cleaner') return '/house-sitter/dashboard'
+  const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : 'house-sit'
+  if (role === 'cleaner' || role === 'house-sitter') return '/house-sitter/dashboard'
   if (role === 'admin') return '/admin/dashboard'
   return '/house-sit/dashboard'
 }
@@ -53,17 +53,20 @@ export async function proxy(request: NextRequest) {
   // Prevent role mismatch: don't let users access another role's area
   if (isProtected && user) {
     const role = typeof user.user_metadata?.role === 'string' ? user.user_metadata.role : null
-    const isClientRoute =
+    const isHouseSitRoute =
       pathname === '/house-sit' ||
       pathname.startsWith('/house-sit/') ||
       pathname === '/house-sits' ||
       pathname.startsWith('/house-sits/')
-    const isCleanerRoute =
+    const isHouseSitterRoute =
       pathname === '/house-sitter' ||
       pathname.startsWith('/house-sitter/') ||
       pathname === '/house-sitters' ||
       pathname.startsWith('/house-sitters/')
-    if ((isClientRoute && role === 'cleaner') || (isCleanerRoute && role === 'client')) {
+    if (
+      (isHouseSitRoute && (role === 'cleaner' || role === 'house-sitter')) ||
+      (isHouseSitterRoute && (role === 'client' || role === 'house-sit'))
+    ) {
       const url = request.nextUrl.clone()
       url.pathname = getPostLoginPath(user)
       return NextResponse.redirect(url)
