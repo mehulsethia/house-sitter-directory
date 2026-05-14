@@ -16,6 +16,8 @@ import {
   Users,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { clearAuthCache } from '@/lib/auth-cache'
+import { clearApiCache } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useCounts } from '@/hooks/use-counts'
@@ -165,11 +167,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   async function signOut() {
+    clearAuthCache()
+    clearApiCache()
     const supabase = createClient()
     await supabase.auth.signOut()
     setAuthState('login')
     setEmail('')
     setPassword('')
+    router.replace('/login')
+    router.refresh()
   }
 
   // Loading spinner
@@ -184,13 +190,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Admin login screen
   if (authState === 'login') {
     return (
-      <div className="relative min-h-screen bg-[#f3f3f3] px-4 py-8">
+      <div className="relative min-h-screen bg-[#f3f3f3] px-4 py-4 sm:py-6">
         <div className="admin-stage-bg" aria-hidden="true" />
         <div className="relative z-10 mx-auto w-full max-w-sm">
           <section className="admin-stage overflow-hidden rounded-[2rem] border border-slate-200/70">
             <div className="admin-stage__media" aria-hidden="true" />
             <div className="admin-stage__grain" aria-hidden="true" />
-            <div className="relative z-10 px-5 py-4 text-white">
+            <div className="relative z-10 px-5 py-2.5 text-white">
               <p className={`text-[0.7rem] uppercase tracking-[0.24em] text-white/75`}>
                 The House Sitter Directory Admin Console
               </p>

@@ -296,23 +296,33 @@
 
 /* Keep internal hero/header banners compact across house-sit, house-sitter, and admin surfaces. */
 :is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) > .relative.z-10 {
-  padding-top: 0.85rem !important;
-  padding-bottom: 0.85rem !important;
+  padding-top: 0.55rem !important;
+  padding-bottom: 0.55rem !important;
   min-height: unset !important;
 }
 
 :is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) h1 {
-  font-size: clamp(1.45rem, 2.35vw, 2.2rem) !important;
-  line-height: 1.14 !important;
+  font-size: clamp(1.2rem, 1.85vw, 1.85rem) !important;
+  line-height: 1.1 !important;
 }
 
 :is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) .rounded-3xl {
-  padding: 0.85rem !important;
+  padding: 0.6rem !important;
+}
+
+:is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) p {
+  margin-top: 0.2rem !important;
+  margin-bottom: 0 !important;
+}
+
+.internal-app-shell.app-shell-main {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
 }
 
 @media (min-width: 640px) {
   :is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) > .relative.z-10 {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
   }
 }

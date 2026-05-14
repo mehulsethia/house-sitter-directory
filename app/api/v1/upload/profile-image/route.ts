@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/server/auth'
 import { db } from '@/server/db'
-import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { IMAGE_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
+import {
+  ensureStorageBucketExists,
+  isBucketNotFoundError,
+  supabaseAdmin,
+} from '@/server/supabase-admin'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+const PROFILE_IMAGES_BUCKET = (process.env.SUPABASE_PROFILE_IMAGES_BUCKET ?? 'profile-images').trim()
 const ALLOWED_MIME = new Set(IMAGE_MIME_TYPES)
 const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -37,19 +38,58 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   const ext = EXT_BY_MIME[file.type]
   const path = `${user.id}/${Date.now()}-${randomUUID()}.${ext}`
 
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from('profile-images')
+  try {
+    await ensureStorageBucketExists(PROFILE_IMAGES_BUCKET, {
+      public: true,
+      fileSizeLimit: 5 * 1024 * 1024,
+      allowedMimeTypes: Array.from(ALLOWED_MIME),
+    })
+  } catch (bucketError: any) {
+    return NextResponse.json(
+      { success: false, message: bucketError?.message ?? 'Failed to initialize profile image bucket' },
+      { status: 500 },
+    )
+  }
+
+  let { error: uploadError } = await supabaseAdmin.storage
+    .from(PROFILE_IMAGES_BUCKET)
     .upload(path, arrayBuffer, {
       contentType: file.type,
       upsert: true,
     })
+
+  if (uploadError && isBucketNotFoundError(uploadError)) {
+    try {
+      await ensureStorageBucketExists(
+        PROFILE_IMAGES_BUCKET,
+        {
+          public: true,
+          fileSizeLimit: 5 * 1024 * 1024,
+          allowedMimeTypes: Array.from(ALLOWED_MIME),
+        },
+        { force: true },
+      )
+      const retried = await supabaseAdmin.storage
+        .from(PROFILE_IMAGES_BUCKET)
+        .upload(path, arrayBuffer, {
+          contentType: file.type,
+          upsert: true,
+        })
+      uploadError = retried.error
+    } catch (bucketError: any) {
+      return NextResponse.json(
+        { success: false, message: bucketError?.message ?? 'Failed to initialize profile image bucket' },
+        { status: 500 },
+      )
+    }
+  }
 
   if (uploadError) {
     return NextResponse.json({ success: false, message: uploadError.message }, { status: 500 })
   }
 
   const { data: urlData } = supabaseAdmin.storage
-    .from('profile-images')
+    .from(PROFILE_IMAGES_BUCKET)
     .getPublicUrl(path)
 
   const publicUrl = urlData.publicUrl

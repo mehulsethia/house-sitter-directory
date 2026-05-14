@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireHouseSit } from '@/server/auth'
 import { houseSitRepo } from '@/server/repositories/house-sit.repo'
-import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { DOCUMENT_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+import {
+  ensureStorageBucketExists,
+  isBucketNotFoundError,
+  supabaseAdmin,
+} from '@/server/supabase-admin'
 
 const HOUSE_SIT_ID_BUCKET = (
   process.env.SUPABASE_HOUSE_SIT_ID_BUCKET ??
   process.env.SUPABASE_CLIENT_ID_BUCKET ??
-  'houseSit-ids'
+  'house-sit-ids'
 ).trim()
 const ALLOWED_MIME = new Set(DOCUMENT_MIME_TYPES)
 const EXT_BY_MIME: Record<string, string> = {
@@ -21,26 +20,6 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
-}
-
-let bucketEnsured = false
-
-async function ensureBucketExists() {
-  if (bucketEnsured) return
-  const { data: existing, error: fetchError } = await supabaseAdmin.storage.getBucket(HOUSE_SIT_ID_BUCKET)
-  if (!fetchError && existing) {
-    bucketEnsured = true
-    return
-  }
-  const { error: createError } = await supabaseAdmin.storage.createBucket(HOUSE_SIT_ID_BUCKET, {
-    public: true,
-    fileSizeLimit: 10 * 1024 * 1024,
-    allowedMimeTypes: Array.from(ALLOWED_MIME),
-  })
-  if (createError && !String(createError.message ?? '').toLowerCase().includes('already exists')) {
-    throw createError
-  }
-  bucketEnsured = true
 }
 
 export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
@@ -67,7 +46,11 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   }
 
   try {
-    await ensureBucketExists()
+    await ensureStorageBucketExists(HOUSE_SIT_ID_BUCKET, {
+      public: true,
+      fileSizeLimit: 10 * 1024 * 1024,
+      allowedMimeTypes: Array.from(ALLOWED_MIME),
+    })
   } catch (bucketError: any) {
     return NextResponse.json(
       { success: false, message: bucketError?.message ?? 'Failed to initialize houseSit ID storage bucket' },
@@ -75,10 +58,34 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     )
   }
 
-  const { error: uploadError } = await supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).upload(path, arrayBuffer, {
+  let { error: uploadError } = await supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).upload(path, arrayBuffer, {
     contentType: file.type,
     upsert: true,
   })
+
+  if (uploadError && isBucketNotFoundError(uploadError)) {
+    try {
+      await ensureStorageBucketExists(
+        HOUSE_SIT_ID_BUCKET,
+        {
+          public: true,
+          fileSizeLimit: 10 * 1024 * 1024,
+          allowedMimeTypes: Array.from(ALLOWED_MIME),
+        },
+        { force: true },
+      )
+      const retried = await supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).upload(path, arrayBuffer, {
+        contentType: file.type,
+        upsert: true,
+      })
+      uploadError = retried.error
+    } catch (bucketError: any) {
+      return NextResponse.json(
+        { success: false, message: bucketError?.message ?? 'Failed to initialize houseSit ID storage bucket' },
+        { status: 500 },
+      )
+    }
+  }
   if (uploadError) {
     return NextResponse.json({ success: false, message: uploadError.message }, { status: 500 })
   }

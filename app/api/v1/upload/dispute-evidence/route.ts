@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/server/auth'
-import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { IMAGE_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-)
+import {
+  ensureStorageBucketExists,
+  isBucketNotFoundError,
+  supabaseAdmin,
+} from '@/server/supabase-admin'
 
 const DISPUTE_EVIDENCE_BUCKET = (process.env.SUPABASE_DISPUTE_EVIDENCE_BUCKET ?? 'dispute-evidence').trim()
 const ALLOWED_MIME = new Set(IMAGE_MIME_TYPES)
@@ -15,30 +14,6 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
-}
-
-let bucketEnsured = false
-
-async function ensureDisputeBucketExists() {
-  if (bucketEnsured) return
-
-  const { data: existing, error: fetchError } = await supabaseAdmin.storage.getBucket(DISPUTE_EVIDENCE_BUCKET)
-  if (!fetchError && existing) {
-    bucketEnsured = true
-    return
-  }
-
-  const { error: createError } = await supabaseAdmin.storage.createBucket(DISPUTE_EVIDENCE_BUCKET, {
-    public: true,
-    fileSizeLimit: 10 * 1024 * 1024,
-    allowedMimeTypes: Array.from(ALLOWED_MIME),
-  })
-
-  if (createError && !String(createError.message ?? '').toLowerCase().includes('already exists')) {
-    throw createError
-  }
-
-  bucketEnsured = true
 }
 
 export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
@@ -63,7 +38,11 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
   const path = `disputes/${user.id}/${Date.now()}-${randomUUID()}.${ext}`
 
   try {
-    await ensureDisputeBucketExists()
+    await ensureStorageBucketExists(DISPUTE_EVIDENCE_BUCKET, {
+      public: true,
+      fileSizeLimit: 10 * 1024 * 1024,
+      allowedMimeTypes: Array.from(ALLOWED_MIME),
+    })
   } catch (bucketError: any) {
     return NextResponse.json(
       { success: false, message: bucketError?.message ?? 'Failed to initialize dispute evidence bucket' },
@@ -71,12 +50,38 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
     )
   }
 
-  const { error: uploadError } = await supabaseAdmin.storage
+  let { error: uploadError } = await supabaseAdmin.storage
     .from(DISPUTE_EVIDENCE_BUCKET)
     .upload(path, arrayBuffer, {
       contentType: file.type,
       upsert: false,
     })
+
+  if (uploadError && isBucketNotFoundError(uploadError)) {
+    try {
+      await ensureStorageBucketExists(
+        DISPUTE_EVIDENCE_BUCKET,
+        {
+          public: true,
+          fileSizeLimit: 10 * 1024 * 1024,
+          allowedMimeTypes: Array.from(ALLOWED_MIME),
+        },
+        { force: true },
+      )
+      const retried = await supabaseAdmin.storage
+        .from(DISPUTE_EVIDENCE_BUCKET)
+        .upload(path, arrayBuffer, {
+          contentType: file.type,
+          upsert: false,
+        })
+      uploadError = retried.error
+    } catch (bucketError: any) {
+      return NextResponse.json(
+        { success: false, message: bucketError?.message ?? 'Failed to initialize dispute evidence bucket' },
+        { status: 500 },
+      )
+    }
+  }
 
   if (uploadError) {
     return NextResponse.json({ success: false, message: uploadError.message }, { status: 500 })
