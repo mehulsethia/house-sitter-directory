@@ -23,10 +23,3 @@ export function formatDate(date: string | Date) {
   }).format(new Date(date))
 }
 
-export function formatTime(date: string | Date) {
-  return new Intl.DateTimeFormat('en-IE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: APP_TIMEZONE,
-  }).format(new Date(date))
-}

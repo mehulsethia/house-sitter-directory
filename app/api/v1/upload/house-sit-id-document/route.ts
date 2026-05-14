@@ -4,6 +4,7 @@ import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { randomUUID } from 'crypto'
 import { DOCUMENT_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
 import {
+  createSignedUploadUrl,
   ensureStorageBucketExists,
   isBucketNotFoundError,
   supabaseAdmin,
@@ -47,7 +48,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
 
   try {
     await ensureStorageBucketExists(HOUSE_SIT_ID_BUCKET, {
-      public: true,
+      public: false,
       fileSizeLimit: 10 * 1024 * 1024,
       allowedMimeTypes: Array.from(ALLOWED_MIME),
     })
@@ -68,7 +69,7 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
       await ensureStorageBucketExists(
         HOUSE_SIT_ID_BUCKET,
         {
-          public: true,
+          public: false,
           fileSizeLimit: 10 * 1024 * 1024,
           allowedMimeTypes: Array.from(ALLOWED_MIME),
         },
@@ -90,17 +91,16 @@ export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
     return NextResponse.json({ success: false, message: uploadError.message }, { status: 500 })
   }
 
-  const { data: urlData } = supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).getPublicUrl(path)
-  const publicUrl = urlData.publicUrl
+  const signedUrl = await createSignedUploadUrl(HOUSE_SIT_ID_BUCKET, path)
 
   await houseSitRepo.update(houseSit.id, {
     idFileName: file.name,
-    idFileUrl: publicUrl,
+    idFileUrl: signedUrl,
     idSubmittedAt: new Date(),
   })
 
   return NextResponse.json({
     success: true,
-    data: { file_name: file.name, url: publicUrl },
+    data: { file_name: file.name, url: signedUrl },
   })
 })

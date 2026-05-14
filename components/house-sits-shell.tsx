@@ -59,7 +59,7 @@ export function HouseSitsShell({ children }: { children: React.ReactNode }) {
   }, [router])
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f3f3f3] text-slate-900 lg:pl-72">
+    <div className="overflow-x-hidden bg-[#f3f3f3] text-slate-900 lg:pl-72">
       <div className="mx-auto max-w-[1500px]">
         <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-[#e7dfd6] lg:bg-white lg:px-5 lg:py-6">
           <Link href="/house-sits/dashboard" className="mb-8 inline-flex items-center gap-2.5">

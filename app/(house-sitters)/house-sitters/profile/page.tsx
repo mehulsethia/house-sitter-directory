@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { Star, ChartNoAxesCombined, CalendarDays, Wallet } from 'lucide-react'
 import { bookingsApi, houseSittersApi, googleCalendarApi, paymentsApi, phoneVerificationApi, reviewsApi, usersApi } from '@/lib/api'
@@ -14,7 +15,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { ProfilePageSkeleton } from '@/components/page-skeletons'
 import { AvatarUpload } from '@/components/avatar-upload'
 import { PhoneInput } from '@/components/phone-input'
-import { ScheduleEditor } from '@/components/schedule-editor'
+const ScheduleEditor = dynamic(
+  () => import('@/components/schedule-editor').then((m) => ({ default: m.ScheduleEditor })),
+  { ssr: false, loading: () => <div className="h-48 animate-pulse rounded-xl bg-slate-100" /> },
+)
 import { getAccessToken } from '@/lib/auth-cache'
 import { toApiV1Url } from '@/lib/api-base'
 import { createClient } from '@/lib/supabase'

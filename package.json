@@ -1,5 +1,5 @@
 {
-  "name": "maidhive",
+  "name": "house-sitter-directory",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -50,7 +50,7 @@
     "dotenv": "^17.4.1",
     "eslint": "^8",
     "eslint-config-next": "^16.2.2",
-    "postcss": "^8",
+    "postcss": "^8.5.14",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"

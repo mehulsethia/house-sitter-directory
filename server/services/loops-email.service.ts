@@ -1,3 +1,5 @@
+import { resolveAppOrigin } from '@/server/app-origin'
+
 const LOOPS_TRANSACTIONAL_ENDPOINT =
   process.env.LOOPS_TRANSACTIONAL_ENDPOINT ?? 'https://app.loops.so/api/v1/transactional'
 const LOOPS_API_KEY = process.env.LOOPS_API_KEY ?? ''
@@ -33,7 +35,7 @@ const CLEANER_CLIENT_DECLINED_PROPOSAL_TRANSACTIONAL_ID =
   process.env.LOOPS_CLEANER_CLIENT_DECLINED_PROPOSAL_TRANSACTIONAL_ID ?? 'cmozyuhtd2ej10iyplagxg614'
 
 function appUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
+  return resolveAppOrigin()
 }
 
 type SendTransactionalPayload = {

@@ -108,6 +108,8 @@ model HouseSitter {
   favoritedByHouseSits  HouseSitFavorite[]
   bookingFlowDrafts     BookingFlowDraft[]
 
+  @@index([status, createdAt])
+  @@index([status, approvedAt])
   @@map("house_sitters")
   @@schema("public")
 }
@@ -282,6 +284,10 @@ model Booking {
   strikes          HouseSitterStrike[]
   bookingFlowDraft BookingFlowDraft?
 
+  @@index([houseSitterId, status, createdAt])
+  @@index([houseSitId, status, createdAt])
+  @@index([status, scheduledStart])
+  @@index([status, payBy])
   @@map("bookings")
   @@schema("public")
 }

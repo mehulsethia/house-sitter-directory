@@ -30,6 +30,15 @@ export async function ensureStorageBucketExists(
 
   const { data: existing, error: fetchError } = await supabaseAdmin.storage.getBucket(normalizedBucket)
   if (!fetchError && existing) {
+    // Drift correction: if existing bucket visibility doesn't match requested, fix it.
+    // Critical for KYC/ID/dispute buckets that may have been created public previously.
+    if (typeof (existing as any).public === 'boolean' && (existing as any).public !== options.public) {
+      await supabaseAdmin.storage.updateBucket(normalizedBucket, {
+        public: options.public,
+        fileSizeLimit: options.fileSizeLimit,
+        allowedMimeTypes: options.allowedMimeTypes,
+      })
+    }
     ensuredBuckets.add(normalizedBucket)
     return
   }
@@ -40,4 +49,18 @@ export async function ensureStorageBucketExists(
   }
 
   ensuredBuckets.add(normalizedBucket)
+}
+
+const DEFAULT_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 days
+
+export async function createSignedUploadUrl(
+  bucket: string,
+  path: string,
+  expiresIn: number = DEFAULT_SIGNED_URL_TTL_SECONDS,
+): Promise<string> {
+  const { data, error } = await supabaseAdmin.storage.from(bucket).createSignedUrl(path, expiresIn)
+  if (error || !data?.signedUrl) {
+    throw error ?? new Error('Failed to create signed URL')
+  }
+  return data.signedUrl
 }

@@ -320,6 +320,13 @@
   padding-bottom: 0 !important;
 }
 
+/* App shell pages: match body bg to shell bg so no white patch shows below short content
+   or in scroll overscroll areas. Uses :has selector (supported in all modern browsers). */
+html:has(.internal-app-shell),
+body:has(.internal-app-shell) {
+  background: #f3f3f3 !important;
+}
+
 /* Onboarding banner should be centered and vertically tight. */
 .onboarding-stage-content {
   padding-top: 0 !important;

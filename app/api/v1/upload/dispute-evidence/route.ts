@@ -3,6 +3,7 @@ import { requireAuth } from '@/server/auth'
 import { randomUUID } from 'crypto'
 import { IMAGE_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
 import {
+  createSignedUploadUrl,
   ensureStorageBucketExists,
   isBucketNotFoundError,
   supabaseAdmin,
@@ -39,7 +40,7 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
 
   try {
     await ensureStorageBucketExists(DISPUTE_EVIDENCE_BUCKET, {
-      public: true,
+      public: false,
       fileSizeLimit: 10 * 1024 * 1024,
       allowedMimeTypes: Array.from(ALLOWED_MIME),
     })
@@ -62,7 +63,7 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
       await ensureStorageBucketExists(
         DISPUTE_EVIDENCE_BUCKET,
         {
-          public: true,
+          public: false,
           fileSizeLimit: 10 * 1024 * 1024,
           allowedMimeTypes: Array.from(ALLOWED_MIME),
         },
@@ -87,9 +88,7 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
     return NextResponse.json({ success: false, message: uploadError.message }, { status: 500 })
   }
 
-  const { data: urlData } = supabaseAdmin.storage
-    .from(DISPUTE_EVIDENCE_BUCKET)
-    .getPublicUrl(path)
+  const signedUrl = await createSignedUploadUrl(DISPUTE_EVIDENCE_BUCKET, path)
 
-  return NextResponse.json({ success: true, data: { url: urlData.publicUrl } })
+  return NextResponse.json({ success: true, data: { url: signedUrl } })
 })

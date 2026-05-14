@@ -166,7 +166,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
 
   if (isOnboardingRoute) {
     return (
-      <div className="min-h-screen bg-[#f3f3f3] px-3 py-3 sm:px-4 md:px-8 md:py-4">
+      <div className="bg-[#f3f3f3] px-3 py-3 sm:px-4 md:px-8 md:py-4">
         <div className="mx-auto w-full max-w-5xl space-y-6">
           <section className="houseSitter-stage overflow-hidden rounded-[2rem] border border-slate-200/70 py-0">
             <div className="houseSitter-stage__media" aria-hidden="true" />
@@ -235,7 +235,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f3f3f3] text-slate-900 lg:pl-72">
+    <div className="overflow-x-hidden bg-[#f3f3f3] text-slate-900 lg:pl-72">
       <div className="mx-auto max-w-[1500px]">
         <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:h-screen lg:w-72 lg:flex-col lg:border-r lg:border-[#e7dfd6] lg:bg-white lg:px-5 lg:py-6">
           <Link href="/house-sitters/dashboard" className="mb-8 inline-flex items-center gap-2.5">

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CircleCheck, Clock3, Euro, Star, ArrowUpRight, CalendarClock, MessageSquare } from 'lucide-react'
 import { bookingsApi, houseSittersApi } from '@/lib/api'
 import { BookingStatusBadge } from '@/components/booking-status-badge'
@@ -50,42 +50,53 @@ export default function HouseSitterDashboardPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [submittingApproval, setSubmittingApproval] = useState(false)
   const [declineConfirmBooking, setDeclineConfirmBooking] = useState<BookingRead | null>(null)
+  const refreshingRef = useRef(false)
 
   async function refresh() {
+    if (refreshingRef.current) return
+    refreshingRef.current = true
     try {
-      // Call house_sitters/me first — it auto-creates the house sitter profile if missing.
-      // Bookings endpoint needs the houseSitter row to exist, so this must complete first.
-      try {
-        const houseSitterRes = await houseSittersApi.me()
-        setCompletionPct(houseSitterRes.data?.onboarding?.completion_pct ?? 0)
-        setOnboardingSteps(houseSitterRes.data?.onboarding?.steps ?? null)
-        const houseSitter = houseSitterRes.data?.houseSitter as any
-        setLifecycleStatus(
-          (houseSitter?.lifecycle_status as any) ??
-            deriveCleanerLifecycleStatus({
-              status: houseSitter?.status,
-              stripeOnboardingComplete: houseSitter?.stripe_onboarding_complete ?? houseSitter?.stripeOnboardingComplete,
-            }),
-        )
-        setStripeConnected(Boolean(houseSitter?.stripe_onboarding_complete ?? houseSitter?.stripeOnboardingComplete))
-        setRejectionReason(houseSitter?.rejection_reason ?? '')
-        setProfileComplete(houseSitter?.profile_complete ?? false)
-        setAvgRating(houseSitter?.average_rating ?? null)
-      } catch {
-        toast.error('Failed to load profile data.')
-      }
-
-      try {
-        const bookingRes = await bookingsApi.my()
-        setBookings(bookingRes.data?.items ?? [])
-      } catch {
-        toast.error('Failed to load bookings.')
-      }
-    } catch {
-      toast.error('Failed to load dashboard data.')
+      await refreshInternal()
     } finally {
-      setLoading(false)
+      refreshingRef.current = false
     }
+  }
+
+  async function refreshInternal() {
+    // house_sitters/me auto-creates the profile row; bookings endpoint depends on that row,
+    // but in practice the row is created during signup so we can parallelise the two reads.
+    const [meResult, bookingsResult] = await Promise.allSettled([
+      houseSittersApi.me(),
+      bookingsApi.my(),
+    ])
+
+    if (meResult.status === 'fulfilled') {
+      const houseSitterRes = meResult.value
+      setCompletionPct(houseSitterRes.data?.onboarding?.completion_pct ?? 0)
+      setOnboardingSteps(houseSitterRes.data?.onboarding?.steps ?? null)
+      const houseSitter = houseSitterRes.data?.houseSitter as any
+      setLifecycleStatus(
+        (houseSitter?.lifecycle_status as any) ??
+          deriveCleanerLifecycleStatus({
+            status: houseSitter?.status,
+            stripeOnboardingComplete: houseSitter?.stripe_onboarding_complete ?? houseSitter?.stripeOnboardingComplete,
+          }),
+      )
+      setStripeConnected(Boolean(houseSitter?.stripe_onboarding_complete ?? houseSitter?.stripeOnboardingComplete))
+      setRejectionReason(houseSitter?.rejection_reason ?? '')
+      setProfileComplete(houseSitter?.profile_complete ?? false)
+      setAvgRating(houseSitter?.average_rating ?? null)
+    } else {
+      toast.error('Failed to load profile data.')
+    }
+
+    if (bookingsResult.status === 'fulfilled') {
+      setBookings(bookingsResult.value.data?.items ?? [])
+    } else {
+      toast.error('Failed to load bookings.')
+    }
+
+    setLoading(false)
   }
 
   useEffect(() => {

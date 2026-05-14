@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -141,7 +142,15 @@ function FindHouseSitsContent() {
               {filteredCards.map((card, idx) => (
                 <article key={`${card.id}-${idx}`} className="overflow-hidden rounded-[8px] border border-[#e6ddd4] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
                   <div className="relative">
-                    <img src={card.image} alt={card.title} className="h-[250px] w-full object-cover" />
+                    <Image
+                      src={card.image}
+                      alt={card.title}
+                      width={400}
+                      height={250}
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="h-[250px] w-full object-cover"
+                      priority={idx < 3}
+                    />
                     <span className="absolute left-2 top-2 rounded bg-[#ececec] px-2 py-1 text-[10px] text-[#5a5a5a]">{card.daysLeft}</span>
                     {card.badge === 'Urgent' && <span className="absolute right-2 top-2 rounded bg-[#e6373a] px-2 py-1 text-[10px] text-white">Urgent</span>}
                   </div>

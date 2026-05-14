@@ -3,11 +3,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
 import { db, ensureDbSchema } from './db'
 import type { User } from '@prisma/client'
+import { resolveAppOrigin } from './app-origin'
 
 export type RouteContext = { params: Promise<Record<string, string>> }
 type AuthedHandler = (req: NextRequest, ctx: RouteContext, user: User) => Promise<NextResponse>
 type Handler = (req: NextRequest, ctx: RouteContext) => Promise<NextResponse>
 const SCHEMA_GUARD_TIMEOUT_MS = Number(process.env.DB_SCHEMA_GUARD_TIMEOUT_MS ?? 1500)
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
 function bootstrapRoleFromMetadata(role: unknown): 'house_sit' | 'house_sitter' {
   return role === 'house_sitter' ? 'house_sitter' : 'house_sit'
@@ -60,17 +62,55 @@ async function ensureSchemaReadyWithoutBlockingAuth() {
   ])
 }
 
+function getOriginFromRequestHeaders(req: NextRequest): string | null {
+  const originHeader = req.headers.get('origin')?.trim()
+  if (originHeader) {
+    try {
+      return new URL(originHeader).origin
+    } catch {
+      return null
+    }
+  }
+
+  const refererHeader = req.headers.get('referer')?.trim()
+  if (refererHeader) {
+    try {
+      return new URL(refererHeader).origin
+    } catch {
+      return null
+    }
+  }
+
+  return null
+}
+
+function isSameOriginMutatingRequest(req: NextRequest): boolean {
+  if (SAFE_METHODS.has(req.method.toUpperCase())) return true
+  const requestOrigin = getOriginFromRequestHeaders(req)
+  if (!requestOrigin) return false
+  const appOrigin = resolveAppOrigin(req)
+  return requestOrigin === appOrigin
+}
+
 export async function getAuthUser(req: NextRequest): Promise<User | null> {
   await ensureSchemaReadyWithoutBlockingAuth()
 
   const authHeader = req.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '').trim()
+  const hasBearerToken = Boolean(token)
+
+  // CSRF guard: if a mutating request relies on cookie session (no bearer),
+  // only allow same-origin browser requests.
+  if (!hasBearerToken && !isSameOriginMutatingRequest(req)) {
+    return null
+  }
 
   // 1) Primary path: Bearer token verification (for explicit API auth headers).
   if (token && process.env.SUPABASE_JWT_SECRET) {
     try {
       const payload = jwt.verify(token, process.env.SUPABASE_JWT_SECRET, {
         audience: 'authenticated',
+        algorithms: ['HS256'],
       }) as { sub: string; email?: string; user_metadata?: Record<string, unknown> }
 
       let user = await db.user.findUnique({ where: { id: payload.sub } })
