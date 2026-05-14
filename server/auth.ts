@@ -7,6 +7,7 @@ import type { User } from '@prisma/client'
 export type RouteContext = { params: Promise<Record<string, string>> }
 type AuthedHandler = (req: NextRequest, ctx: RouteContext, user: User) => Promise<NextResponse>
 type Handler = (req: NextRequest, ctx: RouteContext) => Promise<NextResponse>
+const SCHEMA_GUARD_TIMEOUT_MS = Number(process.env.DB_SCHEMA_GUARD_TIMEOUT_MS ?? 1500)
 
 function bootstrapRoleFromMetadata(role: unknown): 'house_sit' | 'house_sitter' {
   return role === 'house_sitter' ? 'house_sitter' : 'house_sit'
@@ -48,8 +49,19 @@ async function bootstrapPublicUser(params: {
   })
 }
 
+async function ensureSchemaReadyWithoutBlockingAuth() {
+  const schemaPromise = ensureDbSchema().catch((error) => {
+    console.warn('[auth] ensureDbSchema failed:', error instanceof Error ? error.message : String(error))
+  })
+
+  await Promise.race([
+    schemaPromise,
+    new Promise<void>((resolve) => setTimeout(resolve, SCHEMA_GUARD_TIMEOUT_MS)),
+  ])
+}
+
 export async function getAuthUser(req: NextRequest): Promise<User | null> {
-  await ensureDbSchema()
+  await ensureSchemaReadyWithoutBlockingAuth()
 
   const authHeader = req.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '').trim()

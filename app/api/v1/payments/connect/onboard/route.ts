@@ -1,9 +1,10 @@
 import { requireHouseSitter } from '@/server/auth'
+import { resolveAppOrigin } from '@/server/app-origin'
 import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
 
-export const POST = requireHouseSitter(async (_req, _ctx, user) => {
+export const POST = requireHouseSitter(async (req, _ctx, user) => {
   const houseSitter = await houseSitterRepo.findByUserId(user.id)
   if (!houseSitter) return err('HouseSitter profile not found', 404)
 
@@ -18,7 +19,7 @@ export const POST = requireHouseSitter(async (_req, _ctx, user) => {
     await houseSitterRepo.update(houseSitter.id, { stripeAccountId: accountId })
   }
 
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const origin = resolveAppOrigin(req)
   const link = await stripe.accountLinks.create({
     account: accountId,
     refresh_url: `${origin}/house-sitters/onboarding?refresh=true`,

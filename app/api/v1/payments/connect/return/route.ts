@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { resolveAppOrigin } from '@/server/app-origin'
 
-export function GET() {
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+export function GET(req: NextRequest) {
+  const origin = resolveAppOrigin(req)
   return NextResponse.redirect(`${origin}/house-sitters/profile?tab=payments&stripe=connected`)
 }

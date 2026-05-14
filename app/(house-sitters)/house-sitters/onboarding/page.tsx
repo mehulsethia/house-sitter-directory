@@ -190,6 +190,7 @@ const MIN_HOURLY_RATE = 6
 const MAX_HOURLY_RATE = 25
 const IMAGE_FILE_EXT_REGEX = /\.(png|jpe?g|webp|gif|bmp|svg)(?:[?#].*)?$/i
 const STANDARDS_TOTAL_STEPS = 9
+const ONBOARDING_CACHE_KEY = 'house_sitter_onboarding_cache_v1'
 
 function isImageDocumentUrl(url: string) {
   return IMAGE_FILE_EXT_REGEX.test(url)
@@ -306,94 +307,137 @@ function HouseSitterOnboardingPageContent() {
   const [stripeConnected, setStripeConnected] = useState(false)
   const scheduleSaveRef = useRef<(() => Promise<void>) | null>(null)
 
-  async function loadAll() {
-    setLoading(true)
-    try {
-      const [meRes, stripeRes] = await Promise.all([
-        houseSittersApi.me(),
-        paymentsApi.getConnectStatus(),
-      ])
+  function applyOnboardingData(houseSitterData: HouseSitterRead, onboarding: HouseSitterOnboardingProgress) {
+    const c = houseSitterData as any
+    const user = c.user ?? {}
 
-      const houseSitterData = meRes.data?.houseSitter
-      const onboarding = meRes.data?.onboarding
-      if (!houseSitterData || !onboarding) throw new Error('Failed to load onboarding data.')
-      const c = houseSitterData as any
-      const user = c.user ?? {}
+    setCleaner(houseSitterData)
+    setProgress(onboarding)
+    setStep(onboarding.current_step)
 
-      setCleaner(houseSitterData)
-      setProgress(onboarding)
-      setStep(onboarding.current_step)
+    const imgUrl = c.profile_image_url ?? c.profileImageUrl ?? ''
+    setProfileImage(imgUrl)
+    if (imgUrl) setProfileImagePreview(imgUrl)
+    setBio(c.bio ?? '')
+    setHourlyRate(c.hourly_rate ?? c.hourlyRate ? String(c.hourly_rate ?? c.hourlyRate) : '')
+    setSkills(c.skills ?? [])
+    setCleaningSupplies(c.cleaning_supplies ?? c.cleaningSupplies ?? '')
 
-      const imgUrl = c.profile_image_url ?? c.profileImageUrl ?? ''
-      setProfileImage(imgUrl)
-      if (imgUrl) setProfileImagePreview(imgUrl)
-      setBio(c.bio ?? '')
-      setHourlyRate(c.hourly_rate ?? c.hourlyRate ? String(c.hourly_rate ?? c.hourlyRate) : '')
-      setSkills(c.skills ?? [])
-      setCleaningSupplies(c.cleaning_supplies ?? c.cleaningSupplies ?? '')
+    setTransportMode(c.transport_mode ?? c.transportMode ?? '')
+    setPickupLocation(c.transport_pickup_location ?? c.transportPickupLocation ?? '')
+    setPhone(user.phone ?? '')
+    setPhoneVerified(Boolean(user.phone_verified_at))
+    setIdType(c.id_type ?? c.idType ?? '')
+    setIdFileName(c.id_file_name ?? c.idFileName ?? '')
+    setIdFileUrl(c.id_file_url ?? c.idFileUrl ?? '')
+    setPetComfortable(
+      (c.pet_comfortable ?? c.petComfortable) === null || (c.pet_comfortable ?? c.petComfortable) === undefined
+        ? null
+        : Boolean(c.pet_comfortable ?? c.petComfortable),
+    )
+    setWorkEligibilityAnswer(
+      (c.work_eligibility_answer ?? c.workEligibilityAnswer) === null || (c.work_eligibility_answer ?? c.workEligibilityAnswer) === undefined
+        ? null
+        : Boolean(c.work_eligibility_answer ?? c.workEligibilityAnswer),
+    )
+    setWorkEligibilityConfirmed(Boolean(c.work_eligibility_confirmed ?? c.workEligibilityConfirmed))
+    setTermsAccepted(Boolean(c.terms_accepted ?? c.termsAccepted))
+    const existingScore = c.cleaning_quiz_score ?? c.cleaningQuizScore ?? null
+    setQuizScore(existingScore)
+    const existingPassed = Boolean(c.quiz_passed ?? c.quizPassed ?? (existingScore !== null && Number(existingScore) >= QUIZ_PASS_PERCENT))
+    setQuizPassed(existingPassed)
+    const existingStandardsCompleted = Boolean(c.standards_completed ?? c.standardsCompleted ?? c.cleaning_standards_accepted ?? c.cleaningStandardsAccepted)
+    setStandardsCompleted(existingStandardsCompleted)
 
-      setTransportMode(c.transport_mode ?? c.transportMode ?? '')
-      setPickupLocation(c.transport_pickup_location ?? c.transportPickupLocation ?? '')
-      setPhone(user.phone ?? '')
-      setPhoneVerified(Boolean(user.phone_verified_at))
-      setIdType(c.id_type ?? c.idType ?? '')
-      setIdFileName(c.id_file_name ?? c.idFileName ?? '')
-      setIdFileUrl(c.id_file_url ?? c.idFileUrl ?? '')
-      setPetComfortable(
-        (c.pet_comfortable ?? c.petComfortable) === null || (c.pet_comfortable ?? c.petComfortable) === undefined
-          ? null
-          : Boolean(c.pet_comfortable ?? c.petComfortable),
-      )
-      setWorkEligibilityAnswer(
-        (c.work_eligibility_answer ?? c.workEligibilityAnswer) === null || (c.work_eligibility_answer ?? c.workEligibilityAnswer) === undefined
-          ? null
-          : Boolean(c.work_eligibility_answer ?? c.workEligibilityAnswer),
-      )
-      setWorkEligibilityConfirmed(Boolean(c.work_eligibility_confirmed ?? c.workEligibilityConfirmed))
-      setTermsAccepted(Boolean(c.terms_accepted ?? c.termsAccepted))
-      const existingScore = c.cleaning_quiz_score ?? c.cleaningQuizScore ?? null
-      setQuizScore(existingScore)
-      const existingPassed = Boolean(c.quiz_passed ?? c.quizPassed ?? (existingScore !== null && Number(existingScore) >= QUIZ_PASS_PERCENT))
-      setQuizPassed(existingPassed)
-      const existingStandardsCompleted = Boolean(c.standards_completed ?? c.standardsCompleted ?? c.cleaning_standards_accepted ?? c.cleaningStandardsAccepted)
-      setStandardsCompleted(existingStandardsCompleted)
-
-      if (onboarding.current_step === 5) {
-        if (existingPassed) {
-          setStep5Mode('success')
-        } else if (existingStandardsCompleted) {
-          setStep5Mode('quiz')
-        } else {
-          setStep5Mode('standards')
-        }
+    if (onboarding.current_step === 5) {
+      if (existingPassed) {
+        setStep5Mode('success')
+      } else if (existingStandardsCompleted) {
+        setStep5Mode('quiz')
+      } else {
+        setStep5Mode('standards')
       }
+    }
+  }
 
-      setStripeConnected(Boolean(stripeRes.data?.connected))
+  function applyOnboardingState(meRes: Awaited<ReturnType<typeof houseSittersApi.me>>) {
+    const houseSitterData = meRes.data?.houseSitter
+    const onboarding = meRes.data?.onboarding
+    if (!houseSitterData || !onboarding) throw new Error('Failed to load onboarding data.')
+    applyOnboardingData(houseSitterData, onboarding)
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(
+        ONBOARDING_CACHE_KEY,
+        JSON.stringify({
+          houseSitter: houseSitterData,
+          onboarding,
+          cachedAt: Date.now(),
+        }),
+      )
+    }
+  }
+
+  function hydrateFromCachedOnboarding() {
+    if (typeof window === 'undefined') return false
+    try {
+      const raw = sessionStorage.getItem(ONBOARDING_CACHE_KEY)
+      if (!raw) return false
+      const parsed = JSON.parse(raw) as {
+        houseSitter?: HouseSitterRead
+        onboarding?: HouseSitterOnboardingProgress
+      }
+      if (!parsed?.houseSitter || !parsed?.onboarding) return false
+      applyOnboardingData(parsed.houseSitter, parsed.onboarding)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async function refreshStripeStatus(opts?: { reloadProfileOnConnect?: boolean }) {
+    try {
+      const stripeRes = await paymentsApi.getConnectStatus()
+      const connected = Boolean(stripeRes.data?.connected)
+      setStripeConnected(connected)
+
+      if (connected && opts?.reloadProfileOnConnect) {
+        toast.success('Stripe account connected.')
+        const meRes = await houseSittersApi.me()
+        applyOnboardingState(meRes)
+      }
+    } catch {
+      // non-blocking: onboarding form should still be usable even if Stripe is slow
+    }
+  }
+
+  async function loadAll(showSkeleton = true) {
+    if (showSkeleton) setLoading(true)
+    try {
+      const meRes = await houseSittersApi.me()
+      applyOnboardingState(meRes)
+      void refreshStripeStatus()
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to load onboarding.')
     } finally {
-      setLoading(false)
+      if (showSkeleton) setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadAll()
+    const hasCachedOnboarding = hydrateFromCachedOnboarding()
+    if (hasCachedOnboarding) {
+      setLoading(false)
+      void loadAll(false)
+      return
+    }
+    void loadAll(true)
   }, [])
 
   useEffect(() => {
     if (!params.get('connected')) return
     ;(async () => {
-      try {
-        const stripeRes = await paymentsApi.getConnectStatus()
-        const connected = Boolean(stripeRes.data?.connected)
-        setStripeConnected(connected)
-        if (connected) {
-          toast.success('Stripe account connected.')
-          await loadAll()
-        }
-      } catch {
-        // noop
-      }
+      await refreshStripeStatus({ reloadProfileOnConnect: true })
     })()
   }, [params])
 
