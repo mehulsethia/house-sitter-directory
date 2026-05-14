@@ -1,5 +1,11 @@
 BEGIN;
 
+-- Temporarily relax role/proposal/supplies checks so value migration can run safely.
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE public.users
+  ADD CONSTRAINT users_role_check
+  CHECK (role = ANY (ARRAY['client', 'cleaner', 'house_sit', 'house_sitter', 'admin']));
+
 -- Role values
 UPDATE public.users SET role = 'house_sit' WHERE role = 'client';
 UPDATE public.users SET role = 'house_sitter' WHERE role = 'cleaner';
@@ -95,9 +101,58 @@ BEGIN
 END $$;
 
 -- Value migrations used in profile fields
+DO $$
+DECLARE
+  supplies_constraint_name text;
+BEGIN
+  SELECT c.conname
+  INTO supplies_constraint_name
+  FROM pg_constraint c
+  WHERE c.conrelid = 'public.house_sitters'::regclass
+    AND c.contype = 'c'
+    AND pg_get_constraintdef(c.oid) ILIKE '%cleaning_supplies%'
+  LIMIT 1;
+
+  IF supplies_constraint_name IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE public.house_sitters DROP CONSTRAINT %I', supplies_constraint_name);
+  END IF;
+END $$;
+
 UPDATE public.house_sitters
-SET cleaning_supplies = 'house_sit_supplies'
-WHERE cleaning_supplies = 'client_supplies';
+SET cleaning_supplies = CASE
+  WHEN cleaning_supplies = 'client_supplies' THEN 'house_sit_supplies'
+  WHEN cleaning_supplies IN ('own_supplies', 'house_sit_supplies', 'house_sitter_brings', 'house_sit_provides') THEN cleaning_supplies
+  WHEN cleaning_supplies IS NULL THEN NULL
+  ELSE NULL
+END;
+
+ALTER TABLE public.house_sitters
+  ADD CONSTRAINT house_sitters_cleaning_supplies_check
+  CHECK (
+    cleaning_supplies IS NULL
+    OR cleaning_supplies = ANY (ARRAY['own_supplies', 'house_sit_supplies', 'house_sitter_brings', 'house_sit_provides'])
+  );
+
+DO $$
+DECLARE
+  proposal_constraint_name text;
+BEGIN
+  SELECT c.conname
+  INTO proposal_constraint_name
+  FROM pg_constraint c
+  WHERE c.conrelid = 'public.bookings'::regclass
+    AND c.contype = 'c'
+    AND pg_get_constraintdef(c.oid) ILIKE '%proposal_by%'
+  LIMIT 1;
+
+  IF proposal_constraint_name IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE public.bookings DROP CONSTRAINT %I', proposal_constraint_name);
+  END IF;
+END $$;
+
+ALTER TABLE public.bookings
+  ADD CONSTRAINT bookings_proposal_by_check
+  CHECK (proposal_by IS NULL OR proposal_by = ANY (ARRAY['client', 'cleaner', 'house_sit', 'house_sitter']));
 
 UPDATE public.bookings
 SET proposal_by = 'house_sit'
@@ -106,5 +161,16 @@ WHERE proposal_by = 'client';
 UPDATE public.bookings
 SET proposal_by = 'house_sitter'
 WHERE proposal_by = 'cleaner';
+
+-- Tighten checks to final canonical values.
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE public.users
+  ADD CONSTRAINT users_role_check
+  CHECK (role = ANY (ARRAY['house_sit', 'house_sitter', 'admin']));
+
+ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_proposal_by_check;
+ALTER TABLE public.bookings
+  ADD CONSTRAINT bookings_proposal_by_check
+  CHECK (proposal_by IS NULL OR proposal_by = ANY (ARRAY['house_sit', 'house_sitter']));
 
 COMMIT;

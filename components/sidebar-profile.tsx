@@ -93,7 +93,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
             name={user?.name}
             imageUrl={user?.avatarUrl}
             className="h-10 w-10 shrink-0"
-            fallbackClassName="bg-gradient-to-br from-primary to-indigo-600 text-white"
+            fallbackClassName="bg-gradient-to-br from-[#5a4a3b] to-[#7a614c] text-white"
             textClassName="text-sm font-bold"
           />
           <div className="min-w-0">
@@ -140,7 +140,7 @@ export function SidebarProfile({ profileHref, role }: SidebarProfileProps) {
           name={user?.name}
           imageUrl={user?.avatarUrl}
           className="h-8 w-8 shrink-0"
-          fallbackClassName="bg-gradient-to-br from-primary to-indigo-600 text-white"
+          fallbackClassName="bg-gradient-to-br from-[#5a4a3b] to-[#7a614c] text-white"
           textClassName="text-xs font-bold"
         />
         <div className="min-w-0 text-left">

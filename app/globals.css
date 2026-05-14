@@ -288,3 +288,26 @@
   padding: 0.75rem 1rem;
   vertical-align: middle;
 }
+
+/* Keep internal hero/header banners compact across house-sit, house-sitter, and admin surfaces. */
+:is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) > .relative.z-10 {
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.85rem !important;
+  min-height: unset !important;
+}
+
+:is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) h1 {
+  font-size: clamp(1.45rem, 2.35vw, 2.2rem) !important;
+  line-height: 1.14 !important;
+}
+
+:is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) .rounded-3xl {
+  padding: 0.85rem !important;
+}
+
+@media (min-width: 640px) {
+  :is(.houseSit-stage, .houseSitter-stage, .dashboard-stage, .admin-stage) > .relative.z-10 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+}
