@@ -249,7 +249,7 @@ export function HouseSittersShell({ children }: { children: React.ReactNode }) {
                     'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200',
                     active
                       ? 'bg-[#5a4a3b] text-white shadow-inner'
-                      : 'text-[#5f6368] hover:bg-[#f7f2ed] hover:text-[#3a322a]',
+                      : 'text-[#5f6368] hover:bg-[#6b5745] hover:text-white',
                   )}
                 >
                   <Icon className={cn('h-4 w-4', active && 'scale-105')} />

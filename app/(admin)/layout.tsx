@@ -285,7 +285,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                     active
                       ? 'bg-[#5a4a3b] text-white font-medium'
-                      : 'text-[#5f6368] hover:text-[#3a322a] hover:bg-[#f7f2ed]',
+                      : 'text-[#5f6368] hover:bg-[#6b5745] hover:text-white',
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />

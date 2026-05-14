@@ -156,16 +156,18 @@ export const bookingRepo = {
           payment: { is: { status: 'failed' } },
         }
       : baseStatusWhere
-    return Promise.all([
-      db.booking.findMany({
+    return (async () => {
+      // Admin bookings list only needs booking-level fields.
+      // Avoid heavy relation includes and parallel connection contention here.
+      const bookings = await db.booking.findMany({
         where,
-        include: bookingInclude,
         skip: (params.page - 1) * params.pageSize,
         take: params.pageSize,
         orderBy: { createdAt: 'desc' },
-      }),
-      db.booking.count({ where }),
-    ])
+      })
+      const total = await db.booking.count({ where })
+      return [bookings, total] as const
+    })()
   },
 
   findActiveForCleaner: (houseSitterId: string, start: Date, end: Date) =>

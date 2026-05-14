@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { adminApi } from '@/lib/api'
@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/loading-spinner'
 import { EmptyState } from '@/components/empty-state'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { BookingRead, BookingStatus } from '@/types'
+import type { BookingRead } from '@/types'
 import { toast } from 'sonner'
 
 // ── Status groupings ──────────────────────────────────────────────────────────
@@ -115,34 +115,97 @@ export default function AdminBookingsPage() {
   const [total, setTotal] = useState(0)
   const [hasNext, setHasNext] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const load = useCallback(async (group: string, p: number) => {
-    setLoading(true)
-    try {
-      const g = GROUPS.find(g => g.key === group)
-      const statusParam = g && g.statuses.length > 0
-        ? g.statuses.join(',')
-        : undefined
+  const activeGroupRef = useRef(activeGroup)
+  const pageRef = useRef(page)
+  const cacheRef = useRef(
+    new Map<string, { items: BookingRead[]; total: number; hasNext: boolean }>(),
+  )
+  const inFlightRef = useRef(new Map<string, Promise<void>>())
 
-      const res = await adminApi.listBookings({ page: p, status: statusParam })
-      setBookings(res.data?.items ?? [])
-      setTotal(res.data?.total ?? 0)
-      setHasNext(res.data?.has_next ?? false)
-    } catch {
-      toast.error('Failed to load bookings.')
-    } finally {
+  function cacheKey(group: string, p: number) {
+    return `${group}::${p}`
+  }
+
+  function applyCacheEntry(entry: { items: BookingRead[]; total: number; hasNext: boolean }) {
+    setBookings(entry.items)
+    setTotal(entry.total)
+    setHasNext(entry.hasNext)
+  }
+
+  const load = useCallback(async (group: string, p: number, opts?: { background?: boolean; force?: boolean }) => {
+    const key = cacheKey(group, p)
+    const cached = cacheRef.current.get(key)
+    const background = Boolean(opts?.background)
+    const force = Boolean(opts?.force)
+
+    if (cached && !force) {
+      applyCacheEntry(cached)
       setLoading(false)
+      return
     }
+
+    if (!background) {
+      if (!cached) setLoading(true)
+      if (cached) setIsRefreshing(true)
+    }
+
+    const running = inFlightRef.current.get(key)
+    if (running) {
+      await running
+      if (!background) {
+        setLoading(false)
+        setIsRefreshing(false)
+      }
+      return
+    }
+
+    const requestPromise = (async () => {
+      try {
+        const g = GROUPS.find((entry) => entry.key === group)
+        const statusParam = g && g.statuses.length > 0
+          ? g.statuses.join(',')
+          : undefined
+        const res = await adminApi.listBookings({ page: p, status: statusParam })
+        const nextEntry = {
+          items: res.data?.items ?? [],
+          total: res.data?.total ?? 0,
+          hasNext: res.data?.has_next ?? false,
+        }
+        cacheRef.current.set(key, nextEntry)
+
+        if (activeGroupRef.current === group && pageRef.current === p) {
+          applyCacheEntry(nextEntry)
+        }
+      } catch {
+        if (!background && !cached) {
+          toast.error('Failed to load bookings.')
+        }
+      } finally {
+        inFlightRef.current.delete(key)
+        if (activeGroupRef.current === group && pageRef.current === p && !background) {
+          setLoading(false)
+          setIsRefreshing(false)
+        }
+      }
+    })()
+
+    inFlightRef.current.set(key, requestPromise)
+    await requestPromise
   }, [])
 
   useEffect(() => {
-    setPage(1)
-    load(activeGroup, 1)
-  }, [activeGroup, load])
+    activeGroupRef.current = activeGroup
+  }, [activeGroup])
+
+  useEffect(() => {
+    pageRef.current = page
+  }, [page])
 
   useEffect(() => {
     load(activeGroup, page)
-  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeGroup, page, load])
 
   useEffect(() => {
     const filter = searchParams.get('filter')
@@ -152,10 +215,28 @@ export default function AdminBookingsPage() {
     }
   }, [searchParams])
 
+  useEffect(() => {
+    let cancelled = false
+
+    ;(async () => {
+      // Warm first-page caches for all groups so tab switches feel instant.
+      for (const group of GROUPS) {
+        if (cancelled) return
+        const key = cacheKey(group.key, 1)
+        if (cacheRef.current.has(key)) continue
+        await load(group.key, 1, { background: true })
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [load])
+
   return (
     <div className="internal-page space-y-6">
-      <Tabs value={activeGroup} onValueChange={v => { setActiveGroup(v) }}>
-      <TabsList className="scrollbar-hide h-auto w-full justify-start overflow-x-auto whitespace-nowrap pb-1 [-webkit-overflow-scrolling:touch]">
+      <Tabs value={activeGroup} onValueChange={v => { setActiveGroup(v); setPage(1) }}>
+        <TabsList className="scrollbar-hide h-auto w-full justify-start overflow-x-auto whitespace-nowrap pb-1 [-webkit-overflow-scrolling:touch]">
           {GROUPS.map(g => (
             <TabsTrigger key={g.key} value={g.key}>
               {g.label}
@@ -165,7 +246,7 @@ export default function AdminBookingsPage() {
 
         {GROUPS.map(g => (
           <TabsContent key={g.key} value={g.key} className="mt-4">
-            {loading ? (
+            {loading && bookings.length === 0 ? (
               <LoadingSpinner />
             ) : (
               <BookingTable bookings={bookings} />
@@ -173,6 +254,9 @@ export default function AdminBookingsPage() {
           </TabsContent>
         ))}
       </Tabs>
+      {isRefreshing && (
+        <p className="text-xs text-muted-foreground">Refreshing bookings…</p>
+      )}
 
       {/* Pagination */}
       {!loading && total > PAGE_SIZE && (
