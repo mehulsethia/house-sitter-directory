@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { requireClient } from '@/server/auth'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { requireHouseSit } from '@/server/auth'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { userRepo } from '@/server/repositories/user.repo'
 import { ok, err } from '@/server/response'
 import { isCyprusPostcode, isMvpCity, MVP_CITY, MVP_COUNTRY_CODE } from '@/lib/location-policy'
@@ -16,18 +16,18 @@ const updateClientMeSchema = z.object({
   default_country: z.string().trim().length(2).nullable().optional().refine((value) => value == null || value.toUpperCase() === MVP_COUNTRY_CODE, `${MVP_COUNTRY_CODE} only for MVP`),
 })
 
-export const GET = requireClient(async (_req, _ctx, user) => {
-  let client = await clientRepo.findByUserId(user.id)
+export const GET = requireHouseSit(async (_req, _ctx, user) => {
+  let client = await houseSitRepo.findByUserId(user.id)
   if (!client) {
-    client = await clientRepo.create(user.id)
+    client = await houseSitRepo.create(user.id)
   }
   return ok(client)
 })
 
-export const PATCH = requireClient(async (req: NextRequest, _ctx, user) => {
-  let client = await clientRepo.findByUserId(user.id)
+export const PATCH = requireHouseSit(async (req: NextRequest, _ctx, user) => {
+  let client = await houseSitRepo.findByUserId(user.id)
   if (!client) {
-    client = await clientRepo.create(user.id)
+    client = await houseSitRepo.create(user.id)
   }
 
   const body = await req.json()
@@ -48,7 +48,7 @@ export const PATCH = requireClient(async (req: NextRequest, _ctx, user) => {
     })
   }
 
-  const updated = await clientRepo.update(client.id, {
+  const updated = await houseSitRepo.update(client.id, {
     ...(data.default_address !== undefined ? { defaultAddress: data.default_address } : {}),
     ...(data.default_city !== undefined ? { defaultCity: data.default_city } : {}),
     ...(data.default_postcode !== undefined ? { defaultPostcode: data.default_postcode } : {}),
@@ -57,6 +57,6 @@ export const PATCH = requireClient(async (req: NextRequest, _ctx, user) => {
       : { defaultCountry: MVP_COUNTRY_CODE }),
   })
 
-  const full = await clientRepo.findById(updated.id)
+  const full = await houseSitRepo.findById(updated.id)
   return ok(full)
 })

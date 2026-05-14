@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server'
-import { requireClient } from '@/server/auth'
+import { requireHouseSit } from '@/server/auth'
 import { reviewRepo } from '@/server/repositories/review.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { ok, err } from '@/server/response'
 import { createReviewSchema } from '@/server/schemas/review.schema'
 
-export const POST = requireClient(async (req: NextRequest, ctx, user) => {
+export const POST = requireHouseSit(async (req: NextRequest, ctx, user) => {
   const { bookingId } = await ctx.params
   const booking = await bookingRepo.findById(bookingId)
   if (!booking) return err('Booking not found', 404)
@@ -14,7 +14,7 @@ export const POST = requireClient(async (req: NextRequest, ctx, user) => {
     return err('Can only review completed bookings', 400)
   }
 
-  const client = await clientRepo.findByUserId(user.id)
+  const client = await houseSitRepo.findByUserId(user.id)
   if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
 
   const existing = await reviewRepo.findByBookingId(bookingId)

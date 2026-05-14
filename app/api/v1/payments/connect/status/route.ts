@@ -1,11 +1,11 @@
-import { requireCleaner } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { requireHouseSitter } from '@/server/auth'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
 import { pushInAppNotification } from '@/server/services/in-app-notification.service'
 
-export const GET = requireCleaner(async (_req, _ctx, user) => {
-  const cleaner = await cleanerRepo.findByUserId(user.id)
+export const GET = requireHouseSitter(async (_req, _ctx, user) => {
+  const cleaner = await houseSitterRepo.findByUserId(user.id)
   if (!cleaner) return err('Cleaner profile not found', 404)
 
   if (!cleaner.stripeAccountId) {
@@ -30,7 +30,7 @@ export const GET = requireCleaner(async (_req, _ctx, user) => {
     !restrictedOrIncomplete
 
   if (cleaner.stripeOnboardingComplete !== connected) {
-    await cleanerRepo.update(cleaner.id, { stripeOnboardingComplete: connected })
+    await houseSitterRepo.update(cleaner.id, { stripeOnboardingComplete: connected })
     if (connected) {
       await pushInAppNotification({
         userId: user.id,

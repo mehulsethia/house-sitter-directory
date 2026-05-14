@@ -1,19 +1,19 @@
 import { NextRequest } from 'next/server'
-import { requireClient } from '@/server/auth'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { requireHouseSit } from '@/server/auth'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { clientAddressRepo } from '@/server/repositories/house-sit-address.repo'
 import { updateClientAddressSchema } from '@/server/schemas/house-sit-address.schema'
 import { ok, err } from '@/server/response'
 import { MVP_CITY, MVP_COUNTRY_CODE, normalizeCyprusPostcode } from '@/lib/location-policy'
 
-export const PATCH = requireClient(async (req: NextRequest, ctx, user) => {
+export const PATCH = requireHouseSit(async (req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
   const body = await req.json().catch(() => ({}))
   const parsed = updateClientAddressSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  let client = await clientRepo.findByUserId(user.id)
-  if (!client) client = await clientRepo.create(user.id)
+  let client = await houseSitRepo.findByUserId(user.id)
+  if (!client) client = await houseSitRepo.create(user.id)
 
   const existing = await clientAddressRepo.findById(id)
   if (!existing || existing.client_id !== client.id) return err('Address not found', 404)
@@ -39,11 +39,11 @@ export const PATCH = requireClient(async (req: NextRequest, ctx, user) => {
   return ok(updated)
 })
 
-export const DELETE = requireClient(async (_req: NextRequest, ctx, user) => {
+export const DELETE = requireHouseSit(async (_req: NextRequest, ctx, user) => {
   const { id } = await ctx.params
 
-  let client = await clientRepo.findByUserId(user.id)
-  if (!client) client = await clientRepo.create(user.id)
+  let client = await houseSitRepo.findByUserId(user.id)
+  if (!client) client = await houseSitRepo.create(user.id)
 
   const existing = await clientAddressRepo.findById(id)
   if (!existing || existing.client_id !== client.id) return err('Address not found', 404)

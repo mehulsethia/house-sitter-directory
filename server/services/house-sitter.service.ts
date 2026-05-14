@@ -1,4 +1,4 @@
-import { cleanerRepo } from '../repositories/house-sitter.repo'
+import { houseSitterRepo } from '../repositories/house-sitter.repo'
 import { db } from '../db'
 import { ServiceError } from './booking.service'
 import { loopsEmailService } from './loops-email.service'
@@ -12,7 +12,7 @@ import {
 
 const STRIKE_SUSPEND_THRESHOLD = 3
 
-export const cleanerService = {
+export const houseSitterService = {
   async approve(
     cleanerId: string,
     adminUser: User,
@@ -21,7 +21,7 @@ export const cleanerService = {
     rejectionReasonCode?: CleanerRejectionReasonCode,
     rejectionCustomMessage?: string,
   ) {
-    const cleaner = await cleanerRepo.findById(cleanerId)
+    const cleaner = await houseSitterRepo.findById(cleanerId)
     if (!cleaner) throw new ServiceError('Cleaner not found', 404)
     if (cleaner.status !== 'pending') throw new ServiceError('Cleaner is not in pending status', 400)
     const resolvedRejectionMessage = composeCleanerRejectionMessage({
@@ -29,7 +29,7 @@ export const cleanerService = {
       customMessage: rejectionCustomMessage ?? rejectionReason,
     })
 
-    const updated = await cleanerRepo.update(cleanerId, {
+    const updated = await houseSitterRepo.update(cleanerId, {
       status: action === 'approve' ? 'approved' : 'rejected',
       rejectionReason: action === 'reject' ? resolvedRejectionMessage : null,
       approvedAt: action === 'approve' ? new Date() : null,
@@ -88,19 +88,19 @@ export const cleanerService = {
       },
     })
 
-    const strikeCount = await cleanerRepo.countStrikes(cleanerId)
+    const strikeCount = await houseSitterRepo.countStrikes(cleanerId)
     if (strikeCount >= STRIKE_SUSPEND_THRESHOLD) {
-      await cleanerRepo.update(cleanerId, { status: 'suspended' })
+      await houseSitterRepo.update(cleanerId, { status: 'suspended' })
     }
 
     return strikeCount
   },
 
   async toggleSuspension(cleanerId: string) {
-    const cleaner = await cleanerRepo.findById(cleanerId)
+    const cleaner = await houseSitterRepo.findById(cleanerId)
     if (!cleaner) throw new ServiceError('Cleaner not found', 404)
 
     const suspend = cleaner.status !== 'suspended'
-    return cleanerRepo.suspend(cleanerId, suspend)
+    return houseSitterRepo.suspend(cleanerId, suspend)
   },
 }

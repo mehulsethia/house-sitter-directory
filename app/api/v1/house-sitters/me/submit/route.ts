@@ -1,5 +1,5 @@
-import { requireCleaner } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { requireHouseSitter } from '@/server/auth'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { availabilityRepo } from '@/server/repositories/availability.repo'
 import {
   computeCleanerOnboardingProgress,
@@ -10,12 +10,12 @@ import { pushInAppNotification } from '@/server/services/in-app-notification.ser
 import { db } from '@/server/db'
 import { ok, err } from '@/server/response'
 
-export const POST = requireCleaner(async (_req, _ctx, user) => {
+export const POST = requireHouseSitter(async (_req, _ctx, user) => {
   if (!user.phone || !user.phoneVerifiedAt) {
     return err('Phone verification is required before submitting for approval.', 400)
   }
 
-  const cleaner = await cleanerRepo.findByUserId(user.id)
+  const cleaner = await houseSitterRepo.findByUserId(user.id)
   if (!cleaner) return err('Cleaner profile not found.', 404)
   const shouldNotifyAdmin = cleaner.status !== 'pending' || !cleaner.profileComplete
 
@@ -37,7 +37,7 @@ export const POST = requireCleaner(async (_req, _ctx, user) => {
     return err('Profile is already approved.', 400)
   }
 
-  const updated = await cleanerRepo.update(cleaner.id, {
+  const updated = await houseSitterRepo.update(cleaner.id, {
     profileComplete: true,
     status: 'pending',
     rejectionReason: null,

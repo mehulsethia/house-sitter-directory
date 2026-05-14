@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCleaner } from '@/server/auth'
+import { requireHouseSitter } from '@/server/auth'
 import { googleCalendarService, verifyGoogleCalendarState } from '@/server/services/google-calendar.service'
 
-export const GET = requireCleaner(async (req: NextRequest, _ctx, user) => {
+export const GET = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
   const code = req.nextUrl.searchParams.get('code')
   const state = req.nextUrl.searchParams.get('state')
   const error = req.nextUrl.searchParams.get('error')

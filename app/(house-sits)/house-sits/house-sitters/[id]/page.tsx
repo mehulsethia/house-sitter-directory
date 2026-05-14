@@ -46,10 +46,10 @@ export default function CleanerProfilePage() {
       availabilityApi.getBookableDates(id, 2, 28),
       bookingsApi.my(),
     ])
-      .then(([cleanerRes, reviewsRes, availabilityRes, bookingsRes]) => {
-        if (cleanerRes.status !== 'fulfilled') throw new Error('Failed to load house sitter profile')
+      .then(([houseSitterRes, reviewsRes, availabilityRes, bookingsRes]) => {
+        if (houseSitterRes.status !== 'fulfilled') throw new Error('Failed to load house sitter profile')
         startTransition(() => {
-          setCleaner(cleanerRes.value.data ?? null)
+          setCleaner(houseSitterRes.value.data ?? null)
           setReviews(reviewsRes.status === 'fulfilled' ? (reviewsRes.value.data ?? []) : [])
           const dates = availabilityRes.status === 'fulfilled' ? (availabilityRes.value.data ?? []) : []
           setBookableDates(dates)

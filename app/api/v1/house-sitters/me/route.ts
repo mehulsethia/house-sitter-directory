@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
-import { requireCleaner } from '@/server/auth'
+import { requireHouseSitter } from '@/server/auth'
 import { db } from '@/server/db'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { availabilityRepo } from '@/server/repositories/availability.repo'
 import { computeCleanerOnboardingProgress, validateCleanerSubmissionRequirements } from '@/server/services/house-sitter-onboarding.service'
 import { ok, err } from '@/server/response'
@@ -60,12 +60,12 @@ function toLegacyIdType(value: string | null | undefined): string | null | undef
   return value
 }
 
-export const GET = requireCleaner(async (_req, _ctx, user) => {
-  let cleaner = await cleanerRepo.findByUserId(user.id)
+export const GET = requireHouseSitter(async (_req, _ctx, user) => {
+  let cleaner = await houseSitterRepo.findByUserId(user.id)
 
   // Auto-create the cleaner profile if it doesn't exist yet (e.g. sync race condition)
   if (!cleaner) {
-    cleaner = await cleanerRepo.create(user.id)
+    cleaner = await houseSitterRepo.create(user.id)
   }
 
   const schedules = await availabilityRepo.getSchedule(cleaner.id)
@@ -98,7 +98,7 @@ export const GET = requireCleaner(async (_req, _ctx, user) => {
   })
 })
 
-export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
+export const PATCH = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
   const body = await req.json()
   const parsed = updateCleanerSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
@@ -109,9 +109,9 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
     }
   }
 
-  let cleaner = await cleanerRepo.findByUserId(user.id)
+  let cleaner = await houseSitterRepo.findByUserId(user.id)
   if (!cleaner) {
-    cleaner = await cleanerRepo.create(user.id)
+    cleaner = await houseSitterRepo.create(user.id)
   }
 
   const normalizedIdType = normalizeIdTypeInput(parsed.data.id_type)
@@ -173,7 +173,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
 
   let interim
   try {
-    interim = await cleanerRepo.update(cleaner.id, updatePayload)
+    interim = await houseSitterRepo.update(cleaner.id, updatePayload)
   } catch (error) {
     const legacyCleaningSupplies = toLegacyCleaningSupplies(normalizedCleaningSupplies)
     const legacyIdType = toLegacyIdType(normalizedIdType)
@@ -184,7 +184,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
 
     if (!shouldRetryWithLegacy) throw error
 
-    interim = await cleanerRepo.update(cleaner.id, {
+    interim = await houseSitterRepo.update(cleaner.id, {
       ...updatePayload,
       ...(normalizedCleaningSupplies !== undefined ? { cleaningSupplies: legacyCleaningSupplies } : {}),
       ...(normalizedIdType !== undefined ? { idType: legacyIdType } : {}),
@@ -203,7 +203,7 @@ export const PATCH = requireCleaner(async (req: NextRequest, _ctx, user) => {
     return err(`Cannot mark onboarding as complete until all required steps are valid.${missing}`, 422)
   }
 
-  const updated = await cleanerRepo.update(cleaner.id, {
+  const updated = await houseSitterRepo.update(cleaner.id, {
     profileComplete: parsed.data.profile_complete === true ? true : interim.profileComplete,
     onboardingStep: parsed.data.onboarding_step ?? onboarding.current_step,
     onboardingCompletedAt: onboarding.can_be_listed ? interim.onboardingCompletedAt ?? new Date() : null,

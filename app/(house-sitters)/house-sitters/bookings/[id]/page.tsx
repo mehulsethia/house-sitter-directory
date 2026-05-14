@@ -86,8 +86,8 @@ export default function CleanerBookingDetailPage() {
       setCurrentUserId(userRes.data.user?.id ?? meRes?.data?.id ?? null)
     })
     houseSittersApi.me()
-      .then((cleanerRes) => {
-        const cleaner = cleanerRes.data?.cleaner as any
+      .then((houseSitterRes) => {
+        const cleaner = houseSitterRes.data?.cleaner as any
         setStripeConnected(Boolean(cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete))
       })
       .catch(() => null)
@@ -282,7 +282,7 @@ export default function CleanerBookingDetailPage() {
   const {
     isPending,
     hasProposal,
-    isCleanerProposal,
+    isHouseSitterProposal,
     canProposeAlternative,
     proposeAlternativeDisabledReason,
     canAcceptPending,
@@ -315,11 +315,11 @@ export default function CleanerBookingDetailPage() {
   const millisUntilStart = bookingStartsAtMs - Date.now()
   const moreThan24HoursAway = Number.isFinite(bookingStartsAtMs) && millisUntilStart > RESCHEDULE_CUTOFF_MS
   const canStartJobNow = Number.isFinite(bookingStartsAtMs) && Date.now() >= bookingStartsAtMs - START_JOB_EARLY_WINDOW_MS
-  const cleanerReportWindowEndsAtMs = booking.scheduled_end
+  const houseSitterReportWindowEndsAtMs = booking.scheduled_end
     ? new Date(booking.scheduled_end).getTime() + 24 * 60 * 60 * 1000
     : 0
   const canReportProblem = ['in_progress', 'completed', 'disputed'].includes(booking.status) &&
-    Date.now() <= cleanerReportWindowEndsAtMs
+    Date.now() <= houseSitterReportWindowEndsAtMs
   const clientTrust = (booking.client as any)?.trust as {
     memberSince?: string | null
     completedBookingsCount?: number
@@ -331,11 +331,11 @@ export default function CleanerBookingDetailPage() {
   const completedBookingsCount = Number(clientTrust?.completedBookingsCount ?? 0)
   const clientDisplayName = booking.client?.user?.name?.trim() || 'Homeowner'
   const clientAvatarUrl = booking.client?.user?.avatar_url ?? null
-  const cleanerPrivacy = (booking as any)?.cleanerPrivacy as {
+  const houseSitterPrivacy = (booking as any)?.houseSitterPrivacy as {
     phoneVisible?: boolean
     phoneVisibleAt?: string | null
   } | undefined
-  const canRevealPhone = ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status) && Boolean(cleanerPrivacy?.phoneVisible)
+  const canRevealPhone = ['confirmed', 'in_progress', 'completed', 'disputed'].includes(booking.status) && Boolean(houseSitterPrivacy?.phoneVisible)
   const clientPhone = booking.client?.user?.phone ?? ''
   const isCancelledPreConfirmation = booking.status === 'cancelled' && !booking.accepted_at && !booking.confirmed_at
   const isConfirmed = booking.status === 'confirmed'
@@ -346,8 +346,8 @@ export default function CleanerBookingDetailPage() {
   const isPostConfirmationProposal = Boolean(hasProposal && proposalContext === 'post_confirmation')
   const isAmendProposal = Boolean(hasProposal && proposalContext === 'amend_start')
   const hasOpenProposalFlow = hasProposal && ['pending', 'accepted', 'confirmed'].includes(booking.status)
-  const isClientPostConfirmationProposal = isPostConfirmationProposal && booking.proposal_by === 'client'
-  const isCleanerPostConfirmationProposal = isPostConfirmationProposal && booking.proposal_by === 'cleaner'
+  const isHouseSitPostConfirmationProposal = isPostConfirmationProposal && booking.proposal_by === 'client'
+  const isHouseSitterPostConfirmationProposal = isPostConfirmationProposal && booking.proposal_by === 'cleaner'
   const canPostConfirmProposeAlternative =
     isConfirmed &&
     moreThan24HoursAway &&
@@ -355,7 +355,7 @@ export default function CleanerBookingDetailPage() {
     !hasAlreadyRescheduled &&
     (booking.post_cleaner_proposals ?? 0) < 1
   const canRespondToClientPostConfirmationProposal =
-    isClientPostConfirmationProposal &&
+    isHouseSitPostConfirmationProposal &&
     moreThan24HoursAway
   const canRespondToClientAmendProposal =
     isAmendProposal &&
@@ -378,7 +378,7 @@ export default function CleanerBookingDetailPage() {
       ? maxAlternativeProposalDateInputValue(booking.original_scheduled_start ?? booking.scheduled_start)
       : maxPreConfirmationProposalDateInputValue()
   const canCounterClientProposal =
-    isClientPostConfirmationProposal
+    isHouseSitPostConfirmationProposal
       ? (booking.post_cleaner_proposals ?? 0) < 1
       : isAmendProposal
         ? (booking.cleaner_proposals ?? 0) < 1
@@ -457,7 +457,7 @@ export default function CleanerBookingDetailPage() {
             ) : (
               <p className="text-xs text-slate-500">
                 Homeowner phone can be revealed only inside confirmed bookings.
-                {cleanerPrivacy?.phoneVisibleAt ? ` Available from ${formatDate(cleanerPrivacy.phoneVisibleAt)}.` : ''}
+                {houseSitterPrivacy?.phoneVisibleAt ? ` Available from ${formatDate(houseSitterPrivacy.phoneVisibleAt)}.` : ''}
               </p>
             )}
           </div>
@@ -506,17 +506,17 @@ export default function CleanerBookingDetailPage() {
         )}
         {!isCancelledPreConfirmation && booking.status === 'pending' && hasProposal && (
           <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
-            {isCleanerProposal
+            {isHouseSitterProposal
               ? `You proposed a new time (${formatDate(booking.proposed_start!)}). Waiting for client response.`
               : `Homeowner countered with ${formatDate(booking.proposed_start!)}. Accept or decline before request expiry.`}
           </p>
         )}
-        {!isCancelledPreConfirmation && isCleanerPostConfirmationProposal && (
+        {!isCancelledPreConfirmation && isHouseSitterPostConfirmationProposal && (
           <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
             You proposed a reschedule: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Waiting for client response before the 24-hour cutoff.
           </p>
         )}
-        {!isCancelledPreConfirmation && isClientPostConfirmationProposal && (
+        {!isCancelledPreConfirmation && isHouseSitPostConfirmationProposal && (
           <p className="rounded-xl border border-[#e1d4c6] bg-[#f8f3ee] px-3 py-2 text-sm text-[#5a4a3b]">
             Homeowner proposed a reschedule: {formatDate(booking.scheduled_start)} → {formatDate(booking.proposed_start!)}. Accept, decline, or counter once before the 24-hour cutoff.
           </p>
@@ -543,7 +543,7 @@ export default function CleanerBookingDetailPage() {
         )}
         {!isCancelledPreConfirmation && canAcceptPending && (
           <>
-            <Button size="lg" onClick={() => handleBookingAction('accept')} loading={actionLoading === 'accept'} disabled={!stripeConnected || isCleanerProposal}>
+            <Button size="lg" onClick={() => handleBookingAction('accept')} loading={actionLoading === 'accept'} disabled={!stripeConnected || isHouseSitterProposal}>
               Accept booking
             </Button>
             {canProposeAlternative && (

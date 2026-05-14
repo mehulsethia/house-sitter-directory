@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
-import { requireAuth, requireClient } from '@/server/auth'
+import { requireAuth, requireHouseSit } from '@/server/auth'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { bookingService, ServiceError } from '@/server/services/booking.service'
 import { sanitizeBookingsForRole } from '@/server/services/booking-visibility.service'
 import { ok, err } from '@/server/response'
@@ -17,8 +17,8 @@ export const GET = requireAuth(async (req: NextRequest, _ctx, user) => {
   const { page, page_size, status } = parsed.data
 
   if (user.role === 'client') {
-    let client = await clientRepo.findByUserId(user.id)
-    if (!client) client = await clientRepo.create(user.id)
+    let client = await houseSitRepo.findByUserId(user.id)
+    if (!client) client = await houseSitRepo.create(user.id)
     let [bookings, total] = await bookingRepo.findByClient(client.id, { page, pageSize: page_size, status })
     const changed = await bookingService.reconcileDeadlinesForBookings(bookings.map((b) => b.id))
     if (changed) {
@@ -28,8 +28,8 @@ export const GET = requireAuth(async (req: NextRequest, _ctx, user) => {
   }
 
   if (user.role === 'cleaner') {
-    let cleaner = await cleanerRepo.findByUserId(user.id)
-    if (!cleaner) cleaner = await cleanerRepo.create(user.id)
+    let cleaner = await houseSitterRepo.findByUserId(user.id)
+    if (!cleaner) cleaner = await houseSitterRepo.create(user.id)
     let [bookings, total] = await bookingRepo.findByCleaner(cleaner.id, { page, pageSize: page_size, status })
     const changed = await bookingService.reconcileDeadlinesForBookings(bookings.map((b) => b.id))
     if (changed) {
@@ -42,7 +42,7 @@ export const GET = requireAuth(async (req: NextRequest, _ctx, user) => {
 })
 
 // POST /api/v1/bookings — create booking
-export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
+export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   try {
     const body = await req.json()
     const parsed = createBookingSchema.safeParse(body)

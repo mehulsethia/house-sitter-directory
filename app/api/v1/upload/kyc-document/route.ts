@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCleaner } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { requireHouseSitter } from '@/server/auth'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { DOCUMENT_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
@@ -47,8 +47,8 @@ async function ensureKycBucketExists() {
   bucketEnsured = true
 }
 
-export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
-  const cleaner = await cleanerRepo.findByUserId(user.id)
+export const POST = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
+  const cleaner = await houseSitterRepo.findByUserId(user.id)
   if (!cleaner) {
     return NextResponse.json({ success: false, message: 'Cleaner profile not found' }, { status: 404 })
   }
@@ -111,7 +111,7 @@ export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
 
   const publicUrl = urlData.publicUrl
 
-  await cleanerRepo.update(cleaner.id, {
+  await houseSitterRepo.update(cleaner.id, {
     idFileName: file.name,
     idFileUrl: publicUrl,
   })

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
-import { requireClient } from '@/server/auth'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { requireHouseSit } from '@/server/auth'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { paymentAuthorizationService } from '@/server/services/payment-authorization.service'
 import { stripe } from '@/server/stripe'
 import { db } from '@/server/db'
@@ -8,9 +8,9 @@ import { ok, err } from '@/server/response'
 
 const DISPUTE_WINDOW_MS = 24 * 60 * 60 * 1000
 
-export const DELETE = requireClient(async (req: NextRequest, ctx, user) => {
+export const DELETE = requireHouseSit(async (req: NextRequest, ctx, user) => {
   const { paymentMethodId } = await ctx.params
-  const client = await clientRepo.findByUserId(user.id)
+  const client = await houseSitRepo.findByUserId(user.id)
   if (!client?.stripeCustomerId) return err('No saved payment methods found', 404)
 
   let method

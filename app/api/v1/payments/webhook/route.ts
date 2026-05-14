@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/server/stripe'
 import { paymentRepo } from '@/server/repositories/payment.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { paymentAuthorizationService } from '@/server/services/payment-authorization.service'
 import { loopsEmailService } from '@/server/services/loops-email.service'
 import { pushInAppNotification } from '@/server/services/in-app-notification.service'
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
 
       case 'account.updated': {
         const account = event.data.object as Stripe.Account
-        const cleaner = await cleanerRepo.findById(account.metadata?.cleaner_id ?? '')
+        const cleaner = await houseSitterRepo.findById(account.metadata?.cleaner_id ?? '')
         if (cleaner) {
           const restrictedOrIncomplete =
             (account.requirements?.currently_due?.length ?? 0) > 0 ||
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
             account.payouts_enabled &&
             !restrictedOrIncomplete
 
-          await cleanerRepo.update(cleaner.id, {
+          await houseSitterRepo.update(cleaner.id, {
             stripeOnboardingComplete: connected,
           })
         }

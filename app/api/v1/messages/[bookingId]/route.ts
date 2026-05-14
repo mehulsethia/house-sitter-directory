@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { requireAuth } from '@/server/auth'
 import { messageRepo } from '@/server/repositories/message.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { ok, err } from '@/server/response'
 import { sendMessageSchema } from '@/server/schemas/message.schema'
 
@@ -19,11 +19,11 @@ async function isParty(bookingId: string, userId: string, role: string) {
   const booking = await bookingRepo.findById(bookingId)
   if (!booking) return null
   if (role === 'client') {
-    const client = await clientRepo.findByUserId(userId)
+    const client = await houseSitRepo.findByUserId(userId)
     return client && booking.clientId === client.id ? booking : null
   }
   if (role === 'cleaner') {
-    const cleaner = await cleanerRepo.findByUserId(userId)
+    const cleaner = await houseSitterRepo.findByUserId(userId)
     return cleaner && booking.cleanerId === cleaner.id ? booking : null
   }
   return booking // admin

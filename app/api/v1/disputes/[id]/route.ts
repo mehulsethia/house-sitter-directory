@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { requireAuth } from '@/server/auth'
 import { disputeRepo } from '@/server/repositories/dispute.repo'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { ok, err } from '@/server/response'
 import { createDisputeSchema } from '@/server/schemas/dispute.schema'
 import { loopsEmailService } from '@/server/services/loops-email.service'
@@ -26,11 +26,11 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
   const booking = await bookingRepo.findById(id)
   if (!booking) return err('Booking not found', 404)
 
-  const client = await clientRepo.findByUserId(user.id)
-  const cleaner = await cleanerRepo.findByUserId(user.id)
-  const isClient = Boolean(client && booking.clientId === client.id)
-  const isCleaner = Boolean(cleaner && booking.cleanerId === cleaner.id)
-  if (!isClient && !isCleaner && user.role !== 'admin') return err('Forbidden', 403)
+  const client = await houseSitRepo.findByUserId(user.id)
+  const cleaner = await houseSitterRepo.findByUserId(user.id)
+  const isHouseSit = Boolean(client && booking.clientId === client.id)
+  const isHouseSitter = Boolean(cleaner && booking.cleanerId === cleaner.id)
+  if (!isHouseSit && !isHouseSitter && user.role !== 'admin') return err('Forbidden', 403)
 
   const existing = await disputeRepo.findByBookingId(id)
   if (existing?.status === 'under_review') {
@@ -50,10 +50,10 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
       return err(`No-show reporting is available ${NO_SHOW_DELAY_MINUTES} minutes after scheduled start`, 400)
     }
 
-    if (issueType === 'cleaner_didnt_arrive' && !isClient) {
+    if (issueType === 'cleaner_didnt_arrive' && !isHouseSit) {
       return err('Only the client can report cleaner no-show', 403)
     }
-    if (issueType === 'client_no_show' && !isCleaner) {
+    if (issueType === 'client_no_show' && !isHouseSitter) {
       return err('Only the cleaner can report client no-show', 403)
     }
 
@@ -61,7 +61,7 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
       return err('No-show cannot be reported for cancelled or expired bookings', 400)
     }
   } else {
-    if (!isClient && !isCleaner) {
+    if (!isHouseSit && !isHouseSitter) {
       return err('Only the client or assigned cleaner can submit this report type', 403)
     }
 
@@ -69,7 +69,7 @@ export const POST = requireAuth(async (req: NextRequest, ctx, user) => {
       return err('This report can only be raised during or after the cleaning', 400)
     }
 
-    if (isCleaner) {
+    if (isHouseSitter) {
       const cleanerWindowMs = 24 * 60 * 60 * 1000
       const cleanerDeadlineMs = booking.scheduledEnd.getTime() + cleanerWindowMs
       if (Date.now() > cleanerDeadlineMs) {

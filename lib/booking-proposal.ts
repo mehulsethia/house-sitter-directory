@@ -10,8 +10,8 @@ const APP_TIMEZONE = 'Europe/Nicosia'
 export type CleanerProposalEligibility = {
   isPending: boolean
   hasProposal: boolean
-  isCleanerProposal: boolean
-  isClientCounter: boolean
+  isHouseSitterProposal: boolean
+  isHouseSitCounter: boolean
   moreThanCutoffHoursAway: boolean
   canAcceptPending: boolean
   canRespondToCounter: boolean
@@ -22,8 +22,8 @@ export type CleanerProposalEligibility = {
 export function getCleanerProposalEligibility(booking: BookingRead): CleanerProposalEligibility {
   const isPending = booking.status === 'pending'
   const hasProposal = Boolean(booking.proposed_start && booking.proposal_by)
-  const isCleanerProposal = booking.proposal_by === 'cleaner'
-  const isClientCounter = booking.proposal_by === 'client'
+  const isHouseSitterProposal = booking.proposal_by === 'cleaner'
+  const isHouseSitCounter = booking.proposal_by === 'client'
   const cleanerProposals = booking.cleaner_proposals ?? 0
 
   const scheduledStart = new Date(booking.scheduled_start)
@@ -32,14 +32,14 @@ export function getCleanerProposalEligibility(booking: BookingRead): CleanerProp
   const moreThanCutoffHoursAway =
     validScheduledStart && scheduledStartMs - Date.now() > RESCHEDULE_CUTOFF_HOURS * MS_PER_HOUR
 
-  const canAcceptPending = isPending && !isClientCounter
-  const canRespondToCounter = isPending && isClientCounter
+  const canAcceptPending = isPending && !isHouseSitCounter
+  const canRespondToCounter = isPending && isHouseSitCounter
   const canProposeAlternative = isPending && moreThanCutoffHoursAway && !hasProposal && cleanerProposals < 1
 
   const proposeAlternativeDisabledReason = !isPending
     ? null
     : hasProposal
-      ? isCleanerProposal
+      ? isHouseSitterProposal
         ? 'Alternative time already sent. Waiting for client response.'
         : 'Client already sent a counter-offer. You can accept or decline it.'
       : cleanerProposals >= 1
@@ -53,8 +53,8 @@ export function getCleanerProposalEligibility(booking: BookingRead): CleanerProp
   return {
     isPending,
     hasProposal,
-    isCleanerProposal,
-    isClientCounter,
+    isHouseSitterProposal,
+    isHouseSitCounter,
     moreThanCutoffHoursAway,
     canAcceptPending,
     canRespondToCounter,

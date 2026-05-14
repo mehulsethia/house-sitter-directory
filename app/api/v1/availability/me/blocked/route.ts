@@ -1,17 +1,17 @@
 import { NextRequest } from 'next/server'
-import { requireCleaner } from '@/server/auth'
+import { requireHouseSitter } from '@/server/auth'
 import { availabilityRepo } from '@/server/repositories/availability.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { ok, err } from '@/server/response'
 import { addBlockedTimeSchema } from '@/server/schemas/availability.schema'
 import { endOfUtcDate, startOfUtcDate, todayUtcDateOnly, toUtcDateOnly } from '@/lib/datetime'
 
-export const POST = requireCleaner(async (req: NextRequest, _ctx, user) => {
+export const POST = requireHouseSitter(async (req: NextRequest, _ctx, user) => {
   const body = await req.json()
   const parsed = addBlockedTimeSchema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
 
-  const cleaner = await cleanerRepo.findByUserId(user.id)
+  const cleaner = await houseSitterRepo.findByUserId(user.id)
   if (!cleaner) return err('Cleaner profile not found', 404)
 
   const startDateOnly = toUtcDateOnly(parsed.data.start_datetime)

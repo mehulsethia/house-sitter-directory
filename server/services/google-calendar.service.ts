@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { db } from '@/server/db'
 import { config } from '@/server/config'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 
 const GOOGLE_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth'
 const GOOGLE_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
@@ -110,7 +110,7 @@ export const googleCalendarService = {
   },
 
   async syncCleanerUpcomingConfirmedBookings(userId: string) {
-    const cleaner = await cleanerRepo.findByUserId(userId)
+    const cleaner = await houseSitterRepo.findByUserId(userId)
     if (!cleaner) return { synced: 0 }
 
     const bookings = await db.booking.findMany({

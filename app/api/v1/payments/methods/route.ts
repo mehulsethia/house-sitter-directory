@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server'
-import { requireClient } from '@/server/auth'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { requireHouseSit } from '@/server/auth'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { stripe } from '@/server/stripe'
 import { ok } from '@/server/response'
 
-export const GET = requireClient(async (_req: NextRequest, _ctx, user) => {
-  const client = await clientRepo.findByUserId(user.id)
+export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
+  const client = await houseSitRepo.findByUserId(user.id)
   if (!client?.stripeCustomerId) return ok([])
 
   const paymentMethods = await stripe.paymentMethods.list({

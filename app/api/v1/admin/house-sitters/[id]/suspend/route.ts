@@ -1,12 +1,12 @@
 import { requireAdmin } from '@/server/auth'
-import { cleanerService } from '@/server/services/house-sitter.service'
+import { houseSitterService } from '@/server/services/house-sitter.service'
 import { ServiceError } from '@/server/services/booking.service'
 import { ok, err } from '@/server/response'
 
 export const POST = requireAdmin(async (_req, ctx) => {
   const { id } = await ctx.params
   try {
-    const cleaner = await cleanerService.toggleSuspension(id)
+    const cleaner = await houseSitterService.toggleSuspension(id)
     return ok(cleaner)
   } catch (e) {
     if (e instanceof ServiceError) return err(e.message, e.status)

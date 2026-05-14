@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
-import { requireClient } from '@/server/auth'
+import { requireHouseSit } from '@/server/auth'
 import { db } from '@/server/db'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { clientAddressRepo } from '@/server/repositories/house-sit-address.repo'
 import { createClientAddressSchema } from '@/server/schemas/house-sit-address.schema'
 import { ok, err } from '@/server/response'
@@ -12,25 +12,25 @@ import {
   normalizeCyprusPostcode,
 } from '@/lib/location-policy'
 
-export const GET = requireClient(async (_req: NextRequest, _ctx, user) => {
-  let client = await clientRepo.findByUserId(user.id)
-  if (!client) client = await clientRepo.create(user.id)
+export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
+  let client = await houseSitRepo.findByUserId(user.id)
+  if (!client) client = await houseSitRepo.create(user.id)
   const addresses = await clientAddressRepo.listByClientId(client.id)
   return ok(addresses)
 })
 
-export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
+export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   try {
     const body = await req.json()
     const parsed = createClientAddressSchema.safeParse(body)
     if (!parsed.success) return err(parsed.error.message, 422)
 
-    let client = await clientRepo.findByUserId(user.id)
+    let client = await houseSitRepo.findByUserId(user.id)
     if (!client) {
       try {
-        client = await clientRepo.create(user.id)
+        client = await houseSitRepo.create(user.id)
       } catch {
-        client = await clientRepo.findByUserId(user.id)
+        client = await houseSitRepo.findByUserId(user.id)
       }
     }
     if (!client) return err('Unable to load your profile right now. Please try again.', 503)

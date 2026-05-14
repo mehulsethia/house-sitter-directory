@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireClient } from '@/server/auth'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { requireHouseSit } from '@/server/auth'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { DOCUMENT_MIME_TYPES, matchesFileSignature } from '@/lib/file-signature'
@@ -43,8 +43,8 @@ async function ensureBucketExists() {
   bucketEnsured = true
 }
 
-export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
-  const client = await clientRepo.findByUserId(user.id)
+export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
+  const client = await houseSitRepo.findByUserId(user.id)
   if (!client) {
     return NextResponse.json({ success: false, message: 'Client profile not found' }, { status: 404 })
   }
@@ -86,7 +86,7 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
   const { data: urlData } = supabaseAdmin.storage.from(HOUSE_SIT_ID_BUCKET).getPublicUrl(path)
   const publicUrl = urlData.publicUrl
 
-  await clientRepo.update(client.id, {
+  await houseSitRepo.update(client.id, {
     idFileName: file.name,
     idFileUrl: publicUrl,
     idSubmittedAt: new Date(),

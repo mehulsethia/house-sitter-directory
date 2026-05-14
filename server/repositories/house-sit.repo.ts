@@ -5,7 +5,7 @@ function isMissingColumnError(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2022'
 }
 
-export const clientRepo = {
+export const houseSitRepo = {
   findById: async (id: string) => {
     try {
       return await db.client.findUnique({ where: { id }, include: { user: true } })

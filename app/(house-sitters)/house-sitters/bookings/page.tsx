@@ -79,8 +79,8 @@ export default function CleanerBookingsPage() {
   async function refresh() {
     try {
       try {
-        const cleanerRes = await houseSittersApi.me()
-        const cleaner = cleanerRes.data?.cleaner as any
+        const houseSitterRes = await houseSittersApi.me()
+        const cleaner = houseSitterRes.data?.cleaner as any
         setStripeConnected(Boolean(cleaner?.stripe_onboarding_complete ?? cleaner?.stripeOnboardingComplete))
       } catch {
         // no-op: page can still load bookings
@@ -231,8 +231,8 @@ export default function CleanerBookingsPage() {
   }
 
   const filtered = useMemo(() => {
-    const cleanerVisible = bookings.filter((b) => b.status !== 'draft')
-    return cleanerVisible.filter((b) => {
+    const houseSitterVisible = bookings.filter((b) => b.status !== 'draft')
+    return houseSitterVisible.filter((b) => {
       if (filter === 'pending' && b.status !== 'pending') return false
       if (filter !== 'all' && filter !== 'pending' && b.status !== filter) return false
       if (!query.trim()) return true
@@ -246,10 +246,10 @@ export default function CleanerBookingsPage() {
   }, [bookings, filter, query])
 
   const summary = useMemo(() => {
-    const cleanerVisible = bookings.filter((b) => b.status !== 'draft')
-    const pending = cleanerVisible.filter((b) => b.status === 'pending').length
-    const inProgress = cleanerVisible.filter((b) => b.status === 'in_progress').length
-    const completed = cleanerVisible.filter((b) => b.status === 'completed' || b.status === 'disputed').length
+    const houseSitterVisible = bookings.filter((b) => b.status !== 'draft')
+    const pending = houseSitterVisible.filter((b) => b.status === 'pending').length
+    const inProgress = houseSitterVisible.filter((b) => b.status === 'in_progress').length
+    const completed = houseSitterVisible.filter((b) => b.status === 'completed' || b.status === 'disputed').length
     return { pending, inProgress, completed }
   }, [bookings])
 
@@ -413,7 +413,7 @@ export default function CleanerBookingsPage() {
 
                     {b.status === 'pending' && (
                       <>
-                        {eligibility.isCleanerProposal ? (
+                        {eligibility.isHouseSitterProposal ? (
                           <Button size="sm" variant="outline" disabled>
                             Waiting for client
                           </Button>

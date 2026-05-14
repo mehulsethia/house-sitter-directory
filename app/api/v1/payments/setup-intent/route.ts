@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server'
-import { requireClient } from '@/server/auth'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { requireHouseSit } from '@/server/auth'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
 
-export const POST = requireClient(async (_req: NextRequest, _ctx, user) => {
-  const client = await clientRepo.findByUserId(user.id)
+export const POST = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
+  const client = await houseSitRepo.findByUserId(user.id)
   if (!client) return err('Client profile not found', 404)
 
   let stripeCustomerId = client.stripeCustomerId ?? null
@@ -27,7 +27,7 @@ export const POST = requireClient(async (_req: NextRequest, _ctx, user) => {
       },
     })
     stripeCustomerId = customer.id
-    await clientRepo.update(client.id, { stripeCustomerId })
+    await houseSitRepo.update(client.id, { stripeCustomerId })
   }
 
   const setupIntent = await stripe.setupIntents.create({

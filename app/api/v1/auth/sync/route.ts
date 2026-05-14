@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { requireAuth } from '@/server/auth'
 import { userRepo } from '@/server/repositories/user.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { loopsEmailService } from '@/server/services/loops-email.service'
 import { pushInAppNotification } from '@/server/services/in-app-notification.service'
 import { ok } from '@/server/response'
@@ -26,9 +26,9 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
 
   // Ensure role-specific profile exists
   if (user.role === 'client') {
-    const existing = await clientRepo.findByUserId(user.id)
+    const existing = await houseSitRepo.findByUserId(user.id)
     if (!existing) {
-      await clientRepo.create(user.id)
+      await houseSitRepo.create(user.id)
       await pushInAppNotification({
         userId: user.id,
         type: 'account_created',
@@ -45,10 +45,10 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
       }
     }
   } else if (user.role === 'cleaner') {
-    let existing = await cleanerRepo.findByUserId(user.id)
+    let existing = await houseSitterRepo.findByUserId(user.id)
     if (!existing) {
-      await cleanerRepo.create(user.id)
-      existing = await cleanerRepo.findByUserId(user.id)
+      await houseSitterRepo.create(user.id)
+      existing = await houseSitterRepo.findByUserId(user.id)
       await pushInAppNotification({
         userId: user.id,
         type: 'account_created',
@@ -66,7 +66,7 @@ export const POST = requireAuth(async (req: NextRequest, _ctx, user) => {
     }
 
     if (existing && data.experience !== undefined) {
-      await cleanerRepo.update(existing.id, { yearsExperience: data.experience })
+      await houseSitterRepo.update(existing.id, { yearsExperience: data.experience })
     }
   }
 

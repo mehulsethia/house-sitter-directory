@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { requireClient } from '@/server/auth'
+import { requireHouseSit } from '@/server/auth'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { paymentRepo } from '@/server/repositories/payment.repo'
 import { paymentAuthorizationService } from '@/server/services/payment-authorization.service'
 import { stripe } from '@/server/stripe'
@@ -13,7 +13,7 @@ const schema = z.object({
   payment_method_id: z.string().min(1),
 })
 
-export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
+export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   const body = await req.json()
   const parsed = schema.safeParse(body)
   if (!parsed.success) return err(parsed.error.message, 422)
@@ -24,7 +24,7 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
     return err('Booking cannot be authorized in its current state', 400)
   }
 
-  const client = await clientRepo.findByUserId(user.id)
+  const client = await houseSitRepo.findByUserId(user.id)
   if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
   if (!client.stripeCustomerId) return err('No saved payment method found', 400)
 

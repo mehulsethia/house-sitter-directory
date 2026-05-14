@@ -1,10 +1,10 @@
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { db } from '@/server/db'
 import { ok, err } from '@/server/response'
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
-  const cleaner = await cleanerRepo.findById(id)
+  const cleaner = await houseSitterRepo.findById(id)
   if (
     !cleaner ||
     cleaner.status !== 'approved' ||

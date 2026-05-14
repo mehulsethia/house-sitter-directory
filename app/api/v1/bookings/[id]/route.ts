@@ -1,7 +1,7 @@
 import { requireAuth } from '@/server/auth'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { bookingService } from '@/server/services/booking.service'
 import { sanitizeBookingForRole } from '@/server/services/booking-visibility.service'
 import { ok, err } from '@/server/response'
@@ -12,8 +12,8 @@ export const GET = requireAuth(async (_req, ctx, user) => {
   const booking = await bookingRepo.findById(id)
   if (!booking) return err('Booking not found', 404)
 
-  const client = await clientRepo.findByUserId(user.id)
-  const cleaner = await cleanerRepo.findByUserId(user.id)
+  const client = await houseSitRepo.findByUserId(user.id)
+  const cleaner = await houseSitterRepo.findByUserId(user.id)
   const isParty =
     (client && booking.clientId === client.id) ||
     (cleaner && booking.cleanerId === cleaner.id) ||

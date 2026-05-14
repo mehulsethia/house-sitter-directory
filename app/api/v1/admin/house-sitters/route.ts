@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/server/auth'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { db } from '@/server/db'
 import { ok } from '@/server/response'
 import { deriveCleanerLifecycleStatus } from '@/lib/house-sitter-status'
@@ -10,7 +10,7 @@ export const GET = requireAdmin(async (req: NextRequest) => {
   const page = Number(req.nextUrl.searchParams.get('page') ?? 1)
   const pageSize = Number(req.nextUrl.searchParams.get('page_size') ?? 20)
 
-  const [cleaners, total] = await cleanerRepo.listAll({ status, page, pageSize })
+  const [cleaners, total] = await houseSitterRepo.listAll({ status, page, pageSize })
   const cleanerIds = cleaners.map((cleaner) => cleaner.id)
   const completedJobsAgg = cleanerIds.length
     ? await db.booking.groupBy({

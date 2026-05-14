@@ -1,6 +1,6 @@
 import { db } from '../db'
 
-export const cleanerRepo = {
+export const houseSitterRepo = {
   findById: (id: string) =>
     db.cleaner.findUnique({
       where: { id },

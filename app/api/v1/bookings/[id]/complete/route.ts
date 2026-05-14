@@ -1,10 +1,10 @@
-import { requireCleaner } from '@/server/auth'
+import { requireHouseSitter } from '@/server/auth'
 import { bookingService, ServiceError } from '@/server/services/booking.service'
 import { sanitizeBookingForRole } from '@/server/services/booking-visibility.service'
 import { ok, err } from '@/server/response'
 
 // POST /api/v1/bookings/:id/complete — cleaner marks booking as completed
-export const POST = requireCleaner(async (_req, ctx, user) => {
+export const POST = requireHouseSitter(async (_req, ctx, user) => {
   const { id } = await ctx.params
 
   try {

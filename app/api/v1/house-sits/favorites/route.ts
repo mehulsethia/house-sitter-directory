@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { requireClient } from '@/server/auth'
+import { requireHouseSit } from '@/server/auth'
 import { db } from '@/server/db'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { clientFavoriteRepo } from '@/server/repositories/house-sit-favorite.repo'
 import { ok, err } from '@/server/response'
 
@@ -11,9 +11,9 @@ const addFavoriteSchema = z.object({
   cleaner_id: z.string().uuid(),
 })
 
-export const GET = requireClient(async (_req: NextRequest, _ctx, user) => {
-  let client = await clientRepo.findByUserId(user.id)
-  if (!client) client = await clientRepo.create(user.id)
+export const GET = requireHouseSit(async (_req: NextRequest, _ctx, user) => {
+  let client = await houseSitRepo.findByUserId(user.id)
+  if (!client) client = await houseSitRepo.create(user.id)
 
   const favorites = await clientFavoriteRepo.listByClientId(client.id)
   const visibleFavorites = favorites
@@ -92,15 +92,15 @@ export const GET = requireClient(async (_req: NextRequest, _ctx, user) => {
   return ok(mapped)
 })
 
-export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
+export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   const body = await req.json().catch(() => ({}))
   const parsed = addFavoriteSchema.safeParse(body)
   if (!parsed.success) return err('Invalid cleaner selection', 422)
 
-  let client = await clientRepo.findByUserId(user.id)
-  if (!client) client = await clientRepo.create(user.id)
+  let client = await houseSitRepo.findByUserId(user.id)
+  if (!client) client = await houseSitRepo.create(user.id)
 
-  const cleaner = await cleanerRepo.findById(parsed.data.cleaner_id)
+  const cleaner = await houseSitterRepo.findById(parsed.data.cleaner_id)
   if (!cleaner || cleaner.status !== 'approved' || !cleaner.profileComplete || !cleaner.stripeOnboardingComplete) {
     return err('Cleaner not found', 404)
   }

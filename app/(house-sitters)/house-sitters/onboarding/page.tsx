@@ -314,13 +314,13 @@ function CleanerOnboardingPageContent() {
         paymentsApi.getConnectStatus(),
       ])
 
-      const cleanerData = meRes.data?.cleaner
+      const houseSitterData = meRes.data?.cleaner
       const onboarding = meRes.data?.onboarding
-      if (!cleanerData || !onboarding) throw new Error('Failed to load onboarding data.')
-      const c = cleanerData as any
+      if (!houseSitterData || !onboarding) throw new Error('Failed to load onboarding data.')
+      const c = houseSitterData as any
       const user = c.user ?? {}
 
-      setCleaner(cleanerData)
+      setCleaner(houseSitterData)
       setProgress(onboarding)
       setStep(onboarding.current_step)
 

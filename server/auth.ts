@@ -81,7 +81,7 @@ export function requireRole(role: string | string[], handler: AuthedHandler): Ha
   })
 }
 
-export const requireClient = (handler: AuthedHandler) => requireRole('client', handler)
-export const requireCleaner = (handler: AuthedHandler) => requireRole('cleaner', handler)
+export const requireHouseSit = (handler: AuthedHandler) => requireRole('client', handler)
+export const requireHouseSitter = (handler: AuthedHandler) => requireRole('cleaner', handler)
 export const requireAdmin = (handler: AuthedHandler) => requireRole('admin', handler)
-export const requireClientOrCleaner = (handler: AuthedHandler) => requireRole(['client', 'cleaner'], handler)
+export const requireHouseSitOrHouseSitter = (handler: AuthedHandler) => requireRole(['client', 'cleaner'], handler)

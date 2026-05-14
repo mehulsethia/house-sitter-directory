@@ -1,6 +1,6 @@
 import { bookingRepo } from '../repositories/booking.repo'
-import { cleanerRepo } from '../repositories/house-sitter.repo'
-import { clientRepo } from '../repositories/house-sit.repo'
+import { houseSitterRepo } from '../repositories/house-sitter.repo'
+import { houseSitRepo } from '../repositories/house-sit.repo'
 import { availabilityRepo } from '../repositories/availability.repo'
 import { paymentRepo } from '../repositories/payment.repo'
 import { disputeRepo } from '../repositories/dispute.repo'
@@ -143,10 +143,10 @@ export const bookingService = {
     scheduled_start: string
     duration_hours: number
   }) {
-    const client = await clientRepo.findByUserId(user.id)
+    const client = await houseSitRepo.findByUserId(user.id)
     if (!client) throw new ServiceError('Client profile not found', 404)
 
-    const cleaner = await cleanerRepo.findById(data.cleaner_id)
+    const cleaner = await houseSitterRepo.findById(data.cleaner_id)
     if (!cleaner) throw new ServiceError('Cleaner not found', 404)
     if (cleaner.status !== 'approved' || !cleaner.profileComplete || !cleaner.stripeOnboardingComplete) {
       throw new ServiceError('Cleaner is not available', 400)
@@ -260,11 +260,11 @@ export const bookingService = {
     let booking = await bookingRepo.findById(bookingId)
     if (!booking) throw new ServiceError('Booking not found', 404)
 
-    const cleaner = await cleanerRepo.findByUserId(user.id)
-    const client = await clientRepo.findByUserId(user.id)
-    const isCleaner = Boolean(cleaner && booking.cleanerId === cleaner.id)
-    const isClient = Boolean(client && booking.clientId === client.id)
-    if (!isCleaner && !isClient) throw new ServiceError('Forbidden', 403)
+    const cleaner = await houseSitterRepo.findByUserId(user.id)
+    const client = await houseSitRepo.findByUserId(user.id)
+    const isHouseSitter = Boolean(cleaner && booking.cleanerId === cleaner.id)
+    const isHouseSit = Boolean(client && booking.clientId === client.id)
+    if (!isHouseSitter && !isHouseSit) throw new ServiceError('Forbidden', 403)
 
     const reconciled = await bookingService.reconcileSingleBookingDeadline(bookingId)
     if (reconciled) booking = reconciled
@@ -273,7 +273,7 @@ export const bookingService = {
     const requestAcceptBy = resolveRequestAcceptBy(booking)
 
     if (action === 'start') {
-      if (!isCleaner) throw new ServiceError('Only cleaner can start a booking', 403)
+      if (!isHouseSitter) throw new ServiceError('Only cleaner can start a booking', 403)
       if (!['accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot start a booking in status '${booking.status}'`, 400)
       }
@@ -289,7 +289,7 @@ export const bookingService = {
     }
 
     if (action === 'accept') {
-      if (!isCleaner) throw new ServiceError('Only cleaner can accept a booking', 403)
+      if (!isHouseSitter) throw new ServiceError('Only cleaner can accept a booking', 403)
       assertCleanerStripeReady(cleaner)
       if (booking.status !== 'pending') {
         throw new ServiceError(`Cannot accept a booking in status '${booking.status}'`, 400)
@@ -341,7 +341,7 @@ export const bookingService = {
     }
 
     if (action === 'decline') {
-      if (!isCleaner) throw new ServiceError('Only cleaner can decline a booking request', 403)
+      if (!isHouseSitter) throw new ServiceError('Only cleaner can decline a booking request', 403)
       if (booking.status !== 'pending') {
         throw new ServiceError(`Cannot decline a booking in status '${booking.status}'`, 400)
       }
@@ -378,7 +378,7 @@ export const bookingService = {
     }
 
     if (action === 'propose_alternative') {
-      if (!isCleaner && !isClient) throw new ServiceError('Forbidden', 403)
+      if (!isHouseSitter && !isHouseSit) throw new ServiceError('Forbidden', 403)
 
       const isPreConfirmation = booking.status === 'pending'
       const isPostConfirmation = ['accepted', 'confirmed'].includes(booking.status)
@@ -386,7 +386,7 @@ export const bookingService = {
         throw new ServiceError(`Cannot propose a new time in status '${booking.status}'`, 400)
       }
 
-      const actor = isCleaner ? 'cleaner' : 'client'
+      const actor = isHouseSitter ? 'cleaner' : 'client'
       const proposedStart = parseProposedStart(payload.proposed_start)
       assertHalfHourBoundary(proposedStart)
       if (proposedStart.getTime() === booking.scheduledStart.getTime()) {
@@ -509,8 +509,8 @@ export const bookingService = {
     }
 
     if (action === 'counter_proposal') {
-      if (!isCleaner && !isClient) throw new ServiceError('Forbidden', 403)
-      const actor = isCleaner ? 'cleaner' : 'client'
+      if (!isHouseSitter && !isHouseSit) throw new ServiceError('Forbidden', 403)
+      const actor = isHouseSitter ? 'cleaner' : 'client'
       if (!['pending', 'accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot counter a proposal in status '${booking.status}'`, 400)
       }
@@ -694,10 +694,10 @@ export const bookingService = {
       }
       const proposalContext = booking.proposalContext ?? (booking.status === 'pending' ? 'pre_confirmation' : 'post_confirmation')
 
-      if (booking.proposalBy === 'cleaner' && !isClient) {
+      if (booking.proposalBy === 'cleaner' && !isHouseSit) {
         throw new ServiceError('Only client can accept cleaner proposal', 403)
       }
-      if (booking.proposalBy === 'client' && !isCleaner) {
+      if (booking.proposalBy === 'client' && !isHouseSitter) {
         throw new ServiceError('Only cleaner can accept client proposal', 403)
       }
       if (booking.proposalBy === 'client') {
@@ -718,7 +718,7 @@ export const bookingService = {
           ...clearedProposalState(),
         })
         await pushInAppNotification({
-          userId: isClient ? booking.cleaner.userId : booking.client.userId,
+          userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
           type: 'booking_time_agreed',
           title: 'Booking time confirmed',
           body: 'The proposed booking time has been accepted and confirmed.',
@@ -767,7 +767,7 @@ export const bookingService = {
           ...clearedProposalState({ preserveRescheduleUsage: true }),
         })
         await pushInAppNotification({
-          userId: isClient ? booking.cleaner.userId : booking.client.userId,
+          userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
           type: 'booking_time_agreed',
           title: 'Start time amended',
           body: 'The amended start time was accepted.',
@@ -807,7 +807,7 @@ export const bookingService = {
       })
       await resetAuthorizationAfterReschedule(updated.id)
       await pushInAppNotification({
-        userId: isClient ? booking.cleaner.userId : booking.client.userId,
+        userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
         type: 'booking_time_agreed',
         title: 'Reschedule accepted',
         body: 'Booking time updated. Client re-authorization is now required.',
@@ -841,16 +841,16 @@ export const bookingService = {
         throw new ServiceError(`Cannot decline a proposal in status '${booking.status}'`, 400)
       }
       if (!booking.proposalBy) throw new ServiceError('No active proposal to decline', 400)
-      if (booking.proposalBy === 'cleaner' && !isClient) {
+      if (booking.proposalBy === 'cleaner' && !isHouseSit) {
         throw new ServiceError('Only client can decline cleaner proposal', 403)
       }
-      if (booking.proposalBy === 'client' && !isCleaner) {
+      if (booking.proposalBy === 'client' && !isHouseSitter) {
         throw new ServiceError('Only cleaner can decline client proposal', 403)
       }
 
       const proposalContext = booking.proposalContext ?? (booking.status === 'pending' ? 'pre_confirmation' : 'post_confirmation')
       if (proposalContext === 'pre_confirmation') {
-        const declinedByClientFromCleanerProposal = isClient && booking.proposalBy === 'cleaner'
+        const declinedByClientFromCleanerProposal = isHouseSit && booking.proposalBy === 'cleaner'
         const proposedStartLabel = (booking.proposedStart ?? booking.scheduledStart).toLocaleString('en-IE', {
           day: 'numeric',
           month: 'short',
@@ -866,7 +866,7 @@ export const bookingService = {
         })
         await releasePaymentAuthorization(booking.payment?.id, booking.payment?.stripePaymentIntentId, booking.payment?.status)
         await pushInAppNotification({
-          userId: isClient ? booking.cleaner.userId : booking.client.userId,
+          userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
           type: 'booking_request_declined',
           title: declinedByClientFromCleanerProposal ? 'Client declined your proposed time' : 'Booking request declined',
           body: declinedByClientFromCleanerProposal
@@ -907,7 +907,7 @@ export const bookingService = {
         ...clearedProposalState({ preserveRescheduleUsage: proposalContext === 'amend_start' }),
       })
       await pushInAppNotification({
-        userId: isClient ? booking.cleaner.userId : booking.client.userId,
+        userId: isHouseSit ? booking.cleaner.userId : booking.client.userId,
         type: 'booking_request_declined',
         title: proposalContext === 'amend_start' ? 'Amendment declined' : 'Reschedule declined',
         body: proposalContext === 'amend_start'
@@ -928,7 +928,7 @@ export const bookingService = {
     }
 
     if (action === 'amend_start_time') {
-      if (!isClient && !isCleaner) throw new ServiceError('Forbidden', 403)
+      if (!isHouseSit && !isHouseSitter) throw new ServiceError('Forbidden', 403)
       if (!['accepted', 'confirmed'].includes(booking.status)) {
         throw new ServiceError(`Cannot amend start time in status '${booking.status}'`, 400)
       }
@@ -944,7 +944,7 @@ export const bookingService = {
       const hoursUntilBooking = (booking.scheduledStart.getTime() - Date.now()) / (60 * 60 * 1000)
       const ttlMinutes = hoursUntilBooking < 2 ? AMEND_FAST_RESPONSE_MINUTES : AMEND_STANDARD_RESPONSE_MINUTES
       const proposalExpiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000)
-      const actor = isCleaner ? 'cleaner' : 'client'
+      const actor = isHouseSitter ? 'cleaner' : 'client'
       const updated = await bookingRepo.update(bookingId, {
         proposedStart,
         proposedEnd,
@@ -992,7 +992,7 @@ export const bookingService = {
     const booking = await bookingRepo.findById(bookingId)
     if (!booking) throw new ServiceError('Booking not found', 404)
 
-    const cleaner = await cleanerRepo.findByUserId(user.id)
+    const cleaner = await houseSitterRepo.findByUserId(user.id)
     if (!cleaner || booking.cleanerId !== cleaner.id) {
       throw new ServiceError('Only assigned cleaner can complete this booking', 403)
     }
@@ -1026,8 +1026,8 @@ export const bookingService = {
     }
 
     // Verify user is a party on this booking
-    const client = await clientRepo.findByUserId(user.id)
-    const cleaner = await cleanerRepo.findByUserId(user.id)
+    const client = await houseSitRepo.findByUserId(user.id)
+    const cleaner = await houseSitterRepo.findByUserId(user.id)
     const isParty =
       (client && booking.clientId === client.id) ||
       (cleaner && booking.cleanerId === cleaner.id)
@@ -1052,9 +1052,9 @@ export const bookingService = {
       })
     }
 
-    const isClientCancelling = Boolean(client && booking.clientId === client.id)
+    const isHouseSitCancelling = Boolean(client && booking.clientId === client.id)
     const isDraftLikePreAuthorisation =
-      isClientCancelling &&
+      isHouseSitCancelling &&
       (booking.status === 'draft' || (booking.status === 'pending' && !isPaymentAuthorizedStatus(booking.payment?.status)))
 
     if (!isDraftLikePreAuthorisation) {
@@ -1066,8 +1066,8 @@ export const bookingService = {
       await pushInAppNotification({
         userId: notifyUserId,
         type: 'booking_cancelled',
-        title: isClientCancelling ? 'Client cancelled booking request' : 'Booking cancelled',
-        body: isClientCancelling
+        title: isHouseSitCancelling ? 'Client cancelled booking request' : 'Booking cancelled',
+        body: isHouseSitCancelling
           ? 'The client cancelled this booking request before confirmation.'
           : 'A booking has been cancelled',
         data: { booking_id: bookingId },
@@ -1337,14 +1337,14 @@ async function releasePaymentAuthorization(
 }
 
 async function notifyPendingRequestExpired(booking: BookingWithRelations) {
-  const isCleanerProposal = booking.proposalBy === 'cleaner'
+  const isHouseSitterProposal = booking.proposalBy === 'cleaner'
   const isClientProposal = booking.proposalBy === 'client'
-  const cleanerBody = isCleanerProposal
+  const cleanerBody = isHouseSitterProposal
     ? 'Client did not respond before expiry. The request expired and availability is released.'
     : isClientProposal
       ? 'Your request expired because no agreement was reached in time.'
       : 'This request expired before confirmation.'
-  const clientBody = isCleanerProposal
+  const clientBody = isHouseSitterProposal
     ? 'You did not respond before expiry. The request expired and your card authorization was released.'
     : isClientProposal
       ? 'Cleaner did not respond before expiry. The request expired and your card authorization was released.'
@@ -1407,7 +1407,7 @@ function assertCompletionWindow(scheduledEnd: Date) {
   }
 }
 
-function assertCleanerStripeReady(cleaner: Awaited<ReturnType<typeof cleanerRepo.findByUserId>> | null) {
+function assertCleanerStripeReady(cleaner: Awaited<ReturnType<typeof houseSitterRepo.findByUserId>> | null) {
   if (!cleaner?.stripeOnboardingComplete) {
     throw new ServiceError('You must connect Stripe to accept bookings and receive payouts', 403)
   }

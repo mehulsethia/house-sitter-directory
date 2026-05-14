@@ -1000,13 +1000,13 @@ export default function BookingFlowPage() {
 
   async function refreshVerificationStatus() {
     try {
-      const [authUserRes, clientRes] = await Promise.all([
+      const [authUserRes, houseSitRes] = await Promise.all([
         createClient().auth.getUser(),
         houseSitsApi.me().catch(() => null),
       ])
       const authUser = authUserRes.data.user
       const nextEmailVerified = Boolean(authUser?.email_confirmed_at)
-      const nextPhoneVerified = Boolean((clientRes as any)?.data?.user?.phone_verified_at)
+      const nextPhoneVerified = Boolean((houseSitRes as any)?.data?.user?.phone_verified_at)
       setEmailVerified(nextEmailVerified)
       setPhoneVerified(nextPhoneVerified)
       return { emailVerified: nextEmailVerified, phoneVerified: nextPhoneVerified }
@@ -1064,9 +1064,9 @@ export default function BookingFlowPage() {
       houseSitsApi.listAddresses().catch(() => null),
       createClient().auth.getUser().catch(() => null),
     ])
-      .then(([cleanerRes, clientRes, addressRes, authUserRes]) => {
-        setCleaner(cleanerRes.data ?? null)
-        const cp = (clientRes as any)?.data ?? null
+      .then(([houseSitterRes, houseSitRes, addressRes, authUserRes]) => {
+        setCleaner(houseSitterRes.data ?? null)
+        const cp = (houseSitRes as any)?.data ?? null
         const cpAny = (cp ?? {}) as any
         const user = cpAny.user ?? {}
         const addresses = (addressRes as any)?.data ?? []

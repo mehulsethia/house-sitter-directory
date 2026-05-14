@@ -84,13 +84,13 @@ export default function ClientProfilePage() {
   useEffect(() => {
     ;(async () => {
       try {
-        const [clientRes, bookingRes, authUserRes, addressesRes] = await Promise.all([
+        const [houseSitRes, bookingRes, authUserRes, addressesRes] = await Promise.all([
           houseSitsApi.me(),
           bookingsApi.my(),
           createClient().auth.getUser(),
           houseSitsApi.listAddresses().catch(() => ({ data: [] as HouseSitAddressRead[] })),
         ])
-        const client = clientRes.data as any
+        const client = houseSitRes.data as any
         const user = client?.user ?? {}
         const fullName = String(user?.name ?? '').trim()
         const parts = fullName.split(' ').filter(Boolean)

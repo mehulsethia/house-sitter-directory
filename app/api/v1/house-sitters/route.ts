@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { db } from '@/server/db'
 import { ok, err } from '@/server/response'
 import { cleanerSearchSchema } from '@/server/schemas/house-sitter.schema'
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         .filter(Boolean)
     : undefined
 
-  const [cleaners, total] = await cleanerRepo.search({
+  const [cleaners, total] = await houseSitterRepo.search({
     city,
     availability,
     transportMode: transport_mode,

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
-import { requireClient } from '@/server/auth'
+import { requireHouseSit } from '@/server/auth'
 import { bookingRepo } from '@/server/repositories/booking.repo'
-import { clientRepo } from '@/server/repositories/house-sit.repo'
+import { houseSitRepo } from '@/server/repositories/house-sit.repo'
 import { paymentRepo } from '@/server/repositories/payment.repo'
 import { stripe } from '@/server/stripe'
 import { ok, err } from '@/server/response'
@@ -10,7 +10,7 @@ import { z } from 'zod'
 
 const schema = z.object({ booking_id: z.string().uuid() })
 
-export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
+export const POST = requireHouseSit(async (req: NextRequest, _ctx, user) => {
   try {
     const body = await req.json()
     const parsed = schema.safeParse(body)
@@ -22,7 +22,7 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
       return err('Booking must be draft, pending, or accepted for authorisation', 400)
     }
 
-    const client = await clientRepo.findByUserId(user.id)
+    const client = await houseSitRepo.findByUserId(user.id)
     if (!client || booking.clientId !== client.id) return err('Forbidden', 403)
 
     const cleaner = booking.cleaner
@@ -55,7 +55,7 @@ export const POST = requireClient(async (req: NextRequest, _ctx, user) => {
         },
       })
       stripeCustomerId = customer.id
-      await clientRepo.update(client.id, { stripeCustomerId })
+      await houseSitRepo.update(client.id, { stripeCustomerId })
     }
 
     if (booking.status === 'draft') {

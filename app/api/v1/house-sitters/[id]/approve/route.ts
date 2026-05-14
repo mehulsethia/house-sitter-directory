@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/server/auth'
-import { cleanerService } from '@/server/services/house-sitter.service'
+import { houseSitterService } from '@/server/services/house-sitter.service'
 import { ok, err } from '@/server/response'
 import { approveCleanerSchema } from '@/server/schemas/house-sitter.schema'
 import { ServiceError } from '@/server/services/booking.service'
@@ -13,7 +13,7 @@ export const POST = requireAdmin(async (req: NextRequest, ctx, user) => {
   if (!parsed.success) return err(parsed.error.message, 422)
 
   try {
-    const cleaner = await cleanerService.approve(
+    const cleaner = await houseSitterService.approve(
       id,
       user,
       parsed.data.action,

@@ -57,8 +57,8 @@ function LoginForm() {
       if (!next) {
         if (role === 'cleaner') {
           try {
-            const cleanerRes = await houseSittersApi.me()
-            next = cleanerRes.data?.onboarding?.completion_pct === 100 ? '/house-sitter/dashboard' : '/house-sitters/onboarding'
+            const houseSitterRes = await houseSittersApi.me()
+            next = houseSitterRes.data?.onboarding?.completion_pct === 100 ? '/house-sitter/dashboard' : '/house-sitters/onboarding'
           } catch {
             next = '/house-sitters/onboarding'
           }

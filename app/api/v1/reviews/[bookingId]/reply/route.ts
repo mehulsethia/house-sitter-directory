@@ -1,13 +1,13 @@
 import { NextRequest } from 'next/server'
-import { requireCleaner } from '@/server/auth'
+import { requireHouseSitter } from '@/server/auth'
 import { reviewRepo } from '@/server/repositories/review.repo'
-import { cleanerRepo } from '@/server/repositories/house-sitter.repo'
+import { houseSitterRepo } from '@/server/repositories/house-sitter.repo'
 import { cleanerReviewResponseSchema } from '@/server/schemas/review.schema'
 import { ok, err } from '@/server/response'
 
-export const POST = requireCleaner(async (req: NextRequest, ctx, user) => {
+export const POST = requireHouseSitter(async (req: NextRequest, ctx, user) => {
   const { bookingId: reviewId } = await ctx.params
-  const cleaner = await cleanerRepo.findByUserId(user.id)
+  const cleaner = await houseSitterRepo.findByUserId(user.id)
   if (!cleaner) return err('Cleaner profile not found', 404)
 
   const review = await reviewRepo.findById(reviewId)

@@ -56,10 +56,10 @@ export default function CleanerDashboardPage() {
       // Call cleaners/me first — it auto-creates the house sitter profile if missing.
       // Bookings endpoint needs the cleaner row to exist, so this must complete first.
       try {
-        const cleanerRes = await houseSittersApi.me()
-        setCompletionPct(cleanerRes.data?.onboarding?.completion_pct ?? 0)
-        setOnboardingSteps(cleanerRes.data?.onboarding?.steps ?? null)
-        const cleaner = cleanerRes.data?.cleaner as any
+        const houseSitterRes = await houseSittersApi.me()
+        setCompletionPct(houseSitterRes.data?.onboarding?.completion_pct ?? 0)
+        setOnboardingSteps(houseSitterRes.data?.onboarding?.steps ?? null)
+        const cleaner = houseSitterRes.data?.cleaner as any
         setLifecycleStatus(
           (cleaner?.lifecycle_status as any) ??
             deriveCleanerLifecycleStatus({

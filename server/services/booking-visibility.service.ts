@@ -64,7 +64,7 @@ function sanitizeBookingForCleaner<T extends Record<string, any>>(booking: T): T
     copy.accessNotes = null
   }
 
-  copy.cleanerPrivacy = {
+  copy.houseSitterPrivacy = {
     addressVisible: isAddressVisible,
     phoneVisible: isPhoneVisible,
     phoneVisibleAt: isAddressVisible && Number.isFinite(phoneVisibleAtMs)
